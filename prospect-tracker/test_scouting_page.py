@@ -69,24 +69,46 @@ def _registry_ids() -> set:
     return {m.get("model_id") for m in reg["models"]}
 
 
-# ---- 1. flag off: nothing served moves ---------------------------------------
+# ---- 1. the flag: served since TL_23's flip; off, nothing served moves -------
+
+def test_flag_flipped_page_payload_nav_and_sitemap_served():
+    """TL_23_SCOUTING_PAGE_FLIP: the flag is True, and the flip carries the nav
+    leaf right after the Library, the sitemap row, the published page, the
+    data/ payload, the deploy path, the icon and the registry row together."""
+    assert B.SCOUTING_PAGE_LIVE is True
+    assert SX.page_live() is True and SX.output_path() == SX.OUT_PATH
+    keys = [k for k, _l, _h in B.nav_leaves()]
+    assert ("scouting", "Scouting", "/scouting/") in B.nav_leaves()
+    assert keys.index("scouting") == keys.index("glossary") + 1
+    top = [i if isinstance(i, tuple) else None for i in B.NAV_ITEMS]
+    assert ("scouting", "Scouting", "/scouting/") in top, "a top-level entry, not in a group"
+    assert ("/scouting/", "monthly", "0.6") in B.sitemap_pages()
+    assert B.ICON_FOR["scouting"] == "scouting" and "scouting" in B.ICON_KEYS
+    assert (ROOT / "scouting" / "index.html").is_file()
+    payload = json.loads((ROOT / "data" / "scouting_reference.json").read_text(encoding="utf-8"))
+    fresh = json.loads(json.dumps(SX.build_payload(), ensure_ascii=False))
+    assert payload == fresh, "data/scouting_reference.json is the exporter's output: rerun it"
+    paths = (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").split()
+    assert "scouting" in paths
+    assert "scouting_reference" in _registry_ids()
+
 
 def test_flag_off_served_tree_byte_identical(tmp_path, monkeypatch):
-    assert B.SCOUTING_PAGE_LIVE is False
+    monkeypatch.setattr(B, "SCOUTING_PAGE_LIVE", False)
+    fake = tmp_path / "build_site_off.py"
+    fake.write_text("SCOUTING_PAGE_LIVE = False\n", encoding="utf-8")
+    monkeypatch.setattr(SX, "BUILD_SITE_PATH", fake)
     assert SX.page_live() is False
-    # No nav leaf, no sitemap row, no published page, no data/ payload.
-    assert "scouting" not in {k for k, _l, _h in B.nav_leaves()}
+    # No sitemap row while off.
     assert "/scouting/" not in {p for p, _f, _w in B.sitemap_pages()}
-    assert not (ROOT / "scouting" / "index.html").exists()
-    assert not (ROOT / "data" / "scouting_reference.json").exists()
     # The exporter writes only its preview path.
     out, prev = tmp_path / "data" / "scouting_reference.json", tmp_path / "preview" / "s.json"
     monkeypatch.setattr(SX, "OUT_PATH", out)
     monkeypatch.setattr(SX, "PREVIEW_PATH", prev)
     assert SX.main([]) == 0
     assert prev.is_file() and not out.exists()
-    assert {p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*") if p.is_file()} == {
-        "preview/s.json"}
+    assert {p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*")
+            if p.is_file() and p != fake} == {"preview/s.json"}
     # The page lands only in the preview root; _write (the served tree) is never called.
     calls = []
     monkeypatch.setattr(B, "_write", lambda rel, content: calls.append(rel))
@@ -303,9 +325,10 @@ def test_provenance_sentence_matches_fit_file(page_html):
 
 # ---- 6. the calibration line and the reconciliation note ------------------------------
 
-B_CAL = ("This column is the table our valuations use today. It is under a registered "
-         "calibration test, the Prospect Anchor gate, and it is not a measured result until that "
-         "test reads.")
+# B-CAL as amended by TL_23 after the Prospect Anchor look of 2026-10-14 (UNDECIDED).
+B_CAL = ("This column is the table our valuations use today. Its registered calibration test, "
+         "the Prospect Anchor gate, read it once on 2026-10-14 and could not decide it, which is "
+         "not a confirmation. The question opens again once the 2022 debut cohort resolves.")
 B_REC = ("The glossary's methodology table prints the configuration's starting values for this "
          "table until the Prospect Anchor gate moves that table to what serves; this page prints "
          "what serves.")

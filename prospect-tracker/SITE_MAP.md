@@ -31,7 +31,8 @@ fetch strings.
 | 18 | `articles` | Articles | `/articles/` | - |
 | 19 | `forums` | Forums | `/forums/` | - |
 | 20 | `glossary` | Library | `/glossary/` | - |
-| 21 | `team` | Masthead | `/team/` | - |
+| 21 | `scouting` | Scouting | `/scouting/` | - |
+| 22 | `team` | Masthead | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 

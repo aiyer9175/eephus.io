@@ -434,7 +434,10 @@ GLOSSARY_DISPLAY_NAME = "Library"
 # the sitemap row below are emitted only while it is True. The three hand-kept
 # static navs cannot read a flag and change in TL_23's flip commit, with the
 # ICON_FOR entry. tools/scouting_export.py reads this literal from the source.
-SCOUTING_PAGE_LIVE = False
+# Flipped True by TL_23_SCOUTING_PAGE_FLIP (2026-10-15, owner answer TL-Q8):
+# the page, its payload, the nav leaf, the sitemap row, the static navs, the
+# i-scouting icon and the inbound links landed in one commit.
+SCOUTING_PAGE_LIVE = True
 
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
@@ -9838,9 +9841,12 @@ SCOUTING_COPY = {
                  "from FV 35 up. The FanGraphs primers read FV as a six-season average, and a "
                  "player's peak season grades one to two grades above that (Longenhagen 2022)."),
     "B-PROV": SCOUTING_PROV,
-    "B-CAL": ("This column is the table our valuations use today. It is under a registered "
-              "calibration test, the Prospect Anchor gate, and it is not a measured result until "
-              "that test reads."),
+    # B-CAL after the Prospect Anchor look of 2026-10-14 (verdict UNDECIDED):
+    # SCOUTING_PAGE.md, the TL_23 amendment at the end of the document.
+    "B-CAL": ("This column is the table our valuations use today. Its registered calibration "
+              "test, the Prospect Anchor gate, read it once on 2026-10-14 and could not decide "
+              "it, which is not a confirmation. The question opens again once the 2022 debut "
+              "cohort resolves."),
     "B-REC": ("The glossary's methodology table prints the configuration's starting values for "
               "this table until the Prospect Anchor gate moves that table to what serves; this "
               "page prints what serves."),
@@ -10565,6 +10571,7 @@ PAGE_INDEX_PURPOSE = {
     "/articles/": "long-form editorial pieces, newest first",
     "/forums/": "community discussion across prospects, farm systems and articles",
     "/glossary/": "terms, methods, evidence and sources; this index is one of its views",
+    "/scouting/": "the 20-80 scale, WAR by FV tier and the stat line each tool grade implies, every number cited",
     "/team/": "who builds, runs and writes the site: the one page that carries the credits",
     # The /news/ and /history/ rows name MLB transactions only while they are
     # served (claims rule C9; the Q9_22c flip, copy row CP-210).

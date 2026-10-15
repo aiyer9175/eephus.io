@@ -534,3 +534,25 @@ In a new `test_scouting_page.py`, plus `test_build_site.py` and `test_asset_vers
 It builds nothing, writes nothing under `data/`, adds no flag, no route, no registry row and no
 glossary entry; it reads no debut, cohort or outcome; it computes nothing by consensus-FV cell; it
 does not re-apply anchors, edit `anchors_provenance` or run `value_framework.py --fit`.
+
+---
+
+## Amendment 2026-10-15 (TL_23_SCOUTING_PAGE_FLIP): B-CAL after the Prospect Anchor look
+
+Filed by TL_23_SCOUTING_PAGE_FLIP in the flip commit. It changes one copy item and nothing else:
+no table, source, flag, frame, cell or test criterion moves.
+
+Why. Section 8's B-CAL was written before the Prospect Anchor look and says the expected column
+"is not a measured result until that test reads". The look was taken once on 2026-10-14, an
+OWNER-WAIVED EARLY READ under EW3-5, and `docs/PROSPECT_ANCHOR_GATE.md` section 18 records the
+verdict UNDECIDED: nothing served moves, the question re-arms under a new registration when
+`RESOLVED_THROUGH` reaches 2027 (the 2022 debut cohort resolves), and "UNDECIDED is not a
+confirmation and no copy may treat it as one". Printing the old sentence after the look would
+describe a test that has not read. The page prints no number from the look (TL_24 owns any
+release, and an UNDECIDED record releases nothing for display), so the FV tier block still
+carries only the sources 'industry' and 'served_config'.
+
+- B-CAL (verbatim, replaces the section 8 text from TL_23 on): This column is the table our valuations use today. Its registered calibration test, the Prospect Anchor gate, read it once on 2026-10-14 and could not decide it, which is not a confirmation. The question opens again once the 2022 debut cohort resolves.
+
+B-REC is unchanged: under UNDECIDED the gate does not repoint the glossary's emitter, so the
+glossary keeps printing the configuration's starting values and the sentence still holds.

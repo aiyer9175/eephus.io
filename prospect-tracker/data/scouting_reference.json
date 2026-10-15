@@ -1,0 +1,5912 @@
+{
+ "schema": 1,
+ "what": "The /scouting/ page: published 20-80 tables transcribed with section and source ids, plus served value-framework configs read at grades 20 to 80.",
+ "transcription": {
+  "file": "data/reference/fv_framework_tables.json",
+  "from": "docs/reference/FANGRAPHS_FV_FRAMEWORK.md",
+  "from_commit": "07abfc82"
+ },
+ "citations": {
+  "S1": {
+   "author": "Ben Clemens",
+   "title": "The Details of Our New Prospect Valuation Methodology",
+   "url": "https://blogs.fangraphs.com/the-details-of-our-new-prospect-valuation-methodology/",
+   "era": "2026"
+  },
+  "S2": {
+   "author": "Eric Longenhagen and Kiley McDaniel",
+   "title": "The New FanGraphs Scouting Primer",
+   "url": "https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/",
+   "era": "2018"
+  },
+  "S3": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The 20-80 Scouting Scale",
+   "url": "https://blogs.fangraphs.com/scouting-explained-the-20-80-scouting-scale/",
+   "era": "2014"
+  },
+  "W1": {
+   "author": "Carson Cistulli",
+   "title": "The 20-80 Scouting Scale, Translated to Wins",
+   "url": "https://blogs.fangraphs.com/the-20-80-scouting-scale-translated-to-wins/",
+   "era": "2013"
+  },
+  "W2": {
+   "author": "Mark Smith",
+   "title": "The 20-80 Scale, SABR Style",
+   "url": "https://blogs.fangraphs.com/the-20-80-scale-sabr-style/",
+   "era": "Feb 2013"
+  },
+  "W3": {
+   "author": "Mark Smith",
+   "title": "The 20-80 Scale, Saber Style (Again Yet Different)",
+   "url": "https://blogs.fangraphs.com/the-20-80-scale-saber-style-again-yet-different/",
+   "era": "Feb 2013"
+  },
+  "L1": {
+   "author": "Ben Clemens",
+   "title": "Introducing an Updated Method for Prospect Valuation",
+   "url": "https://blogs.fangraphs.com/introducing-an-updated-method-for-prospect-valuation/",
+   "era": "2026"
+  },
+  "L2": {
+   "author": "Craig Edwards",
+   "title": "An Update to Prospect Valuation",
+   "url": "https://blogs.fangraphs.com/an-update-to-prospect-valuation/",
+   "era": "2019"
+  },
+  "L3": {
+   "author": "Craig Edwards",
+   "title": "Putting a Dollar Value on Prospects Outside the Top 100",
+   "url": "https://blogs.fangraphs.com/putting-a-dollar-value-on-prospects-outside-the-top-100/",
+   "era": "2019"
+  },
+  "L4": {
+   "author": "Ben Clemens",
+   "title": "What Are Teams Paying For A Win In Free Agency? 2026 Edition",
+   "url": "https://blogs.fangraphs.com/what-are-teams-paying-for-a-win-in-free-agency-2026-edition/",
+   "era": "2026"
+  },
+  "L5": {
+   "author": "Matt Swartz",
+   "title": "How Do Baseball Teams Discount the Future?",
+   "url": "https://blogs.fangraphs.com/how-do-baseball-teams-discount-the-future/",
+   "era": "2017"
+  },
+  "L6": {
+   "author": "Ben Clemens",
+   "title": "How Do Prospect Grades Translate to Future Outcomes?",
+   "url": "https://blogs.fangraphs.com/how-do-prospect-grades-translate-to-future-outcomes/",
+   "era": "2025"
+  },
+  "L7": {
+   "author": "Eric Longenhagen",
+   "title": "Prospect Week Primer",
+   "url": "https://blogs.fangraphs.com/prospect-week-primer/",
+   "era": "2022"
+  },
+  "L8": {
+   "author": "Eric Longenhagen",
+   "title": "How To Use The Board: A Tutorial",
+   "url": "https://blogs.fangraphs.com/how-to-use-the-board-a-tutorial/",
+   "era": "2021"
+  },
+  "L9": {
+   "author": "Eric Longenhagen",
+   "title": "Valuing Prospects: The Pros and Cons of a Single Number",
+   "url": "https://blogs.fangraphs.com/valuing-prospects-the-pros-and-cons-of-a-single-number/",
+   "era": "2017"
+  },
+  "L10": {
+   "author": "Kiley McDaniel",
+   "title": "Top 200 Prospects: The Process and Introduction",
+   "url": "https://blogs.fangraphs.com/top-200-prospects-the-process-and-introduction/",
+   "era": "2015"
+  },
+  "L11": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 1",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-1/",
+   "era": "2014"
+  },
+  "L12": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 2",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-2/",
+   "era": "2014"
+  },
+  "L13": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 3",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-3/",
+   "era": "2014"
+  },
+  "L14": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 4",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-4/",
+   "era": "2014"
+  },
+  "L15": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool Mailbag (Pt. 5)",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-5/",
+   "era": "2014"
+  },
+  "L16": {
+   "author": "Kiley McDaniel",
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 6",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-6/",
+   "era": "2014"
+  },
+  "P1": {
+   "author": "MLB.com / MLB Pipeline, unsigned",
+   "title": "Scouting Grades (glossary entry)",
+   "url": "https://www.mlb.com/glossary/miscellaneous/scouting-grades",
+   "era": "undated, live"
+  },
+  "B1": {
+   "author": "Kyle Glaser, Baseball America",
+   "title": "Explaining The 20-80 Baseball Scouting Scale",
+   "url": "https://www.baseballamerica.com/stories/explaining-the-20-80-baseball-scouting-scale/",
+   "era": "undated, live"
+  },
+  "B2": {
+   "author": "J.J. Cooper, Baseball America",
+   "title": "Explaining Baseball America's Updated MLB Prospect Grades & Risk System",
+   "url": "https://www.baseballamerica.com/stories/explaining-baseball-americas-updated-mlb-prospect-grades-risk-system/",
+   "era": "2026"
+  }
+ },
+ "scale": {
+  "columns": [
+   {
+    "key": "grade"
+   },
+   {
+    "key": "sd"
+   },
+   {
+    "key": "fangraphs",
+    "sid": "S3"
+   },
+   {
+    "key": "baseball_america",
+    "sid": "B1"
+   },
+   {
+    "key": "pipeline",
+    "sid": "P1"
+   }
+  ],
+  "rows": [
+   {
+    "grade": 80,
+    "sd": {
+     "v": 3.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "80",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Top of the scale",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well above average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "70-80"
+    }
+   },
+   {
+    "grade": 75,
+    "sd": {
+     "v": 2.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well above average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "70-80"
+    }
+   },
+   {
+    "grade": 70,
+    "sd": {
+     "v": 2.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "Plus Plus",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Plus-Plus. Among the best tools in the game",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well above average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "70-80"
+    }
+   },
+   {
+    "grade": 65,
+    "sd": {
+     "v": 1.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1"
+    }
+   },
+   {
+    "grade": 60,
+    "sd": {
+     "v": 1.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "Plus",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Plus",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "above average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": null
+    }
+   },
+   {
+    "grade": 55,
+    "sd": {
+     "v": 0.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "Above Avg",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Above-average",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1"
+    }
+   },
+   {
+    "grade": 50,
+    "sd": {
+     "v": 0.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "Avg",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Major league average",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": null
+    }
+   },
+   {
+    "grade": 45,
+    "sd": {
+     "v": -0.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "Below Avg",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Fringe-average",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1"
+    }
+   },
+   {
+    "grade": 40,
+    "sd": {
+     "v": -1.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Below-average",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "below average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": null
+    }
+   },
+   {
+    "grade": 35,
+    "sd": {
+     "v": -1.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1"
+    }
+   },
+   {
+    "grade": 30,
+    "sd": {
+     "v": -2.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "Well below-average, but not unplayable",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well below average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "20-30"
+    }
+   },
+   {
+    "grade": 25,
+    "sd": {
+     "v": -2.5,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well below average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "20-30"
+    }
+   },
+   {
+    "grade": 20,
+    "sd": {
+     "v": -3.0,
+     "ref": "scale_sd",
+     "section": "1.1",
+     "sid": "S3"
+    },
+    "fangraphs": {
+     "v": "",
+     "ref": "scale_terms",
+     "section": "1.3",
+     "sid": "S3"
+    },
+    "baseball_america": {
+     "v": "As bad as it gets for a big leaguer",
+     "ref": "scale_terms",
+     "section": "11.2",
+     "sid": "B1"
+    },
+    "pipeline": {
+     "v": "well below average",
+     "ref": "scale_terms",
+     "section": "11.1",
+     "sid": "P1",
+     "band": "20-30"
+    }
+   }
+  ]
+ },
+ "fv_tiers": {
+  "headline": {
+   "columns": [
+    {
+     "key": "fv",
+     "quantity": null
+    },
+    {
+     "key": "role",
+     "quantity": "A"
+    },
+    {
+     "key": "prime_war",
+     "quantity": "A"
+    },
+    {
+     "key": "six_yr_avg_war",
+     "quantity": "B"
+    }
+   ],
+   "rows": [
+    {
+     "fv": 20,
+     "role": {
+      "hitter": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": null,
+      "ref": "fv_prime_war",
+      "source": "served_config",
+      "status": "no_table"
+     },
+     "six_yr_avg_war": {
+      "v": 0.0091,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 25,
+     "role": {
+      "hitter": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": null,
+       "ref": "fv_roles",
+       "source": "industry",
+       "status": "not_published",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": null,
+      "ref": "fv_prime_war",
+      "source": "served_config",
+      "status": "no_table"
+     },
+     "six_yr_avg_war": {
+      "v": 0.0106,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 30,
+     "role": {
+      "hitter": {
+       "v": "*Organizational",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "*Organizational",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "*Organizational",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": null,
+      "ref": "fv_prime_war",
+      "source": "served_config",
+      "status": "no_table"
+     },
+     "six_yr_avg_war": {
+      "v": 0.012,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 35,
+     "role": {
+      "hitter": {
+       "v": "Emergency Call-Up",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "Emergency Call-Up",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "Emergency Call-Up",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 0.3,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 0.0143,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 40,
+     "role": {
+      "hitter": {
+       "v": "Bench",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "Swing/Spot SP",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "Middle RP",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 0.6,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 0.0703,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 45,
+     "role": {
+      "hitter": {
+       "v": "Platoon/Util",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#5",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "Low Setup",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 1.1,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 0.31,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 50,
+     "role": {
+      "hitter": {
+       "v": "Avg Regular",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#4",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "Low CL/High SU",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 1.7,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 0.68,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 55,
+     "role": {
+      "hitter": {
+       "v": "Above Avg",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#3/4",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "Mid Closer",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 2.3,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 0.98,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 60,
+     "role": {
+      "hitter": {
+       "v": "Plus",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#3",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "High Closer",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 3.0,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 1.5,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 65,
+     "role": {
+      "hitter": {
+       "v": "All-Star",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#2/3",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 3.8,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 1.99,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 70,
+     "role": {
+      "hitter": {
+       "v": "Top 5",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#1/2",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 4.7,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 2.47,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 75,
+     "role": {
+      "hitter": {
+       "v": "Top 2-3",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#1",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 5.5,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 2.985,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    },
+    {
+     "fv": 80,
+     "role": {
+      "hitter": {
+       "v": "Top 1-2",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "starter": {
+       "v": "#1 Starter",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "ref": "fv_roles",
+       "source": "industry",
+       "section": "3.1",
+       "sid": "S3"
+      }
+     },
+     "prime_war": {
+      "v": 6.5,
+      "ref": "fv_prime_war",
+      "source": "served_config"
+     },
+     "six_yr_avg_war": {
+      "v": 3.5,
+      "ref": "fv_six_yr_war",
+      "source": "served_config"
+     }
+    }
+   ]
+  },
+  "published_arrives": {
+   "columns": [
+    {
+     "key": "grade",
+     "quantity": null
+    },
+    {
+     "key": "mcdaniel_2014",
+     "quantity": "A",
+     "sid": "S3"
+    },
+    {
+     "key": "primer_hitters",
+     "quantity": "A",
+     "sid": "S2"
+    },
+    {
+     "key": "primer_starters",
+     "quantity": "A",
+     "sid": "S2"
+    }
+   ],
+   "rows": [
+    {
+     "grade": 80,
+     "mcdaniel_2014": {
+      "v": "7.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "> 7.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": ">7.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 75,
+     "mcdaniel_2014": {
+      "v": "6.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 70,
+     "mcdaniel_2014": {
+      "v": "5.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "5.0 to 7.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "5.0 to 7.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 65,
+     "mcdaniel_2014": {
+      "v": "4.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 60,
+     "mcdaniel_2014": {
+      "v": "3.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "3.4 to 4.9",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "3.5 to 4.9",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 55,
+     "mcdaniel_2014": {
+      "v": "2.5",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "2.5 to 3.3",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "2.6 to 3.4",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 50,
+     "mcdaniel_2014": {
+      "v": "2.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "1.6 to 2.4",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "1.8 to 2.5",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 45,
+     "mcdaniel_2014": {
+      "v": "1.5",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "0.8 to 1.5",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "1.0 to 1.7",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 40,
+     "mcdaniel_2014": {
+      "v": "1.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "0.0 to 0.7",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "0.0 to 0.9",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 35,
+     "mcdaniel_2014": {
+      "v": "0.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 30,
+     "mcdaniel_2014": {
+      "v": "-1.0",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "<-0.1",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "< -0.1",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    },
+    {
+     "grade": 20,
+     "mcdaniel_2014": {
+      "v": null,
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "status": "not_published",
+      "section": "3.1",
+      "sid": "S3"
+     },
+     "primer_hitters": {
+      "v": "n/a",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.2",
+      "sid": "S2"
+     },
+     "primer_starters": {
+      "v": "n/a",
+      "ref": "fv_published_arrives",
+      "source": "industry",
+      "section": "3.3",
+      "sid": "S2"
+     }
+    }
+   ]
+  },
+  "low_end_roles": {
+   "hitters": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "role",
+      "quantity": "A",
+      "sid": "L7"
+     },
+     {
+      "key": "examples",
+      "quantity": "A",
+      "sid": "L7"
+     }
+    ],
+    "rows": [
+     {
+      "fv": "30",
+      "role": {
+       "v": "Org guy",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Darick Hall",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "35+",
+      "role": {
+       "v": "One-tool bench guy, limited utility",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Terrance Gore",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "40",
+      "role": {
+       "v": "RHH corner role, 5th OF, light-hitting utility, low-end 1B regular, backup C",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Jordan Luplow, Guillermo Heredia, Sergio Alcantara, Christian Walker",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "40+",
+      "role": {
+       "v": "40 role w/ premium tool or two",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Adam Duvall, Edwin Rios, Adam Engel, Yandy Diaz",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "45",
+      "role": {
+       "v": "LHH platoon, luxury utility types, low-end MIF/CF regulars",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Freddy Galvis, Seth Smith, Matt Joyce, Jackie Bradley Jr.",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.5",
+       "sid": "L7"
+      }
+     }
+    ]
+   },
+   "relievers": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "role",
+      "quantity": "A",
+      "sid": "L7"
+     },
+     {
+      "key": "examples",
+      "quantity": "A",
+      "sid": "L7"
+     }
+    ],
+    "rows": [
+     {
+      "fv": "30",
+      "role": {
+       "v": "Org guy",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "C.J. Carter",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "35+",
+      "role": {
+       "v": "Up/down RP, optioned often",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Cole Uvila",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "40",
+      "role": {
+       "v": "Single-inning middle reliever",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Caleb Thielbar",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "40+",
+      "role": {
+       "v": "Multi-inning reliever, once-through-the-order types",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Ryan Yarbrough",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "45",
+      "role": {
+       "v": "Traditional set-up type, high-leverage guys start here",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Alex Colome",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "45+",
+      "role": {
+       "v": "Likely late-inning RPs with a shot to start",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "Ryne Nelson",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     },
+     {
+      "fv": "50",
+      "role": {
+       "v": "No-doubt closers",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      },
+      "examples": {
+       "v": "James Karinchak",
+       "ref": "fv_low_end_roles",
+       "source": "industry",
+       "section": "3.6",
+       "sid": "L7"
+      }
+     }
+    ]
+   }
+  },
+  "published_expected": {
+   "columns": [
+    {
+     "key": "fv",
+     "quantity": null
+    },
+    {
+     "key": "hitter_war",
+     "quantity": "B",
+     "sid": "L1"
+    },
+    {
+     "key": "hitter_star_odds",
+     "quantity": "B",
+     "sid": "L1"
+    },
+    {
+     "key": "pitcher_war",
+     "quantity": "B",
+     "sid": "L1"
+    },
+    {
+     "key": "pitcher_star_odds",
+     "quantity": "B",
+     "sid": "L1"
+    }
+   ],
+   "rows": [
+    {
+     "fv": "70",
+     "hitter_war": {
+      "v": "27.5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "87.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "27",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "87.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "65",
+     "hitter_war": {
+      "v": "13.5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "40.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "13.5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "40.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "60",
+     "hitter_war": {
+      "v": "12.5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "33.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "11",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "21.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "55",
+     "hitter_war": {
+      "v": "8",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "17.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "7",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "7.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "50",
+     "hitter_war": {
+      "v": "7",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "13.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "7.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "45+",
+     "hitter_war": {
+      "v": "3.2",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "6.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "2.6",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "3.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "45",
+     "hitter_war": {
+      "v": "2.5",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "3.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "1.6",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "1.5%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "40+",
+     "hitter_war": {
+      "v": "1.2",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "1.8%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "1",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "1.0%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "40",
+     "hitter_war": {
+      "v": "0.75",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "0.8%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "0.55",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "0.4%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    },
+    {
+     "fv": "35+",
+     "hitter_war": {
+      "v": "0.3",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "hitter_star_odds": {
+      "v": "0.4%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_war": {
+      "v": "0.25",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     },
+     "pitcher_star_odds": {
+      "v": "0.4%",
+      "ref": "fv_published_expected",
+      "source": "industry",
+      "section": "7.2",
+      "sid": "L1"
+     }
+    }
+   ]
+  },
+  "bucket_odds": {
+   "buckets": [
+    {
+     "key": "bust",
+     "band": "<0.5",
+     "name": "Washed out",
+     "band_words": "under 0.5 WAR"
+    },
+    {
+     "key": "bench",
+     "band": "0.5-1.5",
+     "name": "Backup",
+     "band_words": "0.5 to 1.5"
+    },
+    {
+     "key": "regular",
+     "band": "1.5-2.5",
+     "name": "Regular",
+     "band_words": "1.5 to 2.5"
+    },
+    {
+     "key": "good",
+     "band": "2.5-4.0",
+     "name": "Above average",
+     "band_words": "2.5 to 4"
+    },
+    {
+     "key": "star",
+     "band": "4.0+",
+     "name": "Star",
+     "band_words": "4+"
+    }
+   ],
+   "hitter": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "bust",
+      "quantity": "B"
+     },
+     {
+      "key": "bench",
+      "quantity": "B"
+     },
+     {
+      "key": "regular",
+      "quantity": "B"
+     },
+     {
+      "key": "good",
+      "quantity": "B"
+     },
+     {
+      "key": "star",
+      "quantity": "B"
+     }
+    ],
+    "rows": [
+     {
+      "fv": 20,
+      "bust": {
+       "v": 0.9878,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0077,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0032,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0011,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0001,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 25,
+      "bust": {
+       "v": 0.9713,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.018,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0077,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0027,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0003,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 30,
+      "bust": {
+       "v": 0.9338,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0408,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0181,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0065,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0008,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 35,
+      "bust": {
+       "v": 0.8546,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0866,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0415,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0154,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0018,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 40,
+      "bust": {
+       "v": 0.7101,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.1595,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0899,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.036,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0044,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 45,
+      "bust": {
+       "v": 0.5052,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.2303,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.1727,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0812,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0106,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 50,
+      "bust": {
+       "v": 0.2986,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.2383,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.268,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.1702,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.025,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 55,
+      "bust": {
+       "v": 0.1507,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.1751,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.3065,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.3099,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0579,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 60,
+      "bust": {
+       "v": 0.0689,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0988,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.2499,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.4541,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.1284,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 65,
+      "bust": {
+       "v": 0.0299,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0475,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.1526,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.5088,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.2611,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 70,
+      "bust": {
+       "v": 0.0127,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0211,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0769,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.4304,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.4589,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 75,
+      "bust": {
+       "v": 0.0053,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.009,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.035,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.2802,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.6704,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 80,
+      "bust": {
+       "v": 0.0022,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0038,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0151,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.1489,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.83,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     }
+    ]
+   },
+   "pitcher": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "bust",
+      "quantity": "B"
+     },
+     {
+      "key": "bench",
+      "quantity": "B"
+     },
+     {
+      "key": "regular",
+      "quantity": "B"
+     },
+     {
+      "key": "good",
+      "quantity": "B"
+     },
+     {
+      "key": "star",
+      "quantity": "B"
+     }
+    ],
+    "rows": [
+     {
+      "fv": 20,
+      "bust": {
+       "v": 0.9836,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0111,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0039,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0013,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0001,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 25,
+      "bust": {
+       "v": 0.9638,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0243,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0088,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.003,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0001,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 30,
+      "bust": {
+       "v": 0.922,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0516,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0195,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0067,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0003,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 35,
+      "bust": {
+       "v": 0.8398,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.1025,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0421,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.015,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0006,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 40,
+      "bust": {
+       "v": 0.6994,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.1794,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0868,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.033,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0013,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 45,
+      "bust": {
+       "v": 0.508,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.2549,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.1629,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.0712,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0029,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 50,
+      "bust": {
+       "v": 0.3143,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.274,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.2589,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.1463,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0065,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 55,
+      "bust": {
+       "v": 0.169,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.219,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.3229,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.2745,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0146,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 60,
+      "bust": {
+       "v": 0.0828,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.1368,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.3023,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.4458,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0323,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 65,
+      "bust": {
+       "v": 0.0385,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0725,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.2153,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.6038,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.0699,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 70,
+      "bust": {
+       "v": 0.0175,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.035,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.1244,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.6782,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.1448,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 75,
+      "bust": {
+       "v": 0.0078,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0162,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0631,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.6367,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.2762,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     },
+     {
+      "fv": 80,
+      "bust": {
+       "v": 0.0035,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "bench": {
+       "v": 0.0073,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "regular": {
+       "v": 0.0298,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "good": {
+       "v": 0.497,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      },
+      "star": {
+       "v": 0.4623,
+       "ref": "fv_bucket_odds",
+       "source": "served_config"
+      }
+     }
+    ]
+   }
+  },
+  "published_shares": {
+   "hitter": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "washed_out",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "backup",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "regular",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "above_average",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "star",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "count",
+      "quantity": "B",
+      "sid": "L6"
+     }
+    ],
+    "rows": [
+     {
+      "fv": "45",
+      "washed_out": {
+       "v": "51%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "25%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "6%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "1%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "295",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "45+",
+      "washed_out": {
+       "v": "52%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "18%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "19%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "11%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "1%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "91",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "50",
+      "washed_out": {
+       "v": "23%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "24%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "30%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "21%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "2%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "197",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "55",
+      "washed_out": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "30%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "31%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "6%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "54",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "60",
+      "washed_out": {
+       "v": "14%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "12%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "19%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "38%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "42",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "65",
+      "washed_out": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "33%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "33%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "33%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "3",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "70",
+      "washed_out": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "100%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "2",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "80",
+      "washed_out": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "100%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "1",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     }
+    ]
+   },
+   "pitcher": {
+    "columns": [
+     {
+      "key": "fv",
+      "quantity": null
+     },
+     {
+      "key": "washed_out",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "backup",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "regular",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "above_average",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "star",
+      "quantity": "B",
+      "sid": "L6"
+     },
+     {
+      "key": "count",
+      "quantity": "B",
+      "sid": "L6"
+     }
+    ],
+    "rows": [
+     {
+      "fv": "45",
+      "washed_out": {
+       "v": "53%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "26%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "16%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "5%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "230",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "45+",
+      "washed_out": {
+       "v": "38%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "24%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "25%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "13%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "68",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "50",
+      "washed_out": {
+       "v": "27%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "27%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "24%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "20%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "2%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "96",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "55",
+      "washed_out": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "20%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "37%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "27%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "30",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "60",
+      "washed_out": {
+       "v": "17%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "33%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "25%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "25%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "12",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "65",
+      "washed_out": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "100%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "1",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     },
+     {
+      "fv": "70",
+      "washed_out": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "regular": {
+       "v": "100%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      },
+      "count": {
+       "v": "1",
+       "ref": "fv_published_shares",
+       "source": "industry",
+       "section": "7.7",
+       "sid": "L6"
+      }
+     }
+    ]
+   }
+  }
+ },
+ "tool_tiers": {
+  "record": {
+   "look": "T",
+   "spent": true,
+   "generated_at": "2026-10-14T17:22:40Z"
+  },
+  "verdicts": {
+   "game_pwr__hr_per600": {
+    "verdict": "PASS",
+    "unit": "HR per 600 PA",
+    "mae_candidate": {
+     "v": 6.0599,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 7.063142,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 149,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "game_pwr__iso": {
+    "verdict": "PASS",
+    "unit": "ISO",
+    "mae_candidate": {
+     "v": 0.037273,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 0.050327,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 149,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "hit__avg": {
+    "verdict": "PASS",
+    "unit": "AVG",
+    "mae_candidate": {
+     "v": 0.022078,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 0.026921,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 149,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "hit__k_pct": {
+    "verdict": "FAIL",
+    "unit": "K%",
+    "mae_candidate": {
+     "v": 4.588576,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 4.715046,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 149,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "speed__sb_per600": {
+    "verdict": "FAIL",
+    "unit": "SB per 600 PA",
+    "mae_candidate": {
+     "v": 5.903885,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 6.272383,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 149,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "cmd__bb_pct_sp": {
+    "verdict": "PASS",
+    "unit": "BB%, starters",
+    "mae_candidate": {
+     "v": 1.55856,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 1.846598,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 106,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   },
+   "fb__velo_sp": {
+    "verdict": "PASS",
+    "unit": "mph, starters",
+    "mae_candidate": {
+     "v": 1.25742,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "mae_incumbent": {
+     "v": 2.089699,
+     "ref": "tool_measured",
+     "source": "measured"
+    },
+    "n_holdout": {
+     "v": 106,
+     "ref": "tool_measured",
+     "source": "measured"
+    }
+   }
+  },
+  "no_estimate_cells": [
+   "hit__k_pct"
+  ],
+  "tables": [
+   {
+    "key": "hit_avg",
+    "tool": "hit",
+    "stat": "AVG",
+    "fmt": "avg",
+    "cell": "hit__avg",
+    "verdict": "PASS",
+    "columns": [
+     {
+      "key": "objective_tools.batting_avg",
+      "kind": "estimate",
+      "label": "Batting average at maturity",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "smith_hit.ba",
+      "kind": "estimate",
+      "label": "BA, 2010 to 2012",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "measured",
+      "kind": "measured",
+      "unit": "AVG"
+     },
+     {
+      "key": "measured_n",
+      "kind": "n"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "objective_tools.batting_avg": {
+       "v": ".320",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".336",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 75,
+      "objective_tools.batting_avg": {
+       "v": ".310",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 70,
+      "objective_tools.batting_avg": {
+       "v": ".300",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".313",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 65,
+      "objective_tools.batting_avg": {
+       "v": ".290",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.269694,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 16,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 60,
+      "objective_tools.batting_avg": {
+       "v": ".280",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".290",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.259584,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 59,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 55,
+      "objective_tools.batting_avg": {
+       "v": ".270",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.257589,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 72,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 50,
+      "objective_tools.batting_avg": {
+       "v": ".260",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".267",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.249218,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 94,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 45,
+      "objective_tools.batting_avg": {
+       "v": ".250",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.240846,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 53,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 40,
+      "objective_tools.batting_avg": {
+       "v": ".240",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".244",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.232926,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 31,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 35,
+      "objective_tools.batting_avg": {
+       "v": ".230",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 30,
+      "objective_tools.batting_avg": {
+       "v": ".220",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".221",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 20,
+      "objective_tools.batting_avg": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_hit.ba": {
+       "v": ".199",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     }
+    ]
+   },
+   {
+    "key": "hit_k",
+    "tool": "hit",
+    "stat": "K%",
+    "fmt": "pct",
+    "cell": "hit__k_pct",
+    "verdict": "FAIL",
+    "columns": [],
+    "rows": []
+   },
+   {
+    "key": "game_pwr_hr",
+    "tool": "game_pwr",
+    "stat": "HR",
+    "fmt": "hr",
+    "cell": "game_pwr__hr_per600",
+    "verdict": "PASS",
+    "columns": [
+     {
+      "key": "objective_tools.homers",
+      "kind": "estimate",
+      "label": "Home runs per full season",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "measured",
+      "kind": "measured",
+      "unit": "HR per 600 PA"
+     },
+     {
+      "key": "measured_n",
+      "kind": "n"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "objective_tools.homers": {
+       "v": "40+",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 75,
+      "objective_tools.homers": {
+       "v": "35-40",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 70,
+      "objective_tools.homers": {
+       "v": "30-35",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 65,
+      "objective_tools.homers": {
+       "v": "27-30",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 26.250943,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 15,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 60,
+      "objective_tools.homers": {
+       "v": "23-27",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 24.698795,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 47,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 55,
+      "objective_tools.homers": {
+       "v": "19-22",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 21.791768,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 37,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 50,
+      "objective_tools.homers": {
+       "v": "15-18",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 21.192053,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 87,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 45,
+      "objective_tools.homers": {
+       "v": "12-15",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 15.92353,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 42,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 40,
+      "objective_tools.homers": {
+       "v": "8-12",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 15.92353,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 47,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 35,
+      "objective_tools.homers": {
+       "v": "5-8",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 30,
+      "objective_tools.homers": {
+       "v": "3-5",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "measured": {
+       "v": 9.588378,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 29,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     }
+    ]
+   },
+   {
+    "key": "game_pwr_iso",
+    "tool": "game_pwr",
+    "stat": "ISO",
+    "fmt": "avg",
+    "cell": "game_pwr__iso",
+    "verdict": "PASS",
+    "columns": [
+     {
+      "key": "smith_power.iso",
+      "kind": "estimate",
+      "label": "ISO",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "measured",
+      "kind": "measured",
+      "unit": "ISO"
+     },
+     {
+      "key": "measured_n",
+      "kind": "n"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "smith_power.iso": {
+       "v": ".294",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 70,
+      "smith_power.iso": {
+       "v": ".242",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 65,
+      "smith_power.iso": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.20723,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 15,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 60,
+      "smith_power.iso": {
+       "v": ".191",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.197861,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 47,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 55,
+      "smith_power.iso": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.181138,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 37,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 50,
+      "smith_power.iso": {
+       "v": ".140",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.177157,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 87,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 45,
+      "smith_power.iso": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.148347,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 42,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 40,
+      "smith_power.iso": {
+       "v": ".089",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.148347,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 47,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 30,
+      "smith_power.iso": {
+       "v": ".038",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 0.116412,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 29,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 20,
+      "smith_power.iso": {
+       "v": ".000",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2",
+       "source_value": "-.013",
+       "status": "floored"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     }
+    ]
+   },
+   {
+    "key": "speed",
+    "tool": "speed",
+    "stat": "SB",
+    "fmt": "num",
+    "cell": "speed__sb_per600",
+    "verdict": "FAIL",
+    "columns": [
+     {
+      "key": "objective_tools.rhh_to_1b",
+      "kind": "estimate",
+      "label": "Home to first, RHH (sec)",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "objective_tools.lhh_to_1b",
+      "kind": "estimate",
+      "label": "Home to first, LHH (sec)",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "objective_tools.run_60yd",
+      "kind": "estimate",
+      "label": "60-yard dash (sec)",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "smith_speed.sb_per_season",
+      "kind": "estimate",
+      "label": "SB per season",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.00",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "3.90",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.3",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "38",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 75,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.05",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "3.95",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.4",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 70,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.10",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.00",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.5",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "29",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 65,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.15",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.05",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.6",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 60,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.20",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.10",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.7",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "19",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 55,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.25",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.15",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.8",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 50,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.30",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.20",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "6.9-7.0",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "9",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 45,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.35",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.25",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "7.1",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 40,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.40",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.30",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "7.2",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2",
+       "status": "blank_in_source"
+      }
+     },
+     {
+      "grade": 35,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.45",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.35",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "7.3",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 30,
+      "objective_tools.rhh_to_1b": {
+       "v": "4.50",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": "4.40",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": "7.4",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "0",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2",
+       "source_value": "-10",
+       "status": "floored"
+      }
+     },
+     {
+      "grade": 20,
+      "objective_tools.rhh_to_1b": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.lhh_to_1b": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "objective_tools.run_60yd": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_speed.sb_per_season": {
+       "v": "0",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2",
+       "source_value": "-20",
+       "status": "floored"
+      }
+     }
+    ]
+   },
+   {
+    "key": "field",
+    "tool": "field",
+    "stat": "fielding runs",
+    "fmt": "num",
+    "cell": null,
+    "verdict": null,
+    "columns": [
+     {
+      "key": "smith_defense.uzr_150",
+      "kind": "estimate",
+      "label": "UZR/150",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "smith_defense.fld_per_season",
+      "kind": "estimate",
+      "label": "Fld per season",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "smith_defense.uzr_150": {
+       "v": "22.8",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "17.9",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 70,
+      "smith_defense.uzr_150": {
+       "v": "15.7",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "12.4",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 60,
+      "smith_defense.uzr_150": {
+       "v": "8.7",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "6.9",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 50,
+      "smith_defense.uzr_150": {
+       "v": "1.6",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "1.5",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 40,
+      "smith_defense.uzr_150": {
+       "v": "-5.4",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "-4.0",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 30,
+      "smith_defense.uzr_150": {
+       "v": "-12.5",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "-9.5",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     },
+     {
+      "grade": 20,
+      "smith_defense.uzr_150": {
+       "v": "-19.6",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_defense.fld_per_season": {
+       "v": "-14.9",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      }
+     }
+    ]
+   },
+   {
+    "key": "fastball",
+    "tool": "fb",
+    "stat": "velocity",
+    "fmt": "mph",
+    "cell": "fb__velo_sp",
+    "verdict": "PASS",
+    "columns": [
+     {
+      "key": "objective_tools.fastball_velo",
+      "kind": "estimate",
+      "label": "Fastball velocity (mph)",
+      "author": "McDaniel",
+      "year": 2014,
+      "section": "2.1",
+      "sid": "S3"
+     },
+     {
+      "key": "smith_fastball.sp_velo",
+      "kind": "estimate",
+      "label": "Starters (mph)",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "smith_fastball.rp_velo",
+      "kind": "estimate",
+      "label": "Relievers (mph)",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "measured",
+      "kind": "measured",
+      "unit": "mph, starters"
+     },
+     {
+      "key": "measured_n",
+      "kind": "n"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "objective_tools.fastball_velo": {
+       "v": "97",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "97",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "100",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 75,
+      "objective_tools.fastball_velo": {
+       "v": "96",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 70,
+      "objective_tools.fastball_velo": {
+       "v": "95",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "95",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "97",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 96.046667,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 19,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 65,
+      "objective_tools.fastball_velo": {
+       "v": "94",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 94.756845,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 32,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 60,
+      "objective_tools.fastball_velo": {
+       "v": "93",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "93",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "95",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 93.965813,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 77,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 55,
+      "objective_tools.fastball_velo": {
+       "v": "92",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 93.688538,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 46,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 50,
+      "objective_tools.fastball_velo": {
+       "v": "90-91",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "91",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "92",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 92.853453,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 57,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 45,
+      "objective_tools.fastball_velo": {
+       "v": "89",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 91.4,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 15,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 40,
+      "objective_tools.fastball_velo": {
+       "v": "88",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "88",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "89",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 35,
+      "objective_tools.fastball_velo": {
+       "v": "87",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 30,
+      "objective_tools.fastball_velo": {
+       "v": "86",
+       "ref": "tool_estimates",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "86",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "86",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 20,
+      "objective_tools.fastball_velo": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.1",
+       "sid": "S3"
+      },
+      "smith_fastball.sp_velo": {
+       "v": "84",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_fastball.rp_velo": {
+       "v": "84",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     }
+    ]
+   },
+   {
+    "key": "command",
+    "tool": "cmd",
+    "stat": "BB%",
+    "fmt": "pct",
+    "cell": "cmd__bb_pct_sp",
+    "verdict": "PASS",
+    "columns": [
+     {
+      "key": "smith_control.sp_bb_pct",
+      "kind": "estimate",
+      "label": "Starters BB%",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "smith_control.rp_bb_pct",
+      "kind": "estimate",
+      "label": "Relievers BB%",
+      "author": "Smith",
+      "year": 2013,
+      "section": "2.2",
+      "sid": "W2"
+     },
+     {
+      "key": "measured",
+      "kind": "measured",
+      "unit": "BB%, starters"
+     },
+     {
+      "key": "measured_n",
+      "kind": "n"
+     }
+    ],
+    "rows": [
+     {
+      "grade": 80,
+      "smith_control.sp_bb_pct": {
+       "v": "1.7%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "2.0%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 70,
+      "smith_control.sp_bb_pct": {
+       "v": "3.7%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "4.4%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 60,
+      "smith_control.sp_bb_pct": {
+       "v": "5.7%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "6.8%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 7.197827,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 41,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 55,
+      "smith_control.sp_bb_pct": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 7.638679,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 58,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 50,
+      "smith_control.sp_bb_pct": {
+       "v": "7.8%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "9.2%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 8.544304,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 111,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 45,
+      "smith_control.sp_bb_pct": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": null,
+       "ref": "tool_estimates",
+       "status": "not_published",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 8.965249,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 44,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 40,
+      "smith_control.sp_bb_pct": {
+       "v": "9.8%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "11.6%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": 10.280679,
+       "ref": "tool_measured",
+       "source": "measured"
+      },
+      "measured_n": {
+       "v": 19,
+       "ref": "tool_measured",
+       "source": "measured"
+      }
+     },
+     {
+      "grade": 30,
+      "smith_control.sp_bb_pct": {
+       "v": "11.8%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "13.9%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     },
+     {
+      "grade": 20,
+      "smith_control.sp_bb_pct": {
+       "v": "13.9%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "smith_control.rp_bb_pct": {
+       "v": "16.3%",
+       "ref": "tool_estimates",
+       "section": "2.2",
+       "sid": "W2"
+      },
+      "measured": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      },
+      "measured_n": {
+       "v": null,
+       "ref": "tool_measured",
+       "source": "measured",
+       "status": "thin_or_absent"
+      }
+     }
+    ]
+   }
+  ],
+  "no_ground_truth": {
+   "v": "TOOL_GRADE_TABLES 2.11",
+   "ref": "tool_no_ground_truth"
+  }
+ },
+ "sources": [
+  {
+   "id": "scale_terms",
+   "block": "scale",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "1.3",
+    "11.1",
+    "11.2"
+   ],
+   "source_id": [
+    "S3",
+    "B1",
+    "P1"
+   ]
+  },
+  {
+   "id": "scale_sd",
+   "block": "scale",
+   "registry_row": "scouting_reference",
+   "read": "the scale's definition, (grade - 50) / 10",
+   "framework_section": [
+    "1.1"
+   ],
+   "source_id": [
+    "S3"
+   ]
+  },
+  {
+   "id": "fv_roles",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "3.1"
+   ],
+   "source_id": [
+    "S3"
+   ]
+  },
+  {
+   "id": "fv_prime_war",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "value_framework.fv_to_prime_war",
+   "note": "a served display config of industry shape; no other registry row serves it"
+  },
+  {
+   "id": "fv_six_yr_war",
+   "block": "fv_tiers",
+   "registry_row": "fv_to_war_anchors",
+   "read": "value_framework.fv_to_6yr_avg_war",
+   "note": "pending calibration test: prospect_anchor"
+  },
+  {
+   "id": "fv_published_arrives",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "3.1",
+    "3.2",
+    "3.3",
+    "3.4"
+   ],
+   "source_id": [
+    "S3",
+    "S2",
+    "L7"
+   ]
+  },
+  {
+   "id": "fv_low_end_roles",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "3.5",
+    "3.6"
+   ],
+   "source_id": [
+    "L7"
+   ]
+  },
+  {
+   "id": "fv_published_expected",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "7.2"
+   ],
+   "source_id": [
+    "L1"
+   ]
+  },
+  {
+   "id": "fv_bucket_odds",
+   "block": "fv_tiers",
+   "registry_row": "prospect_surplus",
+   "read": "value_framework.p_bucket_given_fv",
+   "named_rows": [
+    "xfv_odds_calibration_slope"
+   ],
+   "note": "PROSPX odds apply a further calibration at the model grade (the named row)"
+  },
+  {
+   "id": "fv_published_shares",
+   "block": "fv_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "7.7"
+   ],
+   "source_id": [
+    "L6"
+   ]
+  },
+  {
+   "id": "tool_estimates",
+   "block": "tool_tiers",
+   "registry_row": "scouting_reference",
+   "read": "transcription",
+   "framework_section": [
+    "2.1",
+    "2.2"
+   ],
+   "source_id": [
+    "S3",
+    "W2"
+   ]
+  },
+  {
+   "id": "tool_no_ground_truth",
+   "block": "tool_tiers",
+   "registry_row": "tool_grade_tables",
+   "read": "TOOL_GRADE_TABLES 2.11"
+  },
+  {
+   "id": "tool_measured",
+   "block": "tool_tiers",
+   "registry_row": "tool_tables_rederived",
+   "read": "data/tool_tables_rederived_eval.json, Part T primary cells with verdict PASS"
+  }
+ ]
+}
