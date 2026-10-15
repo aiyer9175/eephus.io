@@ -3039,9 +3039,48 @@
         + `${swing ? `<div class="mlbp-tiles mlbp-tiles-left">${swing}</div>` : ""}${slotHTML("batspeed", bs)}</div>`
       : slotHTML("batspeed", "");
     const sc = sliders(p.sc, "hitting-statcast");
+    const br = baserunningBlock(p);
     const ctx = gameContextBlock(p, "hit");
     const lines = seasonLines(p.career, false, "hitting-lines", "MLB · hitting");
-    return { content: idx + swing + bs + sc + ctx + lines, html: head + idx + bat + sc + ctx + lines };
+    return { content: idx + swing + bs + sc + br + ctx + lines, html: head + idx + bat + sc + br + ctx + lines };
+  }
+
+  // ---- baserunning (a section of the Hitting tab, no tab of its own) --------
+  // eBR and its three parts on run bars with eBR as the total, FanGraphs' BsR
+  // and Savant's BRV as neutral comparison rows (the Defense tab's
+  // "Positional (FG)" precedent: two systems, never one number), one line of
+  // counts and rates, and the board link. Every value is the baked skills.br
+  // block (mlb_player_export, read off the Baserunning board while
+  // baserunning_export.CARD_BASERUNNING_LIVE is on); without the block the
+  // section is absent and the tab is the tab it was. Descriptive: what
+  // happened this season, on this season's run expectancy, not a forecast.
+  function baserunningBlock(p) {
+    const b = (p.skills || {}).br;
+    if (!b || b.ebr == null) return "";
+    const yr = b.season ? esc(String(b.season)) : "";
+    const pct = v => (v == null ? null : `${(Number(v) * 100).toFixed(1)}%`);
+    const bars = runBars([
+      { label: "SB runs", v: b.ebrSb, gl: "ebr_sb" },
+      { label: "XB runs", v: b.ebrXb, gl: "ebr_xb" },
+      { label: "DP runs", v: b.ebrDp, gl: "ebr_dp" },
+      { label: "eBR", v: b.ebr, gl: "ebr", total: true },
+      b.bsrFg != null ? { label: "BsR (FG, published)", v: b.bsrFg, gl: "bsr", neutral: true, sub: true } : null,
+      b.brvSavant != null ? { label: "BRV (Savant)", v: b.brvSavant, gl: "savant_brv", neutral: true, sub: true } : null,
+    ]);
+    const line = [
+      b.sb != null ? `${esc(String(b.sb))} SB / ${esc(String(b.cs == null ? 0 : b.cs))} CS${b.sbPct != null ? ` (${pct(b.sbPct)})` : ""}` : "",
+      b.pk ? `${esc(String(b.pk))} PK` : "",
+      b.attRate != null ? `Att% ${pct(b.attRate)}` : "",
+      b.xbtPct != null ? `XBT% ${pct(b.xbtPct)}` : "",
+      b.gidpPct != null ? `GIDP% ${pct(b.gidpPct)}` : "",
+      b.sprint != null ? `Sprint ${Number(b.sprint).toFixed(1)} ft/s${b.sprintPct != null ? ` (p${esc(String(b.sprintPct))})` : ""}` : "",
+      `<a class="fa-player-link" href="/mlbstats/#section=baserunning">Baserunning board &rarr;</a>`,
+    ].filter(Boolean);
+    const pub = [b.bsrFg != null ? "BsR" : "", b.brvSavant != null ? "BRV" : ""].filter(Boolean);
+    return section("hitting-baserunning", "Baserunning",
+      `${yr ? yr + " · " : ""}${b.qualified ? "qualified" : "provisional"} · eBR ours, from MLB play-by-play`
+        + (pub.length ? ` · ${pub.join(" and ")} published, not computed here` : ""),
+      `<div class="fa-sub mlbp-index-note">${line.join(" · ")}</div>${bars}`);
   }
 
   // ---- pitching --------------------------------------------------------------
@@ -3915,6 +3954,7 @@
       p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
       (p.origin || {}).aaaHit ? "Statcast (tracked parks): Baseball Savant minors, latest 100+ PA season" : "",
       sk.def ? "Fielding, framing and positional runs: FanGraphs, via MLB StatsAPI" : "",
+      sk.br ? "Baserunning: eBR counted here from MLB play-by-play; BsR FanGraphs via MLB StatsAPI; BRV and sprint speed Baseball Savant" : "",
     ].filter(Boolean).join(" · ");
   }
 

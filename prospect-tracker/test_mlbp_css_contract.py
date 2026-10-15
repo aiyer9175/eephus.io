@@ -103,4 +103,11 @@ def test_player_page_glossary_slugs_exist():
     import proj_export
     if not proj_export.PROJ_COMPONENTS_LIVE:
         known |= {"projected_component_runs", "war_from_components", "projection_gap"}
+    # The card's Baserunning section (EBR_2_BUILD_DARK) renders only once
+    # baserunning_export.CARD_BASERUNNING_LIVE flips, and its six entries
+    # land in that flip commit (EBR_2F_FLIP). The same allowance, from the
+    # board's side, is test_mlbstats_views._dark_baserunning_slugs.
+    import baserunning_export
+    if not baserunning_export.CARD_BASERUNNING_LIVE:
+        known |= {"ebr", "ebr_sb", "ebr_xb", "ebr_dp", "bsr", "savant_brv"}
     assert not sorted(slugs - known), f"unknown glossary slugs: {sorted(slugs - known)}"

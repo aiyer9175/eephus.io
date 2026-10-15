@@ -97,6 +97,11 @@
     // board's own number rather than a second percentile beside it.
     def: { noun: "fielders", within: "pos", trend: { fam: "d", val: "dem", vol: "inn", label: "DEM+", ref: 100 }, roll: null,
            pct: [["dem_plus", "", "dem_plus_pos_pct"]] },
+    // Baserunning (mlbstats.js section 7) supplies its own four panels through
+    // window.MLBX_BR_DRAWER (Speed, the steal map, advancement against the
+    // league, eBR by season); the percentile rows below feed its Speed panel.
+    br: { noun: "runners", custom: true, trend: null, roll: null,
+          pct: [["sprint"], ["hp1", "low"], ["bolts"], ["ebr"], ["xbt_pct"], ["att_rate", "use"]] },
     levbat: { noun: "batters", trend: { fam: "l", val: "wpa", vol: "pa", label: "WPA", ref: 0, fmt: f2 }, roll: null,
               pct: [["wpa"], ["wpa_li"], ["pli", "use"]] },
     levsp: { noun: "starters", trend: { fam: "p", board: "sp", val: "plus", vol: "ip", label: "SEM+", ref: 100 }, roll: null,
@@ -445,6 +450,8 @@
     var html = "", why = "";
     if (ctx.board === "war") {
       html = panel("war", "eWAR by season", "");
+    } else if (cfg.custom && window.MLBX_BR_DRAWER) {
+      html = window.MLBX_BR_DRAWER.panels(ctx, pctPanel, panel);
     } else {
       html = panel("trend", cfg.trend.label + " by season", state("loading", "Loading the seasons."))
         + panel("pct", "Percentile", pctPanel(ctx));
@@ -461,6 +468,7 @@
       + '<div class="mlbx-dfoot"><span class="mlbx-dnote">Descriptive: every number here is what happened.' + why + "</span>"
       + '<span data-mlbxd="strip"></span></div>';
     if (ctx.board === "war") { var w = slot("war"); if (w) w.innerHTML = warBars(ctx, panelWidth(w)); }
+    if (cfg.custom && window.MLBX_BR_DRAWER) window.MLBX_BR_DRAWER.after(OPEN.mount, ctx, panelWidth);
     drawTrend();
     drawRoll();
     drawStrip();

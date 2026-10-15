@@ -6397,10 +6397,25 @@ def build_mlbstats() -> str:
     LT-09) is built dark behind mlbstats_trends_export.MLBSTATS_DRAWER_LIVE:
     while it is False the root carries no data-drawer-src and the boards draw
     no caret. Live, the root names assets/mlbstats-drawer.js there and
-    mlbstats.js injects it on the first drawer open (owner answer LTS-3)."""
+    mlbstats.js injects it on the first drawer open (owner answer LTS-3).
+
+    THE BASERUNNING TAB (owner ask of 2026-09-30; the eWAR v3 gate
+    docs/ebr-2026-09-30/EBR_GATE.md; task EBR_2_BUILD_DARK) is built dark behind
+    baserunning_export.MLBSTATS_BASERUNNING_LIVE: while it is False the shell
+    carries no Baserunning button or panel, and mlbstats.js ignores
+    section=baserunning. Live, the button and panel sit between Defense and
+    Leverage (the other non-batting part of a position player, beside Defense)."""
+    import baserunning_export
     import league_averages
     import mlbstats_trends_export
     league_root = league_btn = league_panel = teams_btn = teams_panel = ""
+    baserunning_btn = baserunning_panel = ""
+    if baserunning_export.MLBSTATS_BASERUNNING_LIVE:
+        baserunning_btn = ('<button type="button" class="mlbstats-sectionbtn" data-mlbsection="baserunning" role="tab" '
+                           'aria-selected="false" aria-controls="mlbstats-section-baserunning">Baserunning</button>')
+        baserunning_panel = ('<div id="mlbstats-section-baserunning" class="mlbstats-section" role="tabpanel" aria-label="Baserunning" hidden>'
+                             f'<div id="mlbstats-baserunning-root"{_csv_optin("mlb-baserunning")}></div>'
+                             '</div>')
     league_live = bool(league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE)
     drawer_root = (f' data-drawer-src="/assets/mlbstats-drawer.js?v={_asset_ver("assets/mlbstats-drawer.js")}"'
                    if mlbstats_trends_export.MLBSTATS_DRAWER_LIVE else "")
@@ -6451,6 +6466,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false" aria-controls="mlbstats-section-starters">Starters</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="bullpen" role="tab" aria-selected="false" aria-controls="mlbstats-section-bullpen">Bullpen</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
+        f'{baserunning_btn}'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
         f'{teams_btn}{league_btn}'
         '</div>'
@@ -6471,6 +6487,7 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-defense" class="mlbstats-section" role="tabpanel" aria-label="Defense" hidden>'
         f'<div id="mlbstats-defense-root"{_csv_optin("mlb-defense")}></div>'
         '</div>'
+        f'{baserunning_panel}'
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'

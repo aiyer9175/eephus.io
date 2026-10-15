@@ -78,6 +78,42 @@ def test_no_betting_module_reads_a_baserunning_file_or_an_ebr_key():
     assert bad == []
 
 
+# The section build (EBR_2_BUILD_DARK): the board, the history file, the eval
+# and the card block are display only. No betting module, no vintage snapshot
+# and no fitted consumer reads them, and the betting vintage's team columns
+# carry no eBR (nothing was added to leaderboard_vintages.TEAM_COLUMNS).
+BOARD_READS = re.compile(r"(baserunning_leaderboards|baserunning_history|baserunning_export|"
+                         r"skills\W+br\b|\[\s*(?:\x22br\x22|\x27br\x27)\s*\]|team_ebr|ebr_sb|ebr_xb|ebr_dp)")
+
+
+def test_no_betting_or_vintage_or_fitted_code_reads_the_board_or_the_card_block():
+    bad = []
+    for p in _modules():
+        if not (_fitted(p) or p.name.startswith("betting_")):
+            continue
+        src = p.read_text(encoding="utf-8", errors="replace")
+        if BOARD_READS.search(src) or (p.name.startswith("betting_") and BETTING_READS.search(src)):
+            bad.append(p.name)
+    assert bad == []
+    import leaderboard_vintages
+    cols = " ".join(str(c) for c in leaderboard_vintages.TEAM_COLUMNS)
+    assert "ebr" not in cols and "baserunning" not in cols, cols
+
+
+def test_the_card_exporter_is_the_only_consumer_of_the_board_outside_the_section():
+    """Who reads baserunning_leaderboards.json: the exporter that writes it,
+    run_monthly's wiring, build_site's shell, the card exporter (behind
+    CARD_BASERUNNING_LIVE) and the page scripts. Anything else is a new
+    reader this pin makes visible."""
+    readers = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in _modules()
+                     if not p.name.startswith("test_")
+                     and re.search(r"baserunning_leaderboards|_bre\.OUT_NAME|bre\.OUT_NAME",
+                                   p.read_text(encoding="utf-8", errors="replace")))
+    allowed = {"baserunning_export.py", "mlb_player_export.py", "run_monthly.py", "build_site.py",
+               "data_catalog.py", "league_averages.py"}
+    assert set(readers) <= allowed, sorted(set(readers) - allowed)
+
+
 def test_the_builders_own_scan_agrees_and_catches_a_planted_offender(tmp_path):
     assert build_ebr.isolation_scan(ROOT)["pass"] is True
     (tmp_path / "tools").mkdir()
