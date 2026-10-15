@@ -1206,6 +1206,259 @@ changes; after both looks, nothing above part 12 changes.
   statistics, thresholds, guards and dates.
 - Committed alone, before the outcome look (part 12.1 is empty at this commit).
 
+### 11.2 2026-10-15: the skill look's target becomes next-season realized runs (clause (i), owner decision EW3-23)
+
+- **Owner answer, verbatim** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-23): "Yes, do your
+  recommendation, with next-season realized runs becoming the target rule." Part 1 gains this row,
+  recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-23 | What the skill look scores candidate parts 3 to 6 against | next-season realized runs of each part's own component decide (11.2.1 to 11.2.3); team runs and wins in Y+1 are a non-inferiority guard (11.2.4); published fWAR(Y+1) is reported as a secondary estimand that decides nothing (11.2.5) | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-23); registered by queue task EWV3_TARGET_AMEND |
+
+- **What this amendment departs from, disclosed.** Clause (i) lets an amendment record an owner
+  answer; the sentence above it says that frames, statistics, thresholds, margins, Holm families,
+  twins, guards, the dates and the claims never change. This amendment changes the skill look's
+  target, its base, its B1 baseline, candidate part 3's statistic, adds one guard and replaces part
+  9.6's copy sentences. It does so only because the owner decided it (EW3-23) before the skill look
+  ran, and it is recorded as an owner override of that sentence for these items alone. Unchanged:
+  the frame (predictor seasons 2021 to 2024, 2020 out on both sides), the floors (hitters 200 PA,
+  pitchers 50 IP, in both seasons), the cells of candidate parts 4 to 6 and their Holm families (k =
+  4, 2, 2), the margin +0.02, the twin, the dispositions and their precedence, convention v2
+  primary with v1 required to agree in sign, B = 2,000 and seed 20261008 for the cells, MDE95 and
+  floors printed first, the era transport and HR-arm clauses, the admission rules EWV3-Q1 (a) and
+  EWV3-Q2 (a), the holdout, the record and every clock of part 7. Parts 2 to 6 (the outcome look,
+  candidate parts 1 and 2 and BEM+) are not touched.
+- **Why.** The registered target, published fWAR(Y+1), carries FanGraphs' own construction: its
+  positional adjustment (part 0 already expected the ladder to lose for that reason), its FIP-based
+  pitching and its fielding source. Ranking fWAR(Y+1) rewards a part for agreeing with FanGraphs'
+  construction a season later, not for forecasting what the player does. The runs a part's own
+  component records in Y+1 are the quantity the part claims to forecast.
+
+#### 11.2.1 The primary target, per component (deciding)
+
+| Component | Candidate part | Base B0, season Y | Test value | Target, season Y+1: rate cell; total cell |
+|---|---|---|---|---|
+| Batting | 4 (both arms) | wRAA_i(Y) = ((wOBA_i - lgwOBA_s) / scale_s) * PA_i on the season's solved weights (`league_constants`, `fwar_frame.wraa`): actual events, the actual arm of S1 | B0 + the arm's re-centred delta (d_bat or d_batx) | batting runs above average from actual PA events in Y+1 on Y+1's solved weights, the same construction: per PA; in runs |
+| Pitching | 5 | war0 of the actual arm of S2 on the replica's feed-only arm `plain_fip_loo_pf`: FanGraphs' FIP-based pitching runs as the frame carries them | B0 + Delta_j on the home-run term the HR-arm clause chose | RA9* (below) in Y+1, sign reversed so that fewer runs rank higher: per IP; runs prevented above average (lgRA9*_s - RA9*_j) * IP_j / 9 in total |
+| Fielding | 6 | Fld + Frm in Y (the actual arm of S3, `saber_feed`) | B0 + d_fld, re-centred | fielding runs in Y+1 from an independent source (11.2.2): per PA; in runs |
+| Baserunning | none in this registration | eBR's realized runs in Y (part 2) | B0 + the part's re-centred delta | realized eBR runs in Y+1 on part 2's RE24 record (eSB + ePK + eXB; eGDP for a double-play part): per PA; in runs |
+| Position | 3 | see 11.2.3 | see 11.2.3 | see 11.2.3 |
+
+- **The base.** B0 is the actual arm of the part's own delta function in season Y: what eWAR v3
+  carries for that component when the part is not admitted. Each cell therefore compares admitting
+  the part with not admitting it, and a part must add forward signal beyond the player's own
+  realized component. For batting and fielding B0 is the player's realized runs in Y on the part's
+  own source. For pitching it is the frame's FIP-based runs (realized strikeouts, walks, hit
+  batters and home runs), because the pitching part departs from FanGraphs' FIP chain, not from
+  runs allowed. Beside every cell the record prints, with no weight, B0r, the target's own
+  construction in season Y (RA9* in Y for pitching; the independent source in Y for fielding; for
+  batting B0r is B0), and the test value's Spearman gap over B0r.
+- **Baserunning.** Candidate parts 1 and 2 stay decided by the outcome look's persistence legs and
+  guards (parts 5 and 6), whose reason, that no next-season baserunning target is free of a rival
+  construct (part 5.2), stands; Leg E, Leg T, the E-DP contrast and BEM+'s gate X-B1 (whose target
+  is already eBR's rate in Y+1) are unchanged. The baserunning row binds only a skill part on
+  baserunning registered later.
+- **The pitching target, RA9*.** Context-neutral runs allowed, adjusted for park, the club's
+  defense and inherited and bequeathed runners:
+
+```
+RA*_j    = R_j - BQS_j + E_BQ_j + (IRS_j - E_IR_j)
+           R_j     runs charged to pitcher j (the StatsAPI season pitching line)
+           BQS_j   runners j left on base who later scored (charged to j)
+           E_BQ_j  sum over those runners of p_s(base, outs at j's exit)
+           IRS_j   runners j inherited who scored (charged to the pitcher who left them)
+           E_IR_j  sum over j's inherited runners of p_s(base, outs at j's entry)
+           p_s(base, outs): the season's share of runners on that base with that many outs who
+                   scored before the half-inning ended, on the fit set of part 2.3
+RA9*_j   = 9 * (RA*_j / PF_j + BF_j * F_t / BF_t) / IP_j
+           PF_j    the park factor of the S2 chain (the leave-one-out back-solve), applied to runs
+                   as pFIPR9 applies it to FIP
+           F_t     club t's fielding runs in Y+1 from the frozen vintage (Fld + Frm summed over its
+                   fielders; positive when the defense saved runs), shared by batters faced; a
+                   pitcher with two clubs sums his stints
+lgRA9*_s = the season's league RA9*
+```
+
+  Runners are tracked through the bases on the runner record (part 2.2). If a season of the era
+  transport block (outcomes 2017 to 2019) lacks the play-by-play the runner terms need, RA9* for
+  that season drops the two runner terms and keeps park and defense, and the record says so.
+  The gmLI weighting (L-A) stays in both arms of Delta and the target carries none; the L-B
+  disclosure stays.
+- **B1, amended.** The uniformly shrunk base, (x * n + m * k) / (n + k): x the B0 rate, n the
+  exposure, m the season's exposure-weighted mean B0 rate at the floor, one k per component
+  (batting, pitching, fielding), k = hm (1 - r) / r with r the pooled Pearson of the B0 rate in Y
+  and the component's target rate in Y+1 on the 2016 to 2018 predictor pairs at the floors (the
+  rule and clamp of `swar_lab.fit_b1`). It is fitted from B0 and the target only, with no candidate
+  part, delta or test value read, and frozen with its log before the look. The constants frozen at
+  a32ff1bb (k 662 PA for hitters and 244 IP for pitchers, fitted on published fWAR) serve only the
+  secondary estimand of 11.2.5. WIN (components) reads lo95 above 0 against this B1.
+- **The twin, era transport and HR-arm clause** are computed as registered with B0 in place of
+  fWAR(Y) and the primary target in place of fWAR(Y+1): the delta permuted within (season, side,
+  exposure decile) and added back to B0; the transport blocks 2016 to 2018 and 2021 to 2024; the
+  HR-arm clause first.
+
+#### 11.2.2 The independent fielding source
+
+- A part that reads FanGraphs' Fld (candidate part 6, through `saber_feed`) is scored on
+  Baseball-Reference's `runs_field` per player-season (`war_source.stint_frame("bat",
+  provider="bwar")`, summed over stints, read from the cached `.cache/war_daily` copy as it stands
+  on look day, never fetched, its sha256 and `fetched_at` printed before any statistic).
+- A part led by Savant OAA is scored on DRS, and a part led by DRS on Savant OAA or fielding run
+  value (2016 on). A part that blends several sources (the triangulation of task EWAR_LADDER) is
+  scored leaving one source out: for each source S it reads, the part rebuilt without S is scored
+  on S in Y+1, and the cell's gap is the mean of the per-source gaps, one cell inside the same
+  bootstrap.
+- Before any statistic the record prints, per season, which fielding system each source's runs
+  come from, citing the source's own documentation. Where the part's source and its target share a
+  system in a season, that season's target is the next source in the order Baseball-Reference
+  `runs_field`, Savant fielding run value that the part does not read, and the record says so.
+- Catchers are scored on whatever catcher scope the target source carries; the C rows' gap is
+  reported beside, with no weight. This follows the SDR gates' practice of measuring a fielding
+  number against more than one incumbent source (`docs/sdr-2026-08-18/SDR_EVAL_GATE.md` C1 and C2);
+  the rule that the target never comes from the part's own source is new here.
+
+#### 11.2.3 Candidate part 3, the position part: the ladder's out-of-sample rule
+
+- A positional adjustment is a convention with no realized run total of its own to forecast, so
+  candidate part 3 keeps the ladder's own out-of-sample rule in place of the Spearman cells. Its
+  one test (Holm family k = 1) is the held-out mean absolute error difference (dMAE) registered in
+  `docs/ewar/LADDER_V2_GATE.md` (task EWAR_LADDER_REDERIVE: leave one season out, predicting the
+  realized defensive plus positional runs of players who switched positions), comparing the ladder
+  that gate leaves standing (v2 if it passed, else v1) with FanGraphs' published positional
+  adjustment, the base S4 departs from, entered as a fixed comparator on the same rows.
+- Admitted when the dMAE in the ladder's favour has a bootstrap lo95 above 0 under that gate's
+  bootstrap and seed, that gate's permuted control fails, and the team guard of 11.2.4 is
+  NON-INFERIOR. If that gate's read does not carry the FanGraphs comparator, the skill look
+  computes this one comparison on that gate's registered estimand, rows and bootstrap, once, in the
+  same run.
+- The position part's H-rate and H-cum cells are reported under the secondary estimand only. Part
+  9.5's registered expectation for candidate part 3 (LOSS or UNRESOLVED, because the target carried
+  FanGraphs' own adjustment) no longer binds a deciding test; none is registered for the dMAE
+  comparison.
+
+#### 11.2.4 The team guard (non-inferiority, deciding)
+
+- **Question.** Does the part keep roster-weighted WAR at least as informative about the next
+  season's club runs and wins as the frame without it?
+- **Club-seasons.** Outcome seasons 2022 to 2025 (predictor seasons 2021 to 2024; 2020 out), 30
+  clubs a season, 120 club-seasons; the five seasons 2021 to 2025 enter.
+- **Roster weighting, turnover handled.** For club c in Y+1, S_c = sum over every player i who
+  played for c in Y+1 of (v_i(Y) / n_i(Y)) * n_ic(Y+1): v_i(Y) the series value in Y (fWAR(Y) for
+  the frame; fWAR_i + d_c,i / RPW_s or fWAR_j + Delta_j for the part's series; bWAR(Y) for the
+  reference), n_i(Y) his exposure in Y (PA for hitters, IP for pitchers), n_ic(Y+1) his exposure
+  with club c in Y+1. A player with no MLB exposure in Y enters at 0 in every series. No floor
+  applies. Hitter and pitcher sides are summed separately, and the total is their sum. Y+1 playing
+  time is known only after the fact; it is the same in every series, so it favours none.
+- **Outcomes,** from the cached StatsAPI standings and team season lines, never fetched on look
+  day: every part on run differential and wins (total sums); batting also on runs scored (hitter
+  side) and pitching also on runs allowed (pitcher side, sign reversed). Fielding and position
+  parts sit on the hitter side, whose sum is mostly batting, so they carry run differential and
+  wins only.
+- **Statistic,** per outcome: dT, the Pearson r of the part's roster sum with the outcome minus the
+  Pearson r of the frame's roster sum with it (the form of Leg T, part 5.3).
+- **Intervals.** Two bootstraps, B = 2,000 each, seed 20261024: player-clustered (players drawn
+  with replacement with all their rows, every club sum recomputed from the drawn players, outcomes
+  fixed) and club-clustered (franchises drawn with replacement with all their club-seasons). Both
+  bootstraps' sd and half-width per outcome are printed before any dT.
+- **NON-INFERIOR** when dT - 1.645 sd is above -0.02 under both bootstraps, for every outcome the
+  part carries. Each outcome must pass, so no multiplicity correction applies. A part that is not
+  NON-INFERIOR is not admitted, whatever its primary cells read.
+- **Power, stated honestly.** No power figure was computed for this amendment, because computing
+  one relates WAR sums to club outcomes, which happens only inside the look. 120 club-seasons is a
+  small sample: the guard can see only a large loss of team information and can pass a part that
+  costs a little. A part is a small zero-sum departure, so the two roster sums sit close together,
+  which narrows the interval of dT. Where a printed half-width exceeds 0.02 the guard cannot reach
+  NON-INFERIOR even at a true difference of 0; the part is then not admitted, and the record says
+  the guard was underpowered, not that the part did harm.
+- **bWAR** enters as a reference: the r of the bWAR roster sum with each outcome, and its difference
+  from the part's, are reported beside, deciding nothing (the frame's choice of fWAR over bWAR is
+  not a part's to decide).
+- **Where its numbers go.** As for Leg T (parts 5.3 and 5.10): the r values and dT only in part 12.2
+  and the tracked record's look block; the flip's served copy `data/swar_eval.json` carries the
+  guard's NON-INFERIOR flag per outcome and the margin, never an r against runs or wins, so that
+  copy is a filtered copy of the tracked record, not a byte copy (Part 8's 8.A rule wins over part
+  9.5's byte-copy sentence). No exporter computes the guard.
+- This guard replaces part 9.5's descriptive next-season wins leg for the parts it decides; the
+  same-season wins leg stays descriptive.
+
+#### 11.2.5 The secondary estimand (reported beside, deciding nothing)
+
+Part 9.5's cells as first registered: B0 = fWAR(Y), B1 at the constants frozen at a32ff1bb, the
+target published fWAR(Y+1), the same frame, floors, bootstrap and precedence. Their dispositions
+are printed beside the primary ones, labelled secondary. No admission, guard or copy sentence reads
+them.
+
+#### 11.2.6 Admission and copy, amended
+
+- A candidate part 4, 5 or 6 enters eWAR v3 only when, on the primary target, its rate cell is WIN
+  (components) and its total cell is not LOSS (EWV3-Q1 (a)), and its team guard is NON-INFERIOR.
+  Candidate part 4's choice between arms (EWV3-Q2 (a)) is computed on the primary target. Candidate
+  part 3 enters as 11.2.3 states. Candidate parts 1 and 2: part 6, unchanged. A VOID skill look
+  admits nothing.
+- The one comparative sentence copy may carry, in place of part 9.6's table; [component's runs] is
+  "batting runs", "runs allowed (adjusted for park, defense and inherited runners)" or "fielding
+  runs (from <the target source>)":
+
+| Disposition of the part's rate cell on the primary target | The sentence, with its numbers |
+|---|---|
+| WIN (components) | "ranked the next season's realized [component's runs] better than the season's own [component's runs] did, and better than a uniformly shrunk version of them" |
+| WIN (regression only) | "ranked the next season's realized [component's runs] better than the season's own [component's runs] did" (no credit to the EM+ component) |
+| SMALL WIN or EQUIVALENT | "ranked the next season's realized [component's runs] about as well as the season's own [component's runs] did" |
+| LOSS | "ranked the next season's realized [component's runs] less well than the season's own [component's runs] did" |
+| UNRESOLVED | none |
+
+  For candidate part 3 on a pass: "on held-out seasons, our ladder matched position switchers'
+  realized defensive and positional runs more closely than FanGraphs' positional adjustment did";
+  otherwise none. Each sentence names its frame as part 9.6 requires. No sentence cites the
+  secondary estimand or the team guard's r values, and part 8's may-not list stands.
+
+#### 11.2.7 Parts registered after this amendment
+
+The pitch-economy parts PE-P and PE-H (task EWAR_T1_PITCH_ECON), the pitching-basis challenger (task
+EWAR_PITCH_BASIS) and the fielding triangulation (task EWAR_LADDER) each name in their own
+registration, committed before any number, the component target of 11.2.1 they are scored on, their
+B0 and their cells. A part whose value lies outside the four components (pitch economy's innings and
+bullpen cost) defines there its realized Y+1 run quantity from actual Y+1 events. None uses a
+published WAR total as its deciding target. Each carries the team guard of 11.2.4 and reports the
+secondary estimand.
+
+#### 11.2.8 eWAR realized has no forward target
+
+The companion series "eWAR realized" (owner decision EW3-20) records actual runs in the frame. This
+amendment gives it no forward target and no look scores it. Its only checks are accounting checks at
+every build: each realized part sums to zero per season and side, and the series' league-season run
+totals reconcile with the frame's. It licenses no forecasting sentence.
+
+#### 11.2.9 What was read before this amendment
+
+No number of any target of this amendment exists for any candidate part at this commit: no lab ran
+on them, and tools/swar_lab.py at this commit computes the fWAR(Y+1) target only. The new targets
+sit closer than fWAR(Y+1) to targets the component gates already read on overlapping pairs (part
+10, 'Read to write this'): HEM+ and xHEM+ on next-season wOBA, SEM+ and REM+ on next-season RA9,
+DEM+ on its own source's next-season rate. On batting and pitching the skill look is therefore even
+less blind than part 10 states; the twin, B1 and the team guard carry the blind weight. The
+independent fielding target, the dMAE comparison against FanGraphs' positional adjustment and the
+team guard have no prior read. Registered expectations on the primary target, in place of part
+9.5's for candidate parts 3 to 6 (predictions from those priors, not measurements): the xHEM+ arm's
+H-rate point gap is positive and a WIN (components) is plausible (its gate read 0.4619 against
+actual wOBA's 0.4108 on next-season wOBA); the HEM+ arm's H-rate is EQUIVALENT, SMALL WIN or
+UNRESOLVED (its gate tied raw wOBA); candidate part 5's P-rate point gap is positive (SEM+ read
++0.0264 over raw FIP under v2 on next-season RA9; REM+ near 0) and larger on starter-heavy pairs;
+candidate part 6 is EQUIVALENT or UNRESOLVED, with a smaller point gap than DEM+'s own-source read;
+every twin fails; every team guard is NON-INFERIOR.
+
+#### 11.2.10 Before the skill look
+
+- The skill look (part 7.3) does not run until `tools/swar_lab.py` implements this amendment (the
+  primary targets, B0, B0r, the amended B1, the independent fielding source, the team guard, the
+  dMAE fallback of 11.2.3 and the secondary block), its fixture test pins them, B1's component
+  constants are fitted and frozen with their log, and a dry run on fixtures with nulls passes. That
+  lands in its own commit, with no number of a candidate part computed, and part 7.3's precondition
+  1 reads it.
+- Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
