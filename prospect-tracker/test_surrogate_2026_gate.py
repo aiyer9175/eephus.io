@@ -3,15 +3,18 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""SG_0 pins (efv2026 PLAN.md s5 and item N5): the surrogate gate draft
-docs/efv-v2/SURROGATE_2026_GATE.md.
+"""SG_0 and SG_7 pins (efv2026 PLAN.md s5 and item N5): the surrogate gate
+docs/efv-v2/SURROGATE_2026_GATE.md, a DRAFT at its first commit and REGISTERED by SG_7.
 
-1. The file carries exactly one status line; while it reads DRAFT,
-   efv_vintage_frame.gate_doc_registered reads the file as False, and the commit that
-   first added it (a DRAFT) opens neither the surrogate guard nor the R-LV guard.
-2. The header records efv2026 OQ1 on its one answer line, and no other answer.
-3. Section 12 (results) is empty.
-4. No em-dash, and no FV-cell stratum (the test_efv_v2_gate.py pattern).
+1. The file carries exactly one status line; gate_doc_registered reads it as REGISTERED
+   exactly when that line says so, and the commit that first added it (a DRAFT) opens
+   neither the surrogate guard nor the R-LV guard.
+2. The header keeps the draft-time OQ1 line and records efv2026 OQ1 to OQ6 (option A to
+   all six, DECISIONS_FOR_OWNER.md 2026-10-01), which gate_header_records reads.
+3. The REGISTERED commit carries this file alone, is the sha the look runner finds, and
+   its header answers OQ2 = A, so the lv2026_surrogate purpose stays closed.
+4. No item marked PENDING is left below the header, and section 12 (results) is empty.
+5. No em-dash, and no FV-cell stratum (the test_efv_v2_gate.py pattern).
 
 Nothing here reads a frame row, an outcome, a score or a label.
 """
@@ -29,6 +32,8 @@ import efv_vintage_frame as F
 ROOT = Path(__file__).parent
 DOC = ROOT / G.SURROGATE_GATE_DOC
 DRAFT_LINE = F.GATE_STATUS_PREFIX + " DRAFT"
+#: The owner answers recorded on 2026-10-01 (efv2026 OQ1 to OQ6), option A to all six.
+REGISTERED_ANSWERS = {f"OQ{i}": "A" for i in range(1, 7)}
 
 
 def _text() -> str:
@@ -53,13 +58,14 @@ def test_exactly_one_status_line():
     assert status[0] in (DRAFT_LINE, F.GATE_STATUS_REGISTERED), status
 
 
-def test_a_draft_is_not_registered():
+def test_registered_exactly_when_the_status_line_says_so():
     t = _text()
-    if _status_lines(t) == [DRAFT_LINE]:
-        assert F.gate_doc_registered(t) is False
-    # the predicate itself, on this file's own text with the line swapped
-    assert F.gate_doc_registered(t.replace(DRAFT_LINE, F.GATE_STATUS_REGISTERED)) is (
-        _status_lines(t) == [DRAFT_LINE])
+    is_registered = _status_lines(t) == [F.GATE_STATUS_REGISTERED]
+    assert F.gate_doc_registered(t) is is_registered
+    # the predicate itself, on this file's own text with the line swapped either way
+    as_draft = t.replace(F.GATE_STATUS_REGISTERED, DRAFT_LINE)
+    assert F.gate_doc_registered(as_draft) is False
+    assert F.gate_doc_registered(as_draft.replace(DRAFT_LINE, F.GATE_STATUS_REGISTERED)) is True
 
 
 def _git(*args: str) -> subprocess.CompletedProcess:
@@ -87,15 +93,51 @@ def test_the_first_committed_draft_opens_no_guard():
             G.guard_surrogate_read(V, gate_sha=sha, purpose="transfer")
 
 
-def test_the_header_records_oq1_and_nothing_else():
+def test_the_header_records_oq1_to_oq6():
     t = _text()
-    assert G.header_answer(t, "OQ1") == "A"
     assert "Owner answer at draft commit (efv2026 OQ1): A (own gate; every section " \
            "below applies)." in t
-    for key in ("OQ2", "OQ3", "OQ4", "OQ5", "OQ6"):
-        assert G.header_answer(t, key) is None, key
+    for key, letter in REGISTERED_ANSWERS.items():
+        assert G.header_answer(t, key) == letter, key
+    assert G.header_answer(t, "OQ7") is None
     answers = [ln for ln in t.splitlines() if ln.startswith("Owner answer")]
-    assert len(answers) == 1, answers
+    assert len(answers) == 1 + len(REGISTERED_ANSWERS), answers
+    head = t.split("\n---\n", 1)[0]
+    assert all(ln in head for ln in answers)
+
+
+def _registered_commit() -> str | None:
+    r = _git("log", "--format=%H", "--", G.SURROGATE_GATE_DOC)
+    for sha in r.stdout.split():
+        if G.gate_sha_committed_for(sha, G.SURROGATE_GATE_DOC):
+            return sha
+    return None
+
+
+def test_the_registered_commit_is_alone_and_reads_its_answers():
+    if _status_lines(_text()) != [F.GATE_STATUS_REGISTERED]:
+        pytest.skip("the surrogate gate is not REGISTERED in this tree")
+    sha = _registered_commit()
+    assert sha is not None, "no commit carries the gate marked REGISTERED"
+    changed = _git("show", "--name-only", "--format=", sha).stdout.split()
+    assert len(changed) == 1 and changed[0].endswith(G.SURROGATE_GATE_DOC), changed
+    for key, letter in REGISTERED_ANSWERS.items():
+        assert G.gate_header_records(sha, key) == letter, key
+    # OQ2 = A: the one surrogate read of lv_2026 never opens, whatever records exist
+    with pytest.raises(F.ReservedFrameError):
+        G.guard_surrogate_read(2026, gate_sha=sha, look_records=["rvm_look_1"],
+                               purpose="lv2026_surrogate")
+    for V in sorted(F.RESERVED_LV):
+        with pytest.raises(F.ReservedFrameError):
+            G.guard_surrogate_read(V, gate_sha=sha, purpose="transfer")
+
+
+def test_no_pending_item_below_the_header():
+    t = _text()
+    if _status_lines(t) != [F.GATE_STATUS_REGISTERED]:
+        pytest.skip("PENDING items are filled at the REGISTERED commit")
+    body = t.split("\n---\n", 1)[1]
+    assert "PENDING" not in body, [ln for ln in body.splitlines() if "PENDING" in ln]
 
 
 def test_section_12_is_empty():
