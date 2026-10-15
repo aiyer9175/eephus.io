@@ -1,0 +1,6219 @@
+{
+ "schema": 1,
+ "item": "EFV5_GROUP_DRIVERS",
+ "produced_by": "efv5_group_drivers.py",
+ "generated_at": "2026-10-15T13:09:11Z",
+ "role": "spent",
+ "adjudicates": false,
+ "selects": false,
+ "one_read": true,
+ "label_note": "spent frame, read after the 10-08 confirmation",
+ "note": "eFV v5 group drivers at the committed configuration on the spent reserved frames (read once by v3 on 2026-10-08); chooses and tunes nothing; not a look",
+ "ledger_rows": false,
+ "owner_decision": "EW3-5 (2026-10-14) and EW2-10: the reserved frames were read once by the v3 confirmation and are spent; this read of the committed v5 configuration chooses nothing and is labelled spent",
+ "gate": {
+  "doc": "docs/efv-v2/EFV_V2_GATE.md",
+  "sha": "e7931ce4e13110eebb53555bff455ff13ca7c502",
+  "guards": {
+   "gate_sha": "e7931ce4e13110eebb53555bff455ff13ca7c502",
+   "reserved_lv_read": [
+    2020,
+    2021
+   ],
+   "r_vm_cohort_read": [
+    2025
+   ],
+   "reserved_vm_pins": [],
+   "rule_last_year": 2016,
+   "anchor_gate_grouping": false
+  }
+ },
+ "spec": {
+  "path": "data/_labs/efv5/efv5_group_spec.json",
+  "sha256": "e0258e248ace6660b90878c01e6e22df61a67b80dcca39d72d92d6acb106757b",
+  "config": {
+   "anchor": null,
+   "scale": {
+    "hit": {
+     "skill": 1.0,
+     "timing": 1.0
+    },
+    "pit": {
+     "skill": 1.0,
+     "timing": 1.0
+    }
+   },
+   "remove": {
+    "hit": {
+     "skill": [],
+     "timing": []
+    },
+    "pit": {
+     "skill": [],
+     "timing": []
+    }
+   },
+   "add": {
+    "hit": {
+     "skill": [
+      "g5_hit_A_all_all_woba",
+      "g5_hit_A_all_all_slg"
+     ],
+     "timing": []
+    },
+    "pit": {
+     "skill": [],
+     "timing": []
+    }
+   }
+  },
+  "description": "hit skill plus g5_hit_A_all_all_woba; hit skill plus g5_hit_A_all_all_slg",
+  "steps": [
+   {
+    "round": 1,
+    "step": "add:hit.skill.g5_hit_A_all_all_woba",
+    "column": "g5_hit_A_all_all_woba",
+    "lv_dev_scope_delta": 0.00421,
+    "vm_dev_scope_delta": 0.0
+   },
+   {
+    "round": 2,
+    "step": "add:hit.skill.g5_hit_A_all_all_slg",
+    "column": "g5_hit_A_all_all_slg",
+    "lv_dev_scope_delta": 0.00221,
+    "vm_dev_scope_delta": 0.0
+   }
+  ],
+  "selected_at": "2026-10-15T12:48:00Z",
+  "selection_commit": "5bfd913e"
+ },
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "code": {
+  "commit": "50fb0e3b",
+  "tool": "efv5_group_drivers.py",
+  "tool_sha256": "7aabae501fa02e144fd8f478efa61a4fdfef5d564bfbbbfdf6b2bb1101141f19",
+  "efv5_atlas_sha256": "40f1ef5d727fcfb5dc93c9bb0d4788037cebaed0e2ef34dd7172370c8f75119c",
+  "atlas_artifact_sha256": "3d2b2bfaa1add01e6664f2e0fe6c1258c74fca6581558790fafcfd46cc74877c",
+  "efv_v3_sha256": "5bdce46bb6b9bd03532905c59cbaed092cb666418624e3095cdfc44ce9fbddfb",
+  "efv_v3_backtest_sha256": "edbd8170af45c94e25e67967ac1df4c4b959f606d6a8a409ecc399669628e53a",
+  "efv_v2_model_sha256": "3134c039922c463893c0930377d8b85f113f9e1f915137a47cd8537bb35b4929",
+  "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
+ },
+ "assembly_sha256": "35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823",
+ "weights": {
+  "hit": {
+   "w_skill": 0.908861,
+   "w_time": 0.202573
+  },
+  "pit": {
+   "w_skill": 1.0,
+   "w_time": 0.020473
+  }
+ },
+ "statistic": {
+  "primary": "within (side, vintage) Spearman, size-weighted",
+  "secondary": "pooled Spearman after the identical output map",
+  "veto": "contributor AUC after the identical output map, pooled",
+  "min_group_rows": 20,
+  "group": "(side, list vintage) on R-LV; (side, debut year) on R-VM",
+  "cells": "efv_strata.position_family on hitters (C, IF, OF); pitchers one cell; each added column's own group"
+ },
+ "bootstrap": {
+  "E_cond": {
+   "B": 2000,
+   "seed": 20260906,
+   "unit": "player cluster"
+  },
+  "E_refit": {
+   "B": 200,
+   "seed": 20260907,
+   "unit": "player cluster"
+  }
+ },
+ "frames_built": {
+  "lv_res": {
+   "per_vintage": [
+    {
+     "side": "hit",
+     "vintage": 2020,
+     "frame_rows": 596,
+     "n_train": 2372,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "consensus_only": false,
+     "skill_keys": [
+      "contact",
+      "is_college"
+     ],
+     "timing_keys": [
+      "milb_absent",
+      "nov_add"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573,
+     "n_scored": 596,
+     "reserved_vm_kept_w3_zero": 27,
+     "label_status": {
+      "not_reached": 286,
+      "ok": 283,
+      "reserved_vm": 27
+     }
+    },
+    {
+     "side": "hit",
+     "vintage": 2021,
+     "frame_rows": 599,
+     "n_train": 2761,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "consensus_only": false,
+     "skill_keys": [
+      "obp_rel",
+      "contact",
+      "is_college"
+     ],
+     "timing_keys": [
+      "nov_add"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573,
+     "n_scored": 599,
+     "reserved_vm_kept_w3_zero": 42,
+     "label_status": {
+      "not_reached": 314,
+      "reserved_vm": 42,
+      "ok": 243
+     }
+    },
+    {
+     "side": "pit",
+     "vintage": 2020,
+     "frame_rows": 572,
+     "n_train": 2313,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "consensus_only": true,
+     "skill_keys": null,
+     "timing_keys": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "n_scored": 572,
+     "reserved_vm_kept_w3_zero": 25,
+     "label_status": {
+      "ok": 299,
+      "not_reached": 248,
+      "reserved_vm": 25
+     }
+    },
+    {
+     "side": "pit",
+     "vintage": 2021,
+     "frame_rows": 583,
+     "n_train": 2730,
+     "train_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "consensus_only": false,
+     "skill_keys": [
+      "k_rel"
+     ],
+     "timing_keys": [],
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "n_scored": 582,
+     "reserved_vm_kept_w3_zero": 42,
+     "label_status": {
+      "ok": 260,
+      "not_reached": 280,
+      "reserved_vm": 42,
+      "identity_conflict": 1
+     }
+    }
+   ],
+   "reserved_vm_kept_w3_zero": 136
+  },
+  "vm_pros": {
+   "per_fold": [
+    {
+     "side": "hit",
+     "year": 2025,
+     "n_train": 1889,
+     "n_test": 82,
+     "n_scored": 72,
+     "dropped": {
+      "not_common": 10,
+      "debut_year_differs": 0,
+      "no_outcome": 0
+     },
+     "consensus_only": false,
+     "skill_keys": [
+      "tool_hit"
+     ],
+     "timing_keys": [
+      "level_rank"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573
+    },
+    {
+     "side": "pit",
+     "year": 2025,
+     "n_train": 1981,
+     "n_test": 95,
+     "n_scored": 75,
+     "dropped": {
+      "not_common": 20,
+      "debut_year_differs": 0,
+      "no_outcome": 0
+     },
+     "consensus_only": true,
+     "skill_keys": null,
+     "timing_keys": null,
+     "w_skill": 0.0,
+     "w_time": 0.0
+    }
+   ]
+  }
+ },
+ "v5_base_parity": {
+  "rows": 2496,
+  "differ": 0,
+  "reproduces": true
+ },
+ "column_receipts": {
+  "coverage": {
+   "lv_res": {
+    "g5_hit_A_all_all_woba": {
+     "slots": 3960,
+     "nonzero": 1128,
+     "test_slots": 1195,
+     "test_nonzero": 302
+    },
+    "g5_hit_A_all_all_slg": {
+     "slots": 3960,
+     "nonzero": 1128,
+     "test_slots": 1195,
+     "test_nonzero": 302
+    }
+   },
+   "vm_pros": {
+    "g5_hit_A_all_all_woba": {
+     "slots": 1971,
+     "nonzero": 240,
+     "test_slots": 82,
+     "test_nonzero": 2
+    },
+    "g5_hit_A_all_all_slg": {
+     "slots": 1971,
+     "nonzero": 240,
+     "test_slots": 82,
+     "test_nonzero": 2
+    }
+   }
+  },
+  "in_group_by_year": {
+   "g5_hit_A_all_all_woba": {
+    "lv": {
+     "2011": 25,
+     "2012": 61,
+     "2013": 72,
+     "2014": 85,
+     "2015": 144,
+     "2016": 132,
+     "2017": 135,
+     "2018": 138,
+     "2019": 145,
+     "2020": 158,
+     "2021": 144
+    },
+    "vm": {
+     "2011": 1,
+     "2012": 4,
+     "2013": 1,
+     "2014": 4,
+     "2015": 5,
+     "2016": 9,
+     "2017": 19,
+     "2018": 24,
+     "2019": 21,
+     "2020": 21,
+     "2021": 21,
+     "2022": 29,
+     "2023": 47,
+     "2024": 34,
+     "2025": 2
+    }
+   },
+   "g5_hit_A_all_all_slg": {
+    "lv": {
+     "2011": 25,
+     "2012": 61,
+     "2013": 72,
+     "2014": 85,
+     "2015": 144,
+     "2016": 132,
+     "2017": 135,
+     "2018": 138,
+     "2019": 145,
+     "2020": 158,
+     "2021": 144
+    },
+    "vm": {
+     "2011": 1,
+     "2012": 4,
+     "2013": 1,
+     "2014": 4,
+     "2015": 5,
+     "2016": 9,
+     "2017": 19,
+     "2018": 24,
+     "2019": 21,
+     "2020": 21,
+     "2021": 21,
+     "2022": 29,
+     "2023": 47,
+     "2024": 34,
+     "2025": 2
+    }
+   }
+  }
+ },
+ "frames": {
+  "lv_res": {
+   "n": 2349,
+   "n_by_side": {
+    "hit": 1195,
+    "pit": 1154
+   },
+   "n_players": 1473,
+   "groups": [
+    "hit|2020",
+    "hit|2021",
+    "pit|2020",
+    "pit|2021"
+   ],
+   "raters": {
+    "efv_v5": {
+     "spearman": 0.1481,
+     "auc": 0.7413,
+     "n": 2349,
+     "within": 0.1481,
+     "pooled": 0.1423,
+     "within_rows": 2349,
+     "within_groups": 4,
+     "mae": 0.9014
+    },
+    "efv_v2": {
+     "spearman": 0.1511,
+     "auc": 0.7431,
+     "n": 2349,
+     "within": 0.1511,
+     "pooled": 0.1431,
+     "within_rows": 2349,
+     "within_groups": 4,
+     "mae": 0.8983
+    },
+    "prospx_consensus": {
+     "spearman": 0.1494,
+     "auc": 0.7279,
+     "n": 2349,
+     "within": 0.1494,
+     "pooled": 0.1384,
+     "within_rows": 2349,
+     "within_groups": 4,
+     "mae": 0.8812
+    },
+    "mlb_pipeline": {
+     "spearman": 0.1988,
+     "auc": 0.7217,
+     "n": 1727,
+     "within": 0.1988,
+     "pooled": 0.1718,
+     "within_rows": 1727,
+     "within_groups": 4,
+     "mae": 1.3257
+    },
+    "fangraphs": {
+     "spearman": 0.1469,
+     "auc": 0.7055,
+     "n": 2242,
+     "within": 0.1469,
+     "pooled": 0.1255,
+     "within_rows": 2242,
+     "within_groups": 4,
+     "mae": 0.9445
+    }
+   },
+   "deltas": {
+    "v5_vs_efv_v2": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": [
+       "hit|2020",
+       "hit|2021",
+       "pit|2020",
+       "pit|2021"
+      ],
+      "rows_in_kept_groups": 2349,
+      "min_group_rows": 20,
+      "a": 0.14812,
+      "b": 0.15107,
+      "delta": -0.00295,
+      "ci95": [
+       -0.009,
+       0.0032
+      ],
+      "sd": 0.00307,
+      "mde95": 0.005,
+      "p_gt_0": 0.179,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.1423,
+      "b": 0.14306,
+      "delta": -0.00077,
+      "ci95": [
+       -0.0071,
+       0.0056
+      ],
+      "sd": 0.00322,
+      "mde95": 0.0053,
+      "p_gt_0": 0.4245,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.74127,
+      "b": 0.74312,
+      "delta": -0.00185,
+      "ci95": [
+       -0.0076,
+       0.0035
+      ],
+      "sd": 0.00283,
+      "mde95": 0.0047,
+      "p_gt_0": 0.261,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 2349,
+      "a": 0.9014,
+      "b": 0.8983,
+      "delta": 0.00305,
+      "ci95": [
+       -0.0041,
+       0.0112
+      ],
+      "sd": 0.00397,
+      "mde95": 0.0065,
+      "p_gt_0": 0.7855,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 1473,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "v5_vs_prospx_consensus": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": [
+       "hit|2020",
+       "hit|2021",
+       "pit|2020",
+       "pit|2021"
+      ],
+      "rows_in_kept_groups": 2349,
+      "min_group_rows": 20,
+      "a": 0.14812,
+      "b": 0.14945,
+      "delta": -0.00133,
+      "ci95": [
+       -0.0239,
+       0.0207
+      ],
+      "sd": 0.01124,
+      "mde95": 0.0185,
+      "p_gt_0": 0.447,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.1423,
+      "b": 0.13844,
+      "delta": 0.00386,
+      "ci95": [
+       -0.0168,
+       0.0261
+      ],
+      "sd": 0.01075,
+      "mde95": 0.0177,
+      "p_gt_0": 0.6335,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.74127,
+      "b": 0.72791,
+      "delta": 0.01336,
+      "ci95": [
+       -0.0037,
+       0.032
+      ],
+      "sd": 0.00914,
+      "mde95": 0.015,
+      "p_gt_0": 0.931,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 2349,
+      "a": 0.9014,
+      "b": 0.8812,
+      "delta": 0.02018,
+      "ci95": [
+       -0.0029,
+       0.0442
+      ],
+      "sd": 0.01191,
+      "mde95": 0.0196,
+      "p_gt_0": 0.9595,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 1473,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "v5_vs_mlb_pipeline": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 1727,
+      "n_clusters": 1093,
+      "groups_kept": [
+       "hit|2020",
+       "hit|2021",
+       "pit|2020",
+       "pit|2021"
+      ],
+      "rows_in_kept_groups": 1727,
+      "min_group_rows": 20,
+      "a": 0.15697,
+      "b": 0.1988,
+      "delta": -0.04184,
+      "ci95": [
+       -0.0785,
+       -0.004
+      ],
+      "sd": 0.01901,
+      "mde95": 0.0313,
+      "p_gt_0": 0.0175,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 below zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 1727,
+      "n_clusters": 1093,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.15022,
+      "b": 0.17178,
+      "delta": -0.02156,
+      "ci95": [
+       -0.0551,
+       0.0117
+      ],
+      "sd": 0.01669,
+      "mde95": 0.0275,
+      "p_gt_0": 0.0975,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 1727,
+      "n_clusters": 1093,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.72903,
+      "b": 0.72173,
+      "delta": 0.0073,
+      "ci95": [
+       -0.0153,
+       0.0315
+      ],
+      "sd": 0.01198,
+      "mde95": 0.0197,
+      "p_gt_0": 0.7335,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 1727,
+      "a": 1.0148,
+      "b": 1.3257,
+      "delta": -0.31087,
+      "ci95": [
+       -0.3588,
+       -0.2644
+      ],
+      "sd": 0.02396,
+      "mde95": 0.0394,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 1093,
+      "status": "derived",
+      "reading": "development only; CI95 below zero"
+     }
+    },
+    "v5_vs_fangraphs": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 2242,
+      "n_clusters": 1398,
+      "groups_kept": [
+       "hit|2020",
+       "hit|2021",
+       "pit|2020",
+       "pit|2021"
+      ],
+      "rows_in_kept_groups": 2242,
+      "min_group_rows": 20,
+      "a": 0.15475,
+      "b": 0.14687,
+      "delta": 0.00788,
+      "ci95": [
+       -0.0222,
+       0.0388
+      ],
+      "sd": 0.01565,
+      "mde95": 0.0257,
+      "p_gt_0": 0.694,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 2242,
+      "n_clusters": 1398,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.15066,
+      "b": 0.12549,
+      "delta": 0.02516,
+      "ci95": [
+       -0.0034,
+       0.0547
+      ],
+      "sd": 0.01486,
+      "mde95": 0.0244,
+      "p_gt_0": 0.9585,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 2242,
+      "n_clusters": 1398,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.74956,
+      "b": 0.70551,
+      "delta": 0.04405,
+      "ci95": [
+       0.0226,
+       0.0679
+      ],
+      "sd": 0.01154,
+      "mde95": 0.019,
+      "p_gt_0": 1.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 above zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 2242,
+      "a": 0.9174,
+      "b": 0.9445,
+      "delta": -0.02703,
+      "ci95": [
+       -0.0549,
+       0.0023
+      ],
+      "sd": 0.01448,
+      "mde95": 0.0238,
+      "p_gt_0": 0.0385,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 1398,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "efv_v2_vs_prospx_consensus": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": [
+       "hit|2020",
+       "hit|2021",
+       "pit|2020",
+       "pit|2021"
+      ],
+      "rows_in_kept_groups": 2349,
+      "min_group_rows": 20,
+      "a": 0.15107,
+      "b": 0.14945,
+      "delta": 0.00162,
+      "ci95": [
+       -0.0201,
+       0.0226
+      ],
+      "sd": 0.01083,
+      "mde95": 0.0178,
+      "p_gt_0": 0.5415,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.14306,
+      "b": 0.13844,
+      "delta": 0.00462,
+      "ci95": [
+       -0.0156,
+       0.0252
+      ],
+      "sd": 0.01026,
+      "mde95": 0.0169,
+      "p_gt_0": 0.667,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 2349,
+      "n_clusters": 1473,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.74312,
+      "b": 0.72791,
+      "delta": 0.01521,
+      "ci95": [
+       -0.0013,
+       0.0328
+      ],
+      "sd": 0.00887,
+      "mde95": 0.0146,
+      "p_gt_0": 0.9635,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 2349,
+      "a": 0.8983,
+      "b": 0.8812,
+      "delta": 0.01713,
+      "ci95": [
+       -0.0046,
+       0.0406
+      ],
+      "sd": 0.01149,
+      "mde95": 0.0189,
+      "p_gt_0": 0.9315,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 1473,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "per_side": {
+    "hit": {
+     "n": 1195,
+     "raters": {
+      "efv_v5": {
+       "spearman": 0.1532,
+       "auc": 0.7817,
+       "n": 1195,
+       "within": 0.1532,
+       "pooled": 0.1511,
+       "within_rows": 1195,
+       "within_groups": 2,
+       "mae": 1.1067
+      },
+      "efv_v2": {
+       "spearman": 0.159,
+       "auc": 0.7852,
+       "n": 1195,
+       "within": 0.159,
+       "pooled": 0.1544,
+       "within_rows": 1195,
+       "within_groups": 2,
+       "mae": 1.1007
+      },
+      "prospx_consensus": {
+       "spearman": 0.1533,
+       "auc": 0.764,
+       "n": 1195,
+       "within": 0.1533,
+       "pooled": 0.1533,
+       "within_rows": 1195,
+       "within_groups": 2,
+       "mae": 1.0694
+      },
+      "mlb_pipeline": {
+       "spearman": 0.2289,
+       "auc": 0.7756,
+       "n": 934,
+       "within": 0.2289,
+       "pooled": 0.2233,
+       "within_rows": 934,
+       "within_groups": 2,
+       "mae": 1.5501
+      },
+      "fangraphs": {
+       "spearman": 0.166,
+       "auc": 0.7371,
+       "n": 1137,
+       "within": 0.166,
+       "pooled": 0.1487,
+       "within_rows": 1137,
+       "within_groups": 2,
+       "mae": 1.1468
+      }
+     },
+     "deltas": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": [
+         "hit|2020",
+         "hit|2021"
+        ],
+        "rows_in_kept_groups": 1195,
+        "min_group_rows": 20,
+        "a": 0.15321,
+        "b": 0.15901,
+        "delta": -0.0058,
+        "ci95": [
+         -0.0179,
+         0.0062
+        ],
+        "sd": 0.00609,
+        "mde95": 0.01,
+        "p_gt_0": 0.1725,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.15114,
+        "b": 0.15441,
+        "delta": -0.00327,
+        "ci95": [
+         -0.0168,
+         0.0091
+        ],
+        "sd": 0.00662,
+        "mde95": 0.0109,
+        "p_gt_0": 0.3135,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78172,
+        "b": 0.78517,
+        "delta": -0.00345,
+        "ci95": [
+         -0.0152,
+         0.0071
+        ],
+        "sd": 0.00566,
+        "mde95": 0.0093,
+        "p_gt_0": 0.2665,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1195,
+        "a": 1.1067,
+        "b": 1.1007,
+        "delta": 0.00599,
+        "ci95": [
+         -0.0091,
+         0.0216
+        ],
+        "sd": 0.00782,
+        "mde95": 0.0129,
+        "p_gt_0": 0.7635,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 728,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": [
+         "hit|2020",
+         "hit|2021"
+        ],
+        "rows_in_kept_groups": 1195,
+        "min_group_rows": 20,
+        "a": 0.15321,
+        "b": 0.15329,
+        "delta": -8e-05,
+        "ci95": [
+         -0.0425,
+         0.0445
+        ],
+        "sd": 0.02207,
+        "mde95": 0.0363,
+        "p_gt_0": 0.5125,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.15114,
+        "b": 0.15331,
+        "delta": -0.00217,
+        "ci95": [
+         -0.0451,
+         0.0429
+        ],
+        "sd": 0.02254,
+        "mde95": 0.0371,
+        "p_gt_0": 0.472,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78172,
+        "b": 0.76395,
+        "delta": 0.01777,
+        "ci95": [
+         -0.0173,
+         0.054
+        ],
+        "sd": 0.01827,
+        "mde95": 0.0301,
+        "p_gt_0": 0.839,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1195,
+        "a": 1.1067,
+        "b": 1.0694,
+        "delta": 0.03728,
+        "ci95": [
+         -0.0074,
+         0.0816
+        ],
+        "sd": 0.02289,
+        "mde95": 0.0376,
+        "p_gt_0": 0.9485,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 728,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 934,
+        "n_clusters": 581,
+        "groups_kept": [
+         "hit|2020",
+         "hit|2021"
+        ],
+        "rows_in_kept_groups": 934,
+        "min_group_rows": 20,
+        "a": 0.16979,
+        "b": 0.22885,
+        "delta": -0.05906,
+        "ci95": [
+         -0.1147,
+         -0.0023
+        ],
+        "sd": 0.02904,
+        "mde95": 0.0478,
+        "p_gt_0": 0.0205,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 934,
+        "n_clusters": 581,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.17531,
+        "b": 0.22326,
+        "delta": -0.04796,
+        "ci95": [
+         -0.1031,
+         0.0092
+        ],
+        "sd": 0.02875,
+        "mde95": 0.0473,
+        "p_gt_0": 0.0465,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 934,
+        "n_clusters": 581,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.77735,
+        "b": 0.77559,
+        "delta": 0.00177,
+        "ci95": [
+         -0.0398,
+         0.0439
+        ],
+        "sd": 0.02092,
+        "mde95": 0.0344,
+        "p_gt_0": 0.5245,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 934,
+        "a": 1.2064,
+        "b": 1.5501,
+        "delta": -0.34373,
+        "ci95": [
+         -0.4215,
+         -0.2651
+        ],
+        "sd": 0.03953,
+        "mde95": 0.065,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 581,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1137,
+        "n_clusters": 687,
+        "groups_kept": [
+         "hit|2020",
+         "hit|2021"
+        ],
+        "rows_in_kept_groups": 1137,
+        "min_group_rows": 20,
+        "a": 0.15613,
+        "b": 0.16602,
+        "delta": -0.0099,
+        "ci95": [
+         -0.062,
+         0.0422
+        ],
+        "sd": 0.0263,
+        "mde95": 0.0433,
+        "p_gt_0": 0.3365,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1137,
+        "n_clusters": 687,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.15624,
+        "b": 0.1487,
+        "delta": 0.00754,
+        "ci95": [
+         -0.045,
+         0.0623
+        ],
+        "sd": 0.02711,
+        "mde95": 0.0446,
+        "p_gt_0": 0.5985,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1137,
+        "n_clusters": 687,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78364,
+        "b": 0.7371,
+        "delta": 0.04653,
+        "ci95": [
+         0.0072,
+         0.0862
+        ],
+        "sd": 0.02017,
+        "mde95": 0.0332,
+        "p_gt_0": 0.99,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 above zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1137,
+        "a": 1.1339,
+        "b": 1.1468,
+        "delta": -0.01289,
+        "ci95": [
+         -0.0659,
+         0.0431
+        ],
+        "sd": 0.02738,
+        "mde95": 0.045,
+        "p_gt_0": 0.313,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 687,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": [
+         "hit|2020",
+         "hit|2021"
+        ],
+        "rows_in_kept_groups": 1195,
+        "min_group_rows": 20,
+        "a": 0.15901,
+        "b": 0.15329,
+        "delta": 0.00571,
+        "ci95": [
+         -0.0362,
+         0.0494
+        ],
+        "sd": 0.02122,
+        "mde95": 0.0349,
+        "p_gt_0": 0.611,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.15441,
+        "b": 0.15331,
+        "delta": 0.0011,
+        "ci95": [
+         -0.0399,
+         0.0444
+        ],
+        "sd": 0.0214,
+        "mde95": 0.0352,
+        "p_gt_0": 0.5265,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1195,
+        "n_clusters": 728,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78517,
+        "b": 0.76395,
+        "delta": 0.02122,
+        "ci95": [
+         -0.0114,
+         0.0563
+        ],
+        "sd": 0.01741,
+        "mde95": 0.0286,
+        "p_gt_0": 0.893,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1195,
+        "a": 1.1007,
+        "b": 1.0694,
+        "delta": 0.03129,
+        "ci95": [
+         -0.0114,
+         0.0752
+        ],
+        "sd": 0.0219,
+        "mde95": 0.036,
+        "p_gt_0": 0.925,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 728,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      }
+     }
+    },
+    "pit": {
+     "n": 1154,
+     "raters": {
+      "efv_v5": {
+       "spearman": 0.1429,
+       "auc": 0.6961,
+       "n": 1154,
+       "within": 0.1429,
+       "pooled": 0.1438,
+       "within_rows": 1154,
+       "within_groups": 2,
+       "mae": 0.6887
+      },
+      "efv_v2": {
+       "spearman": 0.1429,
+       "auc": 0.6961,
+       "n": 1154,
+       "within": 0.1429,
+       "pooled": 0.1438,
+       "within_rows": 1154,
+       "within_groups": 2,
+       "mae": 0.6887
+      },
+      "prospx_consensus": {
+       "spearman": 0.1455,
+       "auc": 0.693,
+       "n": 1154,
+       "within": 0.1455,
+       "pooled": 0.1452,
+       "within_rows": 1154,
+       "within_groups": 2,
+       "mae": 0.6862
+      },
+      "mlb_pipeline": {
+       "spearman": 0.1634,
+       "auc": 0.6738,
+       "n": 793,
+       "within": 0.1634,
+       "pooled": 0.1609,
+       "within_rows": 793,
+       "within_groups": 2,
+       "mae": 1.0613
+      },
+      "fangraphs": {
+       "spearman": 0.1272,
+       "auc": 0.6762,
+       "n": 1105,
+       "within": 0.1272,
+       "pooled": 0.1316,
+       "within_rows": 1105,
+       "within_groups": 2,
+       "mae": 0.7363
+      }
+     },
+     "deltas": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": [
+         "pit|2020",
+         "pit|2021"
+        ],
+        "rows_in_kept_groups": 1154,
+        "min_group_rows": 20,
+        "a": 0.14285,
+        "b": 0.14285,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.14381,
+        "b": 0.14381,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.69605,
+        "b": 0.69605,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1154,
+        "a": 0.6887,
+        "b": 0.6887,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 745,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": [
+         "pit|2020",
+         "pit|2021"
+        ],
+        "rows_in_kept_groups": 1154,
+        "min_group_rows": 20,
+        "a": 0.14285,
+        "b": 0.14546,
+        "delta": -0.00261,
+        "ci95": [
+         -0.0096,
+         0.0043
+        ],
+        "sd": 0.00355,
+        "mde95": 0.0058,
+        "p_gt_0": 0.23,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.14381,
+        "b": 0.14523,
+        "delta": -0.00141,
+        "ci95": [
+         -0.0087,
+         0.006
+        ],
+        "sd": 0.00375,
+        "mde95": 0.0062,
+        "p_gt_0": 0.3605,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.69605,
+        "b": 0.69298,
+        "delta": 0.00307,
+        "ci95": [
+         -0.0033,
+         0.0092
+        ],
+        "sd": 0.00317,
+        "mde95": 0.0052,
+        "p_gt_0": 0.84,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1154,
+        "a": 0.6887,
+        "b": 0.6862,
+        "delta": 0.00248,
+        "ci95": [
+         -0.0028,
+         0.0078
+        ],
+        "sd": 0.00276,
+        "mde95": 0.0045,
+        "p_gt_0": 0.819,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 745,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 793,
+        "n_clusters": 512,
+        "groups_kept": [
+         "pit|2020",
+         "pit|2021"
+        ],
+        "rows_in_kept_groups": 793,
+        "min_group_rows": 20,
+        "a": 0.14187,
+        "b": 0.16342,
+        "delta": -0.02155,
+        "ci95": [
+         -0.0638,
+         0.0195
+        ],
+        "sd": 0.02128,
+        "mde95": 0.035,
+        "p_gt_0": 0.157,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 793,
+        "n_clusters": 512,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.14427,
+        "b": 0.16088,
+        "delta": -0.0166,
+        "ci95": [
+         -0.0569,
+         0.0236
+        ],
+        "sd": 0.02095,
+        "mde95": 0.0345,
+        "p_gt_0": 0.215,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 793,
+        "n_clusters": 512,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.67631,
+        "b": 0.67378,
+        "delta": 0.00253,
+        "ci95": [
+         -0.0324,
+         0.0339
+        ],
+        "sd": 0.01668,
+        "mde95": 0.0274,
+        "p_gt_0": 0.564,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 793,
+        "a": 0.7891,
+        "b": 1.0613,
+        "delta": -0.27217,
+        "ci95": [
+         -0.3154,
+         -0.2267
+        ],
+        "sd": 0.02246,
+        "mde95": 0.0369,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 512,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1105,
+        "n_clusters": 711,
+        "groups_kept": [
+         "pit|2020",
+         "pit|2021"
+        ],
+        "rows_in_kept_groups": 1105,
+        "min_group_rows": 20,
+        "a": 0.15333,
+        "b": 0.12716,
+        "delta": 0.02617,
+        "ci95": [
+         -0.0079,
+         0.0614
+        ],
+        "sd": 0.01726,
+        "mde95": 0.0284,
+        "p_gt_0": 0.9375,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1105,
+        "n_clusters": 711,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.15531,
+        "b": 0.13161,
+        "delta": 0.0237,
+        "ci95": [
+         -0.0097,
+         0.0595
+        ],
+        "sd": 0.01755,
+        "mde95": 0.0289,
+        "p_gt_0": 0.9065,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1105,
+        "n_clusters": 711,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.70819,
+        "b": 0.67619,
+        "delta": 0.03201,
+        "ci95": [
+         0.0046,
+         0.0593
+        ],
+        "sd": 0.01409,
+        "mde95": 0.0232,
+        "p_gt_0": 0.9905,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 above zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1105,
+        "a": 0.6947,
+        "b": 0.7363,
+        "delta": -0.04159,
+        "ci95": [
+         -0.0562,
+         -0.0251
+        ],
+        "sd": 0.00777,
+        "mde95": 0.0128,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 711,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": [
+         "pit|2020",
+         "pit|2021"
+        ],
+        "rows_in_kept_groups": 1154,
+        "min_group_rows": 20,
+        "a": 0.14285,
+        "b": 0.14546,
+        "delta": -0.00261,
+        "ci95": [
+         -0.0096,
+         0.0043
+        ],
+        "sd": 0.00355,
+        "mde95": 0.0058,
+        "p_gt_0": 0.23,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.14381,
+        "b": 0.14523,
+        "delta": -0.00141,
+        "ci95": [
+         -0.0087,
+         0.006
+        ],
+        "sd": 0.00375,
+        "mde95": 0.0062,
+        "p_gt_0": 0.3605,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 1154,
+        "n_clusters": 745,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.69605,
+        "b": 0.69298,
+        "delta": 0.00307,
+        "ci95": [
+         -0.0033,
+         0.0092
+        ],
+        "sd": 0.00317,
+        "mde95": 0.0052,
+        "p_gt_0": 0.84,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 1154,
+        "a": 0.6887,
+        "b": 0.6862,
+        "delta": 0.00248,
+        "ci95": [
+         -0.0028,
+         0.0078
+        ],
+        "sd": 0.00276,
+        "mde95": 0.0045,
+        "p_gt_0": 0.819,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 745,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      }
+     }
+    }
+   },
+   "frame_version": "lv1_v2",
+   "receipts": {
+    "hit|2020": {
+     "consensus_only": false,
+     "skill_keys": [
+      "contact",
+      "is_college",
+      "scr_g5_hit_A_all_all_woba",
+      "scr_g5_hit_A_all_all_slg"
+     ],
+     "timing_keys": [
+      "milb_absent",
+      "nov_add"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573,
+     "n_train": 2372,
+     "n_scored": 596
+    },
+    "hit|2021": {
+     "consensus_only": false,
+     "skill_keys": [
+      "obp_rel",
+      "contact",
+      "is_college",
+      "scr_g5_hit_A_all_all_slg"
+     ],
+     "timing_keys": [
+      "nov_add"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573,
+     "n_train": 2761,
+     "n_scored": 599
+    },
+    "pit|2020": {
+     "consensus_only": true,
+     "skill_keys": null,
+     "timing_keys": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "n_train": 2313,
+     "n_scored": 572
+    },
+    "pit|2021": {
+     "consensus_only": false,
+     "skill_keys": [
+      "k_rel"
+     ],
+     "timing_keys": [],
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "n_train": 2730,
+     "n_scored": 582
+    }
+   },
+   "fold_deltas_vs_v2": {
+    "hit|2020": {
+     "n": 596,
+     "delta": -0.00482,
+     "sign": -1
+    },
+    "hit|2021": {
+     "n": 599,
+     "delta": -0.00677,
+     "sign": -1
+    },
+    "pit|2020": {
+     "n": 572,
+     "delta": 0.0,
+     "sign": 0
+    },
+    "pit|2021": {
+     "n": 582,
+     "delta": 0.0,
+     "sign": 0
+    }
+   },
+   "fold_deltas_vs_consensus": {
+    "hit|2020": {
+     "n": 596,
+     "delta": 0.00127,
+     "sign": 1
+    },
+    "hit|2021": {
+     "n": 599,
+     "delta": -0.00143,
+     "sign": -1
+    },
+    "pit|2020": {
+     "n": 572,
+     "delta": 0.0,
+     "sign": 0
+    },
+    "pit|2021": {
+     "n": 582,
+     "delta": -0.00518,
+     "sign": -1
+    }
+   },
+   "cells": {
+    "hit:C": {
+     "n": 117,
+     "n_players": 72,
+     "raters": {
+      "efv_v5": {
+       "within": 0.4973,
+       "n": 117
+      },
+      "efv_v2": {
+       "within": 0.4821,
+       "n": 117
+      },
+      "prospx_consensus": {
+       "within": 0.423,
+       "n": 117
+      },
+      "mlb_pipeline": {
+       "within": 0.4967,
+       "n": 81
+      },
+      "fangraphs": {
+       "within": 0.4485,
+       "n": 108
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 117,
+      "delta": 0.01519,
+      "ci95": [
+       -0.0145,
+       0.0456
+      ],
+      "mde95": 0.0248,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 117,
+      "delta": 0.07435,
+      "ci95": [
+       -0.0612,
+       0.2154
+      ],
+      "mde95": 0.1189,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "hit:IF": {
+     "n": 575,
+     "n_players": 349,
+     "raters": {
+      "efv_v5": {
+       "within": 0.1288,
+       "n": 575
+      },
+      "efv_v2": {
+       "within": 0.1386,
+       "n": 575
+      },
+      "prospx_consensus": {
+       "within": 0.1355,
+       "n": 575
+      },
+      "mlb_pipeline": {
+       "within": 0.2184,
+       "n": 446
+      },
+      "fangraphs": {
+       "within": 0.1537,
+       "n": 553
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 575,
+      "delta": -0.00979,
+      "ci95": [
+       -0.0287,
+       0.0087
+      ],
+      "mde95": 0.0155,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 575,
+      "delta": -0.00677,
+      "ci95": [
+       -0.0686,
+       0.0534
+      ],
+      "mde95": 0.0506,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "hit:OF": {
+     "n": 481,
+     "n_players": 294,
+     "raters": {
+      "efv_v5": {
+       "within": 0.0897,
+       "n": 481
+      },
+      "efv_v2": {
+       "within": 0.1006,
+       "n": 481
+      },
+      "prospx_consensus": {
+       "within": 0.0947,
+       "n": 481
+      },
+      "mlb_pipeline": {
+       "within": 0.1668,
+       "n": 387
+      },
+      "fangraphs": {
+       "within": 0.0944,
+       "n": 455
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 481,
+      "delta": -0.0109,
+      "ci95": [
+       -0.0301,
+       0.0076
+      ],
+      "mde95": 0.0157,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 481,
+      "delta": -0.00501,
+      "ci95": [
+       -0.0773,
+       0.0737
+      ],
+      "mde95": 0.0621,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "pit:pit": {
+     "n": 1154,
+     "n_players": 745,
+     "raters": {
+      "efv_v5": {
+       "within": 0.1429,
+       "n": 1154
+      },
+      "efv_v2": {
+       "within": 0.1429,
+       "n": 1154
+      },
+      "prospx_consensus": {
+       "within": 0.1455,
+       "n": 1154
+      },
+      "mlb_pipeline": {
+       "within": 0.1634,
+       "n": 793
+      },
+      "fangraphs": {
+       "within": 0.1272,
+       "n": 1105
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 1154,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "mde95": 0.0,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 1154,
+      "delta": -0.00261,
+      "ci95": [
+       -0.0096,
+       0.0043
+      ],
+      "mde95": 0.0058,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "group_cells": {
+    "g5_hit_A_all_all_woba": {
+     "n": 302,
+     "n_players": 164,
+     "v5_vs_efv_v2": {
+      "n": 302,
+      "delta": -0.01519,
+      "ci95": [
+       -0.0546,
+       0.0265
+      ],
+      "mde95": 0.0344,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 302,
+      "delta": -0.07772,
+      "ci95": [
+       -0.1779,
+       0.0167
+      ],
+      "mde95": 0.0791,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "g5_hit_A_all_all_slg": {
+     "n": 302,
+     "n_players": 164,
+     "v5_vs_efv_v2": {
+      "n": 302,
+      "delta": -0.01519,
+      "ci95": [
+       -0.0546,
+       0.0265
+      ],
+      "mde95": 0.0344,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 302,
+      "delta": -0.07772,
+      "ci95": [
+       -0.1779,
+       0.0167
+      ],
+      "mde95": 0.0791,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "role": "spent",
+   "note": "eFV v5 group drivers at the committed configuration on the spent reserved frames (read once by v3 on 2026-10-08); chooses and tunes nothing; not a look",
+   "window": [
+    2020,
+    2021
+   ],
+   "label": "spent frame, read after the 10-08 confirmation",
+   "outcome": "W3 (WAR over the first three MLB seasons, 0 if no debut within three seasons of V)",
+   "e_refit": {
+    "B": 200,
+    "B_used": 200,
+    "seed": 20260907,
+    "estimator": "E_refit",
+    "what": "the pool resampled by player with replacement; every fold of v3 and V2 refit on the drawn training rows (the fold's drawn test players left out) and scored on the drawn test rows; consensus, Pipeline and FanGraphs fixed",
+    "ci95": "2.5th and 97.5th percentile of the draws; mde95 = 1.645 x sd (one-sided)",
+    "elapsed_s": 794.5,
+    "legs": {
+     "both": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": -0.00295,
+        "ci95": [
+         -0.0099,
+         0.0001
+        ],
+        "sd": 0.00309,
+        "mde95": 0.0051,
+        "boot_mean": -0.00123,
+        "B_used": 200,
+        "p_gt_0": 0.03,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.00077,
+        "ci95": [
+         -0.0093,
+         0.0002
+        ],
+        "sd": 0.00261,
+        "mde95": 0.0043,
+        "boot_mean": -0.00103,
+        "B_used": 200,
+        "p_gt_0": 0.04,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": -0.00185,
+        "ci95": [
+         -0.0069,
+         0.0019
+        ],
+        "sd": 0.00209,
+        "mde95": 0.0034,
+        "boot_mean": -0.00065,
+        "B_used": 200,
+        "p_gt_0": 0.09,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.00305,
+        "ci95": [
+         -0.0,
+         0.0149
+        ],
+        "sd": 0.00422,
+        "mde95": 0.0069,
+        "boot_mean": 0.00171,
+        "B_used": 200,
+        "p_gt_0": 0.28,
+        "resolvable": false
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": -0.00133,
+        "ci95": [
+         -0.0246,
+         0.0162
+        ],
+        "sd": 0.01071,
+        "mde95": 0.0176,
+        "boot_mean": -0.00506,
+        "B_used": 200,
+        "p_gt_0": 0.27,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.00386,
+        "ci95": [
+         -0.0193,
+         0.0206
+        ],
+        "sd": 0.01067,
+        "mde95": 0.0175,
+        "boot_mean": -0.00077,
+        "B_used": 200,
+        "p_gt_0": 0.41,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.01336,
+        "ci95": [
+         -0.0162,
+         0.023
+        ],
+        "sd": 0.00993,
+        "mde95": 0.0163,
+        "boot_mean": 1e-05,
+        "B_used": 200,
+        "p_gt_0": 0.445,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.02018,
+        "ci95": [
+         -0.0015,
+         0.0449
+        ],
+        "sd": 0.01203,
+        "mde95": 0.0198,
+        "boot_mean": 0.01824,
+        "B_used": 200,
+        "p_gt_0": 0.96,
+        "resolvable": true
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": -0.04184,
+        "ci95": [
+         -0.0728,
+         -0.0032
+        ],
+        "sd": 0.01807,
+        "mde95": 0.0297,
+        "boot_mean": -0.0373,
+        "B_used": 200,
+        "p_gt_0": 0.015,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": -0.02156,
+        "ci95": [
+         -0.056,
+         0.0072
+        ],
+        "sd": 0.01627,
+        "mde95": 0.0268,
+        "boot_mean": -0.02181,
+        "B_used": 200,
+        "p_gt_0": 0.1,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.0073,
+        "ci95": [
+         -0.0259,
+         0.0178
+        ],
+        "sd": 0.01199,
+        "mde95": 0.0197,
+        "boot_mean": -0.00245,
+        "B_used": 200,
+        "p_gt_0": 0.435,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.31087,
+        "ci95": [
+         -0.391,
+         -0.2326
+        ],
+        "sd": 0.04018,
+        "mde95": 0.0661,
+        "boot_mean": -0.31202,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": 0.00788,
+        "ci95": [
+         -0.0237,
+         0.0339
+        ],
+        "sd": 0.01557,
+        "mde95": 0.0256,
+        "boot_mean": 0.00438,
+        "B_used": 200,
+        "p_gt_0": 0.61,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.02516,
+        "ci95": [
+         -0.0095,
+         0.0492
+        ],
+        "sd": 0.01662,
+        "mde95": 0.0273,
+        "boot_mean": 0.01765,
+        "B_used": 200,
+        "p_gt_0": 0.855,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.04405,
+        "ci95": [
+         0.0007,
+         0.0561
+        ],
+        "sd": 0.01359,
+        "mde95": 0.0223,
+        "boot_mean": 0.02566,
+        "B_used": 200,
+        "p_gt_0": 0.975,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": -0.02703,
+        "ci95": [
+         -0.0513,
+         0.0036
+        ],
+        "sd": 0.01508,
+        "mde95": 0.0248,
+        "boot_mean": -0.02756,
+        "B_used": 200,
+        "p_gt_0": 0.06,
+        "resolvable": true
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.00162,
+        "ci95": [
+         -0.0222,
+         0.0168
+        ],
+        "sd": 0.00994,
+        "mde95": 0.0164,
+        "boot_mean": -0.00383,
+        "B_used": 200,
+        "p_gt_0": 0.295,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.00462,
+        "ci95": [
+         -0.0171,
+         0.0206
+        ],
+        "sd": 0.01003,
+        "mde95": 0.0165,
+        "boot_mean": 0.00026,
+        "B_used": 200,
+        "p_gt_0": 0.46,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.01521,
+        "ci95": [
+         -0.0151,
+         0.023
+        ],
+        "sd": 0.00973,
+        "mde95": 0.016,
+        "boot_mean": 0.00065,
+        "B_used": 200,
+        "p_gt_0": 0.46,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.01713,
+        "ci95": [
+         -0.0018,
+         0.0431
+        ],
+        "sd": 0.01158,
+        "mde95": 0.019,
+        "boot_mean": 0.01653,
+        "B_used": 200,
+        "p_gt_0": 0.95,
+        "resolvable": false
+       }
+      }
+     },
+     "hit": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": -0.0058,
+        "ci95": [
+         -0.0195,
+         0.0002
+        ],
+        "sd": 0.00606,
+        "mde95": 0.01,
+        "boot_mean": -0.00241,
+        "B_used": 200,
+        "p_gt_0": 0.03,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.00327,
+        "ci95": [
+         -0.0199,
+         0.0013
+        ],
+        "sd": 0.00589,
+        "mde95": 0.0097,
+        "boot_mean": -0.00232,
+        "B_used": 200,
+        "p_gt_0": 0.04,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": -0.00345,
+        "ci95": [
+         -0.0124,
+         0.004
+        ],
+        "sd": 0.00397,
+        "mde95": 0.0065,
+        "boot_mean": -0.00126,
+        "B_used": 200,
+        "p_gt_0": 0.085,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.00599,
+        "ci95": [
+         -0.0001,
+         0.0288
+        ],
+        "sd": 0.00831,
+        "mde95": 0.0137,
+        "boot_mean": 0.00336,
+        "B_used": 200,
+        "p_gt_0": 0.28,
+        "resolvable": false
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": -8e-05,
+        "ci95": [
+         -0.0366,
+         0.0342
+        ],
+        "sd": 0.01822,
+        "mde95": 0.03,
+        "boot_mean": -0.00294,
+        "B_used": 200,
+        "p_gt_0": 0.35,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.00217,
+        "ci95": [
+         -0.0346,
+         0.0332
+        ],
+        "sd": 0.01738,
+        "mde95": 0.0286,
+        "boot_mean": -0.00151,
+        "B_used": 200,
+        "p_gt_0": 0.42,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.01777,
+        "ci95": [
+         -0.0299,
+         0.0425
+        ],
+        "sd": 0.01708,
+        "mde95": 0.0281,
+        "boot_mean": 0.00106,
+        "B_used": 200,
+        "p_gt_0": 0.5,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.03728,
+        "ci95": [
+         -0.0028,
+         0.0805
+        ],
+        "sd": 0.02195,
+        "mde95": 0.0361,
+        "boot_mean": 0.03076,
+        "B_used": 200,
+        "p_gt_0": 0.94,
+        "resolvable": true
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": -0.05906,
+        "ci95": [
+         -0.0975,
+         0.0036
+        ],
+        "sd": 0.02578,
+        "mde95": 0.0424,
+        "boot_mean": -0.04657,
+        "B_used": 200,
+        "p_gt_0": 0.045,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": -0.04796,
+        "ci95": [
+         -0.0796,
+         0.0118
+        ],
+        "sd": 0.02542,
+        "mde95": 0.0418,
+        "boot_mean": -0.03617,
+        "B_used": 200,
+        "p_gt_0": 0.065,
+        "resolvable": true
+       },
+       "auc": {
+        "delta": 0.00177,
+        "ci95": [
+         -0.0393,
+         0.0264
+        ],
+        "sd": 0.01905,
+        "mde95": 0.0313,
+        "boot_mean": -0.00602,
+        "B_used": 200,
+        "p_gt_0": 0.37,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.34373,
+        "ci95": [
+         -0.4751,
+         -0.2364
+        ],
+        "sd": 0.0639,
+        "mde95": 0.1051,
+        "boot_mean": -0.35143,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": -0.0099,
+        "ci95": [
+         -0.0521,
+         0.0322
+        ],
+        "sd": 0.02254,
+        "mde95": 0.0371,
+        "boot_mean": -0.01173,
+        "B_used": 200,
+        "p_gt_0": 0.28,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.00754,
+        "ci95": [
+         -0.0431,
+         0.0434
+        ],
+        "sd": 0.02341,
+        "mde95": 0.0385,
+        "boot_mean": 0.00085,
+        "B_used": 200,
+        "p_gt_0": 0.53,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.04653,
+        "ci95": [
+         -0.0126,
+         0.0703
+        ],
+        "sd": 0.01966,
+        "mde95": 0.0323,
+        "boot_mean": 0.02412,
+        "B_used": 200,
+        "p_gt_0": 0.925,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": -0.01289,
+        "ci95": [
+         -0.067,
+         0.0362
+        ],
+        "sd": 0.02722,
+        "mde95": 0.0448,
+        "boot_mean": -0.01996,
+        "B_used": 200,
+        "p_gt_0": 0.195,
+        "resolvable": false
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.00571,
+        "ci95": [
+         -0.032,
+         0.0366
+        ],
+        "sd": 0.01676,
+        "mde95": 0.0276,
+        "boot_mean": -0.00053,
+        "B_used": 200,
+        "p_gt_0": 0.39,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.0011,
+        "ci95": [
+         -0.0312,
+         0.0332
+        ],
+        "sd": 0.01601,
+        "mde95": 0.0263,
+        "boot_mean": 0.00082,
+        "B_used": 200,
+        "p_gt_0": 0.465,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.02122,
+        "ci95": [
+         -0.03,
+         0.0425
+        ],
+        "sd": 0.01677,
+        "mde95": 0.0276,
+        "boot_mean": 0.00232,
+        "B_used": 200,
+        "p_gt_0": 0.57,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.03129,
+        "ci95": [
+         -0.003,
+         0.0798
+        ],
+        "sd": 0.021,
+        "mde95": 0.0345,
+        "boot_mean": 0.02739,
+        "B_used": 200,
+        "p_gt_0": 0.925,
+        "resolvable": false
+       }
+      }
+     },
+     "pit": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": -0.00261,
+        "ci95": [
+         -0.0327,
+         0.0057
+        ],
+        "sd": 0.01096,
+        "mde95": 0.018,
+        "boot_mean": -0.00727,
+        "B_used": 200,
+        "p_gt_0": 0.155,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.00141,
+        "ci95": [
+         -0.0306,
+         0.0094
+        ],
+        "sd": 0.01076,
+        "mde95": 0.0177,
+        "boot_mean": -0.00641,
+        "B_used": 200,
+        "p_gt_0": 0.17,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.00307,
+        "ci95": [
+         -0.0254,
+         0.0084
+        ],
+        "sd": 0.00831,
+        "mde95": 0.0137,
+        "boot_mean": -0.00403,
+        "B_used": 200,
+        "p_gt_0": 0.24,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.00248,
+        "ci95": [
+         -0.0073,
+         0.0231
+        ],
+        "sd": 0.00808,
+        "mde95": 0.0133,
+        "boot_mean": 0.00516,
+        "B_used": 200,
+        "p_gt_0": 0.675,
+        "resolvable": false
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": -0.02155,
+        "ci95": [
+         -0.0793,
+         0.0223
+        ],
+        "sd": 0.02589,
+        "mde95": 0.0426,
+        "boot_mean": -0.02636,
+        "B_used": 200,
+        "p_gt_0": 0.145,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.0166,
+        "ci95": [
+         -0.0763,
+         0.0257
+        ],
+        "sd": 0.02687,
+        "mde95": 0.0442,
+        "boot_mean": -0.02178,
+        "B_used": 200,
+        "p_gt_0": 0.2,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.00253,
+        "ci95": [
+         -0.0441,
+         0.0251
+        ],
+        "sd": 0.01783,
+        "mde95": 0.0293,
+        "boot_mean": -0.00655,
+        "B_used": 200,
+        "p_gt_0": 0.38,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.27217,
+        "ci95": [
+         -0.3599,
+         -0.1862
+        ],
+        "sd": 0.04117,
+        "mde95": 0.0677,
+        "boot_mean": -0.2657,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": 0.02617,
+        "ci95": [
+         -0.0176,
+         0.058
+        ],
+        "sd": 0.02042,
+        "mde95": 0.0336,
+        "boot_mean": 0.02106,
+        "B_used": 200,
+        "p_gt_0": 0.815,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.0237,
+        "ci95": [
+         -0.0198,
+         0.0748
+        ],
+        "sd": 0.02399,
+        "mde95": 0.0395,
+        "boot_mean": 0.02728,
+        "B_used": 200,
+        "p_gt_0": 0.87,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.03201,
+        "ci95": [
+         -0.0077,
+         0.0545
+        ],
+        "sd": 0.01669,
+        "mde95": 0.0275,
+        "boot_mean": 0.02283,
+        "B_used": 200,
+        "p_gt_0": 0.905,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": -0.04159,
+        "ci95": [
+         -0.0572,
+         -0.0097
+        ],
+        "sd": 0.013,
+        "mde95": 0.0214,
+        "boot_mean": -0.03552,
+        "B_used": 200,
+        "p_gt_0": 0.005,
+        "resolvable": true
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": -0.00261,
+        "ci95": [
+         -0.0327,
+         0.0057
+        ],
+        "sd": 0.01096,
+        "mde95": 0.018,
+        "boot_mean": -0.00727,
+        "B_used": 200,
+        "p_gt_0": 0.155,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.00141,
+        "ci95": [
+         -0.0306,
+         0.0094
+        ],
+        "sd": 0.01076,
+        "mde95": 0.0177,
+        "boot_mean": -0.00641,
+        "B_used": 200,
+        "p_gt_0": 0.17,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.00307,
+        "ci95": [
+         -0.0254,
+         0.0084
+        ],
+        "sd": 0.00831,
+        "mde95": 0.0137,
+        "boot_mean": -0.00403,
+        "B_used": 200,
+        "p_gt_0": 0.24,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.00248,
+        "ci95": [
+         -0.0073,
+         0.0231
+        ],
+        "sd": 0.00808,
+        "mde95": 0.0133,
+        "boot_mean": 0.00516,
+        "B_used": 200,
+        "p_gt_0": 0.675,
+        "resolvable": false
+       }
+      }
+     }
+    }
+   },
+   "verdict": "eFV v5 reads -0.0013 within against consensus; ties or trails; vs served eFV (V2) -0.0029 (E_refit CI95 [-0.0099, 0.0001]); spent frame, read after the 10-08 confirmation"
+  },
+  "vm_pros": {
+   "n": 147,
+   "n_by_side": {
+    "hit": 72,
+    "pit": 75
+   },
+   "n_players": 147,
+   "groups": [
+    "hit|2025",
+    "pit|2025"
+   ],
+   "raters": {
+    "efv_v5": {
+     "spearman": 0.3739,
+     "auc": 0.8226,
+     "n": 147,
+     "within": 0.3739,
+     "pooled": 0.3689,
+     "within_rows": 147,
+     "within_groups": 2,
+     "mae": 2.118
+    },
+    "efv_v2": {
+     "spearman": 0.3739,
+     "auc": 0.8226,
+     "n": 147,
+     "within": 0.3739,
+     "pooled": 0.3689,
+     "within_rows": 147,
+     "within_groups": 2,
+     "mae": 2.118
+    },
+    "prospx_consensus": {
+     "spearman": 0.3333,
+     "auc": 0.7695,
+     "n": 147,
+     "within": 0.3333,
+     "pooled": 0.3248,
+     "within_rows": 147,
+     "within_groups": 2,
+     "mae": 2.1775
+    },
+    "mlb_pipeline": {
+     "spearman": 0.3142,
+     "auc": 0.7734,
+     "n": 147,
+     "within": 0.3142,
+     "pooled": 0.3181,
+     "within_rows": 147,
+     "within_groups": 2,
+     "mae": 3.3248
+    },
+    "fangraphs": {
+     "spearman": 0.3568,
+     "auc": 0.7596,
+     "n": 147,
+     "within": 0.3568,
+     "pooled": 0.3246,
+     "within_rows": 147,
+     "within_groups": 2,
+     "mae": 2.4984
+    }
+   },
+   "deltas": {
+    "v5_vs_efv_v2": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": [
+       "hit|2025",
+       "pit|2025"
+      ],
+      "rows_in_kept_groups": 147,
+      "min_group_rows": 20,
+      "a": 0.3739,
+      "b": 0.3739,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "mde95": 0.0,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.3689,
+      "b": 0.3689,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "mde95": 0.0,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.82264,
+      "b": 0.82264,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "mde95": 0.0,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 147,
+      "a": 2.118,
+      "b": 2.118,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "mde95": 0.0,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 147,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "v5_vs_prospx_consensus": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": [
+       "hit|2025",
+       "pit|2025"
+      ],
+      "rows_in_kept_groups": 147,
+      "min_group_rows": 20,
+      "a": 0.3739,
+      "b": 0.3333,
+      "delta": 0.04061,
+      "ci95": [
+       -0.0259,
+       0.1101
+      ],
+      "sd": 0.03496,
+      "mde95": 0.0575,
+      "p_gt_0": 0.877,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.3689,
+      "b": 0.32479,
+      "delta": 0.04411,
+      "ci95": [
+       -0.028,
+       0.1213
+      ],
+      "sd": 0.03813,
+      "mde95": 0.0627,
+      "p_gt_0": 0.868,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.82264,
+      "b": 0.76949,
+      "delta": 0.05315,
+      "ci95": [
+       0.0007,
+       0.1175
+      ],
+      "sd": 0.03042,
+      "mde95": 0.05,
+      "p_gt_0": 0.977,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 above zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 147,
+      "a": 2.118,
+      "b": 2.1775,
+      "delta": -0.05951,
+      "ci95": [
+       -0.2301,
+       0.1099
+      ],
+      "sd": 0.08804,
+      "mde95": 0.1448,
+      "p_gt_0": 0.259,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 147,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    },
+    "v5_vs_mlb_pipeline": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": [
+       "hit|2025",
+       "pit|2025"
+      ],
+      "rows_in_kept_groups": 147,
+      "min_group_rows": 20,
+      "a": 0.3739,
+      "b": 0.31422,
+      "delta": 0.05968,
+      "ci95": [
+       -0.0302,
+       0.1533
+      ],
+      "sd": 0.04657,
+      "mde95": 0.0766,
+      "p_gt_0": 0.8945,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.3689,
+      "b": 0.31815,
+      "delta": 0.05075,
+      "ci95": [
+       -0.0482,
+       0.152
+      ],
+      "sd": 0.05091,
+      "mde95": 0.0837,
+      "p_gt_0": 0.8385,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.82264,
+      "b": 0.77343,
+      "delta": 0.04921,
+      "ci95": [
+       -0.0234,
+       0.13
+      ],
+      "sd": 0.0387,
+      "mde95": 0.0637,
+      "p_gt_0": 0.905,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 147,
+      "a": 2.118,
+      "b": 3.3248,
+      "delta": -1.20675,
+      "ci95": [
+       -1.4832,
+       -0.9357
+      ],
+      "sd": 0.13848,
+      "mde95": 0.2278,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 147,
+      "status": "derived",
+      "reading": "development only; CI95 below zero"
+     }
+    },
+    "v5_vs_fangraphs": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": [
+       "hit|2025",
+       "pit|2025"
+      ],
+      "rows_in_kept_groups": 147,
+      "min_group_rows": 20,
+      "a": 0.3739,
+      "b": 0.35685,
+      "delta": 0.01705,
+      "ci95": [
+       -0.0732,
+       0.1072
+      ],
+      "sd": 0.04665,
+      "mde95": 0.0767,
+      "p_gt_0": 0.633,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.3689,
+      "b": 0.32455,
+      "delta": 0.04435,
+      "ci95": [
+       -0.0547,
+       0.1454
+      ],
+      "sd": 0.05114,
+      "mde95": 0.0841,
+      "p_gt_0": 0.7985,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.82264,
+      "b": 0.75965,
+      "delta": 0.06299,
+      "ci95": [
+       -0.0036,
+       0.1364
+      ],
+      "sd": 0.03544,
+      "mde95": 0.0583,
+      "p_gt_0": 0.9675,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 147,
+      "a": 2.118,
+      "b": 2.4984,
+      "delta": -0.38038,
+      "ci95": [
+       -0.5934,
+       -0.1733
+      ],
+      "sd": 0.10839,
+      "mde95": 0.1783,
+      "p_gt_0": 0.0,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 147,
+      "status": "derived",
+      "reading": "development only; CI95 below zero"
+     }
+    },
+    "efv_v2_vs_prospx_consensus": {
+     "spearman": {
+      "statistic": "within",
+      "label": "within (side, vintage) Spearman, size-weighted",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": [
+       "hit|2025",
+       "pit|2025"
+      ],
+      "rows_in_kept_groups": 147,
+      "min_group_rows": 20,
+      "a": 0.3739,
+      "b": 0.3333,
+      "delta": 0.04061,
+      "ci95": [
+       -0.0259,
+       0.1101
+      ],
+      "sd": 0.03496,
+      "mde95": 0.0575,
+      "p_gt_0": 0.877,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "pooled": {
+      "statistic": "pooled",
+      "label": "pooled Spearman after the identical output map",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.3689,
+      "b": 0.32479,
+      "delta": 0.04411,
+      "ci95": [
+       -0.028,
+       0.1213
+      ],
+      "sd": 0.03813,
+      "mde95": 0.0627,
+      "p_gt_0": 0.868,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "auc": {
+      "statistic": "auc",
+      "label": "contributor AUC after the identical output map, pooled",
+      "n": 147,
+      "n_clusters": 147,
+      "groups_kept": null,
+      "rows_in_kept_groups": null,
+      "min_group_rows": null,
+      "a": 0.82264,
+      "b": 0.76949,
+      "delta": 0.05315,
+      "ci95": [
+       0.0007,
+       0.1175
+      ],
+      "sd": 0.03042,
+      "mde95": 0.05,
+      "p_gt_0": 0.977,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "status": "derived",
+      "reading": "development only; CI95 above zero"
+     },
+     "mae": {
+      "statistic": "mae",
+      "label": "MAE of the priced grade against the outcome",
+      "n": 147,
+      "a": 2.118,
+      "b": 2.1775,
+      "delta": -0.05951,
+      "ci95": [
+       -0.2301,
+       0.1099
+      ],
+      "sd": 0.08804,
+      "mde95": 0.1448,
+      "p_gt_0": 0.259,
+      "B": 2000,
+      "B_used": 2000,
+      "seed": 20260906,
+      "estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "n_clusters": 147,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "per_side": {
+    "hit": {
+     "n": 72,
+     "raters": {
+      "efv_v5": {
+       "spearman": 0.3374,
+       "auc": 0.7895,
+       "n": 72,
+       "within": 0.3374,
+       "pooled": 0.3357,
+       "within_rows": 72,
+       "within_groups": 1,
+       "mae": 2.7148
+      },
+      "efv_v2": {
+       "spearman": 0.3374,
+       "auc": 0.7895,
+       "n": 72,
+       "within": 0.3374,
+       "pooled": 0.3357,
+       "within_rows": 72,
+       "within_groups": 1,
+       "mae": 2.7148
+      },
+      "prospx_consensus": {
+       "spearman": 0.2545,
+       "auc": 0.6879,
+       "n": 72,
+       "within": 0.2545,
+       "pooled": 0.2545,
+       "within_rows": 72,
+       "within_groups": 1,
+       "mae": 2.8364
+      },
+      "mlb_pipeline": {
+       "spearman": 0.2499,
+       "auc": 0.6694,
+       "n": 72,
+       "within": 0.2499,
+       "pooled": 0.2499,
+       "within_rows": 72,
+       "within_groups": 1,
+       "mae": 4.5254
+      },
+      "fangraphs": {
+       "spearman": 0.2893,
+       "auc": 0.7073,
+       "n": 72,
+       "within": 0.2893,
+       "pooled": 0.2893,
+       "within_rows": 72,
+       "within_groups": 1,
+       "mae": 3.2835
+      }
+     },
+     "deltas": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": [
+         "hit|2025"
+        ],
+        "rows_in_kept_groups": 72,
+        "min_group_rows": 20,
+        "a": 0.33739,
+        "b": 0.33739,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.33569,
+        "b": 0.33569,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78952,
+        "b": 0.78952,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 72,
+        "a": 2.7148,
+        "b": 2.7148,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 72,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": [
+         "hit|2025"
+        ],
+        "rows_in_kept_groups": 72,
+        "min_group_rows": 20,
+        "a": 0.33739,
+        "b": 0.25448,
+        "delta": 0.0829,
+        "ci95": [
+         -0.0534,
+         0.2229
+        ],
+        "sd": 0.07065,
+        "mde95": 0.1162,
+        "p_gt_0": 0.8785,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.33569,
+        "b": 0.25448,
+        "delta": 0.08121,
+        "ci95": [
+         -0.0576,
+         0.2278
+        ],
+        "sd": 0.07216,
+        "mde95": 0.1187,
+        "p_gt_0": 0.8665,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78952,
+        "b": 0.6879,
+        "delta": 0.10161,
+        "ci95": [
+         -0.0198,
+         0.2207
+        ],
+        "sd": 0.06189,
+        "mde95": 0.1018,
+        "p_gt_0": 0.9485,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 72,
+        "a": 2.7148,
+        "b": 2.8364,
+        "delta": -0.12151,
+        "ci95": [
+         -0.4595,
+         0.2422
+        ],
+        "sd": 0.17931,
+        "mde95": 0.295,
+        "p_gt_0": 0.2555,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 72,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": [
+         "hit|2025"
+        ],
+        "rows_in_kept_groups": 72,
+        "min_group_rows": 20,
+        "a": 0.33739,
+        "b": 0.24989,
+        "delta": 0.0875,
+        "ci95": [
+         -0.0741,
+         0.2465
+        ],
+        "sd": 0.08035,
+        "mde95": 0.1322,
+        "p_gt_0": 0.8645,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.33569,
+        "b": 0.24989,
+        "delta": 0.0858,
+        "ci95": [
+         -0.0771,
+         0.2455
+        ],
+        "sd": 0.08172,
+        "mde95": 0.1344,
+        "p_gt_0": 0.8605,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78952,
+        "b": 0.66935,
+        "delta": 0.12016,
+        "ci95": [
+         -0.0063,
+         0.25
+        ],
+        "sd": 0.06585,
+        "mde95": 0.1083,
+        "p_gt_0": 0.966,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 72,
+        "a": 2.7148,
+        "b": 4.5254,
+        "delta": -1.81052,
+        "ci95": [
+         -2.2976,
+         -1.3196
+        ],
+        "sd": 0.24424,
+        "mde95": 0.4018,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 72,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": [
+         "hit|2025"
+        ],
+        "rows_in_kept_groups": 72,
+        "min_group_rows": 20,
+        "a": 0.33739,
+        "b": 0.28934,
+        "delta": 0.04805,
+        "ci95": [
+         -0.1098,
+         0.2081
+        ],
+        "sd": 0.08034,
+        "mde95": 0.1322,
+        "p_gt_0": 0.715,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.33569,
+        "b": 0.28934,
+        "delta": 0.04635,
+        "ci95": [
+         -0.1138,
+         0.2087
+        ],
+        "sd": 0.08121,
+        "mde95": 0.1336,
+        "p_gt_0": 0.712,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78952,
+        "b": 0.70726,
+        "delta": 0.08226,
+        "ci95": [
+         -0.0323,
+         0.1901
+        ],
+        "sd": 0.05698,
+        "mde95": 0.0937,
+        "p_gt_0": 0.9165,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 72,
+        "a": 2.7148,
+        "b": 3.2835,
+        "delta": -0.56869,
+        "ci95": [
+         -0.9511,
+         -0.2055
+        ],
+        "sd": 0.19126,
+        "mde95": 0.3146,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 72,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": [
+         "hit|2025"
+        ],
+        "rows_in_kept_groups": 72,
+        "min_group_rows": 20,
+        "a": 0.33739,
+        "b": 0.25448,
+        "delta": 0.0829,
+        "ci95": [
+         -0.0534,
+         0.2229
+        ],
+        "sd": 0.07065,
+        "mde95": 0.1162,
+        "p_gt_0": 0.8785,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.33569,
+        "b": 0.25448,
+        "delta": 0.08121,
+        "ci95": [
+         -0.0576,
+         0.2278
+        ],
+        "sd": 0.07216,
+        "mde95": 0.1187,
+        "p_gt_0": 0.8665,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 72,
+        "n_clusters": 72,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.78952,
+        "b": 0.6879,
+        "delta": 0.10161,
+        "ci95": [
+         -0.0198,
+         0.2207
+        ],
+        "sd": 0.06189,
+        "mde95": 0.1018,
+        "p_gt_0": 0.9485,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 72,
+        "a": 2.7148,
+        "b": 2.8364,
+        "delta": -0.12151,
+        "ci95": [
+         -0.4595,
+         0.2422
+        ],
+        "sd": 0.17931,
+        "mde95": 0.295,
+        "p_gt_0": 0.2555,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 72,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      }
+     }
+    },
+    "pit": {
+     "n": 75,
+     "raters": {
+      "efv_v5": {
+       "spearman": 0.409,
+       "auc": 0.8646,
+       "n": 75,
+       "within": 0.409,
+       "pooled": 0.409,
+       "within_rows": 75,
+       "within_groups": 1,
+       "mae": 1.5451
+      },
+      "efv_v2": {
+       "spearman": 0.409,
+       "auc": 0.8646,
+       "n": 75,
+       "within": 0.409,
+       "pooled": 0.409,
+       "within_rows": 75,
+       "within_groups": 1,
+       "mae": 1.5451
+      },
+      "prospx_consensus": {
+       "spearman": 0.409,
+       "auc": 0.8646,
+       "n": 75,
+       "within": 0.409,
+       "pooled": 0.409,
+       "within_rows": 75,
+       "within_groups": 1,
+       "mae": 1.5451
+      },
+      "mlb_pipeline": {
+       "spearman": 0.376,
+       "auc": 0.87,
+       "n": 75,
+       "within": 0.376,
+       "pooled": 0.376,
+       "within_rows": 75,
+       "within_groups": 1,
+       "mae": 2.1722
+      },
+      "fangraphs": {
+       "spearman": 0.4217,
+       "auc": 0.8631,
+       "n": 75,
+       "within": 0.4217,
+       "pooled": 0.4217,
+       "within_rows": 75,
+       "within_groups": 1,
+       "mae": 1.7447
+      }
+     },
+     "deltas": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": [
+         "pit|2025"
+        ],
+        "rows_in_kept_groups": 75,
+        "min_group_rows": 20,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.86462,
+        "b": 0.86462,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 75,
+        "a": 1.5451,
+        "b": 1.5451,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 75,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": [
+         "pit|2025"
+        ],
+        "rows_in_kept_groups": 75,
+        "min_group_rows": 20,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.86462,
+        "b": 0.86462,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 75,
+        "a": 1.5451,
+        "b": 1.5451,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.987,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 75,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": [
+         "pit|2025"
+        ],
+        "rows_in_kept_groups": 75,
+        "min_group_rows": 20,
+        "a": 0.40895,
+        "b": 0.37597,
+        "delta": 0.03299,
+        "ci95": [
+         -0.067,
+         0.1453
+        ],
+        "sd": 0.05181,
+        "mde95": 0.0852,
+        "p_gt_0": 0.7225,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.40895,
+        "b": 0.37597,
+        "delta": 0.03299,
+        "ci95": [
+         -0.067,
+         0.1453
+        ],
+        "sd": 0.05181,
+        "mde95": 0.0852,
+        "p_gt_0": 0.7225,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.86462,
+        "b": 0.87,
+        "delta": -0.00538,
+        "ci95": [
+         -0.0572,
+         0.0445
+        ],
+        "sd": 0.02561,
+        "mde95": 0.0421,
+        "p_gt_0": 0.4125,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 75,
+        "a": 1.5451,
+        "b": 2.1722,
+        "delta": -0.62714,
+        "ci95": [
+         -0.8448,
+         -0.4
+        ],
+        "sd": 0.11371,
+        "mde95": 0.187,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 75,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": [
+         "pit|2025"
+        ],
+        "rows_in_kept_groups": 75,
+        "min_group_rows": 20,
+        "a": 0.40895,
+        "b": 0.42166,
+        "delta": -0.0127,
+        "ci95": [
+         -0.107,
+         0.0738
+        ],
+        "sd": 0.04514,
+        "mde95": 0.0743,
+        "p_gt_0": 0.382,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.40895,
+        "b": 0.42166,
+        "delta": -0.0127,
+        "ci95": [
+         -0.107,
+         0.0738
+        ],
+        "sd": 0.04514,
+        "mde95": 0.0743,
+        "p_gt_0": 0.382,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.86462,
+        "b": 0.86308,
+        "delta": 0.00154,
+        "ci95": [
+         -0.0614,
+         0.0627
+        ],
+        "sd": 0.03099,
+        "mde95": 0.051,
+        "p_gt_0": 0.5155,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 75,
+        "a": 1.5451,
+        "b": 1.7447,
+        "delta": -0.19959,
+        "ci95": [
+         -0.3722,
+         -0.0255
+        ],
+        "sd": 0.08832,
+        "mde95": 0.1453,
+        "p_gt_0": 0.0135,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 75,
+        "status": "derived",
+        "reading": "development only; CI95 below zero"
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "statistic": "within",
+        "label": "within (side, vintage) Spearman, size-weighted",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": [
+         "pit|2025"
+        ],
+        "rows_in_kept_groups": 75,
+        "min_group_rows": 20,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "pooled": {
+        "statistic": "pooled",
+        "label": "pooled Spearman after the identical output map",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.40895,
+        "b": 0.40895,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "auc": {
+        "statistic": "auc",
+        "label": "contributor AUC after the identical output map, pooled",
+        "n": 75,
+        "n_clusters": 75,
+        "groups_kept": null,
+        "rows_in_kept_groups": null,
+        "min_group_rows": null,
+        "a": 0.86462,
+        "b": 0.86462,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.0,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       },
+       "mae": {
+        "statistic": "mae",
+        "label": "MAE of the priced grade against the outcome",
+        "n": 75,
+        "a": 1.5451,
+        "b": 1.5451,
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "p_gt_0": 0.987,
+        "B": 2000,
+        "B_used": 2000,
+        "seed": 20260906,
+        "estimator": "E_cond",
+        "ci95_estimator": "E_cond, paired, player-clustered",
+        "n_clusters": 75,
+        "status": "derived",
+        "reading": "development only; CI95 spans zero"
+       }
+      }
+     }
+    }
+   },
+   "frame_version": "vm2",
+   "receipts": {
+    "hit|2025": {
+     "consensus_only": false,
+     "skill_keys": [
+      "tool_hit"
+     ],
+     "timing_keys": [
+      "level_rank"
+     ],
+     "w_skill": 0.908861,
+     "w_time": 0.202573,
+     "n_train": 1889,
+     "n_scored": 72
+    },
+    "pit|2025": {
+     "consensus_only": true,
+     "skill_keys": null,
+     "timing_keys": null,
+     "w_skill": 0.0,
+     "w_time": 0.0,
+     "n_train": 1981,
+     "n_scored": 75
+    }
+   },
+   "fold_deltas_vs_v2": {
+    "hit|2025": {
+     "n": 72,
+     "delta": 0.0,
+     "sign": 0
+    },
+    "pit|2025": {
+     "n": 75,
+     "delta": 0.0,
+     "sign": 0
+    }
+   },
+   "fold_deltas_vs_consensus": {
+    "hit|2025": {
+     "n": 72,
+     "delta": 0.0829,
+     "sign": 1
+    },
+    "pit|2025": {
+     "n": 75,
+     "delta": 0.0,
+     "sign": 0
+    }
+   },
+   "cells": {
+    "hit:C": {
+     "n": 11,
+     "n_players": 11,
+     "status": "under 20 rows; not scored"
+    },
+    "hit:IF": {
+     "n": 35,
+     "n_players": 35,
+     "raters": {
+      "efv_v5": {
+       "within": 0.4963,
+       "n": 35
+      },
+      "efv_v2": {
+       "within": 0.4963,
+       "n": 35
+      },
+      "prospx_consensus": {
+       "within": 0.3345,
+       "n": 35
+      },
+      "mlb_pipeline": {
+       "within": 0.4284,
+       "n": 35
+      },
+      "fangraphs": {
+       "within": 0.3595,
+       "n": 35
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 35,
+      "delta": 0.0,
+      "ci95": null,
+      "mde95": null,
+      "status": "not derived: below the floor gate or undefined",
+      "reading": "development only; no interval"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 35,
+      "delta": 0.16175,
+      "ci95": null,
+      "mde95": null,
+      "status": "not derived: below the floor gate or undefined",
+      "reading": "development only; no interval"
+     }
+    },
+    "hit:OF": {
+     "n": 26,
+     "n_players": 26,
+     "raters": {
+      "efv_v5": {
+       "within": 0.2202,
+       "n": 26
+      },
+      "efv_v2": {
+       "within": 0.2202,
+       "n": 26
+      },
+      "prospx_consensus": {
+       "within": 0.0429,
+       "n": 26
+      },
+      "mlb_pipeline": {
+       "within": -0.0162,
+       "n": 26
+      },
+      "fangraphs": {
+       "within": 0.2156,
+       "n": 26
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 26,
+      "delta": 0.0,
+      "ci95": null,
+      "mde95": null,
+      "status": "not derived: below the floor gate or undefined",
+      "reading": "development only; no interval"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 26,
+      "delta": 0.17733,
+      "ci95": null,
+      "mde95": null,
+      "status": "not derived: below the floor gate or undefined",
+      "reading": "development only; no interval"
+     }
+    },
+    "pit:pit": {
+     "n": 75,
+     "n_players": 75,
+     "raters": {
+      "efv_v5": {
+       "within": 0.409,
+       "n": 75
+      },
+      "efv_v2": {
+       "within": 0.409,
+       "n": 75
+      },
+      "prospx_consensus": {
+       "within": 0.409,
+       "n": 75
+      },
+      "mlb_pipeline": {
+       "within": 0.376,
+       "n": 75
+      },
+      "fangraphs": {
+       "within": 0.4217,
+       "n": 75
+      }
+     },
+     "v5_vs_efv_v2": {
+      "n": 75,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "mde95": 0.0,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     },
+     "v5_vs_prospx_consensus": {
+      "n": 75,
+      "delta": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "mde95": 0.0,
+      "status": "derived",
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "group_cells": {
+    "g5_hit_A_all_all_woba": {
+     "n": 2,
+     "n_players": 2,
+     "status": "under 20 rows; not scored"
+    },
+    "g5_hit_A_all_all_slg": {
+     "n": 2,
+     "n_players": 2,
+     "status": "under 20 rows; not scored"
+    }
+   },
+   "role": "spent",
+   "note": "eFV v5 group drivers at the committed configuration on the spent reserved frames (read once by v3 on 2026-10-08); chooses and tunes nothing; not a look",
+   "window": [
+    2025,
+    2025
+   ],
+   "label": "spent frame, read after the 10-08 confirmation",
+   "outcome": "career WAR to date (2025 and 2026 seasons)",
+   "e_refit": {
+    "B": 200,
+    "B_used": 200,
+    "seed": 20260907,
+    "estimator": "E_refit",
+    "what": "the pool resampled by player with replacement; every fold of v3 and V2 refit on the drawn training rows (the fold's drawn test players left out) and scored on the drawn test rows; consensus, Pipeline and FanGraphs fixed",
+    "ci95": "2.5th and 97.5th percentile of the draws; mde95 = 1.645 x sd (one-sided)",
+    "elapsed_s": 269.3,
+    "legs": {
+     "both": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.04061,
+        "ci95": [
+         -0.083,
+         0.1251
+        ],
+        "sd": 0.05632,
+        "mde95": 0.0926,
+        "boot_mean": 0.00558,
+        "B_used": 200,
+        "p_gt_0": 0.48,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.04411,
+        "ci95": [
+         -0.0803,
+         0.1371
+        ],
+        "sd": 0.0598,
+        "mde95": 0.0984,
+        "boot_mean": 0.01055,
+        "B_used": 200,
+        "p_gt_0": 0.495,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.05315,
+        "ci95": [
+         -0.0538,
+         0.11
+        ],
+        "sd": 0.0429,
+        "mde95": 0.0706,
+        "boot_mean": 0.0244,
+        "B_used": 200,
+        "p_gt_0": 0.7,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.05951,
+        "ci95": [
+         -0.2084,
+         0.168
+        ],
+        "sd": 0.09346,
+        "mde95": 0.1537,
+        "boot_mean": -0.01024,
+        "B_used": 200,
+        "p_gt_0": 0.44,
+        "resolvable": false
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": 0.05968,
+        "ci95": [
+         -0.0994,
+         0.1566
+        ],
+        "sd": 0.06757,
+        "mde95": 0.1112,
+        "boot_mean": 0.01818,
+        "B_used": 200,
+        "p_gt_0": 0.595,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.05075,
+        "ci95": [
+         -0.1165,
+         0.1673
+        ],
+        "sd": 0.07005,
+        "mde95": 0.1152,
+        "boot_mean": 0.01508,
+        "B_used": 200,
+        "p_gt_0": 0.58,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.04921,
+        "ci95": [
+         -0.0648,
+         0.1202
+        ],
+        "sd": 0.04973,
+        "mde95": 0.0818,
+        "boot_mean": 0.02384,
+        "B_used": 200,
+        "p_gt_0": 0.655,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -1.20675,
+        "ci95": [
+         -1.4264,
+         -0.8794
+        ],
+        "sd": 0.14632,
+        "mde95": 0.2407,
+        "boot_mean": -1.13284,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": 0.01705,
+        "ci95": [
+         -0.1276,
+         0.1001
+        ],
+        "sd": 0.06665,
+        "mde95": 0.1096,
+        "boot_mean": -0.01825,
+        "B_used": 200,
+        "p_gt_0": 0.375,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.04435,
+        "ci95": [
+         -0.1385,
+         0.1436
+        ],
+        "sd": 0.07598,
+        "mde95": 0.125,
+        "boot_mean": -0.00756,
+        "B_used": 200,
+        "p_gt_0": 0.41,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.06299,
+        "ci95": [
+         -0.0737,
+         0.1227
+        ],
+        "sd": 0.05255,
+        "mde95": 0.0864,
+        "boot_mean": 0.01733,
+        "B_used": 200,
+        "p_gt_0": 0.625,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.38038,
+        "ci95": [
+         -0.5446,
+         -0.1075
+        ],
+        "sd": 0.11794,
+        "mde95": 0.194,
+        "boot_mean": -0.3234,
+        "B_used": 200,
+        "p_gt_0": 0.01,
+        "resolvable": true
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.04061,
+        "ci95": [
+         -0.083,
+         0.1251
+        ],
+        "sd": 0.05632,
+        "mde95": 0.0926,
+        "boot_mean": 0.00558,
+        "B_used": 200,
+        "p_gt_0": 0.48,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.04411,
+        "ci95": [
+         -0.0803,
+         0.1371
+        ],
+        "sd": 0.0598,
+        "mde95": 0.0984,
+        "boot_mean": 0.01055,
+        "B_used": 200,
+        "p_gt_0": 0.495,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.05315,
+        "ci95": [
+         -0.0538,
+         0.11
+        ],
+        "sd": 0.0429,
+        "mde95": 0.0706,
+        "boot_mean": 0.0244,
+        "B_used": 200,
+        "p_gt_0": 0.7,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.05951,
+        "ci95": [
+         -0.2084,
+         0.168
+        ],
+        "sd": 0.09346,
+        "mde95": 0.1537,
+        "boot_mean": -0.01024,
+        "B_used": 200,
+        "p_gt_0": 0.44,
+        "resolvable": false
+       }
+      }
+     },
+     "hit": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.0829,
+        "ci95": [
+         -0.1684,
+         0.2473
+        ],
+        "sd": 0.11383,
+        "mde95": 0.1873,
+        "boot_mean": 0.01053,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.08121,
+        "ci95": [
+         -0.1606,
+         0.2354
+        ],
+        "sd": 0.11358,
+        "mde95": 0.1868,
+        "boot_mean": 0.00958,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.10161,
+        "ci95": [
+         -0.1112,
+         0.2197
+        ],
+        "sd": 0.08583,
+        "mde95": 0.1412,
+        "boot_mean": 0.04468,
+        "B_used": 200,
+        "p_gt_0": 0.665,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.12151,
+        "ci95": [
+         -0.4241,
+         0.3704
+        ],
+        "sd": 0.1878,
+        "mde95": 0.3089,
+        "boot_mean": -0.02274,
+        "B_used": 200,
+        "p_gt_0": 0.445,
+        "resolvable": false
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": 0.0875,
+        "ci95": [
+         -0.1904,
+         0.2395
+        ],
+        "sd": 0.12221,
+        "mde95": 0.201,
+        "boot_mean": 0.0122,
+        "B_used": 200,
+        "p_gt_0": 0.505,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.0858,
+        "ci95": [
+         -0.1866,
+         0.2419
+        ],
+        "sd": 0.12213,
+        "mde95": 0.2009,
+        "boot_mean": 0.01125,
+        "B_used": 200,
+        "p_gt_0": 0.495,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.12016,
+        "ci95": [
+         -0.1023,
+         0.2538
+        ],
+        "sd": 0.09185,
+        "mde95": 0.1511,
+        "boot_mean": 0.06293,
+        "B_used": 200,
+        "p_gt_0": 0.75,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -1.81052,
+        "ci95": [
+         -2.2137,
+         -1.1825
+        ],
+        "sd": 0.26375,
+        "mde95": 0.4339,
+        "boot_mean": -1.6868,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": 0.04805,
+        "ci95": [
+         -0.2384,
+         0.2044
+        ],
+        "sd": 0.12782,
+        "mde95": 0.2103,
+        "boot_mean": -0.02482,
+        "B_used": 200,
+        "p_gt_0": 0.45,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.04635,
+        "ci95": [
+         -0.2404,
+         0.2162
+        ],
+        "sd": 0.12821,
+        "mde95": 0.2109,
+        "boot_mean": -0.02577,
+        "B_used": 200,
+        "p_gt_0": 0.43,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.08226,
+        "ci95": [
+         -0.1178,
+         0.1853
+        ],
+        "sd": 0.08589,
+        "mde95": 0.1413,
+        "boot_mean": 0.02452,
+        "B_used": 200,
+        "p_gt_0": 0.57,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.56869,
+        "ci95": [
+         -0.8824,
+         -0.0214
+        ],
+        "sd": 0.22158,
+        "mde95": 0.3645,
+        "boot_mean": -0.45576,
+        "B_used": 200,
+        "p_gt_0": 0.02,
+        "resolvable": true
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.0829,
+        "ci95": [
+         -0.1684,
+         0.2473
+        ],
+        "sd": 0.11383,
+        "mde95": 0.1873,
+        "boot_mean": 0.01053,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.08121,
+        "ci95": [
+         -0.1606,
+         0.2354
+        ],
+        "sd": 0.11358,
+        "mde95": 0.1868,
+        "boot_mean": 0.00958,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.10161,
+        "ci95": [
+         -0.1112,
+         0.2197
+        ],
+        "sd": 0.08583,
+        "mde95": 0.1412,
+        "boot_mean": 0.04468,
+        "B_used": 200,
+        "p_gt_0": 0.665,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.12151,
+        "ci95": [
+         -0.4241,
+         0.3704
+        ],
+        "sd": 0.1878,
+        "mde95": 0.3089,
+        "boot_mean": -0.02274,
+        "B_used": 200,
+        "p_gt_0": 0.445,
+        "resolvable": false
+       }
+      }
+     },
+     "pit": {
+      "v5_vs_efv_v2": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0
+        ],
+        "sd": 0.0,
+        "mde95": 0.0,
+        "boot_mean": 0.0,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0176
+        ],
+        "sd": 0.00658,
+        "mde95": 0.0108,
+        "boot_mean": 0.00081,
+        "B_used": 200,
+        "p_gt_0": 0.045,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         -0.0001,
+         0.0022
+        ],
+        "sd": 0.00664,
+        "mde95": 0.0109,
+        "boot_mean": 0.00045,
+        "B_used": 200,
+        "p_gt_0": 0.03,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0104
+        ],
+        "sd": 0.00556,
+        "mde95": 0.0091,
+        "boot_mean": 0.00064,
+        "B_used": 200,
+        "p_gt_0": 0.035,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         -0.0,
+         0.029
+        ],
+        "sd": 0.01629,
+        "mde95": 0.0268,
+        "boot_mean": 0.00198,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       }
+      },
+      "v5_vs_mlb_pipeline": {
+       "spearman": {
+        "delta": 0.03299,
+        "ci95": [
+         -0.0823,
+         0.1263
+        ],
+        "sd": 0.05716,
+        "mde95": 0.094,
+        "boot_mean": 0.02393,
+        "B_used": 200,
+        "p_gt_0": 0.63,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.03299,
+        "ci95": [
+         -0.0823,
+         0.1263
+        ],
+        "sd": 0.05732,
+        "mde95": 0.0943,
+        "boot_mean": 0.02358,
+        "B_used": 200,
+        "p_gt_0": 0.625,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": -0.00538,
+        "ci95": [
+         -0.066,
+         0.0667
+        ],
+        "sd": 0.03024,
+        "mde95": 0.0497,
+        "boot_mean": -0.00685,
+        "B_used": 200,
+        "p_gt_0": 0.36,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.62714,
+        "ci95": [
+         -0.8648,
+         -0.363
+        ],
+        "sd": 0.13302,
+        "mde95": 0.2188,
+        "boot_mean": -0.59588,
+        "B_used": 200,
+        "p_gt_0": 0.0,
+        "resolvable": true
+       }
+      },
+      "v5_vs_fangraphs": {
+       "spearman": {
+        "delta": -0.0127,
+        "ci95": [
+         -0.116,
+         0.0674
+        ],
+        "sd": 0.0483,
+        "mde95": 0.0795,
+        "boot_mean": -0.01174,
+        "B_used": 200,
+        "p_gt_0": 0.415,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": -0.0127,
+        "ci95": [
+         -0.1161,
+         0.0674
+        ],
+        "sd": 0.04808,
+        "mde95": 0.0791,
+        "boot_mean": -0.0121,
+        "B_used": 200,
+        "p_gt_0": 0.415,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.00154,
+        "ci95": [
+         -0.0704,
+         0.0616
+        ],
+        "sd": 0.03209,
+        "mde95": 0.0528,
+        "boot_mean": 0.00336,
+        "B_used": 200,
+        "p_gt_0": 0.555,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": -0.19959,
+        "ci95": [
+         -0.3909,
+         -0.012
+        ],
+        "sd": 0.09657,
+        "mde95": 0.1589,
+        "boot_mean": -0.19649,
+        "B_used": 200,
+        "p_gt_0": 0.02,
+        "resolvable": true
+       }
+      },
+      "efv_v2_vs_prospx_consensus": {
+       "spearman": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0176
+        ],
+        "sd": 0.00658,
+        "mde95": 0.0108,
+        "boot_mean": 0.00081,
+        "B_used": 200,
+        "p_gt_0": 0.045,
+        "resolvable": false
+       },
+       "pooled": {
+        "delta": 0.0,
+        "ci95": [
+         -0.0001,
+         0.0022
+        ],
+        "sd": 0.00664,
+        "mde95": 0.0109,
+        "boot_mean": 0.00045,
+        "B_used": 200,
+        "p_gt_0": 0.03,
+        "resolvable": false
+       },
+       "auc": {
+        "delta": 0.0,
+        "ci95": [
+         0.0,
+         0.0104
+        ],
+        "sd": 0.00556,
+        "mde95": 0.0091,
+        "boot_mean": 0.00064,
+        "B_used": 200,
+        "p_gt_0": 0.035,
+        "resolvable": false
+       },
+       "mae": {
+        "delta": 0.0,
+        "ci95": [
+         -0.0,
+         0.029
+        ],
+        "sd": 0.01629,
+        "mde95": 0.0268,
+        "boot_mean": 0.00198,
+        "B_used": 200,
+        "p_gt_0": 0.475,
+        "resolvable": false
+       }
+      }
+     }
+    }
+   },
+   "verdict": "eFV v5 reads +0.0406 within over consensus; not resolved (E_refit CI95 spans zero); vs served eFV (V2) +0.0000 (E_refit CI95 [0.0, 0.0]); spent frame, read after the 10-08 confirmation"
+  }
+ },
+ "elapsed_s": 1165.2,
+ "ship_rule": {
+  "rule": "EW2-10: ship if v5 beats served eFV (V2) in within Spearman on lv_dev, vm_dev, R-LV and R-VM, point estimates, pooled over sides",
+  "frames": {
+   "lv_dev": 0.00329,
+   "vm_dev": 0.0,
+   "lv_res": -0.00295,
+   "vm_pros": 0.0
+  },
+  "ships": false,
+  "vs_consensus_spent": {
+   "lv_res": {
+    "delta": -0.00133,
+    "e_refit_ci95": [
+     -0.0246,
+     0.0162
+    ],
+    "beats_consensus_resolved": false
+   },
+   "vm_pros": {
+    "delta": 0.04061,
+    "e_refit_ci95": [
+     -0.083,
+     0.1251
+    ],
+    "beats_consensus_resolved": false
+   }
+  }
+ }
+}
