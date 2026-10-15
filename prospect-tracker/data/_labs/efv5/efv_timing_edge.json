@@ -1,0 +1,2665 @@
+{
+ "schema": 1,
+ "tool": "tools/efv_timing_edge.py",
+ "item": "EFV_BEAT_TIMING_EDGE",
+ "doc": "docs/efv-v2/EFV_BEAT_TIMING_EDGE.md",
+ "registration_commit": "d9820e84",
+ "code_commit": "ee675cdc3a3de59d172288015b59054989fb7e63",
+ "generated_at": "2026-10-15T20:57:11Z",
+ "role": "development",
+ "served": false,
+ "label": {
+  "lv_dev": "W3 (fWAR, frozen label of the development read)",
+  "vm_dev": "career WAR to date (the development read's label)"
+ },
+ "read_dates": [
+  "04-30",
+  "05-31",
+  "06-30",
+  "07-31",
+  "08-31",
+  "09-30"
+ ],
+ "B": 2000,
+ "seed": 20261015,
+ "min_group_rows": 20,
+ "frames": {
+  "lv_dev": {
+   "n_rows": 16180,
+   "n_players": 1734,
+   "groups": {
+    "hit|2017|2017-04-30": 467,
+    "hit|2017|2017-05-31": 464,
+    "hit|2017|2017-06-30": 457,
+    "hit|2017|2017-07-31": 453,
+    "hit|2017|2017-08-31": 448,
+    "hit|2017|2017-09-30": 439,
+    "hit|2018|2018-04-30": 438,
+    "hit|2018|2018-05-31": 431,
+    "hit|2018|2018-06-30": 428,
+    "hit|2018|2018-07-31": 425,
+    "hit|2018|2018-08-31": 418,
+    "hit|2018|2018-09-30": 412,
+    "hit|2019|2019-04-30": 524,
+    "hit|2019|2019-05-31": 510,
+    "hit|2019|2019-06-30": 500,
+    "hit|2019|2019-07-31": 496,
+    "hit|2019|2019-08-31": 487,
+    "hit|2019|2019-09-30": 480,
+    "pit|2017|2017-04-30": 466,
+    "pit|2017|2017-05-31": 464,
+    "pit|2017|2017-06-30": 459,
+    "pit|2017|2017-07-31": 457,
+    "pit|2017|2017-08-31": 453,
+    "pit|2017|2017-09-30": 446,
+    "pit|2018|2018-04-30": 432,
+    "pit|2018|2018-05-31": 425,
+    "pit|2018|2018-06-30": 416,
+    "pit|2018|2018-07-31": 410,
+    "pit|2018|2018-08-31": 399,
+    "pit|2018|2018-09-30": 396,
+    "pit|2019|2019-04-30": 474,
+    "pit|2019|2019-05-31": 464,
+    "pit|2019|2019-06-30": 450,
+    "pit|2019|2019-07-31": 443,
+    "pit|2019|2019-08-31": 430,
+    "pit|2019|2019-09-30": 419
+   },
+   "primary": {
+    "a": "v5c_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01195,
+    "ci95": [
+     -0.0409,
+     0.0169
+    ],
+    "lb95_one_sided": -0.0366,
+    "sd": 0.01475,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.14401,
+    "within_b": 0.15596,
+    "p_gt_0": 0.201,
+    "status": "derived"
+   },
+   "primary_club": {
+    "a": "v5c_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "club",
+    "n": 16180,
+    "n_clusters": 30,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01195,
+    "ci95": [
+     -0.0431,
+     0.0198
+    ],
+    "lb95_one_sided": -0.0379,
+    "sd": 0.0159,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.14401,
+    "within_b": 0.15596,
+    "p_gt_0": 0.2345,
+    "status": "derived"
+   },
+   "v2_d_vs_cons_d": {
+    "a": "v2_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.00706,
+    "ci95": [
+     -0.0267,
+     0.0138
+    ],
+    "lb95_one_sided": -0.024,
+    "sd": 0.01031,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.1489,
+    "within_b": 0.15596,
+    "p_gt_0": 0.2395,
+    "status": "derived"
+   },
+   "control_v5c_pre_vs_cons_pre": {
+    "a": "v5c_pre",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01577,
+    "ci95": [
+     -0.0453,
+     0.0145
+    ],
+    "lb95_one_sided": -0.0412,
+    "sd": 0.01539,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.13718,
+    "within_b": 0.15295,
+    "p_gt_0": 0.1495,
+    "status": "derived"
+   },
+   "control_v2_pre_vs_cons_pre": {
+    "a": "v2_pre",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01389,
+    "ci95": [
+     -0.0352,
+     0.0079
+    ],
+    "lb95_one_sided": -0.0317,
+    "sd": 0.01118,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.13906,
+    "within_b": 0.15295,
+    "p_gt_0": 0.105,
+    "status": "derived"
+   },
+   "cons_d_vs_cons_pre": {
+    "a": "cons_d",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": 0.00301,
+    "ci95": [
+     -0.0021,
+     0.008
+    ],
+    "lb95_one_sided": -0.0011,
+    "sd": 0.00258,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.15596,
+    "within_b": 0.15295,
+    "p_gt_0": 0.8835,
+    "status": "derived"
+   },
+   "v5c_d_vs_v5c_pre": {
+    "a": "v5c_d",
+    "b": "v5c_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": 0.00683,
+    "ci95": [
+     -0.0015,
+     0.015
+    ],
+    "lb95_one_sided": -0.0003,
+    "sd": 0.00431,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.14401,
+    "within_b": 0.13718,
+    "p_gt_0": 0.942,
+    "status": "derived"
+   },
+   "by_side": {
+    "hit": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 8277,
+     "n_clusters": 877,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.03787,
+     "ci95": [
+      -0.0884,
+      0.0155
+     ],
+     "lb95_one_sided": -0.0817,
+     "sd": 0.02657,
+     "B_used": 2000,
+     "groups_kept": 18,
+     "rows_in_kept_groups": 8277,
+     "within_a": 0.14444,
+     "within_b": 0.18231,
+     "p_gt_0": 0.0815,
+     "status": "derived"
+    },
+    "pit": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 7903,
+     "n_clusters": 857,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.0152,
+     "ci95": [
+      -0.0081,
+      0.0384
+     ],
+     "lb95_one_sided": -0.0046,
+     "sd": 0.01207,
+     "B_used": 2000,
+     "groups_kept": 18,
+     "rows_in_kept_groups": 7903,
+     "within_a": 0.14357,
+     "within_b": 0.12837,
+     "p_gt_0": 0.8905,
+     "status": "derived"
+    }
+   },
+   "by_month": {
+    "04": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2801,
+     "n_clusters": 1734,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.00631,
+     "ci95": [
+      -0.0346,
+      0.0222
+     ],
+     "lb95_one_sided": -0.0301,
+     "sd": 0.01477,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2801,
+     "within_a": 0.16419,
+     "within_b": 0.17051,
+     "p_gt_0": 0.333,
+     "status": "derived"
+    },
+    "05": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2758,
+     "n_clusters": 1726,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.0089,
+     "ci95": [
+      -0.0403,
+      0.0226
+     ],
+     "lb95_one_sided": -0.0355,
+     "sd": 0.01566,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2758,
+     "within_a": 0.14929,
+     "within_b": 0.15818,
+     "p_gt_0": 0.273,
+     "status": "derived"
+    },
+    "06": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2710,
+     "n_clusters": 1711,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01258,
+     "ci95": [
+      -0.0411,
+      0.0171
+     ],
+     "lb95_one_sided": -0.0373,
+     "sd": 0.01499,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2710,
+     "within_a": 0.1408,
+     "within_b": 0.15338,
+     "p_gt_0": 0.203,
+     "status": "derived"
+    },
+    "07": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2684,
+     "n_clusters": 1703,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01137,
+     "ci95": [
+      -0.0406,
+      0.0184
+     ],
+     "lb95_one_sided": -0.0373,
+     "sd": 0.01549,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2684,
+     "within_a": 0.14364,
+     "within_b": 0.15501,
+     "p_gt_0": 0.23,
+     "status": "derived"
+    },
+    "08": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2635,
+     "n_clusters": 1686,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01438,
+     "ci95": [
+      -0.0471,
+      0.016
+     ],
+     "lb95_one_sided": -0.0413,
+     "sd": 0.01557,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2635,
+     "within_a": 0.13883,
+     "within_b": 0.15321,
+     "p_gt_0": 0.1665,
+     "status": "derived"
+    },
+    "09": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 2592,
+     "n_clusters": 1661,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01875,
+     "ci95": [
+      -0.0489,
+      0.0129
+     ],
+     "lb95_one_sided": -0.0442,
+     "sd": 0.01568,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 2592,
+     "within_a": 0.12561,
+     "within_b": 0.14436,
+     "p_gt_0": 0.1195,
+     "status": "derived"
+    }
+   },
+   "by_year": {
+    "2017": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 5473,
+     "n_clusters": 933,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.0154,
+     "ci95": [
+      -0.0548,
+      0.0253
+     ],
+     "lb95_one_sided": -0.0488,
+     "sd": 0.02046,
+     "B_used": 2000,
+     "groups_kept": 12,
+     "rows_in_kept_groups": 5473,
+     "within_a": 0.12007,
+     "within_b": 0.13546,
+     "p_gt_0": 0.2285,
+     "status": "derived"
+    },
+    "2018": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 5030,
+     "n_clusters": 870,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01157,
+     "ci95": [
+      -0.0588,
+      0.0386
+     ],
+     "lb95_one_sided": -0.0515,
+     "sd": 0.02536,
+     "B_used": 2000,
+     "groups_kept": 12,
+     "rows_in_kept_groups": 5030,
+     "within_a": 0.16135,
+     "within_b": 0.17292,
+     "p_gt_0": 0.337,
+     "status": "derived"
+    },
+    "2019": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 5677,
+     "n_clusters": 998,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.00896,
+     "ci95": [
+      -0.0495,
+      0.0298
+     ],
+     "lb95_one_sided": -0.0427,
+     "sd": 0.01991,
+     "B_used": 2000,
+     "groups_kept": 12,
+     "rows_in_kept_groups": 5677,
+     "within_a": 0.15174,
+     "within_b": 0.1607,
+     "p_gt_0": 0.332,
+     "status": "derived"
+    }
+   },
+   "arrival_r3": {
+    "a": "v5c_d",
+    "b": "cons_d",
+    "label": "r3",
+    "cluster": "key",
+    "n": 16180,
+    "n_clusters": 1734,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": 0.00312,
+    "ci95": [
+     -0.0253,
+     0.0322
+    ],
+    "lb95_one_sided": -0.02,
+    "sd": 0.0147,
+    "B_used": 2000,
+    "groups_kept": 36,
+    "rows_in_kept_groups": 16180,
+    "within_a": 0.35356,
+    "within_b": 0.35044,
+    "p_gt_0": 0.583,
+    "status": "derived"
+   },
+   "elapsed_s": 380.8
+  },
+  "vm_dev": {
+   "n_rows": 2114,
+   "n_players": 659,
+   "groups": {
+    "hit|2017|2017-04-30": 27,
+    "hit|2017|2017-05-31": 24,
+    "hit|2017|2017-06-30": 18,
+    "hit|2017|2017-07-31": 14,
+    "hit|2017|2017-08-31": 9,
+    "hit|2018|2018-04-30": 25,
+    "hit|2018|2018-05-31": 18,
+    "hit|2018|2018-06-30": 15,
+    "hit|2018|2018-07-31": 12,
+    "hit|2018|2018-08-31": 5,
+    "hit|2019|2019-04-30": 42,
+    "hit|2019|2019-05-31": 28,
+    "hit|2019|2019-06-30": 18,
+    "hit|2019|2019-07-31": 14,
+    "hit|2019|2019-08-31": 5,
+    "hit|2020|2020-04-30": 54,
+    "hit|2020|2020-05-31": 54,
+    "hit|2020|2020-06-30": 54,
+    "hit|2020|2020-07-31": 44,
+    "hit|2020|2020-08-31": 19,
+    "hit|2021|2021-04-30": 31,
+    "hit|2021|2021-05-31": 22,
+    "hit|2021|2021-06-30": 17,
+    "hit|2021|2021-07-31": 10,
+    "hit|2021|2021-08-31": 7,
+    "hit|2021|2021-09-30": 1,
+    "hit|2022|2022-04-30": 78,
+    "hit|2022|2022-05-31": 61,
+    "hit|2022|2022-06-30": 47,
+    "hit|2022|2022-07-31": 37,
+    "hit|2022|2022-08-31": 23,
+    "hit|2022|2022-09-30": 2,
+    "hit|2023|2023-04-30": 60,
+    "hit|2023|2023-05-31": 51,
+    "hit|2023|2023-06-30": 38,
+    "hit|2023|2023-07-31": 27,
+    "hit|2023|2023-08-31": 12,
+    "pit|2017|2017-04-30": 15,
+    "pit|2017|2017-05-31": 14,
+    "pit|2017|2017-06-30": 11,
+    "pit|2017|2017-07-31": 10,
+    "pit|2017|2017-08-31": 7,
+    "pit|2018|2018-04-30": 32,
+    "pit|2018|2018-05-31": 26,
+    "pit|2018|2018-06-30": 18,
+    "pit|2018|2018-07-31": 12,
+    "pit|2018|2018-08-31": 2,
+    "pit|2019|2019-04-30": 51,
+    "pit|2019|2019-05-31": 42,
+    "pit|2019|2019-06-30": 28,
+    "pit|2019|2019-07-31": 22,
+    "pit|2019|2019-08-31": 10,
+    "pit|2020|2020-04-30": 77,
+    "pit|2020|2020-05-31": 77,
+    "pit|2020|2020-06-30": 77,
+    "pit|2020|2020-07-31": 56,
+    "pit|2020|2020-08-31": 19,
+    "pit|2021|2021-04-30": 54,
+    "pit|2021|2021-05-31": 41,
+    "pit|2021|2021-06-30": 28,
+    "pit|2021|2021-07-31": 25,
+    "pit|2021|2021-08-31": 16,
+    "pit|2021|2021-09-30": 3,
+    "pit|2022|2022-04-30": 42,
+    "pit|2022|2022-05-31": 26,
+    "pit|2022|2022-06-30": 23,
+    "pit|2022|2022-07-31": 21,
+    "pit|2022|2022-08-31": 13,
+    "pit|2022|2022-09-30": 3,
+    "pit|2023|2023-04-30": 71,
+    "pit|2023|2023-05-31": 55,
+    "pit|2023|2023-06-30": 32,
+    "pit|2023|2023-07-31": 21,
+    "pit|2023|2023-08-31": 11
+   },
+   "primary": {
+    "a": "v5c_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.00537,
+    "ci95": [
+     -0.0473,
+     0.0344
+    ],
+    "lb95_one_sided": -0.0402,
+    "sd": 0.02092,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.33638,
+    "within_b": 0.34175,
+    "p_gt_0": 0.4215,
+    "status": "derived"
+   },
+   "primary_club": {
+    "a": "v5c_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "club",
+    "n": 2114,
+    "n_clusters": 30,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.00537,
+    "ci95": [
+     -0.0538,
+     0.0404
+    ],
+    "lb95_one_sided": -0.0463,
+    "sd": 0.02435,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.33638,
+    "within_b": 0.34175,
+    "p_gt_0": 0.4125,
+    "status": "derived"
+   },
+   "v2_d_vs_cons_d": {
+    "a": "v2_d",
+    "b": "cons_d",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01165,
+    "ci95": [
+     -0.0463,
+     0.0238
+    ],
+    "lb95_one_sided": -0.0403,
+    "sd": 0.01813,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.3301,
+    "within_b": 0.34175,
+    "p_gt_0": 0.2885,
+    "status": "derived"
+   },
+   "control_v5c_pre_vs_cons_pre": {
+    "a": "v5c_pre",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.00783,
+    "ci95": [
+     -0.051,
+     0.0312
+    ],
+    "lb95_one_sided": -0.042,
+    "sd": 0.02058,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.33275,
+    "within_b": 0.34058,
+    "p_gt_0": 0.366,
+    "status": "derived"
+   },
+   "control_v2_pre_vs_cons_pre": {
+    "a": "v2_pre",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": -0.01258,
+    "ci95": [
+     -0.0483,
+     0.0224
+    ],
+    "lb95_one_sided": -0.0422,
+    "sd": 0.01815,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.328,
+    "within_b": 0.34058,
+    "p_gt_0": 0.264,
+    "status": "derived"
+   },
+   "cons_d_vs_cons_pre": {
+    "a": "cons_d",
+    "b": "cons_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": 0.00117,
+    "ci95": [
+     -0.0008,
+     0.0036
+    ],
+    "lb95_one_sided": -0.0005,
+    "sd": 0.00109,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.34175,
+    "within_b": 0.34058,
+    "p_gt_0": 0.8545,
+    "status": "derived"
+   },
+   "v5c_d_vs_v5c_pre": {
+    "a": "v5c_d",
+    "b": "v5c_pre",
+    "label": "y",
+    "cluster": "key",
+    "n": 2114,
+    "n_clusters": 659,
+    "B": 2000,
+    "seed": 20261015,
+    "delta": 0.00363,
+    "ci95": [
+     -0.0079,
+     0.0157
+    ],
+    "lb95_one_sided": -0.0062,
+    "sd": 0.00595,
+    "B_used": 2000,
+    "groups_kept": 42,
+    "rows_in_kept_groups": 1754,
+    "within_a": 0.33638,
+    "within_b": 0.33275,
+    "p_gt_0": 0.7425,
+    "status": "derived"
+   },
+   "by_side": {
+    "hit": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 1023,
+     "n_clusters": 317,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.04389,
+     "ci95": [
+      -0.1193,
+      0.0324
+     ],
+     "lb95_one_sided": -0.108,
+     "sd": 0.03982,
+     "B_used": 2000,
+     "groups_kept": 20,
+     "rows_in_kept_groups": 827,
+     "within_a": 0.3207,
+     "within_b": 0.36459,
+     "p_gt_0": 0.152,
+     "status": "derived"
+    },
+    "pit": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 1091,
+     "n_clusters": 342,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.02899,
+     "ci95": [
+      -0.0054,
+      0.0594
+     ],
+     "lb95_one_sided": -0.0002,
+     "sd": 0.01668,
+     "B_used": 2000,
+     "groups_kept": 22,
+     "rows_in_kept_groups": 927,
+     "within_a": 0.35037,
+     "within_b": 0.32138,
+     "p_gt_0": 0.949,
+     "status": "derived"
+    }
+   },
+   "by_month": {
+    "04": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 659,
+     "n_clusters": 659,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.01252,
+     "ci95": [
+      -0.0493,
+      0.0257
+     ],
+     "lb95_one_sided": -0.0436,
+     "sd": 0.01931,
+     "B_used": 2000,
+     "groups_kept": 13,
+     "rows_in_kept_groups": 644,
+     "within_a": 0.3431,
+     "within_b": 0.35562,
+     "p_gt_0": 0.2765,
+     "status": "derived"
+    },
+    "05": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 539,
+     "n_clusters": 539,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.00637,
+     "ci95": [
+      -0.053,
+      0.0382
+     ],
+     "lb95_one_sided": -0.0449,
+     "sd": 0.02315,
+     "B_used": 2000,
+     "groups_kept": 12,
+     "rows_in_kept_groups": 507,
+     "within_a": 0.30302,
+     "within_b": 0.30939,
+     "p_gt_0": 0.3875,
+     "status": "derived"
+    },
+    "06": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 424,
+     "n_clusters": 424,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.00665,
+     "ci95": [
+      -0.0526,
+      0.0575
+     ],
+     "lb95_one_sided": -0.0429,
+     "sd": 0.02777,
+     "B_used": 2000,
+     "groups_kept": 8,
+     "rows_in_kept_groups": 327,
+     "within_a": 0.34223,
+     "within_b": 0.33558,
+     "p_gt_0": 0.5745,
+     "status": "derived"
+    },
+    "07": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 325,
+     "n_clusters": 325,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.02067,
+     "ci95": [
+      -0.0439,
+      0.0786
+     ],
+     "lb95_one_sided": -0.0333,
+     "sd": 0.03171,
+     "B_used": 2000,
+     "groups_kept": 8,
+     "rows_in_kept_groups": 253,
+     "within_a": 0.37591,
+     "within_b": 0.35524,
+     "p_gt_0": 0.7145,
+     "status": "derived"
+    },
+    "08": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 158,
+     "n_clusters": 158,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.24081,
+     "ci95": [
+      -0.5693,
+      0.0517
+     ],
+     "lb95_one_sided": -0.5109,
+     "sd": 0.16382,
+     "B_used": 2000,
+     "groups_kept": 1,
+     "rows_in_kept_groups": 23,
+     "within_a": 0.36561,
+     "within_b": 0.60643,
+     "p_gt_0": 0.066,
+     "status": "derived"
+    },
+    "09": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 9,
+     "n_clusters": 9,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": null,
+     "ci95": null,
+     "lb95_one_sided": null,
+     "sd": null,
+     "B_used": 0,
+     "groups_kept": 0,
+     "rows_in_kept_groups": 0,
+     "status": "undefined"
+    }
+   },
+   "by_year": {
+    "2017": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 149,
+     "n_clusters": 42,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.21633,
+     "ci95": [
+      -0.5828,
+      0.1414
+     ],
+     "lb95_one_sided": -0.5028,
+     "sd": 0.1808,
+     "B_used": 2000,
+     "groups_kept": 2,
+     "rows_in_kept_groups": 51,
+     "within_a": -0.01457,
+     "within_b": 0.20176,
+     "p_gt_0": 0.124,
+     "status": "derived"
+    },
+    "2018": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 165,
+     "n_clusters": 57,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.02258,
+     "ci95": [
+      -0.1058,
+      0.0566
+     ],
+     "lb95_one_sided": -0.0892,
+     "sd": 0.04114,
+     "B_used": 2000,
+     "groups_kept": 3,
+     "rows_in_kept_groups": 83,
+     "within_a": 0.28972,
+     "within_b": 0.3123,
+     "p_gt_0": 0.277,
+     "status": "derived"
+    },
+    "2019": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 260,
+     "n_clusters": 93,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.07394,
+     "ci95": [
+      -0.0209,
+      0.1698
+     ],
+     "lb95_one_sided": -0.0084,
+     "sd": 0.04869,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 213,
+     "within_a": 0.3129,
+     "within_b": 0.23896,
+     "p_gt_0": 0.9295,
+     "status": "derived"
+    },
+    "2020": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 531,
+     "n_clusters": 131,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.06934,
+     "ci95": [
+      -0.0278,
+      0.16
+     ],
+     "lb95_one_sided": -0.0118,
+     "sd": 0.04778,
+     "B_used": 2000,
+     "groups_kept": 8,
+     "rows_in_kept_groups": 493,
+     "within_a": 0.34211,
+     "within_b": 0.27277,
+     "p_gt_0": 0.915,
+     "status": "derived"
+    },
+    "2021": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 255,
+     "n_clusters": 85,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.07921,
+     "ci95": [
+      -0.1685,
+      0.0057
+     ],
+     "lb95_one_sided": -0.15,
+     "sd": 0.04389,
+     "B_used": 2000,
+     "groups_kept": 6,
+     "rows_in_kept_groups": 201,
+     "within_a": 0.23405,
+     "within_b": 0.31326,
+     "p_gt_0": 0.035,
+     "status": "derived"
+    },
+    "2022": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 376,
+     "n_clusters": 120,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": -0.09429,
+     "ci95": [
+      -0.2123,
+      0.0154
+     ],
+     "lb95_one_sided": -0.1915,
+     "sd": 0.05697,
+     "B_used": 2000,
+     "groups_kept": 9,
+     "rows_in_kept_groups": 358,
+     "within_a": 0.48734,
+     "within_b": 0.58162,
+     "p_gt_0": 0.042,
+     "status": "derived"
+    },
+    "2023": {
+     "a": "v5c_d",
+     "b": "cons_d",
+     "label": "y",
+     "cluster": "key",
+     "n": 378,
+     "n_clusters": 131,
+     "B": 2000,
+     "seed": 20261015,
+     "delta": 0.00909,
+     "ci95": [
+      -0.0644,
+      0.0762
+     ],
+     "lb95_one_sided": -0.0528,
+     "sd": 0.03533,
+     "B_used": 2000,
+     "groups_kept": 8,
+     "rows_in_kept_groups": 355,
+     "within_a": 0.30955,
+     "within_b": 0.30046,
+     "p_gt_0": 0.601,
+     "status": "derived"
+    }
+   },
+   "elapsed_s": 92.5
+  }
+ },
+ "verdict": {
+  "rule": "pooled over read dates by row count, the one-sided 95 percent player-clustered lower bound of (eFV v5 COMBINED as of d minus consensus as published at d), within Spearman, above 0 on lv_dev AND vm_dev",
+  "lower_bounds": {
+   "lv_dev": -0.0366,
+   "vm_dev": -0.0402
+  },
+  "pass": false,
+  "verdict": "NOT PASS",
+  "spent_frames": "not opened (the document, section 9: only on a development PASS)"
+ },
+ "receipts": {
+  "parity": {
+   "lv_dev|hit|2017": 472,
+   "lv_dev|hit|2018": 450,
+   "lv_dev|hit|2019": 543,
+   "lv_dev|pit|2017": 469,
+   "lv_dev|pit|2018": 439,
+   "lv_dev|pit|2019": 489,
+   "vm_dev|hit|2017": 30,
+   "vm_dev|hit|2018": 36,
+   "vm_dev|hit|2019": 59,
+   "vm_dev|hit|2020": 54,
+   "vm_dev|hit|2021": 51,
+   "vm_dev|hit|2022": 100,
+   "vm_dev|hit|2023": 76,
+   "vm_dev|pit|2017": 16,
+   "vm_dev|pit|2018": 38,
+   "vm_dev|pit|2019": 63,
+   "vm_dev|pit|2020": 77,
+   "vm_dev|pit|2021": 75,
+   "vm_dev|pit|2022": 65,
+   "vm_dev|pit|2023": 90
+  },
+  "dropped": {},
+  "membership": {
+   "lv_dev|hit|2017|2017-04-30": {
+    "scored": 472,
+    "kept": 467,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2017|2017-05-31": {
+    "scored": 472,
+    "kept": 464,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2017|2017-06-30": {
+    "scored": 472,
+    "kept": 457,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2017|2017-07-31": {
+    "scored": 472,
+    "kept": 453,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2017|2017-08-31": {
+    "scored": 472,
+    "kept": 448,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2017|2017-09-30": {
+    "scored": 472,
+    "kept": 439,
+    "no_debut_day": 0
+   },
+   "lv_dev|hit|2018|2018-04-30": {
+    "scored": 450,
+    "kept": 438,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2018|2018-05-31": {
+    "scored": 450,
+    "kept": 431,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2018|2018-06-30": {
+    "scored": 450,
+    "kept": 428,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2018|2018-07-31": {
+    "scored": 450,
+    "kept": 425,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2018|2018-08-31": {
+    "scored": 450,
+    "kept": 418,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2018|2018-09-30": {
+    "scored": 450,
+    "kept": 412,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-04-30": {
+    "scored": 543,
+    "kept": 524,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-05-31": {
+    "scored": 543,
+    "kept": 510,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-06-30": {
+    "scored": 543,
+    "kept": 500,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-07-31": {
+    "scored": 543,
+    "kept": 496,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-08-31": {
+    "scored": 543,
+    "kept": 487,
+    "no_debut_day": 1
+   },
+   "lv_dev|hit|2019|2019-09-30": {
+    "scored": 543,
+    "kept": 480,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2017|2017-04-30": {
+    "scored": 469,
+    "kept": 466,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2017|2017-05-31": {
+    "scored": 469,
+    "kept": 464,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2017|2017-06-30": {
+    "scored": 469,
+    "kept": 459,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2017|2017-07-31": {
+    "scored": 469,
+    "kept": 457,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2017|2017-08-31": {
+    "scored": 469,
+    "kept": 453,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2017|2017-09-30": {
+    "scored": 469,
+    "kept": 446,
+    "no_debut_day": 0
+   },
+   "lv_dev|pit|2018|2018-04-30": {
+    "scored": 439,
+    "kept": 432,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2018|2018-05-31": {
+    "scored": 439,
+    "kept": 425,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2018|2018-06-30": {
+    "scored": 439,
+    "kept": 416,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2018|2018-07-31": {
+    "scored": 439,
+    "kept": 410,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2018|2018-08-31": {
+    "scored": 439,
+    "kept": 399,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2018|2018-09-30": {
+    "scored": 439,
+    "kept": 396,
+    "no_debut_day": 1
+   },
+   "lv_dev|pit|2019|2019-04-30": {
+    "scored": 489,
+    "kept": 474,
+    "no_debut_day": 2
+   },
+   "lv_dev|pit|2019|2019-05-31": {
+    "scored": 489,
+    "kept": 464,
+    "no_debut_day": 2
+   },
+   "lv_dev|pit|2019|2019-06-30": {
+    "scored": 489,
+    "kept": 450,
+    "no_debut_day": 2
+   },
+   "lv_dev|pit|2019|2019-07-31": {
+    "scored": 489,
+    "kept": 443,
+    "no_debut_day": 2
+   },
+   "lv_dev|pit|2019|2019-08-31": {
+    "scored": 489,
+    "kept": 430,
+    "no_debut_day": 2
+   },
+   "lv_dev|pit|2019|2019-09-30": {
+    "scored": 489,
+    "kept": 419,
+    "no_debut_day": 2
+   },
+   "vm_dev|hit|2017|2017-04-30": {
+    "scored": 30,
+    "kept": 27,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2017|2017-05-31": {
+    "scored": 30,
+    "kept": 24,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2017|2017-06-30": {
+    "scored": 30,
+    "kept": 18,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2017|2017-07-31": {
+    "scored": 30,
+    "kept": 14,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2017|2017-08-31": {
+    "scored": 30,
+    "kept": 9,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2017|2017-09-30": {
+    "scored": 30,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-04-30": {
+    "scored": 36,
+    "kept": 25,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-05-31": {
+    "scored": 36,
+    "kept": 18,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-06-30": {
+    "scored": 36,
+    "kept": 15,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-07-31": {
+    "scored": 36,
+    "kept": 12,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-08-31": {
+    "scored": 36,
+    "kept": 5,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2018|2018-09-30": {
+    "scored": 36,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-04-30": {
+    "scored": 59,
+    "kept": 42,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-05-31": {
+    "scored": 59,
+    "kept": 28,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-06-30": {
+    "scored": 59,
+    "kept": 18,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-07-31": {
+    "scored": 59,
+    "kept": 14,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-08-31": {
+    "scored": 59,
+    "kept": 5,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2019|2019-09-30": {
+    "scored": 59,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-04-30": {
+    "scored": 54,
+    "kept": 54,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-05-31": {
+    "scored": 54,
+    "kept": 54,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-06-30": {
+    "scored": 54,
+    "kept": 54,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-07-31": {
+    "scored": 54,
+    "kept": 44,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-08-31": {
+    "scored": 54,
+    "kept": 19,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2020|2020-09-30": {
+    "scored": 54,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-04-30": {
+    "scored": 51,
+    "kept": 31,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-05-31": {
+    "scored": 51,
+    "kept": 22,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-06-30": {
+    "scored": 51,
+    "kept": 17,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-07-31": {
+    "scored": 51,
+    "kept": 10,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-08-31": {
+    "scored": 51,
+    "kept": 7,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2021|2021-09-30": {
+    "scored": 51,
+    "kept": 1,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-04-30": {
+    "scored": 100,
+    "kept": 78,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-05-31": {
+    "scored": 100,
+    "kept": 61,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-06-30": {
+    "scored": 100,
+    "kept": 47,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-07-31": {
+    "scored": 100,
+    "kept": 37,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-08-31": {
+    "scored": 100,
+    "kept": 23,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2022|2022-09-30": {
+    "scored": 100,
+    "kept": 2,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-04-30": {
+    "scored": 76,
+    "kept": 60,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-05-31": {
+    "scored": 76,
+    "kept": 51,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-06-30": {
+    "scored": 76,
+    "kept": 38,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-07-31": {
+    "scored": 76,
+    "kept": 27,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-08-31": {
+    "scored": 76,
+    "kept": 12,
+    "no_debut_day": 0
+   },
+   "vm_dev|hit|2023|2023-09-30": {
+    "scored": 76,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-04-30": {
+    "scored": 16,
+    "kept": 15,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-05-31": {
+    "scored": 16,
+    "kept": 14,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-06-30": {
+    "scored": 16,
+    "kept": 11,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-07-31": {
+    "scored": 16,
+    "kept": 10,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-08-31": {
+    "scored": 16,
+    "kept": 7,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2017|2017-09-30": {
+    "scored": 16,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-04-30": {
+    "scored": 38,
+    "kept": 32,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-05-31": {
+    "scored": 38,
+    "kept": 26,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-06-30": {
+    "scored": 38,
+    "kept": 18,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-07-31": {
+    "scored": 38,
+    "kept": 12,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-08-31": {
+    "scored": 38,
+    "kept": 2,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2018|2018-09-30": {
+    "scored": 38,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-04-30": {
+    "scored": 63,
+    "kept": 51,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-05-31": {
+    "scored": 63,
+    "kept": 42,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-06-30": {
+    "scored": 63,
+    "kept": 28,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-07-31": {
+    "scored": 63,
+    "kept": 22,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-08-31": {
+    "scored": 63,
+    "kept": 10,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2019|2019-09-30": {
+    "scored": 63,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-04-30": {
+    "scored": 77,
+    "kept": 77,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-05-31": {
+    "scored": 77,
+    "kept": 77,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-06-30": {
+    "scored": 77,
+    "kept": 77,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-07-31": {
+    "scored": 77,
+    "kept": 56,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-08-31": {
+    "scored": 77,
+    "kept": 19,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2020|2020-09-30": {
+    "scored": 77,
+    "kept": 0,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-04-30": {
+    "scored": 75,
+    "kept": 54,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-05-31": {
+    "scored": 75,
+    "kept": 41,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-06-30": {
+    "scored": 75,
+    "kept": 28,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-07-31": {
+    "scored": 75,
+    "kept": 25,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-08-31": {
+    "scored": 75,
+    "kept": 16,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2021|2021-09-30": {
+    "scored": 75,
+    "kept": 3,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-04-30": {
+    "scored": 65,
+    "kept": 42,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-05-31": {
+    "scored": 65,
+    "kept": 26,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-06-30": {
+    "scored": 65,
+    "kept": 23,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-07-31": {
+    "scored": 65,
+    "kept": 21,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-08-31": {
+    "scored": 65,
+    "kept": 13,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2022|2022-09-30": {
+    "scored": 65,
+    "kept": 3,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-04-30": {
+    "scored": 90,
+    "kept": 71,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-05-31": {
+    "scored": 90,
+    "kept": 55,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-06-30": {
+    "scored": 90,
+    "kept": 32,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-07-31": {
+    "scored": 90,
+    "kept": 21,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-08-31": {
+    "scored": 90,
+    "kept": 11,
+    "no_debut_day": 0
+   },
+   "vm_dev|pit|2023|2023-09-30": {
+    "scored": 90,
+    "kept": 0,
+    "no_debut_day": 0
+   }
+  },
+  "points": {
+   "lv_dev|hit|2017|2017-04-30": {
+    "rows": 467,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2017|2017-05-31": {
+    "rows": 464,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2017|2017-06-30": {
+    "rows": 457,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2017|2017-07-31": {
+    "rows": 453,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2017|2017-08-31": {
+    "rows": 448,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2017|2017-09-30": {
+    "rows": 439,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2018|2018-04-30": {
+    "rows": 438,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2018|2018-05-31": {
+    "rows": 431,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2018|2018-06-30": {
+    "rows": 428,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2018|2018-07-31": {
+    "rows": 425,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2018|2018-08-31": {
+    "rows": 418,
+    "consensus_moved": 121
+   },
+   "lv_dev|hit|2018|2018-09-30": {
+    "rows": 412,
+    "consensus_moved": 121
+   },
+   "lv_dev|hit|2019|2019-04-30": {
+    "rows": 524,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2019|2019-05-31": {
+    "rows": 510,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2019|2019-06-30": {
+    "rows": 500,
+    "consensus_moved": 0
+   },
+   "lv_dev|hit|2019|2019-07-31": {
+    "rows": 496,
+    "consensus_moved": 105
+   },
+   "lv_dev|hit|2019|2019-08-31": {
+    "rows": 487,
+    "consensus_moved": 105
+   },
+   "lv_dev|hit|2019|2019-09-30": {
+    "rows": 480,
+    "consensus_moved": 103
+   },
+   "lv_dev|pit|2017|2017-04-30": {
+    "rows": 466,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2017|2017-05-31": {
+    "rows": 464,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2017|2017-06-30": {
+    "rows": 459,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2017|2017-07-31": {
+    "rows": 457,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2017|2017-08-31": {
+    "rows": 453,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2017|2017-09-30": {
+    "rows": 446,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2018|2018-04-30": {
+    "rows": 432,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2018|2018-05-31": {
+    "rows": 425,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2018|2018-06-30": {
+    "rows": 416,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2018|2018-07-31": {
+    "rows": 410,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2018|2018-08-31": {
+    "rows": 399,
+    "consensus_moved": 108
+   },
+   "lv_dev|pit|2018|2018-09-30": {
+    "rows": 396,
+    "consensus_moved": 105
+   },
+   "lv_dev|pit|2019|2019-04-30": {
+    "rows": 474,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2019|2019-05-31": {
+    "rows": 464,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2019|2019-06-30": {
+    "rows": 450,
+    "consensus_moved": 0
+   },
+   "lv_dev|pit|2019|2019-07-31": {
+    "rows": 443,
+    "consensus_moved": 98
+   },
+   "lv_dev|pit|2019|2019-08-31": {
+    "rows": 430,
+    "consensus_moved": 94
+   },
+   "lv_dev|pit|2019|2019-09-30": {
+    "rows": 419,
+    "consensus_moved": 92
+   },
+   "vm_dev|hit|2017|2017-04-30": {
+    "rows": 27,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2017|2017-05-31": {
+    "rows": 24,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2017|2017-06-30": {
+    "rows": 18,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2017|2017-07-31": {
+    "rows": 14,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2017|2017-08-31": {
+    "rows": 9,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2018|2018-04-30": {
+    "rows": 25,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2018|2018-05-31": {
+    "rows": 18,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2018|2018-06-30": {
+    "rows": 15,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2018|2018-07-31": {
+    "rows": 12,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2018|2018-08-31": {
+    "rows": 5,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2019|2019-04-30": {
+    "rows": 42,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2019|2019-05-31": {
+    "rows": 28,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2019|2019-06-30": {
+    "rows": 18,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2019|2019-07-31": {
+    "rows": 14,
+    "consensus_moved": 2
+   },
+   "vm_dev|hit|2019|2019-08-31": {
+    "rows": 5,
+    "consensus_moved": 2
+   },
+   "vm_dev|hit|2020|2020-04-30": {
+    "rows": 54,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2020|2020-05-31": {
+    "rows": 54,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2020|2020-06-30": {
+    "rows": 54,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2020|2020-07-31": {
+    "rows": 44,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2020|2020-08-31": {
+    "rows": 19,
+    "consensus_moved": 4
+   },
+   "vm_dev|hit|2021|2021-04-30": {
+    "rows": 31,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2021|2021-05-31": {
+    "rows": 22,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2021|2021-06-30": {
+    "rows": 17,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2021|2021-07-31": {
+    "rows": 10,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2021|2021-08-31": {
+    "rows": 7,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2021|2021-09-30": {
+    "rows": 1,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2022|2022-04-30": {
+    "rows": 78,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2022|2022-05-31": {
+    "rows": 61,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2022|2022-06-30": {
+    "rows": 47,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2022|2022-07-31": {
+    "rows": 37,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2022|2022-08-31": {
+    "rows": 23,
+    "consensus_moved": 3
+   },
+   "vm_dev|hit|2022|2022-09-30": {
+    "rows": 2,
+    "consensus_moved": 1
+   },
+   "vm_dev|hit|2023|2023-04-30": {
+    "rows": 60,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2023|2023-05-31": {
+    "rows": 51,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2023|2023-06-30": {
+    "rows": 38,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2023|2023-07-31": {
+    "rows": 27,
+    "consensus_moved": 0
+   },
+   "vm_dev|hit|2023|2023-08-31": {
+    "rows": 12,
+    "consensus_moved": 1
+   },
+   "vm_dev|pit|2017|2017-04-30": {
+    "rows": 15,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2017|2017-05-31": {
+    "rows": 14,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2017|2017-06-30": {
+    "rows": 11,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2017|2017-07-31": {
+    "rows": 10,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2017|2017-08-31": {
+    "rows": 7,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2018|2018-04-30": {
+    "rows": 32,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2018|2018-05-31": {
+    "rows": 26,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2018|2018-06-30": {
+    "rows": 18,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2018|2018-07-31": {
+    "rows": 12,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2018|2018-08-31": {
+    "rows": 2,
+    "consensus_moved": 2
+   },
+   "vm_dev|pit|2019|2019-04-30": {
+    "rows": 51,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2019|2019-05-31": {
+    "rows": 42,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2019|2019-06-30": {
+    "rows": 28,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2019|2019-07-31": {
+    "rows": 22,
+    "consensus_moved": 5
+   },
+   "vm_dev|pit|2019|2019-08-31": {
+    "rows": 10,
+    "consensus_moved": 2
+   },
+   "vm_dev|pit|2020|2020-04-30": {
+    "rows": 77,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2020|2020-05-31": {
+    "rows": 77,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2020|2020-06-30": {
+    "rows": 77,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2020|2020-07-31": {
+    "rows": 56,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2020|2020-08-31": {
+    "rows": 19,
+    "consensus_moved": 2
+   },
+   "vm_dev|pit|2021|2021-04-30": {
+    "rows": 54,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2021|2021-05-31": {
+    "rows": 41,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2021|2021-06-30": {
+    "rows": 28,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2021|2021-07-31": {
+    "rows": 25,
+    "consensus_moved": 7
+   },
+   "vm_dev|pit|2021|2021-08-31": {
+    "rows": 16,
+    "consensus_moved": 3
+   },
+   "vm_dev|pit|2021|2021-09-30": {
+    "rows": 3,
+    "consensus_moved": 1
+   },
+   "vm_dev|pit|2022|2022-04-30": {
+    "rows": 42,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2022|2022-05-31": {
+    "rows": 26,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2022|2022-06-30": {
+    "rows": 23,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2022|2022-07-31": {
+    "rows": 21,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2022|2022-08-31": {
+    "rows": 13,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2022|2022-09-30": {
+    "rows": 3,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2023|2023-04-30": {
+    "rows": 71,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2023|2023-05-31": {
+    "rows": 55,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2023|2023-06-30": {
+    "rows": 32,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2023|2023-07-31": {
+    "rows": 21,
+    "consensus_moved": 0
+   },
+   "vm_dev|pit|2023|2023-08-31": {
+    "rows": 11,
+    "consensus_moved": 0
+   }
+  },
+  "milb": {
+   "lv_dev|hit|2017|2017-04-30": {
+    "rows": 467,
+    "read_season_line": 355
+   },
+   "lv_dev|hit|2017|2017-05-31": {
+    "rows": 464,
+    "read_season_line": 373
+   },
+   "lv_dev|hit|2017|2017-06-30": {
+    "rows": 457,
+    "read_season_line": 410
+   },
+   "lv_dev|hit|2017|2017-07-31": {
+    "rows": 453,
+    "read_season_line": 409
+   },
+   "lv_dev|hit|2017|2017-08-31": {
+    "rows": 448,
+    "read_season_line": 406
+   },
+   "lv_dev|hit|2017|2017-09-30": {
+    "rows": 439,
+    "read_season_line": 397
+   },
+   "lv_dev|hit|2018|2018-04-30": {
+    "rows": 438,
+    "read_season_line": 323
+   },
+   "lv_dev|hit|2018|2018-05-31": {
+    "rows": 431,
+    "read_season_line": 338
+   },
+   "lv_dev|hit|2018|2018-06-30": {
+    "rows": 428,
+    "read_season_line": 380
+   },
+   "lv_dev|hit|2018|2018-07-31": {
+    "rows": 425,
+    "read_season_line": 379
+   },
+   "lv_dev|hit|2018|2018-08-31": {
+    "rows": 418,
+    "read_season_line": 373
+   },
+   "lv_dev|hit|2018|2018-09-30": {
+    "rows": 412,
+    "read_season_line": 367
+   },
+   "lv_dev|hit|2019|2019-04-30": {
+    "rows": 524,
+    "read_season_line": 370
+   },
+   "lv_dev|hit|2019|2019-05-31": {
+    "rows": 510,
+    "read_season_line": 374
+   },
+   "lv_dev|hit|2019|2019-06-30": {
+    "rows": 500,
+    "read_season_line": 429
+   },
+   "lv_dev|hit|2019|2019-07-31": {
+    "rows": 496,
+    "read_season_line": 427
+   },
+   "lv_dev|hit|2019|2019-08-31": {
+    "rows": 487,
+    "read_season_line": 423
+   },
+   "lv_dev|hit|2019|2019-09-30": {
+    "rows": 480,
+    "read_season_line": 416
+   },
+   "lv_dev|pit|2017|2017-04-30": {
+    "rows": 466,
+    "read_season_line": 333
+   },
+   "lv_dev|pit|2017|2017-05-31": {
+    "rows": 464,
+    "read_season_line": 361
+   },
+   "lv_dev|pit|2017|2017-06-30": {
+    "rows": 459,
+    "read_season_line": 397
+   },
+   "lv_dev|pit|2017|2017-07-31": {
+    "rows": 457,
+    "read_season_line": 405
+   },
+   "lv_dev|pit|2017|2017-08-31": {
+    "rows": 453,
+    "read_season_line": 405
+   },
+   "lv_dev|pit|2017|2017-09-30": {
+    "rows": 446,
+    "read_season_line": 398
+   },
+   "lv_dev|pit|2018|2018-04-30": {
+    "rows": 432,
+    "read_season_line": 304
+   },
+   "lv_dev|pit|2018|2018-05-31": {
+    "rows": 425,
+    "read_season_line": 319
+   },
+   "lv_dev|pit|2018|2018-06-30": {
+    "rows": 416,
+    "read_season_line": 352
+   },
+   "lv_dev|pit|2018|2018-07-31": {
+    "rows": 410,
+    "read_season_line": 356
+   },
+   "lv_dev|pit|2018|2018-08-31": {
+    "rows": 399,
+    "read_season_line": 349
+   },
+   "lv_dev|pit|2018|2018-09-30": {
+    "rows": 396,
+    "read_season_line": 346
+   },
+   "lv_dev|pit|2019|2019-04-30": {
+    "rows": 474,
+    "read_season_line": 327
+   },
+   "lv_dev|pit|2019|2019-05-31": {
+    "rows": 464,
+    "read_season_line": 342
+   },
+   "lv_dev|pit|2019|2019-06-30": {
+    "rows": 450,
+    "read_season_line": 370
+   },
+   "lv_dev|pit|2019|2019-07-31": {
+    "rows": 443,
+    "read_season_line": 370
+   },
+   "lv_dev|pit|2019|2019-08-31": {
+    "rows": 430,
+    "read_season_line": 361
+   },
+   "lv_dev|pit|2019|2019-09-30": {
+    "rows": 419,
+    "read_season_line": 350
+   },
+   "vm_dev|hit|2017|2017-04-30": {
+    "rows": 27,
+    "read_season_line": 26
+   },
+   "vm_dev|hit|2017|2017-05-31": {
+    "rows": 24,
+    "read_season_line": 23
+   },
+   "vm_dev|hit|2017|2017-06-30": {
+    "rows": 18,
+    "read_season_line": 17
+   },
+   "vm_dev|hit|2017|2017-07-31": {
+    "rows": 14,
+    "read_season_line": 14
+   },
+   "vm_dev|hit|2017|2017-08-31": {
+    "rows": 9,
+    "read_season_line": 9
+   },
+   "vm_dev|hit|2018|2018-04-30": {
+    "rows": 25,
+    "read_season_line": 23
+   },
+   "vm_dev|hit|2018|2018-05-31": {
+    "rows": 18,
+    "read_season_line": 18
+   },
+   "vm_dev|hit|2018|2018-06-30": {
+    "rows": 15,
+    "read_season_line": 15
+   },
+   "vm_dev|hit|2018|2018-07-31": {
+    "rows": 12,
+    "read_season_line": 12
+   },
+   "vm_dev|hit|2018|2018-08-31": {
+    "rows": 5,
+    "read_season_line": 5
+   },
+   "vm_dev|hit|2019|2019-04-30": {
+    "rows": 42,
+    "read_season_line": 41
+   },
+   "vm_dev|hit|2019|2019-05-31": {
+    "rows": 28,
+    "read_season_line": 28
+   },
+   "vm_dev|hit|2019|2019-06-30": {
+    "rows": 18,
+    "read_season_line": 18
+   },
+   "vm_dev|hit|2019|2019-07-31": {
+    "rows": 14,
+    "read_season_line": 14
+   },
+   "vm_dev|hit|2019|2019-08-31": {
+    "rows": 5,
+    "read_season_line": 5
+   },
+   "vm_dev|hit|2020|2020-04-30": {
+    "rows": 54,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2020|2020-05-31": {
+    "rows": 54,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2020|2020-06-30": {
+    "rows": 54,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2020|2020-07-31": {
+    "rows": 44,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2020|2020-08-31": {
+    "rows": 19,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2021|2021-04-30": {
+    "rows": 31,
+    "read_season_line": 0
+   },
+   "vm_dev|hit|2021|2021-05-31": {
+    "rows": 22,
+    "read_season_line": 20
+   },
+   "vm_dev|hit|2021|2021-06-30": {
+    "rows": 17,
+    "read_season_line": 16
+   },
+   "vm_dev|hit|2021|2021-07-31": {
+    "rows": 10,
+    "read_season_line": 10
+   },
+   "vm_dev|hit|2021|2021-08-31": {
+    "rows": 7,
+    "read_season_line": 7
+   },
+   "vm_dev|hit|2021|2021-09-30": {
+    "rows": 1,
+    "read_season_line": 1
+   },
+   "vm_dev|hit|2022|2022-04-30": {
+    "rows": 78,
+    "read_season_line": 74
+   },
+   "vm_dev|hit|2022|2022-05-31": {
+    "rows": 61,
+    "read_season_line": 58
+   },
+   "vm_dev|hit|2022|2022-06-30": {
+    "rows": 47,
+    "read_season_line": 45
+   },
+   "vm_dev|hit|2022|2022-07-31": {
+    "rows": 37,
+    "read_season_line": 36
+   },
+   "vm_dev|hit|2022|2022-08-31": {
+    "rows": 23,
+    "read_season_line": 23
+   },
+   "vm_dev|hit|2022|2022-09-30": {
+    "rows": 2,
+    "read_season_line": 2
+   },
+   "vm_dev|hit|2023|2023-04-30": {
+    "rows": 60,
+    "read_season_line": 57
+   },
+   "vm_dev|hit|2023|2023-05-31": {
+    "rows": 51,
+    "read_season_line": 50
+   },
+   "vm_dev|hit|2023|2023-06-30": {
+    "rows": 38,
+    "read_season_line": 38
+   },
+   "vm_dev|hit|2023|2023-07-31": {
+    "rows": 27,
+    "read_season_line": 27
+   },
+   "vm_dev|hit|2023|2023-08-31": {
+    "rows": 12,
+    "read_season_line": 12
+   },
+   "vm_dev|pit|2017|2017-04-30": {
+    "rows": 15,
+    "read_season_line": 14
+   },
+   "vm_dev|pit|2017|2017-05-31": {
+    "rows": 14,
+    "read_season_line": 14
+   },
+   "vm_dev|pit|2017|2017-06-30": {
+    "rows": 11,
+    "read_season_line": 11
+   },
+   "vm_dev|pit|2017|2017-07-31": {
+    "rows": 10,
+    "read_season_line": 10
+   },
+   "vm_dev|pit|2017|2017-08-31": {
+    "rows": 7,
+    "read_season_line": 7
+   },
+   "vm_dev|pit|2018|2018-04-30": {
+    "rows": 32,
+    "read_season_line": 30
+   },
+   "vm_dev|pit|2018|2018-05-31": {
+    "rows": 26,
+    "read_season_line": 25
+   },
+   "vm_dev|pit|2018|2018-06-30": {
+    "rows": 18,
+    "read_season_line": 18
+   },
+   "vm_dev|pit|2018|2018-07-31": {
+    "rows": 12,
+    "read_season_line": 12
+   },
+   "vm_dev|pit|2018|2018-08-31": {
+    "rows": 2,
+    "read_season_line": 2
+   },
+   "vm_dev|pit|2019|2019-04-30": {
+    "rows": 51,
+    "read_season_line": 42
+   },
+   "vm_dev|pit|2019|2019-05-31": {
+    "rows": 42,
+    "read_season_line": 38
+   },
+   "vm_dev|pit|2019|2019-06-30": {
+    "rows": 28,
+    "read_season_line": 27
+   },
+   "vm_dev|pit|2019|2019-07-31": {
+    "rows": 22,
+    "read_season_line": 22
+   },
+   "vm_dev|pit|2019|2019-08-31": {
+    "rows": 10,
+    "read_season_line": 10
+   },
+   "vm_dev|pit|2020|2020-04-30": {
+    "rows": 77,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2020|2020-05-31": {
+    "rows": 77,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2020|2020-06-30": {
+    "rows": 77,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2020|2020-07-31": {
+    "rows": 56,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2020|2020-08-31": {
+    "rows": 19,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2021|2021-04-30": {
+    "rows": 54,
+    "read_season_line": 0
+   },
+   "vm_dev|pit|2021|2021-05-31": {
+    "rows": 41,
+    "read_season_line": 38
+   },
+   "vm_dev|pit|2021|2021-06-30": {
+    "rows": 28,
+    "read_season_line": 26
+   },
+   "vm_dev|pit|2021|2021-07-31": {
+    "rows": 25,
+    "read_season_line": 24
+   },
+   "vm_dev|pit|2021|2021-08-31": {
+    "rows": 16,
+    "read_season_line": 16
+   },
+   "vm_dev|pit|2021|2021-09-30": {
+    "rows": 3,
+    "read_season_line": 3
+   },
+   "vm_dev|pit|2022|2022-04-30": {
+    "rows": 42,
+    "read_season_line": 41
+   },
+   "vm_dev|pit|2022|2022-05-31": {
+    "rows": 26,
+    "read_season_line": 25
+   },
+   "vm_dev|pit|2022|2022-06-30": {
+    "rows": 23,
+    "read_season_line": 22
+   },
+   "vm_dev|pit|2022|2022-07-31": {
+    "rows": 21,
+    "read_season_line": 21
+   },
+   "vm_dev|pit|2022|2022-08-31": {
+    "rows": 13,
+    "read_season_line": 13
+   },
+   "vm_dev|pit|2022|2022-09-30": {
+    "rows": 3,
+    "read_season_line": 3
+   },
+   "vm_dev|pit|2023|2023-04-30": {
+    "rows": 71,
+    "read_season_line": 68
+   },
+   "vm_dev|pit|2023|2023-05-31": {
+    "rows": 55,
+    "read_season_line": 53
+   },
+   "vm_dev|pit|2023|2023-06-30": {
+    "rows": 32,
+    "read_season_line": 31
+   },
+   "vm_dev|pit|2023|2023-07-31": {
+    "rows": 21,
+    "read_season_line": 20
+   },
+   "vm_dev|pit|2023|2023-08-31": {
+    "rows": 11,
+    "read_season_line": 11
+   }
+  },
+  "elapsed_build_s": 731.0
+ },
+ "elapsed_s": 1205.0
+}
