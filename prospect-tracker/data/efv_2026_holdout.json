@@ -1,0 +1,5455 @@
+{
+ "item": "EFV_2026_HOLDOUT_READ",
+ "tool": "efv_2026_holdout.py",
+ "registration": "docs/efv-v2/EFV_2026_HOLDOUT.md",
+ "generated_at": "2026-10-15T19:42:40Z",
+ "code": {
+  "commit": "c5285660"
+ },
+ "owner": "EW3-13 (2026-10-15): test once on the 2026 season, then train; EW3-5 waiver; R-VM opened on the committed gate sha",
+ "gate_sha": "e7931ce4e13110eebb53555bff455ff13ca7c502",
+ "cutoff": "2026-03-25",
+ "label": {
+  "vintage_id": "2026-10-02-0341299c20ec",
+  "season": 2026,
+  "provider": "fwar"
+ },
+ "train_resolved_through": 2025,
+ "bootstrap": {
+  "B": 4000,
+  "seed": 20261021,
+  "clusterings": [
+   "player",
+   "club"
+  ],
+  "intervals": "percentile; lb95/ub95 one-sided 95 percent, ci95 two-sided",
+  "min_group_rows": 20
+ },
+ "pass_rule": "served eFV v5 COMBINED minus PROSPX consensus, within-side Spearman on WAR2026, pooled sides of F-2026-LIST: one-sided 95 percent lower bound above 0 under both clusterings",
+ "pass_leg": "war2026|spearman|pooled|efv_v5_combined-consensus",
+ "verdict": "ties",
+ "pass": false,
+ "frames": {
+  "list": {
+   "n": 1208,
+   "n_by_side": {
+    "hit": 590,
+    "pit": 618
+   },
+   "legs": {
+    "war2026|spearman|pooled|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.1313,
+     "b": 0.11919,
+     "delta": 0.01211,
+     "player": {
+      "lb95": -0.0073,
+      "ub95": 0.0312,
+      "ci95": [
+       -0.0108,
+       0.0348
+      ],
+      "sd": 0.01169,
+      "p_gt_0": 0.8462,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0067,
+      "ub95": 0.0307,
+      "ci95": [
+       -0.0102,
+       0.0345
+      ],
+      "sd": 0.01132,
+      "p_gt_0": 0.8598,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.12204,
+     "b": 0.11919,
+     "delta": 0.00285,
+     "player": {
+      "lb95": -0.0142,
+      "ub95": 0.0204,
+      "ci95": [
+       -0.0172,
+       0.0241
+      ],
+      "sd": 0.01067,
+      "p_gt_0": 0.606,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0111,
+      "ub95": 0.0172,
+      "ci95": [
+       -0.0135,
+       0.0204
+      ],
+      "sd": 0.00864,
+      "p_gt_0": 0.615,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.12194,
+     "b": 0.11919,
+     "delta": 0.00275,
+     "player": {
+      "lb95": -0.011,
+      "ub95": 0.0167,
+      "ci95": [
+       -0.0137,
+       0.0193
+      ],
+      "sd": 0.00849,
+      "p_gt_0": 0.6342,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0081,
+      "ub95": 0.0143,
+      "ci95": [
+       -0.0102,
+       0.0164
+      ],
+      "sd": 0.00674,
+      "p_gt_0": 0.666,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.1313,
+     "b": 0.12204,
+     "delta": 0.00926,
+     "player": {
+      "lb95": -0.0018,
+      "ub95": 0.0205,
+      "ci95": [
+       -0.0039,
+       0.0229
+      ],
+      "sd": 0.00683,
+      "p_gt_0": 0.9137,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0007,
+      "ub95": 0.0195,
+      "ci95": [
+       -0.0025,
+       0.0213
+      ],
+      "sd": 0.00608,
+      "p_gt_0": 0.9385,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "mlb_pipeline graded",
+     "n": 585,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 323,
+      "pit|2026": 262
+     },
+     "a": 0.15568,
+     "b": 0.18103,
+     "delta": -0.02536,
+     "player": {
+      "lb95": -0.064,
+      "ub95": 0.0134,
+      "ci95": [
+       -0.0715,
+       0.0207
+      ],
+      "sd": 0.02351,
+      "p_gt_0": 0.1467,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0619,
+      "ub95": 0.0126,
+      "ci95": [
+       -0.0686,
+       0.0208
+      ],
+      "sd": 0.02266,
+      "p_gt_0": 0.1348,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "fangraphs graded",
+     "n": 1108,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 533,
+      "pit|2026": 575
+     },
+     "a": 0.14789,
+     "b": 0.11971,
+     "delta": 0.02817,
+     "player": {
+      "lb95": 0.0052,
+      "ub95": 0.052,
+      "ci95": [
+       0.0004,
+       0.0569
+      ],
+      "sd": 0.01435,
+      "p_gt_0": 0.9775,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0105,
+      "ub95": 0.047,
+      "ci95": [
+       0.0073,
+       0.0507
+      ],
+      "sd": 0.01114,
+      "p_gt_0": 0.997,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.18029,
+     "b": 0.16744,
+     "delta": 0.01285,
+     "player": {
+      "lb95": -0.0203,
+      "ub95": 0.0455,
+      "ci95": [
+       -0.0259,
+       0.0532
+      ],
+      "sd": 0.02022,
+      "p_gt_0": 0.7398,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0158,
+      "ub95": 0.044,
+      "ci95": [
+       -0.0205,
+       0.0503
+      ],
+      "sd": 0.01814,
+      "p_gt_0": 0.7425,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.17328,
+     "b": 0.16744,
+     "delta": 0.00583,
+     "player": {
+      "lb95": -0.029,
+      "ub95": 0.0418,
+      "ci95": [
+       -0.0356,
+       0.0496
+      ],
+      "sd": 0.02184,
+      "p_gt_0": 0.606,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0222,
+      "ub95": 0.0363,
+      "ci95": [
+       -0.027,
+       0.0428
+      ],
+      "sd": 0.01784,
+      "p_gt_0": 0.615,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.16774,
+     "b": 0.16744,
+     "delta": 0.00029,
+     "player": {
+      "lb95": -0.0192,
+      "ub95": 0.02,
+      "ci95": [
+       -0.0228,
+       0.0239
+      ],
+      "sd": 0.01191,
+      "p_gt_0": 0.5085,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0174,
+      "ub95": 0.0195,
+      "ci95": [
+       -0.0204,
+       0.0235
+      ],
+      "sd": 0.01118,
+      "p_gt_0": 0.51,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.18029,
+     "b": 0.17328,
+     "delta": 0.00701,
+     "player": {
+      "lb95": -0.0018,
+      "ub95": 0.0161,
+      "ci95": [
+       -0.0036,
+       0.0177
+      ],
+      "sd": 0.00539,
+      "p_gt_0": 0.9048,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0007,
+      "ub95": 0.0142,
+      "ci95": [
+       -0.002,
+       0.0158
+      ],
+      "sd": 0.00459,
+      "p_gt_0": 0.93,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "mlb_pipeline graded",
+     "n": 323,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 323
+     },
+     "a": 0.23562,
+     "b": 0.25807,
+     "delta": -0.02245,
+     "player": {
+      "lb95": -0.0655,
+      "ub95": 0.0204,
+      "ci95": [
+       -0.0757,
+       0.0284
+      ],
+      "sd": 0.02646,
+      "p_gt_0": 0.204,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0636,
+      "ub95": 0.0262,
+      "ci95": [
+       -0.0705,
+       0.0357
+      ],
+      "sd": 0.0276,
+      "p_gt_0": 0.22,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "fangraphs graded",
+     "n": 533,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 533
+     },
+     "a": 0.20042,
+     "b": 0.1707,
+     "delta": 0.02972,
+     "player": {
+      "lb95": -0.0033,
+      "ub95": 0.0634,
+      "ci95": [
+       -0.0096,
+       0.0704
+      ],
+      "sd": 0.02042,
+      "p_gt_0": 0.9265,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0028,
+      "ub95": 0.0628,
+      "ci95": [
+       -0.0086,
+       0.0696
+      ],
+      "sd": 0.01986,
+      "p_gt_0": 0.9337,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.08453,
+     "b": 0.07313,
+     "delta": 0.0114,
+     "player": {
+      "lb95": -0.0089,
+      "ub95": 0.0319,
+      "ci95": [
+       -0.0125,
+       0.0365
+      ],
+      "sd": 0.01235,
+      "p_gt_0": 0.8233,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0058,
+      "ub95": 0.0288,
+      "ci95": [
+       -0.0097,
+       0.0324
+      ],
+      "sd": 0.01061,
+      "p_gt_0": 0.8652,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.07313,
+     "b": 0.07313,
+     "delta": 0.0,
+     "player": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.07822,
+     "b": 0.07313,
+     "delta": 0.00509,
+     "player": {
+      "lb95": -0.0158,
+      "ub95": 0.0254,
+      "ci95": [
+       -0.02,
+       0.0291
+      ],
+      "sd": 0.01246,
+      "p_gt_0": 0.6687,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0109,
+      "ub95": 0.0217,
+      "ci95": [
+       -0.0144,
+       0.0244
+      ],
+      "sd": 0.00997,
+      "p_gt_0": 0.6977,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.08453,
+     "b": 0.07313,
+     "delta": 0.0114,
+     "player": {
+      "lb95": -0.0089,
+      "ub95": 0.0319,
+      "ci95": [
+       -0.0125,
+       0.0365
+      ],
+      "sd": 0.01235,
+      "p_gt_0": 0.8233,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0058,
+      "ub95": 0.0288,
+      "ci95": [
+       -0.0097,
+       0.0324
+      ],
+      "sd": 0.01061,
+      "p_gt_0": 0.8652,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "mlb_pipeline graded",
+     "n": 262,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 262
+     },
+     "a": 0.05712,
+     "b": 0.08606,
+     "delta": -0.02894,
+     "player": {
+      "lb95": -0.0969,
+      "ub95": 0.0407,
+      "ci95": [
+       -0.1084,
+       0.0535
+      ],
+      "sd": 0.04116,
+      "p_gt_0": 0.2465,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0928,
+      "ub95": 0.0307,
+      "ci95": [
+       -0.1048,
+       0.0413
+      ],
+      "sd": 0.0378,
+      "p_gt_0": 0.217,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "fangraphs graded",
+     "n": 575,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 575
+     },
+     "a": 0.09919,
+     "b": 0.07245,
+     "delta": 0.02674,
+     "player": {
+      "lb95": -0.006,
+      "ub95": 0.0601,
+      "ci95": [
+       -0.0128,
+       0.0664
+      ],
+      "sd": 0.02001,
+      "p_gt_0": 0.9157,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0067,
+      "ub95": 0.0635,
+      "ci95": [
+       -0.0127,
+       0.0711
+      ],
+      "sd": 0.0213,
+      "p_gt_0": 0.9055,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.17254,
+     "b": 0.18564,
+     "delta": -0.01309,
+     "player": {
+      "lb95": -0.0421,
+      "ub95": 0.0155,
+      "ci95": [
+       -0.0469,
+       0.0203
+      ],
+      "sd": 0.01751,
+      "p_gt_0": 0.2248,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0332,
+      "ub95": 0.009,
+      "ci95": [
+       -0.0369,
+       0.0138
+      ],
+      "sd": 0.01286,
+      "p_gt_0": 0.156,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.17076,
+     "b": 0.18564,
+     "delta": -0.01487,
+     "player": {
+      "lb95": -0.0406,
+      "ub95": 0.0104,
+      "ci95": [
+       -0.0461,
+       0.0157
+      ],
+      "sd": 0.01589,
+      "p_gt_0": 0.1722,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0321,
+      "ub95": 0.0039,
+      "ci95": [
+       -0.035,
+       0.0078
+      ],
+      "sd": 0.01099,
+      "p_gt_0": 0.096,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.19135,
+     "b": 0.18564,
+     "delta": 0.00571,
+     "player": {
+      "lb95": -0.0143,
+      "ub95": 0.0264,
+      "ci95": [
+       -0.0185,
+       0.0294
+      ],
+      "sd": 0.01234,
+      "p_gt_0": 0.6777,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0073,
+      "ub95": 0.0198,
+      "ci95": [
+       -0.0095,
+       0.0225
+      ],
+      "sd": 0.00822,
+      "p_gt_0": 0.7625,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.16042,
+     "b": 0.18564,
+     "delta": -0.02522,
+     "player": {
+      "lb95": -0.0647,
+      "ub95": 0.0146,
+      "ci95": [
+       -0.0722,
+       0.0214
+      ],
+      "sd": 0.02391,
+      "p_gt_0": 0.1537,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0622,
+      "ub95": 0.0129,
+      "ci95": [
+       -0.069,
+       0.0213
+      ],
+      "sd": 0.02297,
+      "p_gt_0": 0.1395,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.19971,
+     "b": 0.18564,
+     "delta": 0.01407,
+     "player": {
+      "lb95": -0.0213,
+      "ub95": 0.0503,
+      "ci95": [
+       -0.0272,
+       0.0564
+      ],
+      "sd": 0.02175,
+      "p_gt_0": 0.7402,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0143,
+      "ub95": 0.0452,
+      "ci95": [
+       -0.0195,
+       0.0513
+      ],
+      "sd": 0.01806,
+      "p_gt_0": 0.787,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|efv_v5_combined-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.72594,
+     "b": 0.67711,
+     "delta": 0.04882,
+     "player": {
+      "lb95": 0.0344,
+      "ub95": 0.0638,
+      "ci95": [
+       0.0322,
+       0.0669
+      ],
+      "sd": 0.00885,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0332,
+      "ub95": 0.0642,
+      "ci95": [
+       0.0306,
+       0.0676
+      ],
+      "sd": 0.00946,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|efv_v2-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.72584,
+     "b": 0.67711,
+     "delta": 0.04872,
+     "player": {
+      "lb95": 0.0363,
+      "ub95": 0.0622,
+      "ci95": [
+       0.0342,
+       0.0646
+      ],
+      "sd": 0.0079,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0376,
+      "ub95": 0.0603,
+      "ci95": [
+       0.0355,
+       0.0626
+      ],
+      "sd": 0.00687,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|efv_v1-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.70296,
+     "b": 0.67711,
+     "delta": 0.02584,
+     "player": {
+      "lb95": 0.0141,
+      "ub95": 0.0376,
+      "ci95": [
+       0.0123,
+       0.0398
+      ],
+      "sd": 0.00708,
+      "p_gt_0": 0.9998,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0138,
+      "ub95": 0.0385,
+      "ci95": [
+       0.0116,
+       0.041
+      ],
+      "sd": 0.00752,
+      "p_gt_0": 0.9995,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|efv_v5_combined-efv_v2": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pooled",
+     "set": "all",
+     "n": 1208,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590,
+      "pit|2026": 618
+     },
+     "a": 0.72594,
+     "b": 0.72584,
+     "delta": 0.0001,
+     "player": {
+      "lb95": -0.0089,
+      "ub95": 0.0093,
+      "ci95": [
+       -0.0108,
+       0.0113
+      ],
+      "sd": 0.00559,
+      "p_gt_0": 0.493,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0086,
+      "ub95": 0.0081,
+      "ci95": [
+       -0.0103,
+       0.0096
+      ],
+      "sd": 0.00507,
+      "p_gt_0": 0.497,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|mlb_pipeline-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "mlb_pipeline graded",
+     "n": 585,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 323,
+      "pit|2026": 262
+     },
+     "a": 0.61568,
+     "b": 0.65023,
+     "delta": -0.03456,
+     "player": {
+      "lb95": -0.0594,
+      "ub95": -0.0098,
+      "ci95": [
+       -0.065,
+       -0.0054
+      ],
+      "sd": 0.01518,
+      "p_gt_0": 0.0095,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0577,
+      "ub95": -0.0112,
+      "ci95": [
+       -0.0625,
+       -0.0066
+      ],
+      "sd": 0.0141,
+      "p_gt_0": 0.008,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|fangraphs-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "fangraphs graded",
+     "n": 1108,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 533,
+      "pit|2026": 575
+     },
+     "a": 0.67926,
+     "b": 0.66848,
+     "delta": 0.01078,
+     "player": {
+      "lb95": -0.0082,
+      "ub95": 0.0296,
+      "ci95": [
+       -0.0114,
+       0.033
+      ],
+      "sd": 0.0114,
+      "p_gt_0": 0.8287,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0076,
+      "ub95": 0.0287,
+      "ci95": [
+       -0.0109,
+       0.0318
+      ],
+      "sd": 0.01088,
+      "p_gt_0": 0.85,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|efv_v5_combined-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.78663,
+     "b": 0.69118,
+     "delta": 0.09545,
+     "player": {
+      "lb95": 0.0719,
+      "ub95": 0.1207,
+      "ci95": [
+       0.068,
+       0.1249
+      ],
+      "sd": 0.01477,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0724,
+      "ub95": 0.118,
+      "ci95": [
+       0.0681,
+       0.1224
+      ],
+      "sd": 0.01388,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|efv_v2-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.79094,
+     "b": 0.69118,
+     "delta": 0.09976,
+     "player": {
+      "lb95": 0.0747,
+      "ub95": 0.1269,
+      "ci95": [
+       0.0704,
+       0.132
+      ],
+      "sd": 0.01595,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0775,
+      "ub95": 0.1225,
+      "ci95": [
+       0.0734,
+       0.1267
+      ],
+      "sd": 0.01366,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|efv_v1-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.704,
+     "b": 0.69118,
+     "delta": 0.01282,
+     "player": {
+      "lb95": -0.0037,
+      "ub95": 0.0299,
+      "ci95": [
+       -0.007,
+       0.0329
+      ],
+      "sd": 0.01028,
+      "p_gt_0": 0.8938,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0048,
+      "ub95": 0.0296,
+      "ci95": [
+       -0.0079,
+       0.033
+      ],
+      "sd": 0.01056,
+      "p_gt_0": 0.8765,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|efv_v5_combined-efv_v2": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "hit",
+     "set": "all",
+     "n": 590,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 590
+     },
+     "a": 0.78663,
+     "b": 0.79094,
+     "delta": -0.00431,
+     "player": {
+      "lb95": -0.0118,
+      "ub95": 0.0032,
+      "ci95": [
+       -0.0132,
+       0.0047
+      ],
+      "sd": 0.00458,
+      "p_gt_0": 0.168,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.011,
+      "ub95": 0.0016,
+      "ci95": [
+       -0.0127,
+       0.0028
+      ],
+      "sd": 0.0039,
+      "p_gt_0": 0.1177,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|mlb_pipeline-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "mlb_pipeline graded",
+     "n": 323,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 323
+     },
+     "a": 0.684,
+     "b": 0.68731,
+     "delta": -0.00332,
+     "player": {
+      "lb95": -0.0358,
+      "ub95": 0.0277,
+      "ci95": [
+       -0.0419,
+       0.0339
+      ],
+      "sd": 0.01924,
+      "p_gt_0": 0.4482,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0327,
+      "ub95": 0.0257,
+      "ci95": [
+       -0.0386,
+       0.0317
+      ],
+      "sd": 0.01785,
+      "p_gt_0": 0.4275,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|hit|fangraphs-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "fangraphs graded",
+     "n": 533,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 533
+     },
+     "a": 0.68017,
+     "b": 0.68879,
+     "delta": -0.00862,
+     "player": {
+      "lb95": -0.0365,
+      "ub95": 0.0182,
+      "ci95": [
+       -0.0418,
+       0.0232
+      ],
+      "sd": 0.01664,
+      "p_gt_0": 0.303,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0321,
+      "ub95": 0.0138,
+      "ci95": [
+       -0.0369,
+       0.0173
+      ],
+      "sd": 0.01403,
+      "p_gt_0": 0.2945,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|efv_v5_combined-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.66799,
+     "b": 0.66369,
+     "delta": 0.0043,
+     "player": {
+      "lb95": -0.0118,
+      "ub95": 0.0208,
+      "ci95": [
+       -0.0147,
+       0.0244
+      ],
+      "sd": 0.01,
+      "p_gt_0": 0.656,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0127,
+      "ub95": 0.0208,
+      "ci95": [
+       -0.0162,
+       0.024
+      ],
+      "sd": 0.01025,
+      "p_gt_0": 0.6637,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|efv_v2-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.66369,
+     "b": 0.66369,
+     "delta": 0.0,
+     "player": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|efv_v1-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.70196,
+     "b": 0.66369,
+     "delta": 0.03827,
+     "player": {
+      "lb95": 0.0225,
+      "ub95": 0.0546,
+      "ci95": [
+       0.0193,
+       0.0577
+      ],
+      "sd": 0.00973,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0189,
+      "ub95": 0.061,
+      "ci95": [
+       0.0153,
+       0.0656
+      ],
+      "sd": 0.01276,
+      "p_gt_0": 0.9995,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|efv_v5_combined-efv_v2": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pit",
+     "set": "all",
+     "n": 618,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 618
+     },
+     "a": 0.66799,
+     "b": 0.66369,
+     "delta": 0.0043,
+     "player": {
+      "lb95": -0.0118,
+      "ub95": 0.0208,
+      "ci95": [
+       -0.0147,
+       0.0244
+      ],
+      "sd": 0.01,
+      "p_gt_0": 0.656,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0127,
+      "ub95": 0.0208,
+      "ci95": [
+       -0.0162,
+       0.024
+      ],
+      "sd": 0.01025,
+      "p_gt_0": 0.6637,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|mlb_pipeline-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "mlb_pipeline graded",
+     "n": 262,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 262
+     },
+     "a": 0.53145,
+     "b": 0.60452,
+     "delta": -0.07307,
+     "player": {
+      "lb95": -0.1139,
+      "ub95": -0.0344,
+      "ci95": [
+       -0.1223,
+       -0.0283
+      ],
+      "sd": 0.02411,
+      "p_gt_0": 0.0013,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.1144,
+      "ub95": -0.0286,
+      "ci95": [
+       -0.1229,
+       -0.0208
+      ],
+      "sd": 0.02625,
+      "p_gt_0": 0.0043,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pit|fangraphs-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "fangraphs graded",
+     "n": 575,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 575
+     },
+     "a": 0.67841,
+     "b": 0.64965,
+     "delta": 0.02876,
+     "player": {
+      "lb95": 0.0033,
+      "ub95": 0.0554,
+      "ci95": [
+       -0.0031,
+       0.0607
+      ],
+      "sd": 0.01595,
+      "p_gt_0": 0.9653,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0036,
+      "ub95": 0.054,
+      "ci95": [
+       -0.0017,
+       0.0583
+      ],
+      "sd": 0.01526,
+      "p_gt_0": 0.969,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|common|efv_v5_combined-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.71829,
+     "b": 0.64729,
+     "delta": 0.071,
+     "player": {
+      "lb95": 0.0527,
+      "ub95": 0.09,
+      "ci95": [
+       0.0497,
+       0.094
+      ],
+      "sd": 0.01135,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0529,
+      "ub95": 0.0886,
+      "ci95": [
+       0.0496,
+       0.0926
+      ],
+      "sd": 0.01101,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|common|efv_v2-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.70401,
+     "b": 0.64729,
+     "delta": 0.05672,
+     "player": {
+      "lb95": 0.0413,
+      "ub95": 0.0739,
+      "ci95": [
+       0.0381,
+       0.0772
+      ],
+      "sd": 0.01016,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0407,
+      "ub95": 0.0727,
+      "ci95": [
+       0.0381,
+       0.0756
+      ],
+      "sd": 0.00967,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|common|efv_v1-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.67828,
+     "b": 0.64729,
+     "delta": 0.03099,
+     "player": {
+      "lb95": 0.0169,
+      "ub95": 0.0452,
+      "ci95": [
+       0.0148,
+       0.0475
+      ],
+      "sd": 0.00848,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0196,
+      "ub95": 0.0426,
+      "ci95": [
+       0.0177,
+       0.0445
+      ],
+      "sd": 0.00685,
+      "p_gt_0": 1.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|common|mlb_pipeline-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.6137,
+     "b": 0.64729,
+     "delta": -0.03358,
+     "player": {
+      "lb95": -0.0587,
+      "ub95": -0.0086,
+      "ci95": [
+       -0.0644,
+       -0.0041
+      ],
+      "sd": 0.01537,
+      "p_gt_0": 0.0123,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0574,
+      "ub95": -0.0093,
+      "ci95": [
+       -0.0627,
+       -0.005
+      ],
+      "sd": 0.01455,
+      "p_gt_0": 0.0123,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "r2026|auc|pooled|common|fangraphs-consensus": {
+     "stat": "auc",
+     "label": "r2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 570,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 311,
+      "pit|2026": 259
+     },
+     "a": 0.67551,
+     "b": 0.64729,
+     "delta": 0.02822,
+     "player": {
+      "lb95": 0.0044,
+      "ub95": 0.0517,
+      "ci95": [
+       0.001,
+       0.0571
+      ],
+      "sd": 0.01438,
+      "p_gt_0": 0.978,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0064,
+      "ub95": 0.05,
+      "ci95": [
+       0.0023,
+       0.0543
+      ],
+      "sd": 0.01341,
+      "p_gt_0": 0.982,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 167,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78,
+      "pit|2026": 89
+     },
+     "a": 0.18345,
+     "b": 0.19822,
+     "delta": -0.01477,
+     "player": {
+      "lb95": -0.0643,
+      "ub95": 0.0363,
+      "ci95": [
+       -0.0748,
+       0.046
+      ],
+      "sd": 0.03085,
+      "p_gt_0": 0.3155,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0635,
+      "ub95": 0.032,
+      "ci95": [
+       -0.073,
+       0.0409
+      ],
+      "sd": 0.029,
+      "p_gt_0": 0.3155,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 167,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78,
+      "pit|2026": 89
+     },
+     "a": 0.16903,
+     "b": 0.19822,
+     "delta": -0.02919,
+     "player": {
+      "lb95": -0.0691,
+      "ub95": 0.0087,
+      "ci95": [
+       -0.0783,
+       0.0149
+      ],
+      "sd": 0.02381,
+      "p_gt_0": 0.1087,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0659,
+      "ub95": 0.0076,
+      "ci95": [
+       -0.0748,
+       0.013
+      ],
+      "sd": 0.02238,
+      "p_gt_0": 0.1057,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 167,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78,
+      "pit|2026": 89
+     },
+     "a": 0.19416,
+     "b": 0.19822,
+     "delta": -0.00406,
+     "player": {
+      "lb95": -0.0404,
+      "ub95": 0.0304,
+      "ci95": [
+       -0.0468,
+       0.036
+      ],
+      "sd": 0.02116,
+      "p_gt_0": 0.4315,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.04,
+      "ub95": 0.0302,
+      "ci95": [
+       -0.0481,
+       0.0363
+      ],
+      "sd": 0.02166,
+      "p_gt_0": 0.463,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pooled",
+     "set": "all",
+     "n": 167,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78,
+      "pit|2026": 89
+     },
+     "a": 0.18345,
+     "b": 0.16903,
+     "delta": 0.01442,
+     "player": {
+      "lb95": -0.0267,
+      "ub95": 0.056,
+      "ci95": [
+       -0.0353,
+       0.0647
+      ],
+      "sd": 0.02513,
+      "p_gt_0": 0.7238,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0281,
+      "ub95": 0.0561,
+      "ci95": [
+       -0.0354,
+       0.0656
+      ],
+      "sd": 0.02555,
+      "p_gt_0": 0.6925,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "mlb_pipeline graded",
+     "n": 132,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 68,
+      "pit|2026": 64
+     },
+     "a": 0.22002,
+     "b": 0.22236,
+     "delta": -0.00234,
+     "player": {
+      "lb95": -0.0735,
+      "ub95": 0.0732,
+      "ci95": [
+       -0.0893,
+       0.0863
+      ],
+      "sd": 0.04466,
+      "p_gt_0": 0.4903,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.069,
+      "ub95": 0.0679,
+      "ci95": [
+       -0.0852,
+       0.0807
+      ],
+      "sd": 0.04168,
+      "p_gt_0": 0.5038,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "fangraphs graded",
+     "n": 163,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 75,
+      "pit|2026": 88
+     },
+     "a": 0.24386,
+     "b": 0.1998,
+     "delta": 0.04406,
+     "player": {
+      "lb95": -0.0181,
+      "ub95": 0.1077,
+      "ci95": [
+       -0.0285,
+       0.1219
+      ],
+      "sd": 0.03836,
+      "p_gt_0": 0.8735,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0142,
+      "ub95": 0.107,
+      "ci95": [
+       -0.0248,
+       0.1235
+      ],
+      "sd": 0.03757,
+      "p_gt_0": 0.889,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 78,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78
+     },
+     "a": 0.30558,
+     "b": 0.35482,
+     "delta": -0.04924,
+     "player": {
+      "lb95": -0.1239,
+      "ub95": 0.0216,
+      "ci95": [
+       -0.1423,
+       0.0354
+      ],
+      "sd": 0.04499,
+      "p_gt_0": 0.1368,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.1203,
+      "ub95": 0.0181,
+      "ci95": [
+       -0.1362,
+       0.0292
+      ],
+      "sd": 0.04252,
+      "p_gt_0": 0.1293,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 78,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78
+     },
+     "a": 0.29232,
+     "b": 0.35482,
+     "delta": -0.0625,
+     "player": {
+      "lb95": -0.1465,
+      "ub95": 0.0186,
+      "ci95": [
+       -0.1671,
+       0.0315
+      ],
+      "sd": 0.05091,
+      "p_gt_0": 0.1087,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.141,
+      "ub95": 0.0167,
+      "ci95": [
+       -0.1573,
+       0.0293
+      ],
+      "sd": 0.04805,
+      "p_gt_0": 0.1057,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 78,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78
+     },
+     "a": 0.34847,
+     "b": 0.35482,
+     "delta": -0.00635,
+     "player": {
+      "lb95": -0.0462,
+      "ub95": 0.036,
+      "ci95": [
+       -0.0541,
+       0.0452
+      ],
+      "sd": 0.02498,
+      "p_gt_0": 0.3857,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0435,
+      "ub95": 0.0419,
+      "ci95": [
+       -0.0511,
+       0.0551
+      ],
+      "sd": 0.02693,
+      "p_gt_0": 0.4305,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "hit",
+     "set": "all",
+     "n": 78,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 78
+     },
+     "a": 0.30558,
+     "b": 0.29232,
+     "delta": 0.01326,
+     "player": {
+      "lb95": -0.0256,
+      "ub95": 0.0505,
+      "ci95": [
+       -0.0332,
+       0.0596
+      ],
+      "sd": 0.02338,
+      "p_gt_0": 0.7188,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0331,
+      "ub95": 0.0507,
+      "ci95": [
+       -0.0443,
+       0.0592
+      ],
+      "sd": 0.02598,
+      "p_gt_0": 0.6895,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "mlb_pipeline graded",
+     "n": 68,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 68
+     },
+     "a": 0.38522,
+     "b": 0.40988,
+     "delta": -0.02466,
+     "player": {
+      "lb95": -0.0961,
+      "ub95": 0.0425,
+      "ci95": [
+       -0.1128,
+       0.0557
+      ],
+      "sd": 0.04271,
+      "p_gt_0": 0.3003,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0839,
+      "ub95": 0.0554,
+      "ci95": [
+       -0.0965,
+       0.0777
+      ],
+      "sd": 0.04343,
+      "p_gt_0": 0.3013,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|hit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "fangraphs graded",
+     "n": 75,
+     "groups": [
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 75
+     },
+     "a": 0.40453,
+     "b": 0.36944,
+     "delta": 0.03509,
+     "player": {
+      "lb95": -0.0432,
+      "ub95": 0.1136,
+      "ci95": [
+       -0.056,
+       0.1271
+      ],
+      "sd": 0.04657,
+      "p_gt_0": 0.7843,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0585,
+      "ub95": 0.1224,
+      "ci95": [
+       -0.0794,
+       0.1361
+      ],
+      "sd": 0.05466,
+      "p_gt_0": 0.7628,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 89,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 89
+     },
+     "a": 0.07642,
+     "b": 0.06098,
+     "delta": 0.01544,
+     "player": {
+      "lb95": -0.0533,
+      "ub95": 0.0873,
+      "ci95": [
+       -0.0647,
+       0.1024
+      ],
+      "sd": 0.04244,
+      "p_gt_0": 0.6458,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0466,
+      "ub95": 0.0829,
+      "ci95": [
+       -0.0583,
+       0.0972
+      ],
+      "sd": 0.0392,
+      "p_gt_0": 0.6538,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 89,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 89
+     },
+     "a": 0.06098,
+     "b": 0.06098,
+     "delta": 0.0,
+     "player": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 89,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 89
+     },
+     "a": 0.05892,
+     "b": 0.06098,
+     "delta": -0.00206,
+     "player": {
+      "lb95": -0.0601,
+      "ub95": 0.0494,
+      "ci95": [
+       -0.0715,
+       0.0576
+      ],
+      "sd": 0.03324,
+      "p_gt_0": 0.5005,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.062,
+      "ub95": 0.0488,
+      "ci95": [
+       -0.0761,
+       0.0591
+      ],
+      "sd": 0.03428,
+      "p_gt_0": 0.491,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pit",
+     "set": "all",
+     "n": 89,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 89
+     },
+     "a": 0.07642,
+     "b": 0.06098,
+     "delta": 0.01544,
+     "player": {
+      "lb95": -0.0533,
+      "ub95": 0.0873,
+      "ci95": [
+       -0.0647,
+       0.1024
+      ],
+      "sd": 0.04244,
+      "p_gt_0": 0.6458,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0466,
+      "ub95": 0.0829,
+      "ci95": [
+       -0.0583,
+       0.0972
+      ],
+      "sd": 0.0392,
+      "p_gt_0": 0.6538,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "mlb_pipeline graded",
+     "n": 64,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 64
+     },
+     "a": 0.04449,
+     "b": 0.02313,
+     "delta": 0.02136,
+     "player": {
+      "lb95": -0.1081,
+      "ub95": 0.1553,
+      "ci95": [
+       -0.1348,
+       0.1889
+      ],
+      "sd": 0.08069,
+      "p_gt_0": 0.6082,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.107,
+      "ub95": 0.137,
+      "ci95": [
+       -0.1311,
+       0.1598
+      ],
+      "sd": 0.07404,
+      "p_gt_0": 0.6165,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "fangraphs graded",
+     "n": 88,
+     "groups": [
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2026": 88
+     },
+     "a": 0.10692,
+     "b": 0.05522,
+     "delta": 0.0517,
+     "player": {
+      "lb95": -0.0431,
+      "ub95": 0.1498,
+      "ci95": [
+       -0.0624,
+       0.1714
+      ],
+      "sd": 0.05845,
+      "p_gt_0": 0.8125,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0365,
+      "ub95": 0.153,
+      "ci95": [
+       -0.0485,
+       0.1743
+      ],
+      "sd": 0.05725,
+      "p_gt_0": 0.8165,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|common|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 131,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 67,
+      "pit|2026": 64
+     },
+     "a": 0.16588,
+     "b": 0.23386,
+     "delta": -0.06798,
+     "player": {
+      "lb95": -0.1255,
+      "ub95": -0.012,
+      "ci95": [
+       -0.1376,
+       -0.0028
+      ],
+      "sd": 0.03463,
+      "p_gt_0": 0.0205,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.1141,
+      "ub95": -0.0159,
+      "ci95": [
+       -0.1261,
+       -0.0064
+      ],
+      "sd": 0.0301,
+      "p_gt_0": 0.0138,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|common|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 131,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 67,
+      "pit|2026": 64
+     },
+     "a": 0.18412,
+     "b": 0.23386,
+     "delta": -0.04974,
+     "player": {
+      "lb95": -0.1021,
+      "ub95": -0.0,
+      "ci95": [
+       -0.1164,
+       0.0092
+      ],
+      "sd": 0.03175,
+      "p_gt_0": 0.0498,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0944,
+      "ub95": 0.0001,
+      "ci95": [
+       -0.1057,
+       0.0096
+      ],
+      "sd": 0.02906,
+      "p_gt_0": 0.0508,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|common|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 131,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 67,
+      "pit|2026": 64
+     },
+     "a": 0.23385,
+     "b": 0.23386,
+     "delta": -2e-05,
+     "player": {
+      "lb95": -0.0374,
+      "ub95": 0.0367,
+      "ci95": [
+       -0.0453,
+       0.0438
+      ],
+      "sd": 0.02255,
+      "p_gt_0": 0.5088,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0272,
+      "ub95": 0.0308,
+      "ci95": [
+       -0.0332,
+       0.0373
+      ],
+      "sd": 0.01775,
+      "p_gt_0": 0.539,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|common|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 131,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 67,
+      "pit|2026": 64
+     },
+     "a": 0.23122,
+     "b": 0.23386,
+     "delta": -0.00265,
+     "player": {
+      "lb95": -0.0742,
+      "ub95": 0.0728,
+      "ci95": [
+       -0.0908,
+       0.0869
+      ],
+      "sd": 0.04512,
+      "p_gt_0": 0.4895,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0711,
+      "ub95": 0.0684,
+      "ci95": [
+       -0.0874,
+       0.0815
+      ],
+      "sd": 0.04231,
+      "p_gt_0": 0.4988,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "rate|spearman|pooled|common|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "rate",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 131,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 67,
+      "pit|2026": 64
+     },
+     "a": 0.21633,
+     "b": 0.23386,
+     "delta": -0.01754,
+     "player": {
+      "lb95": -0.0843,
+      "ub95": 0.0528,
+      "ci95": [
+       -0.0965,
+       0.067
+      ],
+      "sd": 0.04191,
+      "p_gt_0": 0.3405,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.087,
+      "ub95": 0.0591,
+      "ci95": [
+       -0.1014,
+       0.0731
+      ],
+      "sd": 0.04525,
+      "p_gt_0": 0.3573,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    }
+   },
+   "own": {
+    "war2026": {
+     "efv_v5_combined": {
+      "n": 1208,
+      "spearman": 0.1313,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "spearman": 0.1803
+       },
+       "pit|2026": {
+        "n": 618,
+        "spearman": 0.0845
+       }
+      }
+     },
+     "efv_v2": {
+      "n": 1208,
+      "spearman": 0.122,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "spearman": 0.1733
+       },
+       "pit|2026": {
+        "n": 618,
+        "spearman": 0.0731
+       }
+      }
+     },
+     "efv_v1": {
+      "n": 1208,
+      "spearman": 0.1219,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "spearman": 0.1677
+       },
+       "pit|2026": {
+        "n": 618,
+        "spearman": 0.0782
+       }
+      }
+     },
+     "prospx_consensus": {
+      "n": 1208,
+      "spearman": 0.1192,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "spearman": 0.1674
+       },
+       "pit|2026": {
+        "n": 618,
+        "spearman": 0.0731
+       }
+      }
+     },
+     "mlb_pipeline": {
+      "n": 585,
+      "spearman": 0.1557,
+      "by_group": {
+       "hit|2026": {
+        "n": 323,
+        "spearman": 0.2356
+       },
+       "pit|2026": {
+        "n": 262,
+        "spearman": 0.0571
+       }
+      }
+     },
+     "fangraphs": {
+      "n": 1108,
+      "spearman": 0.1479,
+      "by_group": {
+       "hit|2026": {
+        "n": 533,
+        "spearman": 0.2004
+       },
+       "pit|2026": {
+        "n": 575,
+        "spearman": 0.0992
+       }
+      }
+     }
+    },
+    "r2026": {
+     "efv_v5_combined": {
+      "n": 1208,
+      "auc": 0.7259,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "auc": 0.7866
+       },
+       "pit|2026": {
+        "n": 618,
+        "auc": 0.668
+       }
+      }
+     },
+     "efv_v2": {
+      "n": 1208,
+      "auc": 0.7258,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "auc": 0.7909
+       },
+       "pit|2026": {
+        "n": 618,
+        "auc": 0.6637
+       }
+      }
+     },
+     "efv_v1": {
+      "n": 1208,
+      "auc": 0.703,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "auc": 0.704
+       },
+       "pit|2026": {
+        "n": 618,
+        "auc": 0.702
+       }
+      }
+     },
+     "prospx_consensus": {
+      "n": 1208,
+      "auc": 0.6771,
+      "by_group": {
+       "hit|2026": {
+        "n": 590,
+        "auc": 0.6912
+       },
+       "pit|2026": {
+        "n": 618,
+        "auc": 0.6637
+       }
+      }
+     },
+     "mlb_pipeline": {
+      "n": 585,
+      "auc": 0.6157,
+      "by_group": {
+       "hit|2026": {
+        "n": 323,
+        "auc": 0.684
+       },
+       "pit|2026": {
+        "n": 262,
+        "auc": 0.5314
+       }
+      }
+     },
+     "fangraphs": {
+      "n": 1108,
+      "auc": 0.6793,
+      "by_group": {
+       "hit|2026": {
+        "n": 533,
+        "auc": 0.6802
+       },
+       "pit|2026": {
+        "n": 575,
+        "auc": 0.6784
+       }
+      }
+     }
+    },
+    "rate": {
+     "efv_v5_combined": {
+      "n": 167,
+      "spearman": 0.1835,
+      "by_group": {
+       "hit|2026": {
+        "n": 78,
+        "spearman": 0.3056
+       },
+       "pit|2026": {
+        "n": 89,
+        "spearman": 0.0764
+       }
+      }
+     },
+     "efv_v2": {
+      "n": 167,
+      "spearman": 0.169,
+      "by_group": {
+       "hit|2026": {
+        "n": 78,
+        "spearman": 0.2923
+       },
+       "pit|2026": {
+        "n": 89,
+        "spearman": 0.061
+       }
+      }
+     },
+     "efv_v1": {
+      "n": 167,
+      "spearman": 0.1942,
+      "by_group": {
+       "hit|2026": {
+        "n": 78,
+        "spearman": 0.3485
+       },
+       "pit|2026": {
+        "n": 89,
+        "spearman": 0.0589
+       }
+      }
+     },
+     "prospx_consensus": {
+      "n": 167,
+      "spearman": 0.1982,
+      "by_group": {
+       "hit|2026": {
+        "n": 78,
+        "spearman": 0.3548
+       },
+       "pit|2026": {
+        "n": 89,
+        "spearman": 0.061
+       }
+      }
+     },
+     "mlb_pipeline": {
+      "n": 132,
+      "spearman": 0.22,
+      "by_group": {
+       "hit|2026": {
+        "n": 68,
+        "spearman": 0.3852
+       },
+       "pit|2026": {
+        "n": 64,
+        "spearman": 0.0445
+       }
+      }
+     },
+     "fangraphs": {
+      "n": 163,
+      "spearman": 0.2439,
+      "by_group": {
+       "hit|2026": {
+        "n": 75,
+        "spearman": 0.4045
+       },
+       "pit|2026": {
+        "n": 88,
+        "spearman": 0.1069
+       }
+      }
+     }
+    }
+   }
+  },
+  "debut": {
+   "n": 363,
+   "n_by_side": {
+    "hit": 161,
+    "pit": 202
+   },
+   "legs": {
+    "war2026|spearman|pooled|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 363,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84,
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.30656,
+     "b": 0.2741,
+     "delta": 0.03246,
+     "player": {
+      "lb95": 0.0003,
+      "ub95": 0.0632,
+      "ci95": [
+       -0.005,
+       0.0693
+      ],
+      "sd": 0.01925,
+      "p_gt_0": 0.952,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0063,
+      "ub95": 0.0589,
+      "ci95": [
+       0.0013,
+       0.0637
+      ],
+      "sd": 0.01626,
+      "p_gt_0": 0.9798,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 363,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84,
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.29066,
+     "b": 0.2741,
+     "delta": 0.01656,
+     "player": {
+      "lb95": -0.0131,
+      "ub95": 0.0454,
+      "ci95": [
+       -0.0176,
+       0.0516
+      ],
+      "sd": 0.01769,
+      "p_gt_0": 0.8163,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0098,
+      "ub95": 0.0428,
+      "ci95": [
+       -0.0143,
+       0.049
+      ],
+      "sd": 0.01615,
+      "p_gt_0": 0.8277,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "all",
+     "n": 363,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84,
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.28105,
+     "b": 0.2741,
+     "delta": 0.00695,
+     "player": {
+      "lb95": -0.0161,
+      "ub95": 0.0287,
+      "ci95": [
+       -0.0212,
+       0.0329
+      ],
+      "sd": 0.01361,
+      "p_gt_0": 0.6877,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0109,
+      "ub95": 0.0251,
+      "ci95": [
+       -0.0145,
+       0.0287
+      ],
+      "sd": 0.01098,
+      "p_gt_0": 0.731,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pooled",
+     "set": "all",
+     "n": 363,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84,
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.30656,
+     "b": 0.29066,
+     "delta": 0.0159,
+     "player": {
+      "lb95": -0.0054,
+      "ub95": 0.0372,
+      "ci95": [
+       -0.0095,
+       0.0417
+      ],
+      "sd": 0.01307,
+      "p_gt_0": 0.8885,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0087,
+      "ub95": 0.0416,
+      "ci95": [
+       -0.0143,
+       0.0456
+      ],
+      "sd": 0.01529,
+      "p_gt_0": 0.872,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "mlb_pipeline graded",
+     "n": 291,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 71,
+      "hit|2026": 72,
+      "pit|2025": 77,
+      "pit|2026": 71
+     },
+     "a": 0.30012,
+     "b": 0.33612,
+     "delta": -0.036,
+     "player": {
+      "lb95": -0.0795,
+      "ub95": 0.0114,
+      "ci95": [
+       -0.0892,
+       0.0206
+      ],
+      "sd": 0.02779,
+      "p_gt_0": 0.1135,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0794,
+      "ub95": 0.0143,
+      "ci95": [
+       -0.0884,
+       0.0245
+      ],
+      "sd": 0.02867,
+      "p_gt_0": 0.1278,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "fangraphs graded",
+     "n": 355,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 75,
+      "hit|2026": 81,
+      "pit|2025": 101,
+      "pit|2026": 98
+     },
+     "a": 0.30653,
+     "b": 0.27793,
+     "delta": 0.0286,
+     "player": {
+      "lb95": -0.0069,
+      "ub95": 0.0647,
+      "ci95": [
+       -0.0134,
+       0.0711
+      ],
+      "sd": 0.02163,
+      "p_gt_0": 0.91,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.001,
+      "ub95": 0.0602,
+      "ci95": [
+       -0.0076,
+       0.067
+      ],
+      "sd": 0.01889,
+      "p_gt_0": 0.9425,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 161,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84
+     },
+     "a": 0.35505,
+     "b": 0.29281,
+     "delta": 0.06224,
+     "player": {
+      "lb95": 0.0029,
+      "ub95": 0.119,
+      "ci95": [
+       -0.0074,
+       0.1307
+      ],
+      "sd": 0.03526,
+      "p_gt_0": 0.9605,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0178,
+      "ub95": 0.1128,
+      "ci95": [
+       0.0095,
+       0.1236
+      ],
+      "sd": 0.02903,
+      "p_gt_0": 0.9905,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 161,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84
+     },
+     "a": 0.33016,
+     "b": 0.29281,
+     "delta": 0.03735,
+     "player": {
+      "lb95": -0.0294,
+      "ub95": 0.1021,
+      "ci95": [
+       -0.0402,
+       0.1158
+      ],
+      "sd": 0.0399,
+      "p_gt_0": 0.8163,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0217,
+      "ub95": 0.0972,
+      "ci95": [
+       -0.0328,
+       0.1129
+      ],
+      "sd": 0.03666,
+      "p_gt_0": 0.8277,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "all",
+     "n": 161,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84
+     },
+     "a": 0.31153,
+     "b": 0.29281,
+     "delta": 0.01871,
+     "player": {
+      "lb95": -0.0136,
+      "ub95": 0.0493,
+      "ci95": [
+       -0.0183,
+       0.0558
+      ],
+      "sd": 0.01899,
+      "p_gt_0": 0.8263,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0073,
+      "ub95": 0.0481,
+      "ci95": [
+       -0.0123,
+       0.0546
+      ],
+      "sd": 0.01722,
+      "p_gt_0": 0.875,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "hit",
+     "set": "all",
+     "n": 161,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "hit|2026": 84
+     },
+     "a": 0.35505,
+     "b": 0.33016,
+     "delta": 0.02489,
+     "player": {
+      "lb95": -0.0026,
+      "ub95": 0.0524,
+      "ci95": [
+       -0.0071,
+       0.0587
+      ],
+      "sd": 0.01671,
+      "p_gt_0": 0.933,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0019,
+      "ub95": 0.0598,
+      "ci95": [
+       -0.0078,
+       0.0661
+      ],
+      "sd": 0.0188,
+      "p_gt_0": 0.9397,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "mlb_pipeline graded",
+     "n": 143,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 71,
+      "hit|2026": 72
+     },
+     "a": 0.32263,
+     "b": 0.36268,
+     "delta": -0.04005,
+     "player": {
+      "lb95": -0.0823,
+      "ub95": 0.0079,
+      "ci95": [
+       -0.092,
+       0.0159
+      ],
+      "sd": 0.02758,
+      "p_gt_0": 0.0845,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0816,
+      "ub95": 0.0148,
+      "ci95": [
+       -0.089,
+       0.0268
+      ],
+      "sd": 0.02956,
+      "p_gt_0": 0.108,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|hit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "hit",
+     "set": "fangraphs graded",
+     "n": 156,
+     "groups": [
+      "hit|2025",
+      "hit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 75,
+      "hit|2026": 81
+     },
+     "a": 0.29234,
+     "b": 0.27298,
+     "delta": 0.01936,
+     "player": {
+      "lb95": -0.0368,
+      "ub95": 0.0765,
+      "ci95": [
+       -0.0486,
+       0.0877
+      ],
+      "sd": 0.03481,
+      "p_gt_0": 0.7145,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0231,
+      "ub95": 0.062,
+      "ci95": [
+       -0.0307,
+       0.0701
+      ],
+      "sd": 0.02617,
+      "p_gt_0": 0.7672,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 202,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.26791,
+     "b": 0.25918,
+     "delta": 0.00873,
+     "player": {
+      "lb95": -0.0225,
+      "ub95": 0.0413,
+      "ci95": [
+       -0.0285,
+       0.0479
+      ],
+      "sd": 0.01954,
+      "p_gt_0": 0.6753,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.024,
+      "ub95": 0.0388,
+      "ci95": [
+       -0.0305,
+       0.045
+      ],
+      "sd": 0.01925,
+      "p_gt_0": 0.6645,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 202,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.25918,
+     "b": 0.25918,
+     "delta": 0.0,
+     "player": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p_gt_0": 0.0,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "all",
+     "n": 202,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.25676,
+     "b": 0.25918,
+     "delta": -0.00242,
+     "player": {
+      "lb95": -0.035,
+      "ub95": 0.0285,
+      "ci95": [
+       -0.0409,
+       0.0337
+      ],
+      "sd": 0.01927,
+      "p_gt_0": 0.4515,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0318,
+      "ub95": 0.0264,
+      "ci95": [
+       -0.0365,
+       0.0328
+      ],
+      "sd": 0.01786,
+      "p_gt_0": 0.4368,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "pit",
+     "set": "all",
+     "n": 202,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 103,
+      "pit|2026": 99
+     },
+     "a": 0.26791,
+     "b": 0.25918,
+     "delta": 0.00873,
+     "player": {
+      "lb95": -0.0225,
+      "ub95": 0.0413,
+      "ci95": [
+       -0.0285,
+       0.0479
+      ],
+      "sd": 0.01954,
+      "p_gt_0": 0.6753,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.024,
+      "ub95": 0.0388,
+      "ci95": [
+       -0.0305,
+       0.045
+      ],
+      "sd": 0.01925,
+      "p_gt_0": 0.6645,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "mlb_pipeline graded",
+     "n": 148,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 77,
+      "pit|2026": 71
+     },
+     "a": 0.27837,
+     "b": 0.31044,
+     "delta": -0.03208,
+     "player": {
+      "lb95": -0.1074,
+      "ub95": 0.0478,
+      "ci95": [
+       -0.1242,
+       0.0652
+      ],
+      "sd": 0.0476,
+      "p_gt_0": 0.2607,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0996,
+      "ub95": 0.0433,
+      "ci95": [
+       -0.1137,
+       0.0562
+      ],
+      "sd": 0.04344,
+      "p_gt_0": 0.2572,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pit|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pit",
+     "set": "fangraphs graded",
+     "n": 199,
+     "groups": [
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "pit|2025": 101,
+      "pit|2026": 98
+     },
+     "a": 0.31764,
+     "b": 0.28181,
+     "delta": 0.03584,
+     "player": {
+      "lb95": -0.0086,
+      "ub95": 0.0816,
+      "ci95": [
+       -0.018,
+       0.0917
+      ],
+      "sd": 0.02765,
+      "p_gt_0": 0.9065,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0078,
+      "ub95": 0.0823,
+      "ci95": [
+       -0.0149,
+       0.0928
+      ],
+      "sd": 0.0273,
+      "p_gt_0": 0.9137,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "2025",
+     "set": "all",
+     "n": 180,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "pit|2025": 103
+     },
+     "a": 0.34692,
+     "b": 0.27838,
+     "delta": 0.06854,
+     "player": {
+      "lb95": 0.0205,
+      "ub95": 0.1149,
+      "ci95": [
+       0.011,
+       0.1246
+      ],
+      "sd": 0.02892,
+      "p_gt_0": 0.9905,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0271,
+      "ub95": 0.106,
+      "ci95": [
+       0.0206,
+       0.1131
+      ],
+      "sd": 0.0238,
+      "p_gt_0": 0.9985,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "2025",
+     "set": "all",
+     "n": 180,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "pit|2025": 103
+     },
+     "a": 0.33034,
+     "b": 0.27838,
+     "delta": 0.05196,
+     "player": {
+      "lb95": 0.0076,
+      "ub95": 0.0948,
+      "ci95": [
+       -0.0008,
+       0.1044
+      ],
+      "sd": 0.02658,
+      "p_gt_0": 0.973,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": 0.0085,
+      "ub95": 0.0908,
+      "ci95": [
+       0.001,
+       0.0999
+      ],
+      "sd": 0.02524,
+      "p_gt_0": 0.9768,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "2025",
+     "set": "all",
+     "n": 180,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "pit|2025": 103
+     },
+     "a": 0.30422,
+     "b": 0.27838,
+     "delta": 0.02584,
+     "player": {
+      "lb95": -0.0067,
+      "ub95": 0.0573,
+      "ci95": [
+       -0.0123,
+       0.0636
+      ],
+      "sd": 0.01939,
+      "p_gt_0": 0.9055,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0041,
+      "ub95": 0.0512,
+      "ci95": [
+       -0.0094,
+       0.0551
+      ],
+      "sd": 0.01662,
+      "p_gt_0": 0.9197,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "2025",
+     "set": "all",
+     "n": 180,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 77,
+      "pit|2025": 103
+     },
+     "a": 0.34692,
+     "b": 0.33034,
+     "delta": 0.01658,
+     "player": {
+      "lb95": -0.0133,
+      "ub95": 0.0462,
+      "ci95": [
+       -0.0191,
+       0.0516
+      ],
+      "sd": 0.01822,
+      "p_gt_0": 0.8133,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0179,
+      "ub95": 0.0521,
+      "ci95": [
+       -0.0252,
+       0.0581
+      ],
+      "sd": 0.02125,
+      "p_gt_0": 0.8155,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "2025",
+     "set": "mlb_pipeline graded",
+     "n": 148,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 71,
+      "pit|2025": 77
+     },
+     "a": 0.30405,
+     "b": 0.35939,
+     "delta": -0.05534,
+     "player": {
+      "lb95": -0.1119,
+      "ub95": 0.0069,
+      "ci95": [
+       -0.1245,
+       0.0197
+      ],
+      "sd": 0.03643,
+      "p_gt_0": 0.0712,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.1083,
+      "ub95": 0.0042,
+      "ci95": [
+       -0.1186,
+       0.0179
+      ],
+      "sd": 0.03415,
+      "p_gt_0": 0.065,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2025|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "2025",
+     "set": "fangraphs graded",
+     "n": 176,
+     "groups": [
+      "hit|2025",
+      "pit|2025"
+     ],
+     "n_by_group": {
+      "hit|2025": 75,
+      "pit|2025": 101
+     },
+     "a": 0.32483,
+     "b": 0.29078,
+     "delta": 0.03405,
+     "player": {
+      "lb95": -0.0128,
+      "ub95": 0.081,
+      "ci95": [
+       -0.0215,
+       0.0909
+      ],
+      "sd": 0.02838,
+      "p_gt_0": 0.8872,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0069,
+      "ub95": 0.0671,
+      "ci95": [
+       -0.0146,
+       0.0731
+      ],
+      "sd": 0.02265,
+      "p_gt_0": 0.9165,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "2026",
+     "set": "all",
+     "n": 183,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 84,
+      "pit|2026": 99
+     },
+     "a": 0.26686,
+     "b": 0.26988,
+     "delta": -0.00302,
+     "player": {
+      "lb95": -0.0441,
+      "ub95": 0.0373,
+      "ci95": [
+       -0.0532,
+       0.0464
+      ],
+      "sd": 0.02497,
+      "p_gt_0": 0.4465,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0391,
+      "ub95": 0.0355,
+      "ci95": [
+       -0.0462,
+       0.0431
+      ],
+      "sd": 0.02277,
+      "p_gt_0": 0.4555,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "2026",
+     "set": "all",
+     "n": 183,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 84,
+      "pit|2026": 99
+     },
+     "a": 0.25163,
+     "b": 0.26988,
+     "delta": -0.01825,
+     "player": {
+      "lb95": -0.0568,
+      "ub95": 0.0182,
+      "ci95": [
+       -0.0633,
+       0.0259
+      ],
+      "sd": 0.02286,
+      "p_gt_0": 0.2003,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0514,
+      "ub95": 0.0198,
+      "ci95": [
+       -0.0581,
+       0.0275
+      ],
+      "sd": 0.02176,
+      "p_gt_0": 0.2112,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "2026",
+     "set": "all",
+     "n": 183,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 84,
+      "pit|2026": 99
+     },
+     "a": 0.25825,
+     "b": 0.26988,
+     "delta": -0.01163,
+     "player": {
+      "lb95": -0.0428,
+      "ub95": 0.0178,
+      "ci95": [
+       -0.05,
+       0.0236
+      ],
+      "sd": 0.01862,
+      "p_gt_0": 0.251,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0378,
+      "ub95": 0.0181,
+      "ci95": [
+       -0.0444,
+       0.0237
+      ],
+      "sd": 0.01723,
+      "p_gt_0": 0.2835,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|efv_v5_combined-efv_v2": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "efv_v2",
+     "scope": "2026",
+     "set": "all",
+     "n": 183,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 84,
+      "pit|2026": 99
+     },
+     "a": 0.26686,
+     "b": 0.25163,
+     "delta": 0.01522,
+     "player": {
+      "lb95": -0.0144,
+      "ub95": 0.0481,
+      "ci95": [
+       -0.0203,
+       0.0545
+      ],
+      "sd": 0.01911,
+      "p_gt_0": 0.7923,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0165,
+      "ub95": 0.0502,
+      "ci95": [
+       -0.0222,
+       0.057
+      ],
+      "sd": 0.02055,
+      "p_gt_0": 0.7738,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "2026",
+     "set": "mlb_pipeline graded",
+     "n": 143,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 72,
+      "pit|2026": 71
+     },
+     "a": 0.29605,
+     "b": 0.31203,
+     "delta": -0.01598,
+     "player": {
+      "lb95": -0.0839,
+      "ub95": 0.0558,
+      "ci95": [
+       -0.0981,
+       0.0687
+      ],
+      "sd": 0.04228,
+      "p_gt_0": 0.365,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0768,
+      "ub95": 0.0533,
+      "ci95": [
+       -0.09,
+       0.0646
+      ],
+      "sd": 0.03964,
+      "p_gt_0": 0.3832,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|2026|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "2026",
+     "set": "fangraphs graded",
+     "n": 179,
+     "groups": [
+      "hit|2026",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2026": 81,
+      "pit|2026": 98
+     },
+     "a": 0.28853,
+     "b": 0.2653,
+     "delta": 0.02323,
+     "player": {
+      "lb95": -0.0305,
+      "ub95": 0.0779,
+      "ci95": [
+       -0.041,
+       0.088
+      ],
+      "sd": 0.03294,
+      "p_gt_0": 0.77,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0267,
+      "ub95": 0.0802,
+      "ci95": [
+       -0.0355,
+       0.0908
+      ],
+      "sd": 0.03254,
+      "p_gt_0": 0.7738,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v5_combined-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v5_combined",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 287,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 69,
+      "hit|2026": 71,
+      "pit|2025": 76,
+      "pit|2026": 71
+     },
+     "a": 0.3494,
+     "b": 0.33463,
+     "delta": 0.01477,
+     "player": {
+      "lb95": -0.0234,
+      "ub95": 0.0516,
+      "ci95": [
+       -0.031,
+       0.0597
+      ],
+      "sd": 0.02303,
+      "p_gt_0": 0.7312,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0137,
+      "ub95": 0.0458,
+      "ci95": [
+       -0.0189,
+       0.0513
+      ],
+      "sd": 0.01787,
+      "p_gt_0": 0.7975,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v2-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v2",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 287,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 69,
+      "hit|2026": 71,
+      "pit|2025": 76,
+      "pit|2026": 71
+     },
+     "a": 0.34398,
+     "b": 0.33463,
+     "delta": 0.00935,
+     "player": {
+      "lb95": -0.0261,
+      "ub95": 0.0456,
+      "ci95": [
+       -0.0328,
+       0.0513
+      ],
+      "sd": 0.02167,
+      "p_gt_0": 0.6647,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0233,
+      "ub95": 0.0428,
+      "ci95": [
+       -0.0289,
+       0.0508
+      ],
+      "sd": 0.02026,
+      "p_gt_0": 0.6355,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|efv_v1-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "efv_v1",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 287,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 69,
+      "hit|2026": 71,
+      "pit|2025": 76,
+      "pit|2026": 71
+     },
+     "a": 0.34384,
+     "b": 0.33463,
+     "delta": 0.00922,
+     "player": {
+      "lb95": -0.0147,
+      "ub95": 0.0325,
+      "ci95": [
+       -0.0199,
+       0.0379
+      ],
+      "sd": 0.01461,
+      "p_gt_0": 0.7332,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0095,
+      "ub95": 0.0282,
+      "ci95": [
+       -0.0133,
+       0.0323
+      ],
+      "sd": 0.01161,
+      "p_gt_0": 0.7853,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|mlb_pipeline-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "mlb_pipeline",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 287,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 69,
+      "hit|2026": 71,
+      "pit|2025": 76,
+      "pit|2026": 71
+     },
+     "a": 0.29711,
+     "b": 0.33463,
+     "delta": -0.03752,
+     "player": {
+      "lb95": -0.0812,
+      "ub95": 0.0105,
+      "ci95": [
+       -0.0895,
+       0.0193
+      ],
+      "sd": 0.02797,
+      "p_gt_0": 0.1085,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0821,
+      "ub95": 0.013,
+      "ci95": [
+       -0.0905,
+       0.0227
+      ],
+      "sd": 0.02904,
+      "p_gt_0": 0.1185,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    },
+    "war2026|spearman|pooled|common|fangraphs-consensus": {
+     "stat": "spearman",
+     "label": "war2026",
+     "a_rater": "fangraphs",
+     "b_rater": "prospx_consensus",
+     "scope": "pooled",
+     "set": "common",
+     "n": 287,
+     "groups": [
+      "hit|2025",
+      "hit|2026",
+      "pit|2025",
+      "pit|2026"
+     ],
+     "n_by_group": {
+      "hit|2025": 69,
+      "hit|2026": 71,
+      "pit|2025": 76,
+      "pit|2026": 71
+     },
+     "a": 0.34068,
+     "b": 0.33463,
+     "delta": 0.00605,
+     "player": {
+      "lb95": -0.0329,
+      "ub95": 0.0488,
+      "ci95": [
+       -0.041,
+       0.0576
+      ],
+      "sd": 0.02499,
+      "p_gt_0": 0.6075,
+      "B_used": 4000,
+      "status": "derived"
+     },
+     "club": {
+      "lb95": -0.0355,
+      "ub95": 0.0482,
+      "ci95": [
+       -0.0447,
+       0.0567
+      ],
+      "sd": 0.02568,
+      "p_gt_0": 0.5962,
+      "B_used": 4000,
+      "status": "derived"
+     }
+    }
+   },
+   "own": {
+    "war2026": {
+     "efv_v5_combined": {
+      "n": 363,
+      "spearman": 0.3066,
+      "by_group": {
+       "hit|2025": {
+        "n": 77,
+        "spearman": 0.3147
+       },
+       "hit|2026": {
+        "n": 84,
+        "spearman": 0.392
+       },
+       "pit|2025": {
+        "n": 103,
+        "spearman": 0.371
+       },
+       "pit|2026": {
+        "n": 99,
+        "spearman": 0.1607
+       }
+      }
+     },
+     "efv_v2": {
+      "n": 363,
+      "spearman": 0.2907,
+      "by_group": {
+       "hit|2025": {
+        "n": 77,
+        "spearman": 0.2984
+       },
+       "hit|2026": {
+        "n": 84,
+        "spearman": 0.3592
+       },
+       "pit|2025": {
+        "n": 103,
+        "spearman": 0.3542
+       },
+       "pit|2026": {
+        "n": 99,
+        "spearman": 0.1603
+       }
+      }
+     },
+     "efv_v1": {
+      "n": 363,
+      "spearman": 0.281,
+      "by_group": {
+       "hit|2025": {
+        "n": 77,
+        "spearman": 0.2218
+       },
+       "hit|2026": {
+        "n": 84,
+        "spearman": 0.3937
+       },
+       "pit|2025": {
+        "n": 103,
+        "spearman": 0.3658
+       },
+       "pit|2026": {
+        "n": 99,
+        "spearman": 0.1433
+       }
+      }
+     },
+     "prospx_consensus": {
+      "n": 363,
+      "spearman": 0.2741,
+      "by_group": {
+       "hit|2025": {
+        "n": 77,
+        "spearman": 0.177
+       },
+       "hit|2026": {
+        "n": 84,
+        "spearman": 0.399
+       },
+       "pit|2025": {
+        "n": 103,
+        "spearman": 0.3542
+       },
+       "pit|2026": {
+        "n": 99,
+        "spearman": 0.1603
+       }
+      }
+     },
+     "mlb_pipeline": {
+      "n": 291,
+      "spearman": 0.3001,
+      "by_group": {
+       "hit|2025": {
+        "n": 71,
+        "spearman": 0.1699
+       },
+       "hit|2026": {
+        "n": 72,
+        "spearman": 0.4733
+       },
+       "pit|2025": {
+        "n": 77,
+        "spearman": 0.4278
+       },
+       "pit|2026": {
+        "n": 71,
+        "spearman": 0.1164
+       }
+      }
+     },
+     "fangraphs": {
+      "n": 355,
+      "spearman": 0.3065,
+      "by_group": {
+       "hit|2025": {
+        "n": 75,
+        "spearman": 0.1779
+       },
+       "hit|2026": {
+        "n": 81,
+        "spearman": 0.3983
+       },
+       "pit|2025": {
+        "n": 101,
+        "spearman": 0.434
+       },
+       "pit|2026": {
+        "n": 98,
+        "spearman": 0.1978
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "accounting": {
+  "list": {
+   "hit": {
+    "frame_rows": 590,
+    "no_consensus": 0,
+    "constant_only": 0,
+    "rows": 590
+   },
+   "pit": {
+    "frame_rows": 618,
+    "no_consensus": 0,
+    "constant_only": 0,
+    "rows": 618
+   }
+  },
+  "debut": {
+   "hit": {
+    "candidates": 209,
+    "no_board": 48,
+    "no_consensus": 0,
+    "constant_only": 0,
+    "rows": 161
+   },
+   "pit": {
+    "candidates": 273,
+    "no_board": 71,
+    "no_consensus": 0,
+    "constant_only": 0,
+    "rows": 202
+   }
+  }
+ },
+ "label_accounting": {
+  "list|hit": {
+   "rows": 590,
+   "identity_conflict": 0,
+   "r2026": 78,
+   "war_row_missing": 0,
+   "rate_rows": 78
+  },
+  "list|pit": {
+   "rows": 618,
+   "identity_conflict": 0,
+   "r2026": 89,
+   "war_row_missing": 0,
+   "rate_rows": 89
+  },
+  "debut|hit": {
+   "rows": 161,
+   "identity_conflict": 0,
+   "r2026": 84,
+   "war_row_missing": 11,
+   "rate_rows": 150
+  },
+  "debut|pit": {
+   "rows": 202,
+   "identity_conflict": 0,
+   "r2026": 99,
+   "war_row_missing": 18,
+   "rate_rows": 184
+  }
+ },
+ "identity": {
+  "list": {
+   "hit": {
+    "rows": 590,
+    "outcome_blind_id": 522,
+    "record_id": 578,
+    "agree": 516
+   },
+   "pit": {
+    "rows": 618,
+    "outcome_blind_id": 570,
+    "record_id": 578,
+    "agree": 557
+   }
+  },
+  "debut": {
+   "hit": {
+    "rows": 161,
+    "outcome_blind_id": 158,
+    "record_id": 161,
+    "agree": 158
+   },
+   "pit": {
+    "rows": 202,
+    "outcome_blind_id": 198,
+    "record_id": 202,
+    "agree": 198
+   }
+  }
+ },
+ "training": {
+  "hit": {
+   "relabelled": 872,
+   "no_seasons": 0,
+   "terminal_resolved": 3,
+   "terminal_after_cap": 0,
+   "bust_recent_restored": 0,
+   "changed": 385,
+   "rows": 2012,
+   "dropped_in_frame": 87,
+   "reproduction_rt": 2026,
+   "reproduction_mismatches": 0,
+   "reproduction_no_seasons": 0
+  },
+  "pit": {
+   "relabelled": 998,
+   "no_seasons": 0,
+   "terminal_resolved": 2,
+   "terminal_after_cap": 0,
+   "bust_recent_restored": 0,
+   "changed": 453,
+   "rows": 2158,
+   "dropped_in_frame": 131,
+   "reproduction_rt": 2026,
+   "reproduction_mismatches": 0,
+   "reproduction_no_seasons": 0
+  },
+  "late_first_debuts_2026": 0
+ },
+ "receipts": {
+  "live_columns": {
+   "debut|hit|2025": {
+    "rows": 77,
+    "families": {
+     "group": {
+      "status": "lit"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_time_hit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "partial",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [],
+    "clipped": 4,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 77
+   },
+   "debut|hit|2026": {
+    "rows": 84,
+    "families": {
+     "group": {
+      "status": "partial",
+      "reason": "in-group rows carry no value at the read season: a pitch-call metric needs a discipline aggregate for the season (.cache/efv4_pbp_discipline); value 0.0 (the in-group mean)"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_time_hit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "partial",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [],
+    "clipped": 5,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 84
+   },
+   "list|hit|2026": {
+    "rows": 590,
+    "families": {
+     "group": {
+      "status": "partial",
+      "reason": "in-group rows carry no value at the read season: a pitch-call metric needs a discipline aggregate for the season (.cache/efv4_pbp_discipline); value 0.0 (the in-group mean)"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_time_hit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "dark",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [],
+    "clipped": 23,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 590
+   },
+   "debut|pit|2025": {
+    "rows": 103,
+    "families": {
+     "group": {
+      "status": "lit"
+     },
+     "tool": {
+      "status": "lit"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_skill_pit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "partial",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [],
+    "clipped": 1,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 103
+   },
+   "debut|pit|2026": {
+    "rows": 99,
+    "families": {
+     "group": {
+      "status": "lit"
+     },
+     "tool": {
+      "status": "partial",
+      "reason": "a (cell, season) pool under 30 graded rows has no z norm; its rows read 0.0 (the in-group mean)"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_skill_pit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "partial",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [],
+    "clipped": 6,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 99
+   },
+   "list|pit|2026": {
+    "rows": 618,
+    "families": {
+     "group": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_g5_pit_A_all_SP_age', 'scr_g5_pit_A_all_SP_bf_per_g', 'scr_g5_pit_A_all_SP_k_minus_bb', 'scr_g5_pit_A_all_SP_k_pct', 'scr_g5_pit_A_all_all_age', 'scr_g5_pit_A_all_all_k_minus_bb', 'scr_g5_pit_A_all_all_k_pct', 'scr_g5_pit_A_young_all_k_minus_bb', 'scr_g5_pit_A_young_all_k_pct']; values clipped to the training range"
+     },
+     "tool": {
+      "status": "lit"
+     },
+     "il": {
+      "status": "drift",
+      "reason": "served nonzero share above 2x the training share for ['scr_w2i_sixty_skill_pit']; values clipped to the training range"
+     },
+     "nri": {
+      "status": "dark",
+      "reason": "no non-roster invitee list cached for spring [2026] (.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount is never served, so those rows read None"
+     },
+     "pbp": {
+      "status": "lit"
+     },
+     "pbp_bb": {
+      "status": "lit"
+     },
+     "popmle": {
+      "status": "lit"
+     },
+     "raters": {
+      "status": "dark",
+      "reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+     },
+     "report": {
+      "status": "dark",
+      "reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+     },
+     "w2s": {
+      "status": "lit"
+     }
+    },
+    "withheld": [
+     "scr_t5_pit_Ap_all_SP_sl_gap",
+     "scr_t5_pit_Ap_all_all_sl_gap",
+     "scr_t5_pit_Ap_young_all_sl_gap"
+    ],
+    "clipped": 21,
+    "predict_v2_vs_predict_combined_max_abs": 0.0,
+    "rows_moved_by_candidates": 618
+   }
+  },
+  "fits": {
+   "hit": {
+    "n_train_v5": 1889,
+    "n_train_v2": 1889,
+    "n_train_v1": 1889,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "v5_lambda": {
+     "skill": 1000.0,
+     "timing": 300.0
+    },
+    "w_skill": {
+     "v5": 0.908861,
+     "v2": 0.908861
+    },
+    "w_time": {
+     "v5": 0.202573,
+     "v2": 0.202573
+    }
+   },
+   "pit": {
+    "n_train_v5": 1981,
+    "n_train_v2": 1981,
+    "n_train_v1": 1981,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "v5_lambda": {
+     "skill": 1000.0,
+     "timing": 100.0
+    },
+    "w_skill": {
+     "v5": 1.0,
+     "v2": 0.0
+    },
+    "w_time": {
+     "v5": 0.020473,
+     "v2": 0.0
+    }
+   }
+  }
+ },
+ "milb2026": {
+  "status": "refused",
+  "error": "ReservedFrameError",
+  "message": "surrogate lv2026_surrogate read of V 2026 refused: needs the sha of the commit carrying docs/efv-v2/SURROGATE_2026_GATE.md marked REGISTERED, got '27b5353458cff0a8d38e2f3dc935b28bf293f2fc' (SURROGATE_2026_GATE.md s2.3).",
+  "gate_sha_tried": "27b5353458cff0a8d38e2f3dc935b28bf293f2fc"
+ },
+ "excluded_ids_population_fit": 1285,
+ "seconds_build": 182.2,
+ "spent": "F-2026-LIST and F-2026-DEBUT are SPENT by this read: no later model is claimed on the 2026-season outcomes of these rows"
+}

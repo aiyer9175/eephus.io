@@ -224,3 +224,118 @@ EFV_2026_FOLD_TRAINING may then train on them.
   verdict and the receipts, no per-player row), `data/_labs/efv2026/efv_2026_holdout_rows.json`
   (the per-row scores and labels, not shipped), one row in `data/efv_progress.json`, and
   `docs/efv-v2/EFV_2026_HOLDOUT_RESULTS.md` in plain language.
+
+## 11. The read (appended by the run, 2026-10-15)
+
+Run: `python -u efv_2026_holdout.py --run` from commit c5285660 (artifact `data/efv_2026_holdout.json`, generated 2026-10-15T19:42:40Z; per-row file `data/_labs/efv2026/efv_2026_holdout_rows.json`; label `fwar@2026-10-02-0341299c20ec`; build 182.2 s). The read ran once; no build aborted. B 4000, seed 20261021.
+
+### 11.1 Frames and receipts
+
+- F-2026-LIST: 1208 rows (hitters 590, pitchers 618); every frame row carried a consensus and none was constant-anchor only. R2026 = 1 on 78 hitters and 89 pitchers; no identity conflict; every debutant carried a published 2026 fWAR row. Outcome-blind ids resolved on 522 of 590 hitters and 570 of 618 pitchers (a row without one reads no MiLB block, as on every list-vintage frame).
+- F-2026-DEBUT: 363 rows (hitters 161 of 209 class members, pitchers 202 of 273; the rest had no real-grader board read in the window). 11 hitters and 18 pitchers carry no 2026 fWAR row (2025 debuts who did not play in the 2026 majors) and read 0.0.
+- Training pool (s4.1): at RESOLVED_THROUGH 2026 the recomputation reproduced the matrices' labels on every row (0 mismatches on both sides). At 2025, 385 hitter and 453 pitcher rows changed label; 3 and 2 rows stayed terminal-resolved (no terminal transaction fell after the cutoff) and no recent-bust row was restored. The matrices held 87 hitter and 131 pitcher rows of players in a frame, every one at decision year 2025 (2025 debuts) or 2027 (busts last listed in 2026), outside every fit; the fits trained on 1,889 hitter and 1,981 pitcher rows, the served production counts. Players who left the lists by 2023 and first reached the majors in 2026: 0. The truncated copies (`data/_labs/efv2026/train_matrix_*_rt2025.json`, not tracked) had sha256 d9457745c50d7d28468634b521b9604e6f2e89fa331893c8a04da3b73d81b26b (hit) and a18a85896e5260c5172c4bfa39d9bbbe3d3117e88181ce2960e3bb8d1dddc462 (pit).
+- Fits: v5 COMBINED lambda skill / timing, hitters 1000.0 / 300.0, pitchers 1000.0 / 100.0 (the served production fit chose the same, 1000 / 300 and 1000 / 100). V2 pitchers take the consensus order (no admitted skill driver, owner DS-Q2), so V2 equals consensus on every pitcher.
+- v5 COMBINED candidate columns as of 2026-03-25 (hitters of F-2026-LIST): group partial; il drift; nri dark; pbp lit; pbp_bb lit; popmle lit; raters dark; report dark; w2s lit. `predict_v2` and `predict_combined` agree on every row (max difference 0).
+- MiLB2026: NOT computed. The surrogate guard refused: "surrogate lv2026_surrogate read of V 2026 refused: needs the sha of the commit carrying docs/efv-v2/SURROGATE_2026_GATE.md marked REGISTERED, got '27b5353458cff0a8d38e2f3dc935b28bf293f2fc' (SURROGATE_2026_GATE.md s2.3)."
+
+### 11.2 F-2026-LIST, WAR2026, within-side Spearman (the registered statistic)
+
+| rater | hitters | pitchers | pooled |
+|---|---|---|---|
+| eFV v5 COMBINED (served) | 0.1803 (n 590) | 0.0845 (n 618) | 0.1313 (n 1208) |
+| eFV V2 | 0.1733 (n 590) | 0.0731 (n 618) | 0.1220 (n 1208) |
+| eFV v1 | 0.1677 (n 590) | 0.0782 (n 618) | 0.1219 (n 1208) |
+| PROSPX consensus | 0.1674 (n 590) | 0.0731 (n 618) | 0.1192 (n 1208) |
+| MLB Pipeline | 0.2356 (n 323) | 0.0571 (n 262) | 0.1557 (n 585) |
+| FanGraphs | 0.2004 (n 533) | 0.0992 (n 575) | 0.1479 (n 1108) |
+
+Deltas on identical rows (one-sided 95 percent lower and upper bounds, player-clustered / club-clustered; two-sided CI95 player-clustered):
+
+| leg | n | delta | lb95 player / club | ub95 player / club | CI95 (player) |
+|---|---|---|---|---|---|
+| pooled: eFV v5 COMBINED minus consensus | 1208 | +0.0121 | -0.0073 / -0.0067 | +0.0312 / +0.0307 | [-0.0108, +0.0348] |
+| pooled: eFV V2 minus consensus | 1208 | +0.0029 | -0.0142 / -0.0111 | +0.0204 / +0.0172 | [-0.0172, +0.0241] |
+| pooled: eFV v1 minus consensus | 1208 | +0.0027 | -0.0110 / -0.0081 | +0.0167 / +0.0143 | [-0.0137, +0.0193] |
+| pooled: eFV v5 COMBINED minus eFV V2 | 1208 | +0.0093 | -0.0018 / -0.0007 | +0.0205 / +0.0195 | [-0.0039, +0.0229] |
+| pooled: Pipeline minus consensus (Pipeline-graded rows) | 585 | -0.0254 | -0.0640 / -0.0619 | +0.0134 / +0.0126 | [-0.0715, +0.0207] |
+| pooled: FanGraphs minus consensus (FanGraphs-graded rows) | 1108 | +0.0282 | +0.0052 / +0.0105 | +0.0520 / +0.0470 | [+0.0004, +0.0569] |
+| hit: eFV v5 COMBINED minus consensus | 590 | +0.0129 | -0.0203 / -0.0158 | +0.0455 / +0.0440 | [-0.0259, +0.0532] |
+| hit: eFV V2 minus consensus | 590 | +0.0058 | -0.0290 / -0.0222 | +0.0418 / +0.0363 | [-0.0356, +0.0496] |
+| hit: eFV v1 minus consensus | 590 | +0.0003 | -0.0192 / -0.0174 | +0.0200 / +0.0195 | [-0.0228, +0.0239] |
+| hit: eFV v5 COMBINED minus eFV V2 | 590 | +0.0070 | -0.0018 / -0.0007 | +0.0161 / +0.0142 | [-0.0036, +0.0177] |
+| hit: Pipeline minus consensus (Pipeline-graded rows) | 323 | -0.0225 | -0.0655 / -0.0636 | +0.0204 / +0.0262 | [-0.0757, +0.0284] |
+| hit: FanGraphs minus consensus (FanGraphs-graded rows) | 533 | +0.0297 | -0.0033 / -0.0028 | +0.0634 / +0.0628 | [-0.0096, +0.0704] |
+| pit: eFV v5 COMBINED minus consensus | 618 | +0.0114 | -0.0089 / -0.0058 | +0.0319 / +0.0288 | [-0.0125, +0.0365] |
+| pit: eFV V2 minus consensus | 618 | +0.0000 | +0.0000 / +0.0000 | +0.0000 / +0.0000 | [+0.0000, +0.0000] |
+| pit: eFV v1 minus consensus | 618 | +0.0051 | -0.0158 / -0.0109 | +0.0254 / +0.0217 | [-0.0200, +0.0291] |
+| pit: eFV v5 COMBINED minus eFV V2 | 618 | +0.0114 | -0.0089 / -0.0058 | +0.0319 / +0.0288 | [-0.0125, +0.0365] |
+| pit: Pipeline minus consensus (Pipeline-graded rows) | 262 | -0.0289 | -0.0969 / -0.0928 | +0.0407 / +0.0307 | [-0.1084, +0.0535] |
+| pit: FanGraphs minus consensus (FanGraphs-graded rows) | 575 | +0.0267 | -0.0060 / -0.0067 | +0.0601 / +0.0635 | [-0.0128, +0.0664] |
+| common set: eFV v5 COMBINED (served) minus consensus | 570 | -0.0131 | -0.0421 / -0.0332 | +0.0155 / +0.0090 | [-0.0469, +0.0203] |
+| common set: eFV V2 minus consensus | 570 | -0.0149 | -0.0406 / -0.0321 | +0.0104 / +0.0039 | [-0.0461, +0.0157] |
+| common set: eFV v1 minus consensus | 570 | +0.0057 | -0.0143 / -0.0073 | +0.0264 / +0.0198 | [-0.0185, +0.0294] |
+| common set: MLB Pipeline minus consensus | 570 | -0.0252 | -0.0647 / -0.0622 | +0.0146 / +0.0129 | [-0.0722, +0.0214] |
+| common set: FanGraphs minus consensus | 570 | +0.0141 | -0.0213 / -0.0143 | +0.0503 / +0.0452 | [-0.0272, +0.0564] |
+
+### 11.3 F-2026-LIST, R2026 (ARRIVAL, tilted toward a model with a timing head; never value)
+
+| leg | n | delta | lb95 player / club | ub95 player / club | CI95 (player) |
+|---|---|---|---|---|---|
+| pooled: eFV v5 COMBINED minus consensus (AUC) | 1208 | +0.0488 | +0.0344 / +0.0332 | +0.0638 / +0.0642 | [+0.0322, +0.0669] |
+| pooled: eFV V2 minus consensus (AUC) | 1208 | +0.0487 | +0.0363 / +0.0376 | +0.0622 / +0.0603 | [+0.0342, +0.0646] |
+| pooled: eFV v1 minus consensus (AUC) | 1208 | +0.0258 | +0.0141 / +0.0138 | +0.0376 / +0.0385 | [+0.0123, +0.0398] |
+| pooled: Pipeline minus consensus (Pipeline-graded rows) (AUC) | 585 | -0.0346 | -0.0594 / -0.0577 | -0.0098 / -0.0112 | [-0.0650, -0.0054] |
+| pooled: FanGraphs minus consensus (FanGraphs-graded rows) (AUC) | 1108 | +0.0108 | -0.0082 / -0.0076 | +0.0296 / +0.0287 | [-0.0114, +0.0330] |
+| hit: eFV v5 COMBINED minus consensus (AUC) | 590 | +0.0954 | +0.0719 / +0.0724 | +0.1207 / +0.1180 | [+0.0680, +0.1249] |
+| hit: eFV V2 minus consensus (AUC) | 590 | +0.0998 | +0.0747 / +0.0775 | +0.1269 / +0.1225 | [+0.0704, +0.1320] |
+| hit: eFV v1 minus consensus (AUC) | 590 | +0.0128 | -0.0037 / -0.0048 | +0.0299 / +0.0296 | [-0.0070, +0.0329] |
+| hit: Pipeline minus consensus (Pipeline-graded rows) (AUC) | 323 | -0.0033 | -0.0358 / -0.0327 | +0.0277 / +0.0257 | [-0.0419, +0.0339] |
+| hit: FanGraphs minus consensus (FanGraphs-graded rows) (AUC) | 533 | -0.0086 | -0.0365 / -0.0321 | +0.0182 / +0.0138 | [-0.0418, +0.0232] |
+| pit: eFV v5 COMBINED minus consensus (AUC) | 618 | +0.0043 | -0.0118 / -0.0127 | +0.0208 / +0.0208 | [-0.0147, +0.0244] |
+| pit: eFV V2 minus consensus (AUC) | 618 | +0.0000 | +0.0000 / +0.0000 | +0.0000 / +0.0000 | [+0.0000, +0.0000] |
+| pit: eFV v1 minus consensus (AUC) | 618 | +0.0383 | +0.0225 / +0.0189 | +0.0546 / +0.0610 | [+0.0193, +0.0577] |
+| pit: Pipeline minus consensus (Pipeline-graded rows) (AUC) | 262 | -0.0731 | -0.1139 / -0.1144 | -0.0344 / -0.0286 | [-0.1223, -0.0283] |
+| pit: FanGraphs minus consensus (FanGraphs-graded rows) (AUC) | 575 | +0.0288 | +0.0033 / +0.0036 | +0.0554 / +0.0540 | [-0.0031, +0.0607] |
+
+Own AUC, pooled over sides: eFV v5 COMBINED (served) 0.7259 (n 1208); eFV V2 0.7258 (n 1208); eFV v1 0.7030 (n 1208); PROSPX consensus 0.6771 (n 1208); MLB Pipeline 0.6157 (n 585); FanGraphs 0.6793 (n 1108).
+
+### 11.4 Secondary reads (adjudicate nothing)
+
+Rate (WAR2026 per 600 PA or 150 IP, debutants of F-2026-LIST only), within-side Spearman:
+
+| leg | n | delta | lb95 player / club | ub95 player / club | CI95 (player) |
+|---|---|---|---|---|---|
+| pooled: eFV v5 COMBINED minus consensus | 167 | -0.0148 | -0.0643 / -0.0635 | +0.0363 / +0.0320 | [-0.0748, +0.0460] |
+| pooled: eFV V2 minus consensus | 167 | -0.0292 | -0.0691 / -0.0659 | +0.0087 / +0.0076 | [-0.0783, +0.0149] |
+| pooled: eFV v1 minus consensus | 167 | -0.0041 | -0.0404 / -0.0400 | +0.0304 / +0.0302 | [-0.0468, +0.0360] |
+| pooled: Pipeline minus consensus (Pipeline-graded rows) | 132 | -0.0023 | -0.0735 / -0.0690 | +0.0732 / +0.0679 | [-0.0893, +0.0863] |
+| pooled: FanGraphs minus consensus (FanGraphs-graded rows) | 163 | +0.0441 | -0.0181 / -0.0142 | +0.1077 / +0.1070 | [-0.0285, +0.1219] |
+| common set: eFV v5 COMBINED (served) minus consensus | 131 | -0.0680 | -0.1255 / -0.1141 | -0.0120 / -0.0159 | [-0.1376, -0.0028] |
+| common set: eFV V2 minus consensus | 131 | -0.0497 | -0.1021 / -0.0944 | -0.0000 / +0.0001 | [-0.1164, +0.0092] |
+| common set: eFV v1 minus consensus | 131 | -0.0000 | -0.0374 / -0.0272 | +0.0367 / +0.0308 | [-0.0453, +0.0438] |
+
+F-2026-DEBUT, WAR2026, within (side, debut class) Spearman:
+
+| leg | n | delta | lb95 player / club | ub95 player / club | CI95 (player) |
+|---|---|---|---|---|---|
+| class pooled: eFV v5 COMBINED minus consensus | 363 | +0.0325 | +0.0003 / +0.0063 | +0.0632 / +0.0589 | [-0.0050, +0.0693] |
+| class pooled: eFV V2 minus consensus | 363 | +0.0166 | -0.0131 / -0.0098 | +0.0454 / +0.0428 | [-0.0176, +0.0516] |
+| class pooled: eFV v1 minus consensus | 363 | +0.0069 | -0.0161 / -0.0109 | +0.0287 / +0.0251 | [-0.0212, +0.0329] |
+| class pooled: Pipeline minus consensus (Pipeline-graded rows) | 291 | -0.0360 | -0.0795 / -0.0794 | +0.0114 / +0.0143 | [-0.0892, +0.0206] |
+| class pooled: FanGraphs minus consensus (FanGraphs-graded rows) | 355 | +0.0286 | -0.0069 / -0.0010 | +0.0647 / +0.0602 | [-0.0134, +0.0711] |
+| class 2025: eFV v5 COMBINED minus consensus | 180 | +0.0685 | +0.0205 / +0.0271 | +0.1149 / +0.1060 | [+0.0110, +0.1246] |
+| class 2025: eFV V2 minus consensus | 180 | +0.0520 | +0.0076 / +0.0085 | +0.0948 / +0.0908 | [-0.0008, +0.1044] |
+| class 2025: eFV v1 minus consensus | 180 | +0.0258 | -0.0067 / -0.0041 | +0.0573 / +0.0512 | [-0.0123, +0.0636] |
+| class 2025: Pipeline minus consensus (Pipeline-graded rows) | 148 | -0.0553 | -0.1119 / -0.1083 | +0.0069 / +0.0042 | [-0.1245, +0.0197] |
+| class 2025: FanGraphs minus consensus (FanGraphs-graded rows) | 176 | +0.0340 | -0.0128 / -0.0069 | +0.0810 / +0.0671 | [-0.0215, +0.0909] |
+| class 2026: eFV v5 COMBINED minus consensus | 183 | -0.0030 | -0.0441 / -0.0391 | +0.0373 / +0.0355 | [-0.0532, +0.0464] |
+| class 2026: eFV V2 minus consensus | 183 | -0.0182 | -0.0568 / -0.0514 | +0.0182 / +0.0198 | [-0.0633, +0.0259] |
+| class 2026: eFV v1 minus consensus | 183 | -0.0116 | -0.0428 / -0.0378 | +0.0178 / +0.0181 | [-0.0500, +0.0236] |
+| class 2026: Pipeline minus consensus (Pipeline-graded rows) | 143 | -0.0160 | -0.0839 / -0.0768 | +0.0558 / +0.0533 | [-0.0981, +0.0687] |
+| class 2026: FanGraphs minus consensus (FanGraphs-graded rows) | 179 | +0.0232 | -0.0305 / -0.0267 | +0.0779 / +0.0802 | [-0.0410, +0.0880] |
+
+Own within Spearman, pooled: eFV v5 COMBINED (served) 0.3066 (n 363); eFV V2 0.2907 (n 363); eFV v1 0.2810 (n 363); PROSPX consensus 0.2741 (n 363); MLB Pipeline 0.3001 (n 291); FanGraphs 0.3065 (n 355).
+
+## 12. The verdict (the rule of s7)
+
+Served eFV v5 COMBINED minus PROSPX consensus, within-side Spearman on WAR2026, pooled sides of F-2026-LIST (n 1208): +0.0121; one-sided 95 percent lower bound -0.0073 player-clustered and -0.0067 club-clustered; upper bound +0.0312 and +0.0307. Neither lower bound is above 0 and neither upper bound is below 0: **ties**. eFV does NOT beat consensus on the 2026 holdout; no served number moves and the Source Comparison copy keeps "ties consensus". One row landed in `data/efv_progress.json` (frame `holdout_2026`, role `holdout_2026`, verdict `ties`, not charted, not read by the served claim). The frame is SPENT (dated note in `docs/efv-v2/EFV_V2_GATE.md`).

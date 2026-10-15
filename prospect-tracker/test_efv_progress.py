@@ -542,7 +542,7 @@ def test_lv2026_registration_changes_no_existing_row():
     assert not [r for r in rows if r["frame"] in LV2026]
     assert P.restamp_roles(rows) == rows
     for r in rows:
-        assert r["frame"] in _PRE_SG5_FRAMES | _EFV3_A5_FRAMES
+        assert r["frame"] in _PRE_SG5_FRAMES | _EFV3_A5_FRAMES | _HOLDOUT_FRAMES
         assert r.get("content_hash") == P.content_hash(r)
     for fid, meta in (doc.get("frames") or {}).items():
         if fid in LV2026:

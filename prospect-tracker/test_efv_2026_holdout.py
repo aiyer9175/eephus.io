@@ -13,6 +13,7 @@ by consensus-FV level.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -168,3 +169,61 @@ def test_the_module_groups_nothing_by_consensus_fv_level():
     for bad in ("fv_cell", "fv_bucket", "by_fv", "fv_level", "fv_bin", "fv_stratum"):
         assert bad not in src, bad
     assert "run_backtest" not in src
+
+
+# ---------------------------------------------------------------------------
+# the one committed read (data/efv_2026_holdout.json), pinned, never recomputed
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def read():
+    if not X.OUT_PATH.exists():
+        pytest.skip("the 2026 holdout artifact is not on disk")
+    return json.loads(X.OUT_PATH.read_text(encoding="utf-8"))
+
+
+def test_the_read_is_the_registered_one(read):
+    assert read["item"] == X.ITEM and read["cutoff"] == X.CUTOFF
+    assert read["label"]["vintage_id"] == X.LABEL_VINTAGE_ID
+    assert read["bootstrap"]["B"] == X.B and read["bootstrap"]["seed"] == X.SEED
+    assert read["train_resolved_through"] == 2025 and read["gate_sha"] == X.GATE_SHA
+    assert read["pass_leg"] == X.PASS_LEG
+    for side in ("hit", "pit"):
+        assert read["training"][side]["reproduction_mismatches"] == 0
+
+
+def test_the_verdict_is_ties_and_follows_from_the_leg(read):
+    leg = read["frames"]["list"]["legs"][X.PASS_LEG]
+    assert read["verdict"] == X.verdict(leg) == "ties" and read["pass"] is False
+    assert leg["n"] == 1208 and leg["delta"] == pytest.approx(0.01211, abs=1e-5)
+    assert leg["player"]["lb95"] < 0 and leg["club"]["lb95"] < 0
+    assert leg["player"]["B_used"] == leg["club"]["B_used"] == X.B
+
+
+def test_the_read_happens_once():
+    if not X.OUT_PATH.exists():
+        pytest.skip("the 2026 holdout artifact is not on disk")
+    with pytest.raises(X.AlreadyRead):
+        X.guard_one_read()
+
+
+def test_the_shipped_artifact_carries_no_player_row(read):
+    txt = X.OUT_PATH.read_text(encoding="utf-8")
+    assert '"player_key"' not in txt and '"rows"' not in read
+
+
+def test_the_ledger_row_copies_the_artifact_and_the_claim_ignores_it(read):
+    import efv_progress as P
+    import efv_v2_serve as S
+    prog = P.load()
+    rows = [r for r in prog["rows"] if r.get("frame") == X.PROGRESS_FRAME]
+    assert len(rows) == 1
+    r = rows[0]
+    leg = read["frames"]["list"]["legs"][X.PASS_LEG]
+    assert r["role"] == X.PROGRESS_ROLE and r["verdict"] == read["verdict"]
+    cons = r["deltas"]["vs_prospx_consensus"]["spearman"]
+    assert cons["delta"] == leg["delta"] and cons["ci95"] == leg["player"]["ci95"]
+    assert cons["lb95_player"] == leg["player"]["lb95"]
+    assert cons["lb95_club"] == leg["club"]["lb95"]
+    claim = S.served_claim(prog)
+    assert claim["frame"] != X.PROGRESS_FRAME and claim["word"] == "ties"

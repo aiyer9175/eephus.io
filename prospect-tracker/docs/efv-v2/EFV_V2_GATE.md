@@ -1105,3 +1105,23 @@ one-season label; it is not R-VM look 2 and spends none of look 2's alpha (the O
 schedule of s2.2 is untouched for the career-WAR looks). No R-LV list vintage (2020, 2021) is
 built and nothing is cut by consensus-FV level. After the read a dated note below marks the
 2026-season frames SPENT.
+
+## Note 2026-10-15: the 2026-season holdout was read once and its frames are SPENT (EW3-13, EW3-5)
+
+EFV_2026_HOLDOUT_READ (`efv_2026_holdout.py`, registration `docs/efv-v2/EFV_2026_HOLDOUT.md`
+committed alone at d1c59d85 before any number, the amendment above committed before any number)
+read the 2026 regular season ONCE (commit c5285660, artifact `data/efv_2026_holdout.json`,
+generated 2026-10-15T19:42:40Z, label `fwar@2026-10-02-0341299c20ec`). Every rater was frozen
+at the 2026 opening day (2026-03-25) and every eFV fit was rebuilt on labels stopped at the
+2025 season. Verdict on the registered leg (served eFV v5 COMBINED minus PROSPX consensus,
+within-side Spearman on WAR2026, pooled sides of F-2026-LIST, n 1,208): +0.0121, one-sided 95
+percent lower bound -0.0073 player-clustered and -0.0067 club-clustered: TIES. The R-VM cohorts
+were opened through `guard_vm_request` on this registration's sha `e7931ce4`; no R-LV list
+vintage was built; nothing was cut by consensus-FV level.
+
+SPENT from this date: F-2026-LIST (the preseason 2026 lists' 2026-season outcomes) and
+F-2026-DEBUT (the 2025 debut class's 2026 season and the 2026 debut class's first season). No
+later model is ever claimed on these rows' 2026-season outcomes. EFV_2026_FOLD_TRAINING may
+train on them. R-VM look 2 and look 3 (career WAR, the O'Brien-Fleming schedule of s2.2) are
+untouched by this read; any later look on the 2025 and 2026 cohorts discloses that their first
+2026 season was read here. The forking-path count of s6 gains this one registered read.
