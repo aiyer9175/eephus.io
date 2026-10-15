@@ -1117,3 +1117,181 @@ def test_the_scorecard_never_prints_a_bare_market_rho():
     assert "REM+ vs next-winter AAV &rho; <b>0.5665</b>" in html
     assert "232 signings, descriptive" in html
     assert "market fit" not in html
+
+
+# ---------------------------------------------------------------- Baserunning
+# The seventh board (owner ask 2026-09-30; task EBR_2_BUILD_DARK), built dark
+# behind baserunning_export.MLBSTATS_BASERUNNING_LIVE. The stub's
+# getElementById answers every id, so the harness sees the panel the shell
+# writes only while the flag is on, and renders the board as the live page
+# will. Three rows: a fast qualified runner, a slow qualified one, and a pinch
+# runner under every floor, whose rate cells must read blank and never zero.
+_BR_ROWS = [
+    {"mlbam": 691718, "name": "Fast Runner", "team": "CHC", "pos": "CF", "pa": 726, "sb": 41, "cs": 7,
+     "gidp": 2, "starts_on_base": 460, "qualified": True, "sb2": 36, "sb3": 5, "sbh": 0, "cs2": 6, "cs3": 1,
+     "csh": 0, "pk1": 1, "pk2": 0, "pk3": 0, "opp_sb2": 150, "opp_sb3": 97, "opp_sbh": 96,
+     "x13": [8, 21], "x2h": [15, 19], "x1h": [1, 4], "tag3h": [3, 6], "tag23": [12, 17], "oob": 5,
+     "adv_err": 1, "gdp_opp": 119, "gidp_pbp": 2, "pk": 1, "sb_pct": 0.854, "att_rate": 0.194,
+     "xbt": 24, "xbt_opp": 44, "xbt_pct": 0.545, "tag": [15, 23], "tag_pct": 0.652, "gidp_pct": 0.017,
+     "ebr": 15.589, "ebr_sb": 3.15, "ebr_xb": 6.929, "ebr_dp": 5.51, "ebr_oob": 1.375,
+     "bsr": 8.2, "wsb": 4.3, "bsr_rest": 4.0, "brv": 7.9, "brv_xb": 4.0, "brv_sb": 4.0,
+     "sav_steal_runs": 4.0, "lead_p": 11.8, "lead_s": 15.5, "sprint": 29.5, "sprint_pct": 95,
+     "bolts": 43, "hp1": 4.26, "runs_comp": 198, "war": 9.8, "recent_debut": False},
+    {"mlbam": 672386, "name": "Slow Catcher", "team": "TOR", "pos": "C", "pa": 540, "sb": 0, "cs": 1,
+     "gidp": 21, "starts_on_base": 310, "qualified": True, "sb2": 0, "sb3": 0, "sbh": 0, "cs2": 1, "cs3": 0,
+     "csh": 0, "pk1": 0, "pk2": 0, "pk3": 0, "opp_sb2": 101, "opp_sb3": 40, "opp_sbh": 50,
+     "x13": [3, 20], "x2h": [6, 14], "x1h": [0, 3], "tag3h": [2, 5], "tag23": [1, 9], "oob": 3,
+     "adv_err": 0, "gdp_opp": 140, "gidp_pbp": 21, "pk": 0, "sb_pct": None, "att_rate": 0.007,
+     "xbt": 9, "xbt_opp": 37, "xbt_pct": 0.243, "tag": [3, 14], "tag_pct": 0.214, "gidp_pct": 0.15,
+     "ebr": -8.699, "ebr_sb": -0.4, "ebr_xb": -3.1, "ebr_dp": -5.199, "ebr_oob": -0.9,
+     "bsr": -6.1, "wsb": -0.3, "bsr_rest": -5.8, "brv": -4.9, "brv_xb": -4.7, "brv_sb": -0.2,
+     "sprint": 23.9, "sprint_pct": 1, "bolts": 0, "hp1": 4.95, "runs_comp": 120, "war": 1.4,
+     "recent_debut": False},
+    {"mlbam": 700001, "name": "Pinch Runner", "team": "CHC", "pos": "SS", "pa": 12, "sb": 2, "cs": 0,
+     "gidp": 0, "starts_on_base": 9, "qualified": False, "sb2": 2, "sb3": 0, "sbh": 0, "cs2": 0, "cs3": 0,
+     "csh": 0, "pk1": 0, "pk2": 0, "pk3": 0, "opp_sb2": 6, "opp_sb3": 2, "opp_sbh": 1,
+     "x13": [1, 2], "x2h": [0, 1], "x1h": [0, 0], "tag3h": [0, 0], "tag23": [0, 1], "oob": 0,
+     "adv_err": 0, "gdp_opp": 3, "gidp_pbp": 0, "pk": 0, "sb_pct": None, "att_rate": None,
+     "xbt": 1, "xbt_opp": 3, "xbt_pct": None, "tag": [0, 1], "tag_pct": None, "gidp_pct": None,
+     "ebr": 0.41, "ebr_sb": 0.3, "ebr_xb": 0.11, "ebr_dp": 0.0, "ebr_oob": 0.0,
+     "recent_debut": True},
+]
+_BR_TEAM = {"n_runners": 18, "team_ebr": 31.7, "team_ebr_sb": 5.6, "team_ebr_xb": 14.6, "team_ebr_dp": 11.5,
+            "team_sb": 167, "team_cs": 37, "team_sb_pct": 0.819, "team_att_rate": 0.096, "team_xbt_pct": 0.477,
+            "team_tag_pct": 0.41, "team_oob": 49, "team_gidp_pct": 0.074, "team_sprint": 28.0,
+            "team_bsr": 15.8, "team_brv": 13.9}
+BR_SAMPLE = json.dumps({
+    "schema": 1, "generated_at": "2026-10-14T18:23:00", "season": 2026, "as_of": "2026-10-14",
+    "verdict": "descriptive", "flag": {"MLBSTATS_BASERUNNING_LIVE": False},
+    "frame": {"ewar_note": "Its baserunning is Baseball-Reference's (runs_br and runs_dp carried inside bWAR), a different frame from eBR and BsR.",
+              "war_provider": "ewar_v2"},
+    "bem_plus": {"served": False, "reason": "EBR_GATE.md part 12.1 records no BEM+ PASS"},
+    "sources": {"official": {"source": "statsapi season hitting (playerPool=All)", "fetched_at": "2026-10-14T07:47:08", "n_rows": 751},
+                "published": {"source": "statsapi sabermetrics (FanGraphs BsR, wSB)", "available": True,
+                              "fetched_at": "2026-10-14T07:43:50", "n_joined": 3, "n_ambiguous": 0, "not_read": ["ubr", "wGdp"]},
+                "savant_brv": {"season": 2026, "fetched_at": "2026-10-14T18:16:48", "n_source_rows": 612, "n_joined": 2},
+                "sprint": {"fetched_at": "2026-10-14T18:16:50", "min_runs": 10, "pool_n": 567},
+                "runner_moves": {"built_at": "2026-10-14T18:20:00", "games": 2429, "games_scheduled": 2430,
+                                 "through": "2026-10-13", "collisions": 0}},
+    "values": {"breakeven_sb2": 0.74, "breakeven_sb3": 0.80,
+               "re24": {"0|0": {"re": 0.49, "n": 46000}, "1|0": {"re": 0.88, "n": 11000}},
+               "steal": {"per_opportunity": {"1B": 0.012, "2B": 0.004, "3B": 0.0}},
+               "gidp": {"rate": 0.091, "cost": {"1|0": 0.54}}},
+    "qualify": {"min_pa": 200, "floors": {"sb_pct": 5, "att_rate": 20, "xbt": 10, "cls": 5, "tag": 5, "gidp": 20},
+                "sprint_min_runs": 10},
+    "league": {"season": 2026, "sb": 3289, "cs": 984, "sb_pct": 0.77, "att_rate": {"2B": 0.086, "3B": 0.019},
+               "xbt_pct": 0.437, "cls": {"s1_3": [2582, 7532], "s2_h": [3023, 4998], "d1_h": [897, 2364]},
+               "tag": {"f3_H": [924, 1216], "f2_3": [880, 2435]}, "oob_per_100_starts": 1.159,
+               "pk_per_100_starts": 0.196, "gidp_pct": 0.091, "starts_on_base": 113159,
+               "sprint": {"mean": 27.37, "median": 27.5, "sd": 1.363, "n": 567},
+               "ebr_sum": {"ebr": -0.018, "ebr_sb": -0.005, "ebr_xb": -0.005, "ebr_dp": -0.008}},
+    "team_basis": {"basis": "current_roster", "scope": "current", "n_rows": 3, "n_moved_to_current_club": 1,
+                   "n_team_unresolved": 0, "label": "baserunning", "note": "The club MLB's transaction feed lists today."},
+    "n_qualified": 2, "runners": _BR_ROWS,
+    "teams": [dict(_BR_TEAM, team="CHC", roster=dict(_BR_TEAM, team="CHC"), earned=dict(_BR_TEAM, team="CHC", team_ebr=33.7)),
+              dict(_BR_TEAM, team="TOR", team_ebr=-12.4, team_ebr_dp=-9.0, team_sb=40, team_sb_pct=0.69,
+                   team_sprint=26.1, roster=dict(_BR_TEAM, team="TOR", team_ebr=-12.4), earned=dict(_BR_TEAM, team="TOR", team_ebr=-11.0))],
+})
+_BR_HFIELDS = ["mlbam", "name", "team", "pos", "pa", "qualified", "sb", "cs", "sb_pct", "gidp", "pk", "att_rate",
+               "xbt", "xbt_opp", "xbt_pct", "tag_pct", "oob", "gidp_pct", "starts_on_base", "ebr", "ebr_sb",
+               "ebr_xb", "ebr_dp", "bsr", "wsb", "bsr_rest", "brv", "brv_xb", "brv_sb", "sprint", "sprint_pct", "war"]
+BR_HISTORY_SAMPLE = json.dumps({
+    "schema": 1, "generated_at": "2026-10-14T18:07:00", "ebr_version": "ebr_v1", "seasons": [2024, 2025],
+    "fields": _BR_HFIELDS,
+    "frame": {"ewar_note": "Its baserunning is Baseball-Reference's (runs_br and runs_dp carried inside bWAR), a different frame from eBR and BsR.",
+              "war_provider": "ewar_v2"},
+    "team_basis": {"basis": "current_roster", "scope": "history", "n_rows": 2, "n_moved_to_current_club": 0,
+                   "note": "These are CLOSED seasons; team is the club today."},
+    "history": {"2025": {"season": 2025, "n_qualified": 2, "runners": [
+        [691718, "Fast Runner", "CHC", "CF", 700, True, 35, 9, 0.795, 3, 2, 0.17, 20, 40, 0.5, 0.6, 4, 0.03, 430,
+         12.5, 2.1, 6.4, 4.0, 8.5, 3.9, 4.6, 8.1, 4.4, 3.7, 29.6, 96, 7.1],
+        [672386, "Slow Catcher", "TOR", "C", 520, True, 0, 0, None, 18, 0, 0.0, 8, 35, 0.229, 0.2, 2, 0.13, 300,
+         -7.2, -0.3, -2.4, -4.5, -5.0, -0.2, -4.8, -4.1, -3.9, -0.2, 24.1, 2, 1.9]]}},
+})
+
+
+def _baserunning_prelude(hash_: str, sample: str | None = None) -> str:
+    override = f"""
+    var BR_SAMPLE={sample or BR_SAMPLE};
+    var BR_HISTORY_SAMPLE={BR_HISTORY_SAMPLE};
+    fetch=function(url){{
+      var u=String(url);
+      var body = (u.indexOf('baserunning_history')>=0) ? BR_HISTORY_SAMPLE
+               : (u.indexOf('baserunning')>=0) ? BR_SAMPLE : SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{
+      teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{"691718":{{"key":"fast_runner","mlbam":691718,"name":"Fast Runner","prospx":"fast-runner"}}}}}});}}
+    }};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    return _prelude(hash_) + override
+
+
+def _render_baserunning(hash_: str, sample: str | None = None) -> str:
+    ctx = MiniRacer()
+    ctx.eval(_baserunning_prelude(hash_, sample) + JS)
+    return ctx.eval("__html['mlbstats-baserunning-root'] || ''")
+
+
+def test_baserunning_board_renders_via_section_hash():
+    html = _render_baserunning("#section=baserunning")
+    assert "Fast Runner" in html and "Slow Catcher" in html
+    assert "Pinch Runner" not in html, "the qualified gate starts on"
+    assert "undefined" not in html and "NaN" not in html
+    assert "15.6" in html and "-8.7" in html                       # eBR, one decimal, signed
+    assert "mlbstats-br-qual" in html and "mlbstats-br-recent" in html
+    assert 'href="/management/#section=running"' in html
+    assert "PUBLISHED, NOT COMPUTED HERE" in html and "From Baseball Savant" in html
+    assert "74.0 percent" in html, "the RE24 break-even for a steal of second reads off values.breakeven_sb2"
+
+
+def test_baserunning_rates_under_a_floor_read_blank_and_never_zero():
+    html = _render_baserunning("#section=baserunning&bcols=all", sample=json.dumps(
+        dict(json.loads(BR_SAMPLE), runners=[r for r in _BR_ROWS if r["mlbam"] == 700001])))
+    assert "Pinch Runner" not in html
+    html = _render_baserunning("#section=baserunning&bcols=all", sample=json.dumps(
+        dict(json.loads(BR_SAMPLE), runners=[dict(r, qualified=True) for r in _BR_ROWS if r["mlbam"] == 700001])))
+    assert "Pinch Runner" in html
+    row = html.split('mlbstats-name-txt">Pinch Runner')[1].split("</tr>")[0]
+    assert "0.0%" not in row and "0%" not in row
+    assert "under the 5-chance floor" in row                        # the [taken, chances] title names the floor
+
+
+def test_baserunning_team_sub_tab_renders_without_ewar():
+    html = _render_baserunning("#section=baserunning&bview=teams")
+    assert "CHC" in html and "TOR" in html and "31.7" in html and "-12.4" in html
+    assert 'data-col="war"' not in html and 'data-col="team_war"' not in html
+    assert "club running style" in html and 'href="/management/#section=running"' in html
+    assert "undefined" not in html
+
+
+def test_baserunning_charts_render_or_say_why_not():
+    html = _render_baserunning("#section=baserunning&bview=charts")
+    # Two qualified runners cannot chart (the 12-row floor); the board says so
+    # rather than drawing a two-dot scatter.
+    assert "Too few qualified runners" in html
+    rows = [dict(_BR_ROWS[0], mlbam=800000 + i, name="Runner %d" % i, sprint=26.0 + i * 0.3, ebr=i - 6.0,
+                 att_rate=0.05 + i * 0.01, sb_pct=0.6 + i * 0.02) for i in range(14)]
+    html = _render_baserunning("#section=baserunning&bview=charts", sample=json.dumps(dict(json.loads(BR_SAMPLE), runners=rows)))
+    assert html.count("hub-scatter") == 2
+    assert "win-probability break-even" in html and 'href="/management/#section=running"' in html
+    assert "trend" not in html.lower() and "fit line" not in html.lower()
+
+
+def test_baserunning_history_season_renders_from_the_positional_rows():
+    html = _render_baserunning("#section=baserunning&bseason=2025")
+    assert "2025 season, 2 qualified runners" in html
+    assert "Fast Runner" in html and "12.5" in html
+    assert 'data-col="x13"' not in html, "the by-base splits are not in the history fields"
+    assert 'data-col="war"' in html and "7.1" in html
+    assert "undefined" not in html and "NaN" not in html
+
+
+def test_baserunning_a_years_link_gets_the_house_refusal_line():
+    html = _render_baserunning("#section=baserunning&byears=2024-2026")
+    assert "single seasons" in html and "not offered here yet" in html

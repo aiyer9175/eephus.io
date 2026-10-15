@@ -454,6 +454,7 @@
       : section === "hitters" ? hitterTeam
       : section === "leverage" ? leverageTeam
       : section === "defense" ? defenseTeam
+      : section === "baserunning" ? brTeam
       : section === "war" ? warTeam : relTeam;
   }
   function clearActiveTeam() {
@@ -461,6 +462,7 @@
     else if (section === "hitters") { hitterTeam = ""; writeHash(); renderHittersInPlace(); }
     else if (section === "leverage") { leverageTeam = ""; writeHash(); renderLeverageInPlace(); }
     else if (section === "defense") { defenseTeam = ""; writeHash(); renderDefenseInPlace(); }
+    else if (section === "baserunning") { brTeam = ""; writeHash(); renderBaserunningInPlace(); }
     else if (section === "war") { warTeam = ""; writeHash(); renderWar(); }
     else { relTeam = ""; writeHash(); renderInPlace(); }
   }
@@ -991,6 +993,22 @@
                "c_cs_runs", "c_cs_aa", "c_sb_att", "|", "c_pop", "c_exchange", "c_arm", "|", "inn"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
+    // The Baserunning board (section 7): Standard, Steals, Advancement,
+    // Speed, Runs and All; every named view is 10 or 11 columns with the name.
+    br: [
+      { id: "standard", label: "Standard", phone: ["ebr", "sb", "sb_pct", "sprint", "war"],
+        keys: ["ebr", "|", "bsr", "brv", "|", "sb", "cs", "sb_pct", "|", "xbt_pct", "sprint", "|", "war"] },
+      { id: "steals", label: "Steals", phone: ["sb", "sb_pct", "att_rate", "ebr_sb"],
+        keys: ["sb", "cs", "pk", "sb_pct", "att_rate", "sb3", "|", "ebr_sb", "wsb", "brv_sb", "|", "lead_s"] },
+      { id: "advancement", label: "Advancement", phone: ["xbt_pct", "oob", "ebr_xb", "gidp_pct"],
+        keys: ["xbt_pct", "x13", "x2h", "x1h", "|", "tag_pct", "oob", "|", "ebr_xb", "brv_xb", "|", "gidp_pct", "ebr_dp"] },
+      { id: "speed", label: "Speed", phone: ["sprint", "sprint_pct", "bolts", "hp1"],
+        keys: ["pos", "|", "sprint", "sprint_pct", "bolts", "hp1", "runs_comp", "|", "att_rate", "xbt_pct", "|", "ebr"] },
+      { id: "runs", label: "Runs", phone: ["ebr", "bsr", "brv", "ebr_xb"],
+        keys: ["ebr", "ebr_sb", "ebr_xb", "ebr_dp", "|", "bsr", "wsb", "bsr_rest", "|", "brv", "brv_sb", "brv_xb"] },
+      { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
+    ],
+    brteam: [{ id: "standard", label: "Standard", phone: ["team_ebr", "team_sb", "team_sb_pct", "team_xbt_pct"], keys: null }],
     // Single-view boards: no view strip, only a phone subset.
     levbat: [{ id: "standard", label: "Standard", phone: ["wpa", "wpa_li", "war", "pa"], keys: null }],
     levsp: [{ id: "standard", label: "Standard", phone: ["wpa", "wpa_per_start", "war", "gs"], keys: null }],
@@ -1015,8 +1033,8 @@
   // Which named view each multi-view board is on. The hash outranks the
   // stored preference, which outranks Standard.
   var COL_VIEW = { rel: "standard", sp: "standard", hit: "standard", def: "standard",
-                   war: "standard" };
-  var COL_VIEW_HASH = { rel: "rcols", sp: "scols", hit: "hcols", def: "dcols", war: "wcols" };
+                   war: "standard", br: "standard" };
+  var COL_VIEW_HASH = { rel: "rcols", sp: "scols", hit: "hcols", def: "dcols", war: "wcols", br: "bcols" };
   // Retired view ids and the view that replaced each, so a deep link or a
   // stored pick naming one opens the replacement rather than Standard.
   var VIEW_ALIAS = { def: { blocking: "catching", throwing: "catching" } };
@@ -1197,7 +1215,7 @@
   function sectionLiveSeason(sec) {
     var d = sec === "war" ? warData : sec === "starters" ? starterData
           : sec === "hitters" ? hitterData : sec === "leverage" ? leverageData
-          : sec === "defense" ? defenseData : DATA;
+          : sec === "defense" ? defenseData : sec === "baserunning" ? brData : DATA;
     return num(d && d.season);
   }
   function sectionHistorySeasons(sec) {
@@ -1258,6 +1276,7 @@
     else if (sec === "hitters") renderHitters();
     else if (sec === "leverage") renderLeverage();
     else if (sec === "defense") renderDefense();
+    else if (sec === "baserunning") renderBaserunning();
     else if (sec === "war") renderWar();
     else render();
   }
@@ -2251,7 +2270,7 @@
   var drawerScroll = false;       // bring the deep-linked row into view once
   var drawerAsked = false;
   var DRAWER_SEC = { hit: "hitters", sp: "starters", rel: "bullpen", def: "defense",
-                     levbat: "leverage", levsp: "leverage", war: "war" };
+                     levbat: "leverage", levsp: "leverage", war: "war", br: "baserunning" };
   function drawerSrc() {
     var r = document.querySelector(".mlbx");
     return (r && r.getAttribute && r.getAttribute("data-drawer-src")) || "";
@@ -2298,7 +2317,7 @@
   function drawerCols(board) {
     return board === "hit" ? HITTER_COLS : board === "sp" ? STARTER_COLS : board === "rel" ? REL_COLS
          : board === "def" ? DEFENSE_COLS : board === "levbat" ? BAT_LEV_COLS
-         : board === "levsp" ? STARTER_LEV_COLS : [];
+         : board === "levsp" ? STARTER_LEV_COLS : board === "br" ? brCols() : [];
   }
   // The rows a percentile ranks against: the board's own season before any
   // filter, so a team pick or a search never moves a player's percentile.
@@ -2307,9 +2326,10 @@
     if (sec === "war") return null;
     if (isWindow(sec)) return { window: WIN[sec].lo + "-" + WIN[sec].hi };
     var cur = { hitters: hitterSeason, starters: starterSeason, bullpen: relSeason,
-                defense: defenseSeason, leverage: leverageSeason }[sec];
+                defense: defenseSeason, leverage: leverageSeason, baserunning: brSeason }[sec];
     var rows = board === "hit" ? hitterSourceRows() : board === "sp" ? starterSourceRows()
-             : board === "rel" ? relSourceRows() : board === "def" ? defenseSourceRows() : leverageSourceRows();
+             : board === "rel" ? relSourceRows() : board === "def" ? defenseSourceRows()
+             : board === "br" ? brSourceRows() : leverageSourceRows();
     var live = cur === "current";
     return { rows: rows, live: live, season: live ? sectionLiveSeason(sec) : num(cur) };
   }
@@ -2759,6 +2779,7 @@
     rel: "Relievers leaderboard", relteam: "Team bullpens",
     def: "Fielders leaderboard", defteam: "Team defense",
     levbat: "Leverage leaderboard, hitters", levsp: "Leverage leaderboard, pitchers",
+    br: "Baserunning leaderboard", brteam: "Team baserunning",
   };
 
   // player_links map (mlbam -> merged-card key), preloaded once at init so
@@ -2830,6 +2851,7 @@
     else if (sec === "hitters") renderHittersInPlace(focusId);
     else if (sec === "leverage") renderLeverageInPlace(focusId);
     else if (sec === "defense") renderDefenseInPlace(focusId);
+    else if (sec === "baserunning") renderBaserunningInPlace(focusId);
     else if (sec === "war") renderWar(focusId);
     else renderInPlace(focusId);
   }
@@ -3500,6 +3522,8 @@
     lssort: { key: "wpa", asc: false },             // Leverage: starters
     dsort:  { key: "dem_plus", asc: false },        // Defense: fielders
     dtsort: { key: "team_dem_plus", asc: false },   // Team Defense
+    bsort:  { key: "ebr", asc: false },             // Baserunning: runners
+    btsort: { key: "team_ebr", asc: false },        // Team Baserunning
     wsort:  { key: "war", asc: false },             // eWAR: players
     wtsort: { key: "war", asc: false },             // eWAR: teams
   };
@@ -3558,8 +3582,11 @@
     // tabs (data-league-src on the root, build_site's
     // MLBSTATS_LEAGUE_TEAMS_LIVE); without it the link opens the landing
     // board, as an unknown section does.
-    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams)\b/.exec(h);
-    if (s && ((s[1] !== "league" && s[1] !== "teams") || leagueSrc())) section = s[1];
+    // `baserunning` likewise needs its panel (build_site writes it only while
+    // baserunning_export.MLBSTATS_BASERUNNING_LIVE is on).
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams|baserunning)\b/.exec(h);
+    if (s && (s[1] === "baserunning" ? baserunningLive()
+              : (s[1] !== "league" && s[1] !== "teams") || leagueSrc())) section = s[1];
     var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
     var sv = /(?:^#|[#&])sview=(starters|teams|charts)\b/.exec(h);
@@ -3572,11 +3599,18 @@
     if (dv) defenseView = dv[1];
     var wv = /(?:^#|[#&])wview=(players|teams)\b/.exec(h);
     if (wv) warView = wv[1];
+    // The Baserunning keys (b prefix): bview, bseason (single seasons only;
+    // byears is reserved and refused with a note), bcols, bsort and btsort.
+    var bv = /(?:^#|[#&])bview=(runners|teams|charts)\b/.exec(h);
+    if (bv) brView = bv[1];
+    var bs = /(?:^#|[#&])bseason=(\d{4})\b/.exec(h);
+    if (bs) brSeason = bs[1];
+    brYearsRefused = /(?:^#|[#&])byears=/.test(h);
     // One team for every section (section 7). Set before the boards render, so
     // a deep-linked club is the first thing each one is narrowed to.
     var tm = TEAM_HASH_RE.exec(h);
     if (tm) {
-      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = tm[1];
+      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = brTeam = tm[1];
     }
     var gr = GRAD_HASH_RE.exec(h);
     if (gr) gradSel = gr[1];
@@ -3613,6 +3647,8 @@
     readSort(h, "dtsort", DEFENSE_TEAM_COLS, defenseTeamSort);
     readSort(h, "wsort", WAR_COLS, warSort);
     readSort(h, "wtsort", WAR_TEAM_COLS, warTeamSort);
+    readSort(h, "bsort", BR_COLS, brSort);
+    readSort(h, "btsort", BR_TEAM_COLS, brTeamSort);
   }
 
   // Compose the FULL page state into the hash on every section/tab/season/sort
@@ -3634,6 +3670,8 @@
     if (leverageView !== "batters") parts.push("lview=" + leverageView);
     if (defenseView !== "fielders") parts.push("dview=" + defenseView);
     if (warView !== "players") parts.push("wview=" + warView);
+    if (brView !== "runners") parts.push("bview=" + brView);
+    if (brSeason !== "current") parts.push("bseason=" + brSeason);
     pushWindow(parts, "bullpen", "rseason", "ryears");
     pushWindow(parts, "starters", "sseason", "syears");
     pushWindow(parts, "hitters", "hseason", "hyears");
@@ -3655,6 +3693,8 @@
     pushSort(parts, "dtsort", defenseTeamSort);
     pushSort(parts, "wsort", warSort);
     pushSort(parts, "wtsort", warTeamSort);
+    pushSort(parts, "bsort", brSort);
+    pushSort(parts, "btsort", brTeamSort);
     leagueHashParts(parts);
     teamsHashParts(parts);
     // The ACTIVE section's team, so the URL describes the board on screen
@@ -5921,6 +5961,733 @@
   }
 
   // ===========================================================================
+  // Section 7: Baserunning (owner ask 2026-09-30, "a Baserunning section in the
+  // MLB Stats module"; the design is part8/baserunning.md section 3 as the eWAR
+  // v3 gate, docs/ebr-2026-09-30/EBR_GATE.md, amends it).
+  // ---------------------------------------------------------------------------
+  // DARK behind baserunning_export.MLBSTATS_BASERUNNING_LIVE: build_site writes
+  // the tab and the panel only while the flag is on, and without the panel
+  // readHash ignores section=baserunning (as it ignores league without its
+  // script) and nothing here runs, so a dark build renders what it did before.
+  //
+  // Three kinds of number, said on every header: OFFICIAL (StatsAPI counts),
+  // PUBLISHED, NOT COMPUTED HERE (FanGraphs' BsR and wSB through MLB's feed;
+  // Baseball Savant's run values, leads and sprint speed) and OURS (eBR, its
+  // parts and the counts from the runner record). eBR is runs above average on
+  // the bases this season, on this season's run expectancy: what happened, not
+  // a forecast. No run column carries a value-ruler colour (the Defense board's
+  // rule for Fld and Def); only BEM+ would, on the z family, and it is offered
+  // only when the payload says its registered gate recorded a PASS.
+  // ===========================================================================
+  var BR_URL = "/data/baserunning_leaderboards.json";
+  var BR_HISTORY_URL = "/data/baserunning_history.json";
+  var BR_MGMT_HREF = "/management/#section=running";
+
+  var brData = null;
+  var brErr = false;
+  var brInit = false;
+  var brView = "runners";                     // runners | teams | charts
+  var brSort = { key: "ebr", asc: false };
+  var brTeamSort = { key: "team_ebr", asc: false };
+  var brQuery = "";
+  var brQualifiedOnly = true;
+  var brTeam = "";                            // "" = all clubs
+  var brMinChances = null;                    // null = no floor; steal plus advancement chances
+  var brRecentOnly = false;                   // the Recent debuts chip
+  var brSeason = "current";                   // "current" or a four-digit season
+  var brYearsRefused = false;                 // a deep link carried byears=, which this board does not offer
+  var BR_HISTORY = null;
+  var BR_HISTORY_LOADING = false;
+  var BR_HISTORY_ERROR = false;
+
+  // The shell carries the panel only while the flag is on.
+  function baserunningLive() { return !!document.getElementById("mlbstats-section-baserunning"); }
+
+  // [taken, chances] cells: the pair printed, the rate in the title, sorted
+  // by the rate once the class clears its display floor (the exporter's own
+  // floors, carried in qualify.floors).
+  function brFloor(name, dflt) {
+    var f = brData && brData.qualify && brData.qualify.floors;
+    return (f && f[name] != null) ? Number(f[name]) : dflt;
+  }
+  function brPair(r, key) { var p = r && r[key]; return (p && p.length === 2) ? p : null; }
+  function brPairRate(key, floorName, dflt) {
+    return function (r) {
+      var p = brPair(r, key);
+      return (p && p[1] >= brFloor(floorName, dflt)) ? p[0] / p[1] : null;
+    };
+  }
+  function brPairCell(key, floorName, dflt, what) {
+    return function (r) {
+      var p = brPair(r, key);
+      if (!p || !p[1]) return EM_DASH;
+      var floor = brFloor(floorName, dflt);
+      var rate = p[1] >= floor ? (p[0] / p[1] * 100).toFixed(1) + " percent"
+        : "under the " + floor + "-chance floor";
+      return '<span title="' + esc(what + ": " + p[0] + " of " + p[1] + " chances, " + rate) + '">'
+        + p[0] + "/" + p[1] + "</span>";
+    };
+  }
+  function brPosCell(r) { return r.pos ? esc(r.pos) : EM_DASH; }
+
+  // The column master list (baserunning.md 3.2; titles follow the gate doc's
+  // definitions, part 2.5 and 2.7). `key` precedes `label` in every object.
+  var BR_COLS = [
+    { key: "name", label: "Runner", term: null, sortable: true, kind: "name", asc: true },
+    { key: "pos", label: "Pos", title: "Primary position this season.", cell: brPosCell },
+    { key: "ebr", label: "eBR", term: "ebr", fmt: fSigned, num: true, desc: true,
+      title: "OURS. Runs above average on the bases this season: SB runs plus XB runs plus DP runs, each against an average runner with the same chances, on this season's run expectancy. What happened, not a forecast." },
+    { key: "ebr_sb", label: "SB runs", term: "ebr_sb", fmt: fSigned, num: true,
+      title: "OURS. Steals, caught stealing and pickoffs, minus what an average runner made of the same times on base with the next base open." },
+    { key: "ebr_xb", label: "XB runs", term: "ebr_xb", fmt: fSigned, num: true,
+      title: "OURS. Taking or not taking the extra base on singles, doubles, caught fly balls and ground balls, outs on the bases included, against an average runner in the same spot and out count." },
+    { key: "ebr_dp", label: "DP runs", term: "ebr_dp", fmt: fSigned, num: true,
+      title: "OURS. Double plays grounded into against the league rate for the same chances (a runner on first, fewer than two out), priced by base-out state." },
+    { key: "bsr", label: "BsR", term: "bsr", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs baserunning runs as MLB's feed publishes them." },
+    { key: "wsb", label: "wSB", term: "wsb", fmt: fSigned, num: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs stolen-base runs from MLB's feed." },
+    { key: "bsr_rest", label: "BsR ex-wSB", term: "bsr", fmt: fSigned, num: true,
+      title: "BsR minus wSB: the part of FanGraphs' baserunning that is not steals. Arithmetic on the two published columns." },
+    { key: "brv", label: "BRV", term: "savant_brv", fmt: fSigned, num: true,
+      title: "From Baseball Savant: baserunning run value, extra bases plus steals. Display only." },
+    { key: "brv_xb", label: "BRV XB", term: "savant_brv", fmt: fSigned, num: true,
+      title: "From Baseball Savant: run value of extra bases taken and not taken. Display only." },
+    { key: "brv_sb", label: "BRV SB", term: "savant_brv", fmt: fSigned, num: true,
+      title: "From Baseball Savant: run value of steal attempts. Display only." },
+    { key: "sb", label: "SB", fmt: fInt, num: true, title: "Stolen bases (official)." },
+    { key: "cs", label: "CS", fmt: fInt, num: true, asc: true,
+      title: "Caught stealing (official), including picked off while attempting." },
+    { key: "sb_pct", label: "SB%", fmt: fPct, num: true,
+      title: "SB / (SB + CS), official. Shown at 5 or more attempts." },
+    { key: "pk", label: "PK", fmt: fInt, num: true, asc: true,
+      title: "Picked off with no attempt, from the play-by-play." },
+    { key: "att_rate", label: "Att%", term: "steal_attempt_rate", fmt: fPct, num: true,
+      title: "Steal attempts per chance: plate appearances begun on first with second open, or on second with third open. Shown at 20 or more chances." },
+    { key: "sb3", label: "SB 3B", fmt: fInt, num: true, title: "Steals of third, from the play-by-play." },
+    { key: "xbt_pct", label: "XBT%", term: "xbt_pct", fmt: fPct, num: true,
+      title: "Extra bases taken: first to third or home on a single, second to home on a single, first to home on a double, over chances with the base ahead open. Shown at 10 or more." },
+    { key: "x13", label: "1st-3rd", num: true, get: brPairRate("x13", "cls", 5),
+      cell: brPairCell("x13", "cls", 5, "First to third or home on a single"),
+      title: "First to third or home on a single: taken / chances. Sorted by the rate at 5 or more chances." },
+    { key: "x2h", label: "2nd-H", num: true, get: brPairRate("x2h", "cls", 5),
+      cell: brPairCell("x2h", "cls", 5, "Second to home on a single"),
+      title: "Second to home on a single: taken / chances. Sorted by the rate at 5 or more chances." },
+    { key: "x1h", label: "1st-H", num: true, get: brPairRate("x1h", "cls", 5),
+      cell: brPairCell("x1h", "cls", 5, "First to home on a double"),
+      title: "First to home on a double: taken / chances. Sorted by the rate at 5 or more chances." },
+    { key: "tag_pct", label: "Tag%", term: "tag_up_rate", fmt: fPct, num: true,
+      title: "Advanced on a caught fly ball with fewer than two out, over chances. Shown at 5 or more." },
+    { key: "oob", label: "OOB", term: "outs_on_bases", fmt: fInt, num: true, asc: true,
+      title: "Outs on the bases: thrown out advancing or stretching, doubled off, caught returning, or out in a rundown. Not caught stealing, pickoffs or force outs." },
+    { key: "gidp_pct", label: "GIDP%", term: "gidp_rate", fmt: fPct, num: true, asc: true,
+      title: "Grounded into double plays per chance (a runner on first, fewer than two out). Shown at 20 or more." },
+    { key: "sprint", label: "Sprint", term: "sprint_speed", fmt: f1, num: true,
+      title: "Sprint speed, feet per second, from Baseball Savant (10 or more competitive runs)." },
+    { key: "sprint_pct", label: "Sprint %ile", fmt: fInt, num: true,
+      title: "Percentile among every player Savant tracked this season." },
+    { key: "bolts", label: "Bolts", term: "bolts", fmt: fInt, num: true,
+      title: "Runs at 30 ft/s or faster, from Baseball Savant." },
+    { key: "hp1", label: "HP-1B", term: "hp_to_1b", fmt: f2, num: true, asc: true,
+      title: "Home to first in seconds, from Baseball Savant." },
+    { key: "runs_comp", label: "Runs", fmt: fInt, num: true,
+      title: "Competitive runs in Savant's sprint sample." },
+    { key: "lead_p", label: "Lead 1", fmt: f1, num: true,
+      title: "From Baseball Savant: average primary lead, feet, as Savant measures it. Display only." },
+    { key: "lead_s", label: "Lead 2", fmt: f1, num: true,
+      title: "From Baseball Savant: average secondary lead, feet, as Savant measures it. Display only." },
+    // Whole-player eWAR on a baserunning board: its baserunning term comes from
+    // a different frame than eBR and BsR, and the payload NAMES that frame in
+    // frame.ewar_note (read through the served WAR provider), which renderTable
+    // appends to this title. Never type a frame here.
+    { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true, noteFrom: "ewar_note",
+      title: "Whole-player eWAR this season." },
+    // BEM+ is wired here and offered only once the payload's bem_plus block
+    // says the gate (EBR_GATE.md part 5.8) recorded a PASS; brCols() drops it
+    // otherwise, so no header, cell or view ever shows it before then.
+    { key: "bem_plus", label: "BEM+", term: "bem_plus", fmt: remCell, num: true, desc: true, isRem: true,
+      title: "100 = pool average; 10 points = 1 SD. A sample-shrunk baserunning rate on the z ruler, served only on its registered gate's PASS." },
+  ];
+  function brBemServed(d) { return !!(d && d.bem_plus && d.bem_plus.served === true); }
+  function brCols() {
+    return brBemServed(brData) ? BR_COLS : BR_COLS.filter(function (c) { return c.key !== "bem_plus"; });
+  }
+  // History rows (baserunning_history.json) carry the season line and the
+  // published values but not the by-base splits or the Savant leads, so those
+  // columns drop rather than render blank; eWAR drops by itself until a season
+  // carries it (coveredCols).
+  function brHistoryCols(rows) {
+    var fields = (BR_HISTORY && BR_HISTORY.fields) || [];
+    var cols = historyTitle(brCols().filter(function (c) {
+      return c.key === "name" || fields.indexOf(c.key) >= 0;
+    }), "war", "Whole-player eWAR for the season shown.");
+    return coveredCols(cols, rows);
+  }
+  function brHistorySort() {
+    var ok = false;
+    brHistoryCols([]).forEach(function (c) { if (c.key === brSort.key) ok = true; });
+    return ok ? brSort : { key: "ebr", asc: false };
+  }
+
+  // Team Baserunning: the club today (the roster basis the exporter prints at
+  // the top level of each team row; the earned basis rides beside it in the
+  // payload). No eWAR column, the Team Defense rule.
+  var BR_TEAM_COLS = [
+    { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
+    { key: "team_ebr", label: "Team eBR", term: "team_ebr", fmt: fSigned, num: true, desc: true,
+      title: "OURS. The sum of the club's runners' eBR this season, club today." },
+    { key: "team_ebr_sb", label: "SB runs", term: "ebr_sb", fmt: fSigned, num: true, title: "OURS. Sum of SB runs." },
+    { key: "team_ebr_xb", label: "XB runs", term: "ebr_xb", fmt: fSigned, num: true, title: "OURS. Sum of XB runs." },
+    { key: "team_ebr_dp", label: "DP runs", term: "ebr_dp", fmt: fSigned, num: true, title: "OURS. Sum of DP runs." },
+    { key: "team_sb", label: "SB", fmt: fInt, num: true, title: "Stolen bases (official), summed over the club's runners." },
+    { key: "team_sb_pct", label: "SB%", fmt: fPct, num: true, title: "SB / (SB + CS), official, pooled over the club's runners." },
+    { key: "team_att_rate", label: "Att%", term: "steal_attempt_rate", fmt: fPct, num: true,
+      title: "Steal attempts per chance, pooled over the club's runners." },
+    { key: "team_xbt_pct", label: "XBT%", term: "xbt_pct", fmt: fPct, num: true,
+      title: "Extra bases taken over chances, pooled over the club's runners." },
+    { key: "team_oob", label: "OOB", term: "outs_on_bases", fmt: fInt, num: true, asc: true,
+      title: "Outs on the bases, summed over the club's runners." },
+    { key: "team_sprint", label: "Sprint", term: "sprint_speed", fmt: f1, num: true,
+      title: "From Baseball Savant: mean sprint speed of the club's tracked runners, weighted by starts on base." },
+  ];
+
+  function brHistorySeasons() {
+    if (BR_HISTORY && BR_HISTORY.seasons && BR_HISTORY.seasons.length) return BR_HISTORY.seasons.slice();
+    return [];
+  }
+  function brHistoryYear() {
+    return (BR_HISTORY && BR_HISTORY.history && BR_HISTORY.history[brSeason]) || null;
+  }
+  // The history file keeps its rows positional (fields); the board reads them
+  // as objects once, per season, and caches the result on the season block.
+  function brHistoryRows(yr) {
+    if (!yr) return [];
+    if (yr._rows) return yr._rows;
+    var F = (BR_HISTORY && BR_HISTORY.fields) || [];
+    yr._rows = (yr.runners || []).map(function (a) {
+      if (!a || typeof a !== "object" || !("length" in a)) return a;
+      var o = {};
+      for (var i = 0; i < F.length; i++) o[F[i]] = a[i];
+      return o;
+    });
+    return yr._rows;
+  }
+  function loadBaserunningHistory() {
+    if (BR_HISTORY || BR_HISTORY_LOADING) return;
+    BR_HISTORY_LOADING = true;
+    BR_HISTORY_ERROR = false;
+    fetch(BR_HISTORY_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { BR_HISTORY = j; BR_HISTORY_LOADING = false; renderBaserunning(); })
+      .catch(function () { BR_HISTORY_LOADING = false; BR_HISTORY_ERROR = true; renderBaserunning(); });
+  }
+  // The unfiltered pool behind the active season pill.
+  function brSourceRows() {
+    if (brSeason !== "current") return brHistoryRows(brHistoryYear());
+    return (brData && brData.runners) || [];
+  }
+  function brChances(r) {
+    return (num(r.opp_sb2) || 0) + (num(r.opp_sb3) || 0) + (num(r.xbt_opp) || 0);
+  }
+  function brMatch(r) {
+    if (brQualifiedOnly && r.qualified === false) return false;
+    if (brTeam && r.team !== brTeam) return false;
+    if (brRecentOnly && !r.recent_debut) return false;
+    if (!passesMin(brChances(r), brMinChances)) return false;
+    var q = brQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+  }
+  function filteredBaserunning() { return brSourceRows().filter(brMatch); }
+
+  // The PX chip: the hub strip's rule (player_links.json byMlbam[mlbam].prospx),
+  // on rows whose player has a PROSPX card. Active prospects have no MLB
+  // sprint rows, so the chip reads "former PROSPX prospect".
+  function brPxChip(r) {
+    var row = LINKS && LINKS.byMlbam && r && r.mlbam != null ? LINKS.byMlbam[String(r.mlbam)] : null;
+    if (!row || !row.prospx) return "";
+    return '<a class="bp-role mlbx-grad" href="/prospx/#player=' + encodeURIComponent(row.prospx)
+      + '" title="PROSPX card: open his prospect card" data-export-skip>PX</a>';
+  }
+  function brDrawerOpts() {
+    var o = drawerOpts("br") || {};
+    var inner = o.nameExtra;
+    return { pageTo: o.pageTo || null, child: o.child || null,
+             nameExtra: function (r) { return (inner ? inner(r) : "") + brPxChip(r); } };
+  }
+
+  function brTabBar() {
+    var tabs = [["runners", "Runners"], ["teams", "Team Baserunning"], ["charts", "Baserunning Charts"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === brView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-brview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === brView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  // Single seasons only (no year-range windows in v1: counts and eBR would sum
+  // and rates pool under the house rules, a later step). A deep link that
+  // carried byears= gets the house refusal line.
+  function brSeasonPills() {
+    var cur = num(brData && brData.season);
+    var ys = brHistorySeasons();
+    if (!ys.length && cur != null) for (var y = cur - 1; y >= cur - 5; y--) ys.push(y);
+    ys = ys.filter(function (y) { return cur == null || y < cur; }).sort(function (a, b) { return b - a; });
+    var pills = [["current", cur != null ? "Current (" + cur + ")" : "Current"]].concat(ys.map(function (y) { return [String(y), String(y)]; }));
+    return '<div class="mlbstats-seasons" role="group" aria-label="Season">' + pills.map(function (p) {
+      var on = p[0] === brSeason;
+      return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" data-bseason="' + esc(p[0])
+        + '" aria-pressed="' + on + '">' + esc(p[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function brYearsNote() {
+    return brYearsRefused
+      ? '<div class="mlbstats-note">This board shows single seasons; the year range in the link is not offered here yet.</div>' : "";
+  }
+  function brControls() {
+    if (brView !== "runners") return "";
+    var pool = brSourceRows();
+    return '<div class="' + filtCls() + '">' + filtBtn(filtCount(brTeam, brMinChances, brRecentOnly ? ["recent"] : [], !brQualifiedOnly))
+      + teamFilterChip(brTeam)
+      + '<label class="mlbstats-ctl">'
+      + '<input type="checkbox" id="mlbstats-br-qual"' + (brQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-br-team", pool, brTeam, "baserunning")
+      + minSelect("mlbstats-br-minch", "min chances", brMinChances,
+          "Minimum steal plus advancement chances. Stacks with qualified only.")
+      + '<button type="button" class="chip' + (brRecentOnly ? " active" : "") + '" id="mlbstats-br-recent" aria-pressed="'
+      + brRecentOnly + '" title="PROSPX graduates whose MLB debut is this season or last">Recent debuts</button>'
+      + '<input class="mlbstats-search" type="search" id="mlbstats-br-q" placeholder="Search runner or team" value="' + esc(brQuery) + '">'
+      + "</div>";
+  }
+
+  function brExplainer() {
+    var v = (brData && brData.values) || {};
+    var be = num(v.breakeven_sb2);
+    var html = gloss("eBR", "ebr") + " is computed here from MLB's play-by-play: every chance a runner had, valued on this season's "
+      + gloss("run expectancy", "run_expectancy") + " against an average runner with the same chance, in three parts: "
+      + gloss("SB runs", "ebr_sb") + ", " + gloss("XB runs", "ebr_xb") + " and " + gloss("DP runs", "ebr_dp") + ". "
+      + gloss("BsR", "bsr") + " and " + gloss("wSB", "wsb") + " are FanGraphs' published values from MLB's feed; "
+      + gloss("BRV", "savant_brv") + ", " + gloss("sprint speed", "sprint_speed") + " and leads are Baseball Savant's. "
+      + "Each system values a runner its own way, so the columns differ. Counts are official. "
+      + "Descriptive: what happened this season, not a forecast."
+      + (be != null ? " This season's run-expectancy " + gloss("break-even", "steal_break_even") + " for a steal of second is "
+          + (be * 100).toFixed(1) + " percent." : "")
+      + ' Whether sending a runner paid in a given game state is priced on <a href="' + BR_MGMT_HREF + '">In-Game Management</a>.';
+    return explainer("ebr", html);
+  }
+  // The source dates line, read from the payload's source blocks, and the
+  // play-by-play `through` date, which can trail the counts.
+  function brSourcesLine() {
+    var s = (brData && brData.sources) || {};
+    function d(x) { return (x && x.fetched_at) ? String(x.fetched_at).slice(0, 10) : ""; }
+    var bits = [];
+    if (s.runner_moves && s.runner_moves.through) bits.push("runs and advancement through " + esc(String(s.runner_moves.through).slice(0, 10)));
+    if (d(s.official)) bits.push("official counts fetched " + esc(d(s.official)));
+    if (d(s.published)) bits.push("BsR and wSB fetched " + esc(d(s.published)));
+    if (d(s.savant_brv)) bits.push("Savant run values fetched " + esc(d(s.savant_brv)));
+    if (d(s.sprint)) bits.push("sprint speed fetched " + esc(d(s.sprint)));
+    return bits.length ? '<p class="mlbstats-note">Sources: ' + bits.join("; ") + ".</p>" : "";
+  }
+
+  function renderBaserunningBoard() {
+    if (brSeason !== "current") return renderBaserunningHistory();
+    var cols = brCols();
+    var rows = sortRows(filteredBaserunning(), cols, brSort);
+    var body = rows.length
+      ? proseFold("br-about", rows.length + " runners", brExplainer() + brSourcesLine())
+        + '<div class="mlbstats-scroll">' + renderTable(rows, cols, brSort, brData, "br", brDrawerOpts()) + "</div>"
+      : noRowsNote(brTeam, "No runners match these filters.");
+    return toolRow(brSeasonPills(), "br") + brYearsNote() + body;
+  }
+  function renderBaserunningHistory() {
+    if (!BR_HISTORY && !BR_HISTORY_LOADING && !BR_HISTORY_ERROR) loadBaserunningHistory();
+    var pills = toolRow(brSeasonPills(), "br") + brYearsNote();
+    if (BR_HISTORY_ERROR) {
+      return pills + pxState("failed",
+        "Season history did not load. The nightly build may be writing it. "
+        + '<button type="button" class="chip" id="mlbstats-br-history-retry">Retry</button>', "mlbstats-load-error");
+    }
+    if (!BR_HISTORY || BR_HISTORY_LOADING) {
+      return pills + pxState("loading", "Loading the " + esc(brSeason) + " season leaderboard.");
+    }
+    var yr = brHistoryYear();
+    var all = brHistoryRows(yr);
+    if (!yr || !all.length) {
+      return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(brSeason) + " season.</div>";
+    }
+    var sort = brHistorySort();
+    var rows = sortRows(all.filter(brMatch), brHistoryCols(all), sort);
+    var cols = brHistoryCols(rows);
+    var nQual = (yr.n_qualified != null) ? yr.n_qualified : all.length;
+    var cap = proseFold("br-history-about", esc(brSeason) + " season, " + esc(nQual) + " qualified runners", brExplainer());
+    var meta = { frame: (BR_HISTORY && BR_HISTORY.frame) || (brData && brData.frame) || null,
+                 ewar_vintage: BR_HISTORY && BR_HISTORY.ewar_vintage };
+    var table = rows.length
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort, meta, "br", brDrawerOpts()) + "</div>"
+      : noRowsNote(brTeam, "No runners match these filters.");
+    return pills + cap + table;
+  }
+
+  function renderBaserunningTeams() {
+    var rows = sortRows((brData && brData.teams) || [], BR_TEAM_COLS, brTeamSort);
+    if (!rows.length) return '<div class="mlbstats-empty">No team baserunning to show yet.</div>';
+    var note = explainer("team_ebr", gloss("Team eBR", "team_ebr")
+      + ": the sum of the club's runners' eBR, club today, as on every team tab here. Realized runs, not a grade of how a club chose to run; "
+      + 'club running style is on <a href="' + BR_MGMT_HREF + '">In-Game Management</a>.');
+    return proseFold("brteam-about", rows.length + " clubs", note)
+      + '<div class="mlbstats-scroll">' + renderTable(rows, BR_TEAM_COLS, brTeamSort, brData, "brteam") + "</div>";
+  }
+
+  // Baserunning Charts: sprint speed against eBR per 100 starts on base, and
+  // Att% against SB% with the season's run-expectancy break-even for a steal
+  // of second as the reference line. No fit line, no trend.
+  function baserunningViz() {
+    var qual = ((brData && brData.runners) || []).filter(function (r) {
+      return r.qualified !== false && r.ebr != null;
+    });
+    if (qual.length < 12) return "";
+    var pts = qual.filter(function (r) { return r.sprint != null && num(r.starts_on_base) > 0; }).map(function (r) {
+      var per = r.ebr / r.starts_on_base * 100;
+      return { x: r.sprint, y: per,
+               label: r.name + "  Sprint " + f1(r.sprint) + "  eBR/100 starts " + fSigned(per),
+               color: r.ebr >= 5 ? null : "var(--text-tertiary)" };
+    });
+    var sc = pts.length >= 12
+      ? chart("scatter", pts, { height: 250, xLabel: "Sprint speed (ft/s) →", yLabel: "↑ eBR per 100 starts on base",
+          yRef: 0, aria: "sprint speed by eBR per 100 starts on base" })
+      : "";
+    var be = num(brData && brData.values && brData.values.breakeven_sb2);
+    var apts = qual.filter(function (r) { return r.att_rate != null && r.sb_pct != null; }).map(function (r) {
+      return { x: r.att_rate * 100, y: r.sb_pct * 100,
+               label: r.name + "  Att% " + fPct(r.att_rate) + "  SB% " + fPct(r.sb_pct),
+               color: (be != null && r.sb_pct >= be) ? null : "var(--text-tertiary)" };
+    });
+    var asc = apts.length >= 12
+      ? chart("scatter", apts, { height: 250, xLabel: "Att% →", yLabel: "↑ SB%",
+          yRef: be != null ? be * 100 : null, aria: "steal attempt rate by success rate" })
+      : "";
+    if (!sc && !asc) return "";
+    var body = '<div class="mlbstats-viz">'
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("Sprint speed", "sprint_speed")
+          + " by " + gloss("eBR", "ebr") + ' per 100 starts on base <span class="proj-dim">(qualified runners)</span></div>' + sc + "</div>" : "")
+      + (asc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("Att%", "steal_attempt_rate") + " by SB%"
+          + (be != null ? ' <span class="proj-dim">(line: this season\'s run-expectancy ' + gloss("break-even", "steal_break_even")
+            + " for a steal of second, " + (be * 100).toFixed(1) + " percent)</span>" : "") + "</div>" + asc
+          + '<div class="mlbstats-note">The win-probability break-even by game state is on <a href="' + BR_MGMT_HREF + '">In-Game Management</a>.</div></div>' : "")
+      + "</div>";
+    return collapsible("br-viz", 'Charts <span class="proj-dim">(sprint by eBR, Att% by SB%)</span>', body, { collapsed: false });
+  }
+  function renderBaserunningCharts() {
+    if (!brData || !((brData.runners) || []).length) {
+      return '<div class="mlbstats-empty">No baserunning charts to show yet.</div>';
+    }
+    return baserunningViz() || '<div class="mlbstats-empty">Too few qualified runners carry these values to chart.</div>';
+  }
+
+  function baserunningInner() {
+    return (brView === "teams") ? renderBaserunningTeams()
+      : (brView === "charts") ? renderBaserunningCharts() : renderBaserunningBoard();
+  }
+  function brBasisDoc() { return brSeason === "current" ? brData : (BR_HISTORY || null); }
+  function renderBaserunning() {
+    var root = document.getElementById("mlbstats-baserunning-root");
+    if (!root) return;
+    if (!brData) {
+      root.innerHTML = brErr
+        ? pxState("failed", "Baserunning board did not load. The nightly build may be writing it. "
+          + '<button type="button" class="chip" id="mlbstats-br-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", "Baserunning board not built yet on this deploy; the nightly build writes it.");
+      var retry = document.getElementById("mlbstats-br-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = pxState("loading", "Loading the baserunning board.");
+        loadBaserunning();
+      });
+      return;
+    }
+    var inner = baserunningInner();
+    root.innerHTML = bannerHTML(brData, { sec: "baserunning" }) + teamBasisNote(brBasisDoc())
+      + brTabBar() + brControls() + inner;
+    bindBaserunningEvents(root);
+    wireGlossary(root);
+  }
+  function renderBaserunningInPlace(focusId) {
+    var root = document.getElementById("mlbstats-baserunning-root");
+    if (!root) return;
+    var inner = baserunningInner();
+    root.innerHTML = bannerHTML(brData, { sec: "baserunning" }) + teamBasisNote(brBasisDoc())
+      + brTabBar() + brControls() + inner;
+    restoreFocus(root, focusId || "mlbstats-br-q");
+    bindBaserunningEvents(root);
+    wireGlossary(root);
+  }
+  function bindBaserunningEvents(root) {
+    bindCollapse(root);
+    stampCsv("baserunning", root);
+    bindColViews(root, function () { renderBaserunningInPlace(); });
+    root.querySelectorAll("[data-brview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        brView = b.getAttribute("data-brview");
+        writeHash();
+        renderBaserunning();
+      });
+    });
+    root.querySelectorAll("[data-bseason]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        brSeason = b.getAttribute("data-bseason") || "current";
+        brYearsRefused = false;
+        writeHash();
+        renderBaserunning();
+      });
+    });
+    var q = root.querySelector("#mlbstats-br-q");
+    if (q) q.addEventListener("input", function () { brQuery = q.value; renderBaserunningInPlace(); });
+    var qual = root.querySelector("#mlbstats-br-qual");
+    if (qual) qual.addEventListener("change", function () { brQualifiedOnly = qual.checked; renderBaserunningInPlace(); });
+    var bTeam = root.querySelector("#mlbstats-br-team");
+    if (bTeam) bTeam.addEventListener("change", function () {
+      brTeam = bTeam.value || "";
+      writeHash();
+      renderBaserunningInPlace("mlbstats-br-team");
+    });
+    var bMin = root.querySelector("#mlbstats-br-minch");
+    if (bMin) bMin.addEventListener("input", function () {
+      brMinChances = readMin(bMin);
+      renderBaserunningInPlace("mlbstats-br-minch");
+    });
+    var recent = root.querySelector("#mlbstats-br-recent");
+    if (recent) recent.addEventListener("click", function () {
+      brRecentOnly = !brRecentOnly;
+      renderBaserunningInPlace("mlbstats-br-recent");
+    });
+    var hretry = root.querySelector("#mlbstats-br-history-retry");
+    if (hretry) hretry.addEventListener("click", function () {
+      BR_HISTORY_ERROR = false;
+      loadBaserunningHistory();
+      renderBaserunning();
+    });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      bindSortKeys(th, root, function () {
+        var key = th.getAttribute("data-col");
+        var cols = (brView === "teams") ? BR_TEAM_COLS
+          : (brSeason !== "current") ? brHistoryCols(brHistoryRows(brHistoryYear())) : brCols();
+        var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
+        var sort = (brView === "teams") ? brTeamSort : brSort;
+        if (sort.key === key) sort.asc = !sort.asc;
+        else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
+        renderBaserunning();
+      });
+    });
+  }
+  function loadBaserunning() {
+    brErr = false;
+    fetch(BR_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { brData = j; renderBaserunning(); })
+      .catch(function () { brData = null; brErr = true; renderBaserunning(); });
+  }
+  function initBaserunning() {
+    if (!baserunningLive()) return;
+    if (brInit) { renderBaserunning(); return; }
+    brInit = true;
+    renderBaserunning();
+    loadBaserunning();
+  }
+
+  // ---- the drawer panels (assets/mlbstats-drawer.js asks for these) ----------
+  // The drawer shell owns the row, the caret and the deep link; this board
+  // supplies its four panels (baserunning.md 3.7): Speed (percentile bars
+  // against the qualified pool, from the rows already loaded), the steal map
+  // (an inline SVG diamond), advancement against the league (five classes)
+  // and eBR by season (the history file, fetched on the first open only).
+  // Every SVG carries role="img", an aria-label and its numbers in a table
+  // under a details fold; --viz-1 is the runner, --viz-2 the league. No
+  // hot or cold word, no arrow.
+  function brSvgTable(rows) {
+    return '<details class="mlbx-dnote"><summary>Numbers</summary><table class="mlbstats-table"><tbody>'
+      + rows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>"; }).join("")
+      + "</tbody></table></details>";
+  }
+  function brSpeedPanel(ctx, pctPanel) {
+    var r = ctx.row || {};
+    var pool = (ctx.pool && ctx.pool.rows) || [];
+    var html = pctPanel ? pctPanel(ctx) : "";
+    if (r.sprint != null && r.pos) {
+      var same = pool.filter(function (x) { return x.qualified !== false && x.pos === r.pos && x.sprint != null; })
+        .map(function (x) { return x.sprint; });
+      if (same.length >= 5) {
+        var below = 0, eq = 0;
+        same.forEach(function (v) { if (v < r.sprint) below++; else if (v === r.sprint) eq++; });
+        var p = Math.max(0, Math.min(100, Math.floor((below + eq / 2) / same.length * 100 + 0.5)));
+        html += '<p class="mlbx-dnote">Sprint speed against the ' + same.length + " qualified " + esc(r.pos)
+          + " with a Savant row: percentile " + p + ".</p>";
+      }
+    }
+    return html || '<p class="mlbx-dnote">No sprint speed or pool to rank against.</p>';
+  }
+  function brStealMap(ctx) {
+    var r = ctx.row || {}, lg = (brData && brData.league) || {};
+    var sb2 = num(r.sb2), cs2 = num(r.cs2), sb3 = num(r.sb3), cs3 = num(r.cs3), sbh = num(r.sbh), csh = num(r.csh);
+    if (sb2 == null && cs2 == null && sb3 == null && r.sb == null) {
+      return '<p class="mlbx-dnote">The by-base splits are on the Current board; this season carries the official totals only'
+        + (r.sb != null ? ": " + fInt(r.sb) + " SB, " + fInt(r.cs) + " CS" : "") + ".</p>";
+    }
+    var bases = [
+      { name: "2B", x: 100, y: 28, sb: sb2 || 0, cs: cs2 || 0 },
+      { name: "3B", x: 28, y: 100, sb: sb3 || 0, cs: cs3 || 0 },
+      { name: "H", x: 100, y: 172, sb: sbh || 0, cs: csh || 0 }];
+    var pk = [["1B", num(r.pk1) || 0, 172, 100], ["2B", num(r.pk2) || 0, 100, 28], ["3B", num(r.pk3) || 0, 28, 100]];
+    var W = 200, H = 200, R = 16;
+    function arc(cx, cy, share) {
+      if (share <= 0) return "";
+      if (share >= 1) return '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="var(--viz-1)" stroke-width="4"/>';
+      var a = share * 2 * Math.PI, x = cx + R * Math.sin(a), y = cy - R * Math.cos(a);
+      return '<path d="M' + cx + " " + (cy - R) + " A" + R + " " + R + " 0 " + (share > 0.5 ? 1 : 0) + " 1 " + x.toFixed(1) + " " + y.toFixed(1)
+        + '" fill="none" stroke="var(--viz-1)" stroke-width="4"/>';
+    }
+    var g = '<path d="M100 28 L172 100 L100 172 L28 100 Z" fill="none" stroke="var(--border)" stroke-width="2"/>';
+    bases.forEach(function (b) {
+      var att = b.sb + b.cs;
+      g += '<circle cx="' + b.x + '" cy="' + b.y + '" r="' + R + '" fill="var(--bg-tertiary)" stroke="var(--border)"/>'
+        + arc(b.x, b.y, att ? b.sb / att : 0)
+        + '<text x="' + b.x + '" y="' + (b.y + 4) + '" text-anchor="middle" font-size="10" font-family="monospace" fill="var(--text-primary)">'
+        + b.sb + "-" + b.cs + "</text>"
+        + '<text x="' + b.x + '" y="' + (b.y + (b.name === "H" ? 26 : -22)) + '" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">' + b.name + "</text>";
+    });
+    pk.forEach(function (p) {
+      if (!p[1]) return;
+      g += '<text x="' + (p[2] + (p[0] === "1B" ? 0 : p[0] === "3B" ? -30 : 26)) + '" y="' + (p[3] + (p[0] === "1B" ? -22 : 4))
+        + '" text-anchor="middle" font-size="9" fill="var(--text-secondary)">PK ' + p[1] + "</text>";
+    });
+    g += '<text x="172" y="128" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">1B</text>';
+    var aria = "Steal map: at second " + (sb2 || 0) + " stolen and " + (cs2 || 0) + " caught, at third " + (sb3 || 0) + " and " + (cs3 || 0)
+      + ", at home " + (sbh || 0) + " and " + (csh || 0) + "; picked off " + fInt(r.pk) + " times.";
+    var att = num(r.att_rate), chances = (num(r.opp_sb2) || 0) + (num(r.opp_sb3) || 0);
+    var line = "Att% " + (att != null ? fPct(att) : EM_DASH) + " on " + chances + " chances"
+      + (lg.sb_pct != null ? "; league SB% " + fPct(lg.sb_pct) : "")
+      + (lg.att_rate ? "; league Att% " + fPct(lg.att_rate["2B"]) + " at second, " + fPct(lg.att_rate["3B"]) + " at third" : "") + ".";
+    var table = brSvgTable([["Base", "SB", "CS", "PK"],
+      ["2B", sb2 || 0, cs2 || 0, num(r.pk2) || 0], ["3B", sb3 || 0, cs3 || 0, num(r.pk3) || 0], ["Home", sbh || 0, csh || 0, EM_DASH],
+      ["1B", EM_DASH, EM_DASH, num(r.pk1) || 0]]);
+    return '<svg class="eephus-chart" viewBox="0 0 ' + W + " " + H + '" width="200" height="200" role="img" aria-label="' + esc(aria) + '">' + g + "</svg>"
+      + '<p class="mlbx-dnote">' + esc(line) + " The arc is the share of attempts that succeeded.</p>" + table;
+  }
+  function brAdvancePanel(ctx, width) {
+    var r = ctx.row || {}, lg = (brData && brData.league) || {};
+    var classes = [["x13", "s1_3", "1st-3rd"], ["x2h", "s2_h", "2nd-H"], ["x1h", "d1_h", "1st-H"], ["tag3h", "f3_H", "Tag 3B-H"], ["tag23", "f2_3", "Tag 2B-3B"]];
+    var rows = [], any = false;
+    classes.forEach(function (c) {
+      var p = brPair(r, c[0]);
+      var L = (lg.cls && lg.cls[c[1]]) || (lg.tag && lg.tag[c[1]]) || null;
+      var mine = (p && p[1]) ? p[0] / p[1] : null;
+      var league = (L && L[1]) ? L[0] / L[1] : null;
+      if (mine != null) any = true;
+      rows.push({ label: c[2], mine: mine, n: p ? p[1] : 0, taken: p ? p[0] : 0, league: league });
+    });
+    if (!any) return '<p class="mlbx-dnote">The advancement classes are on the Current board; this season carries XBT% only'
+      + (r.xbt_pct != null ? ": " + fPct(r.xbt_pct) : "") + ".</p>";
+    var W = Math.max(240, width || 280), L0 = 78, L1 = W - 44, RH = 22, H = rows.length * RH + 6;
+    var g = "";
+    rows.forEach(function (row, i) {
+      var y = i * RH + 15;
+      g += '<text x="0" y="' + (y + 4) + '" font-size="10" fill="var(--text-secondary)">' + esc(row.label) + "</text>"
+        + '<line x1="' + L0 + '" y1="' + y + '" x2="' + L1 + '" y2="' + y + '" stroke="var(--border)" stroke-width="2"/>';
+      if (row.league != null) {
+        var lx = L0 + row.league * (L1 - L0);
+        g += '<line x1="' + lx.toFixed(1) + '" y1="' + (y - 7) + '" x2="' + lx.toFixed(1) + '" y2="' + (y + 7) + '" stroke="var(--viz-2)" stroke-width="2"/>';
+      }
+      if (row.mine != null) {
+        var mx = L0 + row.mine * (L1 - L0);
+        g += '<circle cx="' + mx.toFixed(1) + '" cy="' + y + '" r="5" fill="var(--viz-1)"/>';
+      }
+      g += '<text x="' + W + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="var(--text-tertiary)">' + row.taken + "/" + row.n + "</text>";
+    });
+    var aria = "Advancement against the league: " + rows.map(function (row) {
+      return row.label + " " + (row.mine != null ? (row.mine * 100).toFixed(0) + " percent" : "no chances")
+        + (row.league != null ? " against " + (row.league * 100).toFixed(0) : "");
+    }).join("; ") + ".";
+    var legend = '<div class="mlbx-dlegend"><span><i class="mlbx-dkey-1"></i>runner</span><span><i class="mlbx-dkey-2"></i>league</span></div>';
+    var table = brSvgTable([["Class", "Taken", "Chances", "Rate", "League"]].concat(rows.map(function (row) {
+      return [row.label, row.taken, row.n, row.mine != null ? fPct(row.mine) : EM_DASH, row.league != null ? fPct(row.league) : EM_DASH];
+    })));
+    return legend + '<svg class="eephus-chart" viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(aria) + '">' + g + "</svg>"
+      + '<p class="mlbx-dnote">Chances with the base ahead open; an advance credited to an error counts on neither side. Outs on the bases: '
+      + fInt(r.oob) + ".</p>" + table;
+  }
+  function brSeasonRows(id) {
+    var out = [];
+    var F = (BR_HISTORY && BR_HISTORY.fields) || [];
+    var im = F.indexOf("mlbam"), ie = F.indexOf("ebr"), ib = F.indexOf("bsr"), iv = F.indexOf("brv");
+    if (BR_HISTORY && BR_HISTORY.history && im >= 0) {
+      Object.keys(BR_HISTORY.history).sort().forEach(function (y) {
+        var yr = BR_HISTORY.history[y];
+        (yr.runners || []).forEach(function (a) {
+          if (String(a[im]) !== String(id)) return;
+          out.push({ season: Number(y), ebr: ie >= 0 ? a[ie] : null, bsr: ib >= 0 ? a[ib] : null, brv: iv >= 0 ? a[iv] : null });
+        });
+      });
+    }
+    var live = ((brData && brData.runners) || []).filter(function (r) { return String(r.mlbam) === String(id); })[0];
+    if (live && brData.season != null) out.push({ season: Number(brData.season), ebr: live.ebr, bsr: live.bsr, brv: live.brv, live: true });
+    return out;
+  }
+  function brSeasonBars(id, width) {
+    var rows = brSeasonRows(id);
+    if (!rows.length) return '<p class="mlbx-dnote">No qualified season of eBR on file for this runner.</p>';
+    var W = Math.max(240, width || 280), H = 120, pad = 24, bw = Math.max(8, Math.min(28, (W - pad * 2) / rows.length - 6));
+    var m = 5;
+    rows.forEach(function (r) { [r.ebr, r.bsr, r.brv].forEach(function (v) { if (num(v) != null && Math.abs(v) > m) m = Math.abs(v); }); });
+    var mid = H / 2, sc = (mid - 14) / m;
+    var g = '<line x1="' + pad + '" y1="' + mid + '" x2="' + (W - pad) + '" y2="' + mid + '" stroke="var(--border)"/>';
+    rows.forEach(function (r, i) {
+      var x = pad + (i + 0.5) * (W - pad * 2) / rows.length - bw / 2;
+      var v = num(r.ebr);
+      if (v != null) {
+        var h = Math.abs(v) * sc, y = v >= 0 ? mid - h : mid;
+        g += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1)
+          + '" fill="var(--viz-1)"' + (r.live ? ' opacity="0.6"' : "") + "/>";
+      }
+      [r.bsr, r.brv].forEach(function (t, k) {
+        var tv = num(t);
+        if (tv == null) return;
+        var ty = mid - tv * sc;
+        g += '<line x1="' + x.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + (x + bw).toFixed(1) + '" y2="' + ty.toFixed(1)
+          + '" stroke="var(--viz-2)" stroke-width="2"' + (k === 1 ? ' stroke-dasharray="3 2"' : "") + "/>";
+      });
+      g += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">' + r.season + "</text>";
+    });
+    var aria = "eBR by season: " + rows.map(function (r) { return r.season + " " + fSigned(r.ebr); }).join(", ") + ".";
+    var legend = '<div class="mlbx-dlegend"><span><i class="mlbx-dkey-1"></i>eBR</span><span><i class="mlbx-dkey-2"></i>BsR tick, BRV dashed</span></div>';
+    var table = brSvgTable([["Season", "eBR", "BsR", "BRV"]].concat(rows.map(function (r) {
+      return [r.season + (r.live ? " (live)" : ""), fSigned(r.ebr), fSigned(r.bsr), fSigned(r.brv)];
+    })));
+    return legend + '<svg class="eephus-chart" viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(aria) + '">' + g + "</svg>"
+      + '<p class="mlbx-dnote">Qualified seasons only (200 PA); the live season is the lighter bar. Each season on its own run expectancy, never re-priced.</p>' + table;
+  }
+  function brDrawerPanels(ctx, pctPanel, panel) {
+    return panel("brspeed", "Speed", brSpeedPanel(ctx, pctPanel))
+      + panel("brsteal", "Steal map", brStealMap(ctx))
+      + panel("bradv", "Advancement vs league", "")
+      + panel("brseason", "eBR by season", pxState("loading", "Loading the seasons."));
+  }
+  // Called once the panels are mounted: the width-dependent SVGs draw at
+  // their cell's real width, and the seasons panel fills from the history
+  // file (fetched once a page view, never by the landing board). Until it
+  // lands the panel shows its loading state; the fetch's own re-render puts
+  // the drawer back through the shell's fill, which calls this again.
+  function brDrawerAfter(mount, ctx, panelWidth) {
+    function slot(k) { return mount && mount.querySelector ? mount.querySelector('[data-mlbxd="' + k + '"]') : null; }
+    var a = slot("bradv");
+    if (a) a.innerHTML = brAdvancePanel(ctx, panelWidth(a));
+    var s = slot("brseason");
+    if (!s) return;
+    if (BR_HISTORY) s.innerHTML = brSeasonBars(ctx.id, panelWidth(s));
+    else if (BR_HISTORY_ERROR) s.innerHTML = '<p class="mlbx-dnote">The seasons did not load.</p>';
+    else loadBaserunningHistory();
+  }
+  try { window.MLBX_BR_DRAWER = { panels: brDrawerPanels, after: brDrawerAfter }; } catch (e) { /* no window */ }
+
+  // ===========================================================================
   // Generate GFX: shared EEPHUS_GFX board specs, one builder for every board.
   // ---------------------------------------------------------------------------
   // Each board's control row carries a "Generate GFX" chip; the click handler
@@ -6630,7 +7397,7 @@
                   starters: "mlbstats-section-starters",
                   hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
                   defense: "mlbstats-section-defense", league: "mlbstats-section-league",
-                  teams: "mlbstats-section-teams" };
+                  teams: "mlbstats-section-teams", baserunning: "mlbstats-section-baserunning" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
@@ -6641,6 +7408,7 @@
     else if (name === "hitters") initHitters();
     else if (name === "leverage") initLeverage();
     else if (name === "defense") initDefense();
+    else if (name === "baserunning") initBaserunning();
     else if (name === "war") initWar();
     else if (name === "bullpen") initBullpen();
     else if (name === "league") initLeague();
@@ -6897,6 +7665,7 @@
       else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
       else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
       else if (section === "defense") { if (defenseInit) renderDefense(); }
+      else if (section === "baserunning") { if (brInit) renderBaserunning(); }
       else if (section === "war") { if (warInit) renderWar(); }
       else if (relInit) render();
     });

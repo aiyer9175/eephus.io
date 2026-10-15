@@ -116,6 +116,13 @@ PAGES = [
     # and this is the Hitters board; live, every named view must still fit
     # with the drawer open, because its box never widens the table.
     ("hitters drawer", "hitters", "section=hitters&player=665742", "mlbstats-hitter-qual"),
+    # The Baserunning tab (owner ask 2026-09-30; task EBR_2_BUILD_DARK), dark
+    # behind baserunning_export.MLBSTATS_BASERUNNING_LIVE: every named view is
+    # read off its own Columns strip; the team sub-tab and a past season are
+    # their own states. Skipped, never failed, while dark.
+    ("baserunning", "baserunning", "section=baserunning", "mlbstats-br-qual"),
+    ("team baserunning", "baserunning", "section=baserunning&bview=teams", None),
+    ("baserunning 2025", "baserunning", "section=baserunning&bseason=2025", None),
 ]
 # The five sections that carry a methodology fold and a Team note, which is what
 # the vertical-budget case below measures. Overall carries neither (spec 4.7
@@ -181,6 +188,14 @@ def _teams_built() -> bool:
     """The served shell carries the Teams tab and its payload is on disk."""
     shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
     return 'data-mlbsection="teams"' in shell and (ROOT / "data" / "mlb_team_stats.json").exists()
+
+
+def _baserunning_built() -> bool:
+    """The served shell carries the Baserunning tab and its payloads are on disk."""
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    return ('data-mlbsection="baserunning"' in shell
+            and (ROOT / "data" / "baserunning_leaderboards.json").exists()
+            and (ROOT / "data" / "baserunning_history.json").exists())
 
 
 def _league_built() -> bool:
@@ -283,7 +298,9 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
                 continue
             if sec == "teams" and not _teams_built():
                 continue
-            if sec != "teams" and "season=" in hash_ and not (ROOT / "data" / (
+            if sec == "baserunning" and not _baserunning_built():
+                continue
+            if sec not in ("teams", "baserunning") and "season=" in hash_ and not (ROOT / "data" / (
                     {"bullpen": "bullpen", "starters": "starter", "hitters": "hitter",
                      "defense": "defense"}[sec] + "_history.json")).exists():
                 continue

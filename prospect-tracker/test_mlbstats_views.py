@@ -84,6 +84,11 @@ STANDARD = {
     "hitteam": ["team", "offense_plus", "team_war", "heart_hem", "n_above_avg", "team_pa"],
     "defteam": ["team", "team_dem_plus", "n_above_avg", "team_fld_total", "team_frm_runs",
                 "team_pos_runs", "team_pos_runs_fg", "team_inn"],
+    # The Baserunning board (task EBR_2_BUILD_DARK): eBR first, the published
+    # BsR and Savant's BRV beside it, the official counts, then eWAR.
+    "br": ["name", "ebr", "bsr", "brv", "sb", "cs", "sb_pct", "xbt_pct", "sprint", "war"],
+    "brteam": ["team", "team_ebr", "team_ebr_sb", "team_ebr_xb", "team_ebr_dp", "team_sb", "team_sb_pct",
+               "team_att_rate", "team_xbt_pct", "team_oob", "team_sprint"],
 }
 # The phone subset (640px and below) of each Standard view; the identity column
 # and the sorted column always show as well.
@@ -102,16 +107,19 @@ PHONE = {
     "spteam": ["rotation_plus", "team_war", "front_sem", "starter_ip"],
     "hitteam": ["offense_plus", "team_war", "heart_hem", "team_pa"],
     "defteam": ["team_dem_plus", "n_above_avg", "team_fld_total", "team_inn"],
+    "br": ["ebr", "sb", "sb_pct", "sprint", "war"],
+    "brteam": ["team_ebr", "team_sb", "team_sb_pct", "team_xbt_pct"],
 }
 # The eWAR column each board carries, and its payload key. Team Defense is
-# absent on purpose (spec 4.5), and that absence is pinned too.
+# absent on purpose (spec 4.5), and that absence is pinned too; Team
+# Baserunning follows the same rule (baserunning.md 3.5).
 EWAR_ON = {"rel": "war", "sp": "war", "hit": "war", "def": "war", "levbat": "war", "levsp": "war",
-           "relteam": "team_war", "spteam": "team_war", "hitteam": "team_war"}
+           "relteam": "team_war", "spteam": "team_war", "hitteam": "team_war", "br": "war"}
 # Where each payload keeps the rows a board renders, so a test can stamp or
 # strip one field and re-render.
 ROWS_KEY = {"rel": "relievers", "sp": "starters", "hit": "hitters", "def": "fielders",
             "levbat": "batters", "levsp": "starters", "relteam": "teams", "spteam": "teams",
-            "hitteam": "teams", "defteam": "teams"}
+            "hitteam": "teams", "defteam": "teams", "br": "runners", "brteam": "teams"}
 
 
 def _render_bullpen(hash_: str) -> str:
@@ -135,6 +143,8 @@ DEFAULT_RENDERS = {
     "levsp": (smoke._render_leverage, "#section=leverage&lview=starters"),
     "def": (smoke._render_defense, "#section=defense"),
     "defteam": (smoke._render_defense, "#section=defense&dview=teams"),
+    "br": (smoke._render_baserunning, "#section=baserunning"),
+    "brteam": (smoke._render_baserunning, "#section=baserunning&bview=teams"),
 }
 
 
@@ -214,6 +224,15 @@ def test_team_defense_is_pinned_without_an_ewar_column():
     assert 'data-col="war"' not in table and 'data-col="team_war"' not in table
 
 
+def test_team_baserunning_is_pinned_without_an_ewar_column():
+    """The Team Defense rule applied to the Team Baserunning sub-tab
+    (baserunning.md 3.5): a whole-player number on a baserunning rollup would
+    repeat the lineup total on another frame."""
+    fn, hash_ = DEFAULT_RENDERS["brteam"]
+    table = _table(fn(hash_))
+    assert 'data-col="war"' not in table and 'data-col="team_war"' not in table
+
+
 @pytest.mark.parametrize("board", sorted(DEFAULT_RENDERS))
 def test_hidden_cells_never_reach_an_export_and_headers_keep_their_case(board):
     fn, hash_ = DEFAULT_RENDERS[board]
@@ -260,6 +279,75 @@ def test_the_defense_phone_exception_is_the_only_one():
     assert [b for b in EWAR_ON if EWAR_ON[b] not in PHONE[b]] == ["def"]
 
 
+# ---------------------------------------------------------------- the Baserunning board
+# Task EBR_2_BUILD_DARK (baserunning.md 3, as the eWAR v3 gate amends it). The
+# b-prefixed keys, the views, no value-ruler colour on a run column, BEM+ wired
+# but withheld until the payload says its gate recorded a PASS.
+def test_the_baserunning_deep_links_read_and_write_and_omit_their_defaults():
+    ctx = _clicker("#section=baserunning", prelude=smoke._baserunning_prelude)
+    assert ctx.eval("__hashes.length") == 0
+    ctx.eval("__click('br:steals')")
+    last = ctx.eval("__hashes[__hashes.length - 1]")
+    assert last == "#section=baserunning&bcols=steals", last
+    assert "ebr_sb" in _visible(ctx.eval("__html['mlbstats-baserunning-root']"))
+    ctx.eval("__click('br:standard')")
+    assert ctx.eval("__hashes[__hashes.length - 1]") == "#section=baserunning"
+    ctx = _clicker("#section=baserunning&bview=teams&bseason=2025&bsort=sprint.a&btsort=team_sb.d&team=CHC",
+                   prelude=smoke._baserunning_prelude)
+    ctx.eval("__click('brview:teams')")
+    last = ctx.eval("__hashes[__hashes.length - 1]")
+    for part in ("bview=teams", "bseason=2025", "bsort=sprint.a", "btsort=team_sb.d", "team=CHC"):
+        assert part in last, (part, last)
+
+
+@pytest.mark.parametrize("view,want", [
+    # Steals and Advancement lack the board's sort column (eBR), which the
+    # house rule pins at the end, the hitter Batting view's precedent.
+    ("steals", ["name", "sb", "cs", "pk", "sb_pct", "att_rate", "sb3", "ebr_sb", "wsb", "brv_sb", "lead_s", "ebr"]),
+    ("advancement", ["name", "xbt_pct", "x13", "x2h", "x1h", "tag_pct", "oob", "ebr_xb", "brv_xb", "gidp_pct", "ebr_dp", "ebr"]),
+    ("speed", ["name", "pos", "sprint", "sprint_pct", "bolts", "hp1", "runs_comp", "att_rate", "xbt_pct", "ebr"]),
+    ("runs", ["name", "ebr", "ebr_sb", "ebr_xb", "ebr_dp", "bsr", "wsb", "bsr_rest", "brv", "brv_sb", "brv_xb"]),
+])
+def test_each_baserunning_view_shows_its_columns(view, want):
+    html = smoke._render_baserunning("#section=baserunning&bcols=" + view)
+    assert _visible(html) == want, _visible(html)
+    assert ('data-colview="br:%s" aria-pressed="true"' % view) in html
+
+
+def test_no_run_column_on_the_baserunning_board_carries_a_value_ruler_colour():
+    html = smoke._render_baserunning("#section=baserunning&bcols=all")
+    for key in ("ebr", "ebr_sb", "ebr_xb", "ebr_dp", "bsr", "wsb", "bsr_rest", "brv", "brv_xb", "brv_sb"):
+        for cell in _cells(html, key):
+            assert "vt-" not in cell and "proj-pos" not in cell and "proj-neg" not in cell, (key, cell)
+
+
+def test_bem_plus_is_wired_but_withheld_until_the_gate_records_a_pass():
+    html = smoke._render_baserunning("#section=baserunning&bcols=all")
+    assert 'data-col="bem_plus"' not in html
+    served = json.loads(smoke.BR_SAMPLE)
+    served["bem_plus"] = {"served": True, "reason": "test"}
+    for r in served["runners"]:
+        r["bem_plus"] = 113
+    html = smoke._render_baserunning("#section=baserunning&bcols=all", sample=json.dumps(served))
+    assert 'data-col="bem_plus"' in html and "113" in "".join(_cells(html, "bem_plus"))
+    assert len(re.findall(r'\{ key: "bem_plus"', JS)) == 1
+
+
+def test_the_baserunning_ewar_header_takes_its_frame_sentence_from_the_payload():
+    tag = {k: t for _, k, t in _heads(smoke._render_baserunning("#section=baserunning"))}["war"]
+    assert "Whole-player eWAR this season." in tag
+    assert "a different frame from eBR and BsR" in tag, tag
+    assert "runs_br" not in JS.split("Section 7: Baserunning")[1], "the page must not type the baserunning frame"
+
+
+def test_the_baserunning_history_board_keeps_the_live_columns_it_is_served():
+    html = smoke._render_baserunning("#section=baserunning&bseason=2025")
+    vis = _visible(html)
+    assert vis == ["name", "ebr", "bsr", "brv", "sb", "cs", "sb_pct", "xbt_pct", "sprint", "war"], vis
+    tag = {k: t for _, k, t in _heads(html)}["war"]
+    assert "for the season shown" in tag and "this season" not in tag
+
+
 def test_the_group_rules_on_the_reliever_standard_view():
     grp = [k for cls, k, _ in _heads(_render_bullpen("")) if "mlbstats-cv-grp" in cls.split()]
     assert grp == ["war", "ip", "k_bb_pct", "gmli"], grp
@@ -270,6 +358,7 @@ def test_the_group_rules_on_the_reliever_standard_view():
     ("sp", "#section=starters", smoke._render_starters),
     ("hit", "#section=hitters", smoke._render_hitters),
     ("def", "#section=defense", smoke._render_defense),
+    ("br", "#section=baserunning", smoke._render_baserunning),
 ])
 def test_multi_view_boards_carry_the_columns_strip(board, hash_, fn):
     html = fn(hash_)
@@ -283,6 +372,7 @@ def test_multi_view_boards_carry_the_columns_strip(board, hash_, fn):
     ("#section=leverage", smoke._render_leverage),
     ("#view=teams", _render_bullpen),
     ("#section=defense&dview=teams", smoke._render_defense),
+    ("#section=baserunning&bview=teams", smoke._render_baserunning),
 ])
 def test_single_view_boards_carry_no_strip(hash_, fn):
     assert "data-colview" not in fn(hash_)
@@ -476,6 +566,9 @@ _PAYLOAD_RENDER = {
     "def": (smoke._defense_prelude, "DEFENSE_SAMPLE", "mlbstats-defense-root", "#section=defense"),
     "defteam": (smoke._defense_prelude, "DEFENSE_SAMPLE", "mlbstats-defense-root",
                 "#section=defense&dview=teams"),
+    "br": (smoke._baserunning_prelude, "BR_SAMPLE", "mlbstats-baserunning-root", "#section=baserunning"),
+    "brteam": (smoke._baserunning_prelude, "BR_SAMPLE", "mlbstats-baserunning-root",
+               "#section=baserunning&bview=teams"),
 }
 
 
@@ -926,17 +1019,25 @@ FROZEN_KEYS = {
     # keys, so they are frozen the moment the section ships.
     "WAR_COLS": ["name", "pos", "war", "war_bat", "war_pit", "pa", "ip", "gs"],
     "WAR_TEAM_COLS": ["team", "war", "war_earned", "war_bat", "war_sp", "war_rp", "war_sw", "n_players"],
+    # The Baserunning board (EBR_2_BUILD_DARK): bsort= and btsort= name these.
+    "BR_COLS": ["name", "pos", "ebr", "ebr_sb", "ebr_xb", "ebr_dp", "bsr", "wsb", "bsr_rest", "brv", "brv_xb",
+                "brv_sb", "sb", "cs", "sb_pct", "pk", "att_rate", "sb3", "xbt_pct", "x13", "x2h", "x1h", "tag_pct",
+                "oob", "gidp_pct", "sprint", "sprint_pct", "bolts", "hp1", "runs_comp", "lead_p", "lead_s", "war",
+                "bem_plus"],
+    "BR_TEAM_COLS": ["team", "team_ebr", "team_ebr_sb", "team_ebr_xb", "team_ebr_dp", "team_sb", "team_sb_pct",
+                     "team_att_rate", "team_xbt_pct", "team_oob", "team_sprint"],
 }
 # The table each view-registry board renders.
 BOARD_ARRAYS = {"rel": "REL_COLS", "sp": "STARTER_COLS", "hit": "HITTER_COLS", "def": "DEFENSE_COLS",
                 "levbat": "BAT_LEV_COLS", "levsp": "STARTER_LEV_COLS", "relteam": "TEAM_COLS",
                 "spteam": "STARTER_TEAM_COLS", "hitteam": "HITTER_TEAM_COLS", "defteam": "DEFENSE_TEAM_COLS",
-                "war": "WAR_COLS", "warteam": "WAR_TEAM_COLS"}
-# The view ids a deep link can name (rcols= / scols= / hcols= / dcols=).
+                "war": "WAR_COLS", "warteam": "WAR_TEAM_COLS", "br": "BR_COLS", "brteam": "BR_TEAM_COLS"}
+# The view ids a deep link can name (rcols= / scols= / hcols= / dcols= / bcols=).
 FROZEN_VIEWS = {"rel": ["standard", "skill", "value", "leverage", "pitches", "all"],
                 "sp": ["standard", "skill", "value", "pitches", "all"],
                 "hit": ["standard", "skill", "value", "batting", "pitches", "all"],
-                "def": ["standard", "runs", "catching", "all"]}
+                "def": ["standard", "runs", "catching", "all"],
+                "br": ["standard", "steals", "advancement", "speed", "runs", "all"]}
 
 
 def _array_block(name: str) -> str:
@@ -1009,7 +1110,7 @@ def test_no_deep_linkable_view_id_is_ever_lost():
         assert set(want) <= set(have), (board, have)
     hashkeys = dict(re.findall(r'(\w+): "([a-z]cols)"', re.search(r"var COL_VIEW_HASH = \{([^}]*)\}", JS).group(1)))
     assert hashkeys == {"rel": "rcols", "sp": "scols", "hit": "hcols", "def": "dcols",
-                        "war": "wcols"}
+                        "war": "wcols", "br": "bcols"}
 
 
 def _render_calls() -> list[str]:
@@ -1059,6 +1160,19 @@ def _dark_pitch_slugs() -> set[str]:
     return set() if pitch_rates.SERVE_PITCH_RATES else {"p_ip", "p_bf", "p_pa", "par"}
 
 
+def _dark_baserunning_slugs() -> set[str]:
+    """The Baserunning board's slugs (EBR_2_BUILD_DARK) are allowed to miss
+    the glossary only while baserunning_export.MLBSTATS_BASERUNNING_LIVE is
+    off: the entries land in the flip commit (EBR_2F_FLIP), and from then on
+    these resolve like every other slug."""
+    import baserunning_export
+    if baserunning_export.MLBSTATS_BASERUNNING_LIVE:
+        return set()
+    return {"ebr", "ebr_sb", "ebr_xb", "ebr_dp", "team_ebr", "bem_plus", "bsr", "wsb", "savant_brv",
+            "xbt_pct", "steal_attempt_rate", "outs_on_bases", "tag_up_rate", "gidp_rate", "bolts",
+            "hp_to_1b"}
+
+
 def _glossary_ids() -> set[str]:
     g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     return {e["id"] for e in g["entries"]}
@@ -1071,7 +1185,7 @@ def test_every_glossary_slug_the_page_links_resolves():
     for p in pats:
         slugs |= set(re.findall(p, JS))
     assert len(slugs) >= 50, len(slugs)
-    missing = sorted(slugs - _glossary_ids() - _dark_pitch_slugs())
+    missing = sorted(slugs - _glossary_ids() - _dark_pitch_slugs() - _dark_baserunning_slugs())
     assert not missing, missing
 
 
@@ -1280,10 +1394,13 @@ def test_the_count_names_the_qualified_gate_the_closed_drawer_hides():
     checkbox. The search box, which stays visible at every width, is the
     one filter deliberately left out of the count."""
     calls = re.findall(r"filtBtn\(filtCount\(([^)]*)\)\)", JS)
-    assert len(calls) == 6, calls
+    # Six boards plus the Baserunning board (EBR_2_BUILD_DARK), whose
+    # filters bar sits in the page source whatever the flag says.
+    assert len(calls) == 7, calls
     flags = [c.split(",")[-1].strip() for c in calls]
     assert flags == ["!qualifiedOnly", "!starterQualifiedOnly", "!hitterQualifiedOnly",
-                     "!leverageQualifiedOnly", "!defenseQualifiedOnly", "!warQualifiedOnly"], flags
+                     "!leverageQualifiedOnly", "!defenseQualifiedOnly", "!brQualifiedOnly",
+                     "!warQualifiedOnly"], flags
     i = JS.index("function filtCount(")
     assert "qualOff ? 1 : 0" in JS[i:i + 300], JS[i:i + 300]
 
