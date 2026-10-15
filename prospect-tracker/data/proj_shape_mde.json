@@ -1,0 +1,412 @@
+{
+ "generated_at": "2026-10-15T12:52:28Z",
+ "gate": "docs/PROJ_PATH_SHAPE_GATE.md section 3, under amendment A-2 (fwar corpus, after step Z)",
+ "read": "OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14, verbatim: 'Fuck the registered look days and waiting, we don't have to wait for anything. Let's do everything today'): registered 2026-10-02 (moved after step Z by A-2), produced 2026-10-14 after the blast artifact",
+ "producer": "tools/proj_shape_mde_lab.py",
+ "fixture": false,
+ "corpus": {
+  "path": "work/fa_corpus.pkl (copied from .cache/fa_corpus.pkl)",
+  "sha256": "8786673a802dc5ed14baec22ab9e303e7f23555bd42f10717d05df65119acd9d",
+  "first": 2000,
+  "last": 2026,
+  "war_provider": "fwar",
+  "label_shape": "side_keyed_v1",
+  "n_hit_rows": 17094,
+  "n_pit_rows": 19417
+ },
+ "frame_read": {
+  "scored_bases": [
+   2008,
+   2009,
+   2010,
+   2011
+  ],
+  "scored_label_seasons": [
+   2008,
+   2009,
+   2010,
+   2011
+  ],
+  "training_label_seasons_max": 2010,
+  "blend_fit_label_seasons_max": 2010,
+  "prediction_ceiling_label_season": 2011,
+  "labels_blanked_above": 2011,
+  "frames": [
+   "DEV",
+   "simulation"
+  ],
+  "note": "every label above season 2011 was blanked on load in every process of this lab; every bundle fitted at a base <= 2011 on labels <= 2010; every prediction capped at label season 2011; no GATE, CONFIRM or Tier-2 label or prediction exists in this process. The GATE player counts the transport formula needs are STRUCTURAL: which (player, base, horizon) cells exist and are not two-sided, read off the base and the label SEASON, never a label value"
+ },
+ "n_cells_dev": 17814,
+ "n_players_dev": 2431,
+ "n_players_gate_structural": 3109,
+ "transport": {
+  "formula": "sd_GATE = sd_DEV * sqrt(n_players_DEV / n_players_GATE)",
+  "factor": 0.884264
+ },
+ "bootstrap": {
+  "B": 1000,
+  "refits_per_draw": 0,
+  "train_resampled": false,
+  "seed": 20260918,
+  "clustered_on": "player",
+  "vif_registered": 1.8,
+  "calibration": {
+   "B": 200,
+   "refits_per_draw": 16,
+   "train_resampled": true,
+   "arms": [
+    "S",
+    "J0.20"
+   ],
+   "calibration_candidate_default": "lambda 0.20, the middle of the non-zero grid; the measured ratio is applied to every lambda's sd",
+   "blends_refit_per_draw": true,
+   "sd_full": 0.003425,
+   "sd_test": 0.002152,
+   "wall_s": 4272.1,
+   "seed_base": 20261918
+  },
+  "vif_measured": 1.5916,
+  "vif_applied": 1.8
+ },
+ "z_one_sided": 1.6448536269514722,
+ "per_lambda": {
+  "0.00": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.001773,
+    "per_h_mae": {
+     "1": 0.002213,
+     "2": 0.003331,
+     "3": 0.003446,
+     "4": 0.005912
+    },
+    "pooled_bias": 0.002404,
+    "star_mae": 0.02769,
+    "star_bias": 0.04129,
+    "coverage": 0.002319,
+    "pinball_q10": 0.0005,
+    "pinball_q90": 0.000952
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00464,
+    "per_h_mae": {
+     "1": 0.00579,
+     "2": 0.00872,
+     "3": 0.00902,
+     "4": 0.01548
+    },
+    "pooled_bias": 0.00629,
+    "star_mae": 0.0725,
+    "star_bias": 0.1081,
+    "coverage": 0.00607,
+    "pinball_q10": 0.00131,
+    "pinball_q90": 0.00249
+   }
+  },
+  "0.05": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.001801,
+    "per_h_mae": {
+     "1": 0.002148,
+     "2": 0.003352,
+     "3": 0.003377,
+     "4": 0.005718
+    },
+    "pooled_bias": 0.00234,
+    "star_mae": 0.026917,
+    "star_bias": 0.030863,
+    "coverage": 0.002255,
+    "pinball_q10": 0.000531,
+    "pinball_q90": 0.000975
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00471,
+    "per_h_mae": {
+     "1": 0.00562,
+     "2": 0.00878,
+     "3": 0.00884,
+     "4": 0.01497
+    },
+    "pooled_bias": 0.00613,
+    "star_mae": 0.07047,
+    "star_bias": 0.0808,
+    "coverage": 0.0059,
+    "pinball_q10": 0.00139,
+    "pinball_q90": 0.00255
+   }
+  },
+  "0.10": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.00192,
+    "per_h_mae": {
+     "1": 0.002211,
+     "2": 0.00348,
+     "3": 0.00341,
+     "4": 0.005462
+    },
+    "pooled_bias": 0.002548,
+    "star_mae": 0.029474,
+    "star_bias": 0.028484,
+    "coverage": 0.002297,
+    "pinball_q10": 0.000564,
+    "pinball_q90": 0.001029
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00503,
+    "per_h_mae": {
+     "1": 0.00579,
+     "2": 0.00911,
+     "3": 0.00893,
+     "4": 0.0143
+    },
+    "pooled_bias": 0.00667,
+    "star_mae": 0.07717,
+    "star_bias": 0.07457,
+    "coverage": 0.00601,
+    "pinball_q10": 0.00148,
+    "pinball_q90": 0.00269
+   }
+  },
+  "0.20": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.002152,
+    "per_h_mae": {
+     "1": 0.00231,
+     "2": 0.003651,
+     "3": 0.00369,
+     "4": 0.005611
+    },
+    "pooled_bias": 0.002983,
+    "star_mae": 0.035332,
+    "star_bias": 0.034815,
+    "coverage": 0.002681,
+    "pinball_q10": 0.000619,
+    "pinball_q90": 0.001166
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00563,
+    "per_h_mae": {
+     "1": 0.00605,
+     "2": 0.00956,
+     "3": 0.00966,
+     "4": 0.01469
+    },
+    "pooled_bias": 0.00781,
+    "star_mae": 0.0925,
+    "star_bias": 0.09115,
+    "coverage": 0.00702,
+    "pinball_q10": 0.00162,
+    "pinball_q90": 0.00305
+   }
+  },
+  "0.40": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.00246,
+    "per_h_mae": {
+     "1": 0.002567,
+     "2": 0.004066,
+     "3": 0.003938,
+     "4": 0.006155
+    },
+    "pooled_bias": 0.003539,
+    "star_mae": 0.043159,
+    "star_bias": 0.046551,
+    "coverage": 0.002881,
+    "pinball_q10": 0.000674,
+    "pinball_q90": 0.001396
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00644,
+    "per_h_mae": {
+     "1": 0.00672,
+     "2": 0.01065,
+     "3": 0.01031,
+     "4": 0.01612
+    },
+    "pooled_bias": 0.00926,
+    "star_mae": 0.11299,
+    "star_bias": 0.12187,
+    "coverage": 0.00754,
+    "pinball_q10": 0.00176,
+    "pinball_q90": 0.00365
+   }
+  },
+  "0.80": {
+   "sd_dev_test_only": {
+    "pooled_mae": 0.00287,
+    "per_h_mae": {
+     "1": 0.002983,
+     "2": 0.004589,
+     "3": 0.004403,
+     "4": 0.006831
+    },
+    "pooled_bias": 0.004174,
+    "star_mae": 0.052044,
+    "star_bias": 0.05694,
+    "coverage": 0.002943,
+    "pinball_q10": 0.000728,
+    "pinball_q90": 0.001551
+   },
+   "mde95_gate": {
+    "pooled_mae": 0.00751,
+    "per_h_mae": {
+     "1": 0.00781,
+     "2": 0.01202,
+     "3": 0.01153,
+     "4": 0.01789
+    },
+    "pooled_bias": 0.01093,
+    "star_mae": 0.13626,
+    "star_bias": 0.14907,
+    "coverage": 0.00771,
+    "pinball_q10": 0.00191,
+    "pinball_q90": 0.00406
+   }
+  }
+ },
+ "mde95_pooled_mae_by_lambda": {
+  "0.00": 0.00464,
+  "0.05": 0.00471,
+  "0.10": 0.00503,
+  "0.20": 0.00563,
+  "0.40": 0.00644,
+  "0.80": 0.00751
+ },
+ "margin_M": 0.0065,
+ "margin_guard": {
+  "0.00": "clears",
+  "0.05": "clears",
+  "0.10": "clears",
+  "0.20": "clears",
+  "0.40": "clears",
+  "0.80": "UNDERPOWERED_NO_MARGIN"
+ },
+ "arm_a_detection": {
+  "0.00": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.002821,
+   "one_sided_lower_bound": 0.001859,
+   "detected": true
+  },
+  "0.05": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.002866,
+   "one_sided_lower_bound": 0.001785,
+   "detected": true
+  },
+  "0.10": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.003056,
+   "one_sided_lower_bound": 0.001473,
+   "detected": true
+  },
+  "0.20": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.003425,
+   "one_sided_lower_bound": 0.000866,
+   "detected": true
+  },
+  "0.40": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.003916,
+   "one_sided_lower_bound": 5.9e-05,
+   "detected": true
+  },
+  "0.80": {
+   "planted_delta_mae": 0.0065,
+   "sd_gate_vif": 0.004567,
+   "one_sided_lower_bound": -0.001013,
+   "detected": false
+  }
+ },
+ "arm_b": {
+  "holm_k": 3,
+  "z_step1": 2.128,
+  "levers": {
+   "B-AGE": {
+    "cells": [
+     "age:<=24:hit",
+     "age:34+:hit",
+     "age:<=24:pit",
+     "age:34+:pit"
+    ],
+    "statistic": "n-weighted mean over the four registered age cells of the bias signed by its published prior's direction",
+    "sd": 0.030618,
+    "mde95_holm_k3": 0.065157,
+    "planted": 0.051611,
+    "n_players_dev": 1133,
+    "n_players_gate": 1490,
+    "detected": false,
+    "verdict_if_not_detected": "UNDERPOWERED"
+   },
+   "B-C": {
+    "cells": [
+     "role:C"
+    ],
+    "statistic": "the cell's signed bias",
+    "sd": 0.100643,
+    "mde95_holm_k3": 0.214173,
+    "planted": 0.1862,
+    "detected": false,
+    "verdict_if_not_detected": "UNDERPOWERED"
+   },
+   "B-STAR": {
+    "cells": [
+     "star"
+    ],
+    "statistic": "the cell's signed bias",
+    "sd": 0.210643,
+    "mde95_holm_k3": 0.448258,
+    "planted": 0.1489,
+    "detected": false,
+    "verdict_if_not_detected": "UNDERPOWERED"
+   }
+  },
+  "cells": {
+   "age:<=24:hit": {
+    "n_dev": 347,
+    "n_players_dev": 170,
+    "n_players_gate": 144,
+    "sd_gate_vif": 0.244536
+   },
+   "age:34+:hit": {
+    "n_dev": 2622,
+    "n_players_dev": 390,
+    "n_players_gate": 605,
+    "sd_gate_vif": 0.036636
+   },
+   "age:<=24:pit": {
+    "n_dev": 424,
+    "n_players_dev": 202,
+    "n_players_gate": 156,
+    "sd_gate_vif": 0.191236
+   },
+   "age:34+:pit": {
+    "n_dev": 2430,
+    "n_players_dev": 379,
+    "n_players_gate": 604,
+    "sd_gate_vif": 0.037583
+   },
+   "role:C": {
+    "n_dev": 1309,
+    "n_players_dev": 193,
+    "n_players_gate": 238,
+    "sd_gate_vif": 0.100643
+   },
+   "star": {
+    "n_dev": 661,
+    "n_players_dev": 166,
+    "n_players_gate": 225,
+    "sd_gate_vif": 0.210643
+   }
+  },
+  "floor_key": "mde95_holm_k3",
+  "planted_source": "the nearer-zero end of each cell's published CI in data/proj_calibration_eval.json (3.3)"
+ },
+ "reading": [
+  "Floors are per statistic class and not transferable between classes (3.2).",
+  "MDE95 is one-sided (1.645 sd) with the VIF applied after transport.",
+  "Every criterion in this battery is scored on `war_provider = fwar`. The champion-versus-challenger numbers in `data/proj_horizon_eval.json` (2026-08-19) and every cell of `data/proj_calibration_eval.json` (2026-07-25) predate the fWAR label epoch (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md) and are priors, not comparators. Label seasons 2015 through 2025 were already scored on the shipped challenger by `challenger_blocks.gate1_targets` and carry no confirming verdict here."
+ ],
+ "wall_time_s": 4281.7
+}
