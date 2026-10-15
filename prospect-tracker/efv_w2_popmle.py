@@ -141,6 +141,20 @@ GBM_PARAMS = {"loss": "squared_error", "learning_rate": 0.05, "max_iter": 300,
               "early_stopping": False, "random_state": 20261008}
 TWIN_SEED = 20261009
 
+#: EFV_FIX_A (owner decision EW3-21, docs/efv-v2/EFV_FIX_A.md): the population repairs.
+#: (1) norms sums each distinct count column once; before it, a denominator shared by several
+#: rates (pa for hitters' k, bb, hr and sb; bf for pitchers' k and bb) was added once per
+#: rate, so every league reference rate read a quarter (hitters) or a half (pitchers) of the
+#: truth and the *_rel features were not league-relative. (2) season_lines drops the
+#: non-affiliated Mexican League lines (NON_AFFILIATED_LEAGUES at sport 11, through 2019),
+#: which the affiliated population above never meant to hold. DARK: False keeps every path
+#: byte-identical to the code before the repair, because the production heads refit on
+#: every export and this column moves their slopes; EFV_FIX_B_REFIT turns it on with its
+#: registered re-fit, never alone.
+POP_REPAIR_ON = False
+#: (sport id, league code) pairs of non-affiliated leagues in the MiLB cache files.
+NON_AFFILIATED_LEAGUES = frozenset({(11, "MEX")})
+
 ARMS: tuple[dict, ...] = (
     {"name": "w4p_pop_hit", "side": "hit", "head": "skill", "twin": False},
     {"name": "w4p_pop_pit", "side": "pit", "head": "skill", "twin": False},
@@ -208,6 +222,8 @@ def season_lines(season: int, side: str) -> tuple:
             pid, lv = r.get("mlbam"), r.get("level")
             if not pid or lv not in LEVEL_RANK:
                 continue
+            if POP_REPAIR_ON and (int(sp), str(r.get("league") or "")) in NON_AFFILIATED_LEAGUES:
+                continue
             c = line_counts(r, side)
             if c is None:
                 continue
@@ -215,15 +231,28 @@ def season_lines(season: int, side: str) -> tuple:
     return tuple(out)
 
 
+def count_columns(side: str) -> tuple[str, ...]:
+    """Every distinct count column RATES reads for the side, once each (a denominator
+    shared by several rates appears once)."""
+    return tuple(sorted({c for pair in RATES[side].values() for c in pair}))
+
+
 @lru_cache(maxsize=None)
 def norms(season: int, side: str) -> dict:
     """Pooled rates per (level, league) and per level, and the exposure-weighted mean age
-    per level, over every line of the season. Contemporaneous; no outcome."""
+    per level, over every line of the season. Contemporaneous; no outcome. With
+    POP_REPAIR_ON each count column is summed once (the legacy loop, kept byte-identical
+    while the flag is off, summed a shared denominator once per rate)."""
     acc: dict = {"lg": {}, "lv": {}, "age": {}}
+    cols = count_columns(side)
     for _pid, lv, lg, age, c in season_lines(int(season), side):
         for key, slot in (((lv, lg), acc["lg"]), (lv, acc["lv"])):
             a = slot.setdefault(key, {"n": 0})
             a["n"] += 1
+            if POP_REPAIR_ON:
+                for col in cols:
+                    a[col] = a.get(col, 0.0) + c[col]
+                continue
             for num, den in RATES[side].values():
                 a[num] = a.get(num, 0.0) + c[num]
                 a[den] = a.get(den, 0.0) + c[den]

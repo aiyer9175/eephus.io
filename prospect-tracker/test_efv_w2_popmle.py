@@ -278,3 +278,102 @@ def test_spent_frames_are_labelled_and_never_ledger_rows():
         assert sp["note"] == P.SPENT_NOTE and sp["ledger_rows"] is False
         for fid in ("lv_res", "vm_pros"):
             assert sp[fid]["role"] == "spent" and sp[fid]["note"] == P.SPENT_NOTE
+
+# ---------------------------------------------------------------------------
+# 6. the population repairs (EFV_FIX_A, docs/efv-v2/EFV_FIX_A.md)
+# ---------------------------------------------------------------------------
+
+def test_the_repair_is_dark_until_the_refit():
+    """The production heads refit on every export and this column moves their slopes, so
+    the repair reaches the board only with EFV_FIX_B_REFIT's registered re-fit."""
+    assert P.POP_REPAIR_ON is False
+    assert P.NON_AFFILIATED_LEAGUES == frozenset({(11, "MEX")})
+
+
+def test_count_columns_name_a_shared_denominator_once():
+    assert P.count_columns("hit").count("pa") == 1
+    assert P.count_columns("pit").count("bf") == 1
+    for side in ("hit", "pit"):
+        want = {c for pair in P.RATES[side].values() for c in pair}
+        assert set(P.count_columns(side)) == want
+
+
+def test_norms_sum_each_count_once_under_the_repair(world, monkeypatch):
+    store, _join = world
+    rows = store[(14, 2010, "hitting")]
+    so = sum(r["so"] for r in rows)
+    pa = sum(r["pa"] for r in rows)
+    bb = sum(r["bb"] for r in rows)
+    legacy = P.norms(2010, "hit")["lv"]["A"]
+    assert abs(legacy["k"] - so / (4 * pa)) < 1e-12, "the legacy loop, kept while dark"
+    monkeypatch.setattr(P, "POP_REPAIR_ON", True)
+    _clear()
+    fixed = P.norms(2010, "hit")["lv"]["A"]
+    assert abs(fixed["k"] - so / pa) < 1e-12
+    assert abs(fixed["bb"] - bb / pa) < 1e-12
+    # every hitter's k_rel is now relative to the true pooled rate: the PA-weighted mean is 0
+    ps = P.player_seasons(2010, "hit")
+    num = sum(f["k_rel"] * f["exp"] for f in ps.values())
+    assert abs(num / sum(f["exp"] for f in ps.values())) < 1e-12
+
+
+def test_non_affiliated_lines_leave_the_population_under_the_repair(world, monkeypatch):
+    store, _join = world
+    store[(11, 2010, "hitting")] = [
+        _hit(950000 + i, 2010, level="AAA", league="MEX", age=30) for i in range(25)]
+    store[(11, 2010, "hitting")].append(_hit(960000, 2010, level="AAA", league="PCL"))
+    _clear()
+    assert sum(1 for t in P.season_lines(2010, "hit") if t[2] == "MEX") == 25
+    monkeypatch.setattr(P, "POP_REPAIR_ON", True)
+    _clear()
+    lines = P.season_lines(2010, "hit")
+    assert not any(t[2] == "MEX" for t in lines)
+    assert any(t[0] == 960000 for t in lines)
+    assert ("AAA", "MEX") not in P.norms(2010, "hit")["lg"]
+    assert 950000 not in P.player_seasons(2010, "hit")
+
+
+@pytest.fixture
+def repaired_cache(monkeypatch):
+    """The real MiLB cache under the repair (skipped where the cache is absent)."""
+    if not P.mh.season_splits(11, 2026, "hitting", fetch=False):
+        pytest.skip("no 2026 AAA hitting cache on this tree")
+    monkeypatch.setattr(P, "POP_REPAIR_ON", True)
+    _clear()
+    yield
+    _clear()
+
+
+def test_a_real_season_reads_league_rates_at_their_true_size(repaired_cache):
+    """2026 AAA hitters struck out in about 22% of plate appearances; the legacy loop read
+    0.056 (a quarter)."""
+    nm = P.norms(2026, "hit")["lv"]["AAA"]
+    assert 0.20 < nm["k"] < 0.25
+    assert 0.20 < P.norms(2026, "pit")["lv"]["AAA"]["k"] < 0.25
+
+
+@pytest.mark.parametrize("season", [2015, 2026])
+def test_every_rate_is_league_relative_over_the_population(repaired_cache, season):
+    """Over every line of a season, the denominator-weighted mean of (rate - its reference)
+    is near 0 for every rate of both sides, and the exposure-weighted population mean of
+    each *_rel whose denominator is the exposure is near 0."""
+    for side in ("hit", "pit"):
+        nm = P.norms(season, side)
+        for r, (num, den) in P.RATES[side].items():
+            x = w = xr = 0.0
+            for _pid, lv, lg, _age, c in P.season_lines(season, side):
+                ref = P._norm_rate(nm, lv, lg, r)
+                if c[den] <= 0 or ref is None:
+                    continue
+                x += (c[num] / c[den] - ref) * c[den]
+                w += c[den]
+                xr += ref * c[den]
+            assert abs(x / w) < 1e-6 * (xr / w), (side, r, x / w)
+        exp_den = {"hit": "pa", "pit": "bf"}[side]
+        ps = P.player_seasons(season, side)
+        for r, (_num, den) in P.RATES[side].items():
+            if den != exp_den:
+                continue
+            vals = [(f[f"{r}_rel"], f["exp"]) for f in ps.values() if f[f"{r}_rel"] == f[f"{r}_rel"]]
+            mean = sum(v * e for v, e in vals) / sum(e for _v, e in vals)
+            assert abs(mean) < 1e-6, (side, r, mean)
