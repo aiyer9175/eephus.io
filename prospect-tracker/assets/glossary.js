@@ -12,7 +12,7 @@
 // anatomy guide; Formulas: every formula by shelf) · Methods
 // (Methodology: seven chapters with a chapter rail, the industry-comparison
 // chapter at #industry-comparison, the interactive teaching widgets and the
-// PDF export) ·
+// PDF export; WAR Framework Comparison: fWAR, bWAR and eWAR side by side) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
 // Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
 // live calibration monitor and what an eFV grade is worth; What Predicts the
@@ -92,6 +92,8 @@
     { id: "guide", shelf: "reference", label: "How to Read", body: "guide-body", render: renderGuide, aliases: [] },
     { id: "formulas", shelf: "reference", label: "Formulas", body: "formulas-body", render: renderFormulas, aliases: [] },
     { id: "methodology", shelf: "methods", label: "Methodology", body: "methodology-body", render: renderMethodology, aliases: [] },
+    // UPKEEP (LIB_WAR_COMPARISON): when an eWAR part is admitted or rejected, update this view's eWAR column.
+    { id: "war-comparison", shelf: "methods", label: "WAR Framework Comparison", body: "war-comparison-body", render: renderWarComparison, aliases: [] },
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
     { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
@@ -6363,6 +6365,67 @@ function renderMetricAtlas() {
     if (s.dataset.wpm === "label") _WPM_SEL.frame = "clean";
     renderMetricAtlas();
   });
+}
+
+// ---- Methods > WAR Framework Comparison (LIB_WAR_COMPARISON, owner EW3-22) ----
+// The fWAR, bWAR and eWAR method reference, copied word for word from the
+// owner's comparison artifact of 2026-10-15 and drawn in the site's theme. A
+// "[candidate]" marker in a cell renders the candidate tag: an eWAR part that
+// is not admitted yet. UPKEEP: when an eWAR part is admitted or rejected, edit
+// its eWAR cell here (drop the tag or the part) and the pins in
+// test_war_comparison_view.py in the same commit. The data sits in a hoisted
+// function, not a module const, for the TDZ reason _SACC gives: boot can
+// render this view before these lines run.
+function _warcData() {
+  return {
+    url: "https://claude.ai/artifact/UghNTdvm8aLES39nnk9aYj",
+    title: "WAR framework comparison: fWAR, bWAR, eWAR",
+    meta: "eephus.io \u00b7 method reference \u00b7 2026-10-15",
+    caption: "Rows marked candidate enter eWAR only if they improve the rank correlation with the component's realized runs in the next season.",
+    cols: ["Component", "fWAR (FanGraphs)", "bWAR (Baseball-Reference)", "eWAR"],
+    rows: [
+      ["Objective", "Predictive", "Descriptive", "Two outputs. eWAR: predictive. eWAR realized: descriptive."],
+      ["Inclusion rule", "Fixed method", "Fixed method", "A component is included only if it improves the rank correlation with its own realized runs in season Y+1. Team runs and wins in Y+1 must not be predicted worse."],
+      ["Hitting", "wOBA, wRC+", "Linear weights", "Shrunk event rates (HEM+) and Statcast xwOBA (xHEM+); realized: actual event runs"],
+      ["Pitching", "FIP (K, BB, HBP, HR)", "RA9, adjusted for defense and park", "Shrunk K, BB, HBP, HR rates (SEM+, REM+). [candidate] regressed contact quality and sequencing. Realized: RA9 adjusted for defense, park and inherited runners"],
+      ["Pitch economy", "Not included", "Not included", "[candidate] P/PA, P/IP, P/BF converted to runs via count-state run values, hitters and pitchers"],
+      ["Defense, non-catchers", "UZR (OAA-based since 2016)", "DRS", "Reliability-weighted combination of SDR, OAA, DRS, UZR, DEM+, weights set per position"],
+      ["Defense, catchers", "Framing included", "rSB, rCERA", "SDR catcher components: framing, blocking, throwing"],
+      ["ABS challenges", "Not included", "Not included", "eABS: run value of challenge outcomes from count-state run values. [candidate] inclusion pending stability test"],
+      ["Baserunning", "BsR (wSB, UBR, wGDP)", "Rbaser, Rdp", "eBR: SB, pickoffs, extra bases, outs on bases, double plays, valued with RE24"],
+      ["Positional adjustment", "FanGraphs table", "Baseball-Reference table", "Fitted ladder. [candidate] position-switcher ladder, included only if out-of-sample error is lower"],
+      ["Prospects (MiLB)", "Not published", "Not published", "MiLB SDR and translated MiLB components"],
+      ["Uses", "Not applicable", "Not applicable", "eWAR: eFV label, projections, trade and FA value, WAG. eWAR realized: Awards, HoF, season summaries"],
+    ],
+    notes: [
+      "FanGraphs fielding has used Statcast OAA since 2016.",
+      "UZR does not rate catchers. FanGraphs counts catcher framing as a separate term.",
+      "eWAR and eWAR realized share the baserunning, defense, positional and ABS components; they differ in the hitting and pitching basis.",
+    ],
+  };
+}
+
+function renderWarComparison() {
+  const el = document.getElementById("war-comparison-body");
+  if (!el) return;
+  const d = _warcData();
+  const cell = s => escapeHtml(s).replace(/\[candidate\]/g, '<span class="warc-tag">candidate</span>');
+  const head = d.cols.map((c, i) => `<th scope="col"${i === 3 ? ' class="warc-e"' : ""}>${escapeHtml(c)}</th>`).join("");
+  const body = d.rows.map(r => `<tr><th scope="row">${escapeHtml(r[0])}</th><td>${cell(r[1])}</td>`
+    + `<td>${cell(r[2])}</td><td class="warc-e">${cell(r[3])}</td></tr>`).join("");
+  el.innerHTML = `<div class="source-comp-wrap warc-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>${escapeHtml(d.meta)}</div>
+    <h2 class="meth-h">${escapeHtml(d.title)}</h2>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="${escapeHtml(d.title)}">
+      <table class="warc-table"><caption>${escapeHtml(d.caption)}</caption>
+        <thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+    </div>
+    <p class="meth-note warc-link"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer">Standalone version</a></p>
+    <section class="warc-notes" aria-labelledby="warc-notes-h">
+      <h3 class="meth-h3" id="warc-notes-h">Notes</h3>
+      <ol>${d.notes.map(n => `<li>${escapeHtml(n)}</li>`).join("")}</ol>
+    </section>
+  </div>`;
 }
 
 // ---- Library view ----------------------------------------------------------
