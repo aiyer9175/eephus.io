@@ -137,3 +137,142 @@ def test_doc_records_the_reads_below_section_23():
     i24 = t.index("## 24. RESULTS, 2026-10-14")
     assert i24 > i23
     assert t.count("OWNER-WAIVED EARLY READ") >= 2
+
+
+# ------------------------------------------------------------ the power artifact
+def test_mde_artifact_read_dev_only():
+    """3.1: the recorded scored set is a subset of DEV, and nothing at or above the
+    GATE frame's first label season was read for any purpose."""
+    m = _load(MDE)
+    fr = m["frame_read"]
+    assert set(fr["scored_label_seasons"]) <= set(G.DEV_LABELS)
+    assert set(fr["scored_bases"]) <= set(range(2008, 2012))
+    assert fr["training_label_seasons_max"] < min(G.GATE_LABELS)
+    assert fr["blend_fit_label_seasons_max"] < min(G.GATE_LABELS)
+    assert fr["prediction_ceiling_label_season"] < min(G.GATE_LABELS)
+    assert fr["labels_blanked_above"] == max(G.DEV_LABELS)
+    assert set(fr["frames"]) <= {"DEV", "simulation"}
+
+
+def test_committed_artifacts_are_not_dry_runs():
+    """The dry-run mode (synthetic labels, 12-tree heads) rehearses the reporting
+    path before a look; no committed artifact may come from it."""
+    for p in (MDE, GATE):
+        if p.exists():
+            assert json.loads(p.read_text(encoding="utf-8")).get("fixture") is False, p.name
+
+
+def test_mde_bootstrap_provenance():
+    b = _load(MDE)["bootstrap"]
+    for k in ("B", "refits_per_draw", "train_resampled", "vif_registered",
+              "vif_measured", "vif_applied", "seed"):
+        assert k in b
+    assert b["B"] == 1000 and b["seed"] == 20260918 and b["train_resampled"] is False
+    assert b["vif_registered"] == 1.8
+    assert b["vif_applied"] == pytest.approx(max(1.8, b["vif_measured"]), abs=1e-4)
+    c = b["calibration"]
+    assert c["B"] == 200 and c["train_resampled"] is True and c["refits_per_draw"] > 0
+
+
+def test_mde_floors_and_levers():
+    m = _load(MDE)
+    assert set(m["mde95_pooled_mae_by_lambda"]) == {"%.2f" % l for l in G.LAMBDA_GRID}
+    for k, v in m["mde95_pooled_mae_by_lambda"].items():
+        assert m["margin_guard"][k] == ("UNDERPOWERED_NO_MARGIN" if v >= G.M else "clears")
+    lev = m["arm_b"]["levers"]
+    assert list(lev) == list(G.LEVERS)
+    for v in lev.values():
+        assert "mde95_holm_k3" in v
+        assert v["detected"] == (v["planted"] >= v["mde95_holm_k3"])
+
+
+# ------------------------------------------------------------ the gate artifact
+def test_gate_criteria_are_verbatim():
+    a = _load(GATE)
+    if "arm_a" not in a or "criteria_verbatim" not in a["arm_a"]:
+        pytest.skip("ARM A not scored")
+    doc_lines = {ln.strip() for ln in DOC.read_text(encoding="utf-8").splitlines()}
+    cv = a["arm_a"]["criteria_verbatim"]
+    assert set(cv) == set(G.CRITERIA_IDS)
+    for row in cv.values():
+        assert row in doc_lines
+
+
+def test_gate_frames_in_artifact_are_disjoint():
+    a = _load(GATE)
+    if "arm_a" not in a:
+        pytest.skip("ARM A not scored")
+    fr = a["arm_a"]["frame"]
+    sets = [set(fr[k]) for k in ("DEV", "GATE", "CONFIRM", "TIER2")]
+    for i in range(4):
+        for j in range(i + 1, 4):
+            assert not (sets[i] & sets[j])
+    assert fr["GATE"] == list(G.GATE_LABELS) and fr["DEV"] == list(G.DEV_LABELS)
+
+
+def test_gate_holm_is_k3_in_the_fixed_order():
+    a = _load(GATE)
+    assert a["holm"]["arm_a"] == "NOT_APPLICABLE_NON_INFERIORITY"
+    hb = a["holm"]["arm_b"]
+    if hb is None:
+        pytest.skip("ARM B not scored")
+    assert hb["k"] == 3
+    assert [c["key"] for c in sorted(hb["cells"], key=lambda c: G.LEVERS.index(c["key"]))] \
+        == list(G.LEVERS)
+    assert {c["key"] for c in hb["cells"]} == set(G.LEVERS)
+    for c in hb["cells"]:
+        assert "mde95_holm_k3" in c
+        assert not any(k.startswith("mde95_holm_k") and k != "mde95_holm_k3" for k in c)
+
+
+def test_negative_delta_lever_reads_null():
+    a = _load(GATE)
+    if "arm_b" not in a:
+        pytest.skip("ARM B not scored")
+    for L in a["arm_b"]["levers"].values():
+        b1 = L.get("b1")
+        if b1 is not None and b1["delta"] <= 0:
+            assert L["verdict"] == "NULL"
+        assert L["verdict"] in G.VERDICTS
+    # and the substitution: an unfitted or sign-failed lever enters at delta 0
+    for c in a["holm"]["arm_b"]["cells"]:
+        L = a["arm_b"]["levers"][c["key"]]
+        if L.get("holm_substitution"):
+            assert c["delta"] == 0.0 and c["p_one_sided"] == 0.5
+
+
+def test_gate_bootstrap_provenance_and_flags():
+    a = _load(GATE)
+    b = a["bootstrap"]
+    for k in ("B", "refits_per_draw", "train_resampled", "vif_registered",
+              "vif_measured", "vif_applied", "seed"):
+        assert k in b
+    assert a["flags"]["SERVE_SHAPE_REFIT"] is False and a["flags"]["SERVE_BIAS_LEVERS"] == []
+    assert a["tier2_or_confirm_supports_pass"] is False
+    assert a["war_provider"] == "fwar"
+    assert "OWNER-WAIVED EARLY READ" in a["read"]
+
+
+def test_no_two_sided_row_is_scored():
+    a = _load(GATE)
+    assert a["l1"]["two_sided_cells_scored"] == 0
+
+
+def test_per_base_blend_lambdas_are_present():
+    a = _load(GATE)
+    if "arm_a" not in a or "per_base_lambdas" not in a["arm_a"]:
+        pytest.skip("ARM A not scored on GATE")
+    pb = a["arm_a"]["per_base_lambdas"]
+    for arm in ("S", "candidate"):
+        assert set(pb[arm]) == {str(b) for b in range(2008, 2015)}
+        for v in pb[arm].values():
+            assert v["star_served"]["2"] == 0.0
+
+
+def test_arm_a_verdict_is_in_the_vocabulary():
+    a = _load(GATE)
+    if "arm_a" not in a:
+        pytest.skip("ARM A not scored")
+    assert a["arm_a"]["verdict"] in G.VERDICTS
+    if a["arm_a"]["verdict"] != "PASS":
+        assert a["flags"]["SERVE_SHAPE_REFIT"] is False

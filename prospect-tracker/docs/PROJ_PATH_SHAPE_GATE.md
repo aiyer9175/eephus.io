@@ -1755,6 +1755,7 @@ the 5c amendment form and it is the only way this document changes.
 | 2026-09-30 | - | noted | - | TAIL BAND (owner answers VAL2-Q3 and VAL2-Q3-REVIEW (b)): the trade value's P10-P90 range now spans the contract tail, each tail season on the served 2031 `warP10` / `warP90` chained with `fa_market.chain_aging_tail` (the P10 unfloored), shipped as `warP10Tail` / `warP90Tail`. A SERVE flip moves them through the h5 P10/P90 heads, as it moves the tail point. No served point value moves (sum of `surNpv` unchanged on the same 904 rows); 37 of the 39 tail rows' trade ranges widen. No candidate scored, no look spent, no threshold moved |
 | 2026-10-14 | - | produced | `data/proj_shape_blast.json` `bb56bd29...23365`, wall 0.5 s | GATE 0.1 (24.2), OWNER-WAIVED EARLY READ (owner EW3-5): 877 rows, IDENTITY reprice exact on 877; Spearman MAXSMOOTH 0.976489, RAMP 0.994451, the reordering criterion is not demoted. Nothing fitted |
 | 2026-10-14 | - | restated | - | 23.4 groups A to D on the `fwar` corpus (24.3): two-sided 671, frame counts identical, served `war` RS2 0.4687 / UAF 0.1678, A-SHAPE stays binding; measurements only, no candidate scored |
+| 2026-10-15 | - | produced | `data/proj_shape_mde.json` `1c8b035e...b484`, wall 4,281.7 s | POWER (24.4), OWNER-WAIVED EARLY READ (owner EW3-5): DEV and simulation only, every label above 2011 blanked; vif_measured 1.5916, vif_applied 1.8; MDE95 pooled MAE 0.00464 (lambda 0) to 0.00751 (lambda 0.80), lambda 0.80 UNDERPOWERED_NO_MARGIN; all three ARM B detection checks fail (UNDERPOWERED). Candidates scored on DEV only; no verdict-bearing frame read |
 
 ---
 
@@ -2920,3 +2921,81 @@ of `surNpv` **$12,505,957,789** (band $11.568B to $13.444B); Ohtani `warTotal`
 **25.6**, `surNpv` / `surTotal` **$203,222,380 / $203,222,380**. 9.2's insulated
 numbers on the same payload: `warChamp` 5-year sum 3,272.9, `warY1Champ` sum 915.2,
 the 181 prospect rows' 5-year WAR sum 491.5.
+
+### 24.4 The power artifact (section 3). OWNER-WAIVED EARLY READ
+
+`data/proj_shape_mde.json` (sha256
+`1c8b035ea4c4280022604db6a3ec7faae5d329a0c248eccf198da58dc932a484`), produced by
+`python tools/proj_shape_mde_lab.py --work <run> --procs 5` on 2026-10-15, wall time
+4,281.7 s, of which the full-refit calibration bootstrap took 4,272.1 s. Registered
+2026-10-02 and moved after step Z by A-2; produced after the blast artifact (24.2) and
+before the pre-flight (24.5), in the registered order. A first attempt on 2026-10-14
+at 23:29 was cut off by the machine's fourth blue screen of that day (23:33) before it
+wrote anything; its 56 point-in-time bundles at bases 2004 to 2011 were written
+atomically, were checked whole on 2026-10-15, and were reused unchanged (each fit is
+single-threaded and deterministic at `SEED = 20260611`, so a refit would reproduce
+them). The dry run the Part 8 LOOKS rule asks for ran first on 2026-10-14 on a
+fixture (synthetic labels, 12-tree heads, `PROJ_SHAPE_GATE_FIXTURE=1`) through every
+stage and the assembled artifact; `test_committed_artifacts_are_not_dry_runs` pins
+that no committed artifact carries that mode.
+
+**The frame it touched (3.1).** Every label above season 2011 was blanked on load in
+every process of the lab (`PROJ_SHAPE_LABEL_CEILING=2011`, read by `load_frame`),
+every bundle was fitted at a base at or below 2011 on labels at or below 2010, every
+prediction was capped at label season 2011, and the scored set is bases 2008 to 2011
+and label seasons 2008 to 2011: DEV and nothing else. The GATE player count the
+transport formula needs (3,109) is a structural count of cells by base and label
+SEASON, never a label value. `test_mde_artifact_read_dev_only` pins the recorded set.
+
+**Bootstrap provenance (3.2), as the artifact records it.** PRIMARY: B = 1000
+test-only paired draws clustered on player, seed 20260918, `refits_per_draw` 0,
+`train_resampled` False. CALIBRATION: B = 200 full-refit draws on DEV, the player pool
+resampled with replacement and BOTH arms (S and the lambda 0.20 candidate, default D6)
+refitted at every base 2004 to 2011 per draw with their blends refit point in time, 16
+refits per draw; `sd_full` 0.003425 against `sd_test` 0.002152, so **`vif_measured`
+1.5916**, below the registered 1.8, and **`vif_applied` = 1.8** (a measured ratio
+replaces the registered one only when it is larger). DEV holds 17,814 cells and 2,431
+players; the transport factor is sqrt(2,431 / 3,109) = 0.884264.
+
+**MDE95 of the pooled MAE delta against S (one-sided, 1.645 sd, the VIF applied after
+transport), per lambda, against M = 0.0065 (3.5), with the ARM A detection check of
+3.3 (a +0.0065 degradation planted on the real paired-difference structure):**
+
+| lambda | MDE95 pooled MAE | margin guard (3.5) | MDE95 per horizon h1 / h2 / h3 / h4 | planted +0.0065: one-sided lower bound |
+|---|---|---|---|---|
+| 0.00 | 0.00464 | clears | 0.00579 / 0.00872 / 0.00902 / 0.01548 | +0.00186, detected |
+| 0.05 | 0.00471 | clears | 0.00562 / 0.00878 / 0.00884 / 0.01497 | +0.00179, detected |
+| 0.10 | 0.00503 | clears | 0.00579 / 0.00911 / 0.00893 / 0.01430 | +0.00147, detected |
+| 0.20 | 0.00563 | clears | 0.00605 / 0.00956 / 0.00966 / 0.01469 | +0.00087, detected |
+| 0.40 | 0.00644 | clears, by 0.00006 | 0.00672 / 0.01065 / 0.01031 / 0.01612 | +0.00006, detected |
+| 0.80 | 0.00751 | **UNDERPOWERED_NO_MARGIN** | 0.00781 / 0.01202 / 0.01153 / 0.01789 | -0.00101, **not detected** |
+
+So a candidate at lambda 0.80 would read UNDERPOWERED_NO_MARGIN whatever its point
+estimate (A-F8), and the battery can resolve M at every other grid point. The other
+classes' floors, one per class and not transferable (3.2), per lambda from 0.00 to
+0.80: pooled bias 0.0063 to 0.0109; star MAE 0.0725 to 0.1363; star bias 0.0808 to
+0.1491; coverage 0.0059 to 0.0077; pinball q10 0.0013 to 0.0019 and q90 0.0025 to
+0.0041. The per-horizon MDE95 at h4 (0.0143 to 0.0179) already exceeds S1b's
++0.0130 at every lambda; S1b is a point-estimate bound and carries no significance
+test, so nothing turns on that, and it is recorded because it says how thin the
+h4 cells are at DEV depth.
+
+**ARM B (3.3, 5.5): each lever's floor at Holm step one (k = 3, z = 2.128 at alpha /
+3) against the planted nearer-zero end of its published CI:**
+
+| lever | cells | sd on GATE with the VIF | `mde95_holm_k3` | planted | detected |
+|---|---|---|---|---|---|
+| B-AGE | the four registered age cells as a unit (D7: n-weighted, prior-signed mean bias; 1,133 DEV players, 1,490 GATE) | 0.0306 | 0.0652 | 0.0516 | **no** |
+| B-C | `role:C` (193 DEV players, 238 GATE) | 0.1006 | 0.2142 | 0.1862 | **no** |
+| B-STAR | `star` (166 DEV players, 225 GATE) | 0.2106 | 0.4483 | 0.1489 | **no** |
+
+Consequence, pre-registered (B-F8, section 16 item 2): **every lever's detection check
+fails**, so each lever reads UNDERPOWERED whatever its adjudication in 24.8 returns,
+none ships on this battery, and each holds its Holm slot under 5.5a (D11). This is a
+statement about the resolving power of a 15-cell GATE frame on these slices (238
+catcher players, 225 star players), not about the levers; 5.1 registered that B0-GATE
+would be thinner than the published map and that thinner is the conservative
+direction, and the VIF of 1.8 widens every floor further in the same direction (3.4).
+
+The artifact carries the basis sentence of 23.2 (d) and records that MDE95 is
+one-sided with the VIF applied after transport.
