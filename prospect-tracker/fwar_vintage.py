@@ -35,9 +35,27 @@ Pitching (orchestrator note of 2026-10-01, for the Part 9
 component projections): war, rar, fip, xfip, ra9War, gmli, exli, pli, inli,
 eraMinus, fipMinus, md and sd, plus numTeams. A field the feed does not carry
 on a row is stored as null and never invented: the pitching group carries no
-innings, starts or games, and on every cached season 2011 to 2026 the hitting
-group carries no plateAppearances, so that column is null until the feed
-publishes it. `field_presence` reports the share of rows carrying each field.
+innings, starts or games. `field_presence` reports the share of rows carrying
+each field.
+
+PLATE APPEARANCES (amendment 2026-10-15, task EWAR_P0_VINTAGE_PA, owner answer
+EW3-19: a new vintage id). The sabermetrics feed carries no plateAppearances
+on any season, so the 2026-10-02 freeze stored that column null on every
+hitting row, which blocked every per-PA read of the label (the eBR gate's
+Leg E and eWAR v3's re-centring). The column is now filled from StatsAPI's
+official season hitting line (PA_LINE_URL, stats=season, one row per
+player-season, a traded player's row being his numTeams > 1 season total),
+joined by MLBAM id (`pa_from_lines`: a repeated id resolves through
+saber_feed.resolve_groups and, failing a unique total, is summed over its
+one-team stint rows). The builder makes that call once per frozen hitting
+group, right after the group (rule 4 applies to it as to any call), and the
+group keeps a `pa_join` receipt: the line URL, its fetched_at, HTTP status
+and raw sha256, the join counts, the ids left null and the PA sums. Only the
+plateAppearances column moves; every published value stays as the feed
+carried it. The 2026-10-02 vintage was amended once, in place, by
+tools/amend_fwar_vintage_pa.py, which records the step under the file's
+`amendments` key with the previous vintage id (`war_lineage` reads that
+chain).
 
 THE RULES (builder):
   1. A season once frozen is NEVER overwritten. A run that names a frozen
@@ -47,7 +65,8 @@ THE RULES (builder):
      complete only after its regular season's last day (REGULAR_SEASON_END; the
      2026 regular season ended 2026-09-27); a later year is refused.
   3. The builder never reads .cache payloads as the vintage. It fetches each
-     group straight from StatsAPI (no credits, no FanGraphs HTML) through a
+     group (and each hitting group's PA line) straight from StatsAPI (no
+     credits, no FanGraphs HTML) through a
      fetcher that bypasses the scraper cache, and the fetcher is injected so a
      test never touches the network.
   4. All or nothing. A non-200 response, an unparseable body, a body at the
@@ -57,7 +76,8 @@ THE RULES (builder):
   6. THE PRE-2011 PATH (E3 part 5, owner answer O4: "Cache 2000-2010 (22
      calls, no credits)"). The builder accepts 2000 to 2010 beside the feed's
      known era (FEED_FIRST_SEASON 2011): 11 seasons x 2 groups = the 22 calls
-     of O4. Before 2011 each season calls PITCHING FIRST, so on a run that
+     of O4, plus one PA line call per frozen hitting group (the 2026-10-15
+     amendment). Before 2011 each season calls PITCHING FIRST, so on a run that
      starts at 2000 the very first call is the pre-2011 pitching probe. A
      pre-2011 group whose answer is HTTP 200 with no rows is not a failure: it
      is RECORDED AS ABSENT, with the response it got (the HTTP status, the
@@ -75,7 +95,8 @@ THE RULES (builder):
 THE READER. `load()` (memoised in `_CACHE`, the test seam, like ewar.load),
 `available()`, `fwar_seasons()` (the seasons whose every group is frozen),
 `side_targets()` and `season_totals()`, the maps war_source's `fwar` provider
-serves from. A player-season's fWAR is the sum of its groups' published war,
+serves from, and `war_lineage()`, the current id plus its WAR-identical
+predecessors. A player-season's fWAR is the sum of its groups' published war,
 the same summing rule the bWAR aggregate applies across its two frames.
 """
 from __future__ import annotations
@@ -129,6 +150,14 @@ FIELDS = {"hitting": HITTING_FIELDS, "pitching": PITCHING_FIELDS}
 _SPLIT_FIELDS = ("numTeams",)
 
 BUILD_CMD = "python tools/build_fwar_vintage.py --freeze 2000-2026 --write"
+
+#: The hitting column the sabermetrics feed does not carry, and where it comes
+#: from instead: StatsAPI's official season hitting line (amendment 2026-10-15).
+PA_FIELD = "plateAppearances"
+PA_LINE_URL = ("https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting"
+               "&season={season}&sportId=1&limit=5000&playerPool=All")
+#: A PA line answer at this many rows may be truncated and is refused.
+PA_LINE_LIMIT = 5000
 
 
 class FreezeError(RuntimeError):
@@ -297,6 +326,110 @@ def absent_group(season: int, group: str, url: str, at: str, resp: FetchResponse
     return block
 
 
+def pa_from_lines(splits: list) -> tuple[dict[int, int], dict]:
+    """({mlbam: plate appearances}, receipt) from StatsAPI season hitting splits.
+
+    One row per id is the normal shape (a traded player's row is his numTeams > 1
+    season total). A repeated id resolves through saber_feed.resolve_groups to its
+    unique total; with no unique total it is summed over its one-team stint rows
+    and counted in `n_summed`; with none of those it is refused and listed. A PA
+    that is not an integer is refused, as rule 4's string rule refuses a value."""
+    by_id: dict[int, list] = {}
+    for s in splits or []:
+        pid = (s.get("player") or {}).get("id")
+        if pid is not None:
+            by_id.setdefault(int(pid), []).append(s)
+    resolved, ambiguous, n_multi = saber_feed.resolve_groups(splits)
+    out: dict[int, int] = {}
+    refused: list[int] = []
+    n_summed = 0
+
+    def _pa(row) -> int | None:
+        v = (row.get("stat") or {}).get(PA_FIELD)
+        if isinstance(v, bool) or not isinstance(v, int):
+            return None
+        return v
+
+    for pid, row in resolved.items():
+        v = _pa(row)
+        if v is None:
+            refused.append(pid)
+        else:
+            out[pid] = v
+    for pid in ambiguous:
+        stints = [r for r in by_id.get(pid, []) if (r.get("numTeams") or 1) <= 1]
+        vals = [_pa(r) for r in stints]
+        if not stints or any(v is None for v in vals):
+            refused.append(pid)
+            continue
+        out[pid] = sum(vals)
+        n_summed += 1
+    receipt = {"n_line_rows": len(splits or []), "n_line_players": len(by_id),
+               "n_line_multi_team": n_multi, "n_summed": n_summed,
+               "refused_ids": sorted(refused), "pa_sum_lines": sum(out.values())}
+    return out, receipt
+
+
+def apply_pa(block: dict, pa: dict[int, int], receipt: dict) -> dict:
+    """A copy of a frozen hitting block with its plateAppearances column set from
+    `pa` (an id with no line stays null and is listed), its `pa_join` receipt and
+    its content hash recomputed. No other value of any row moves."""
+    out = json.loads(json.dumps(block))
+    if out.get("status") != "frozen":
+        return out
+    fields = list(out.get("fields") or [])
+    i = fields.index(PA_FIELD)
+    unjoined: list[int] = []
+    rows = {}
+    for mid, vals in (out.get("rows") or {}).items():
+        v = list(vals)
+        got = pa.get(int(mid))
+        v[i] = got
+        if got is None:
+            unjoined.append(int(mid))
+        rows[mid] = v
+    out["rows"] = rows
+    in_rows = {int(m) for m in rows}
+    joined = dict(receipt)
+    joined.update({
+        "field": PA_FIELD, "n_rows": len(rows), "n_joined": len(rows) - len(unjoined),
+        "unjoined_ids": sorted(unjoined),
+        "n_lines_not_in_rows": sum(1 for m in pa if m not in in_rows),
+        "pa_sum_rows": sum(v[i] for v in rows.values() if v[i] is not None),
+    })
+    out["pa_join"] = joined
+    out["content_sha256"] = group_content_sha(out)
+    return out
+
+
+def freeze_pa(block: dict, season: int, fetch: Callable[[str], FetchResponse],
+              now: Callable[[], str]) -> dict:
+    """Fetch the season's PA line and join it into a frozen hitting block. Rule 4
+    applies to the call: a non-200, unparseable, empty or capped answer raises
+    FreezeError. An absent block is returned unchanged with no call."""
+    if block.get("status") != "frozen":
+        return block
+    url = PA_LINE_URL.format(season=int(season))
+    resp = fetch(url)
+    at = now()
+    if resp.status != 200:
+        raise FreezeError(f"{season} hitting PA line: HTTP {resp.status} from {url}")
+    try:
+        splits = saber_feed.parse_splits(resp.body)
+    except (ValueError, AttributeError, TypeError, IndexError) as exc:
+        raise FreezeError(f"{season} hitting PA line: unparseable body "
+                          f"({type(exc).__name__})") from exc
+    if not splits:
+        raise FreezeError(f"{season} hitting PA line: the feed returned no rows")
+    if len(splits) >= PA_LINE_LIMIT:
+        raise FreezeError(f"{season} hitting PA line: {len(splits)} rows reaches the cap "
+                          f"{PA_LINE_LIMIT}; the response may be truncated")
+    pa, receipt = pa_from_lines(splits)
+    receipt = {"url": url, "fetched_at": at, "http_status": resp.status,
+               "raw_sha256": hashlib.sha256(resp.body).hexdigest(), **receipt}
+    return apply_pa(block, pa, receipt)
+
+
 def _call_order(season: int) -> tuple[str, ...]:
     """Pitching first before 2011, so the first pre-2011 call is the probe."""
     if int(season) < FEED_FIRST_SEASON:
@@ -348,6 +481,9 @@ def freeze_seasons(existing: dict | None, seasons, *,
                 pause(CALL_PAUSE_SECONDS)
             first = False
             sb[g] = freeze_group(s, g, fetch, now)
+            if g == "hitting" and sb[g].get("status") == "frozen":
+                pause(CALL_PAUSE_SECONDS)
+                sb[g] = freeze_pa(sb[g], s, fetch, now)
         sb["fetched_at"] = max(sb[g]["fetched_at"] for g in GROUPS)
         sb["basis"] = season_basis(sb)
         sb["content_sha256"] = season_content_sha(sb)
@@ -478,6 +614,22 @@ def season_totals(blob: dict | None = None) -> dict[tuple[int, int], float]:
             for mid, w in war_by_group(blob, s, g).items():
                 out[(mid, s)] = out.get((mid, s), 0.0) + w
     return out
+
+
+def war_lineage(blob: dict | None = None) -> list[str]:
+    """The current vintage_id first, then every earlier id the file's
+    `amendments` record as WAR-identical predecessors (newest first). An
+    amendment enters the chain only when it states `war_identical: true`, which
+    tools/amend_fwar_vintage_pa.py writes only after it proved every published
+    value of every row unchanged. A frozen read registered against an earlier id
+    may accept a later id on this chain; nothing else is inferred from it."""
+    blob = load() if blob is None else blob
+    out = [str(blob.get("vintage_id") or "")]
+    for a in reversed(list(blob.get("amendments") or [])):
+        prev = a.get("previous_vintage_id")
+        if a.get("war_identical") is True and prev and a.get("vintage_id") == out[-1]:
+            out.append(str(prev))
+    return [v for v in out if v]
 
 
 def field_presence(blob: dict) -> dict[str, dict[str, dict]]:

@@ -23,6 +23,11 @@ pre-2011 pitching probe, and a clean empty answer is recorded as ABSENT with
 the response it got (fwar_vintage rule 6); such a season is `mixed` and its
 consumers stamp `war_basis: mixed`.
 
+Since 2026-10-15 (EWAR_P0_VINTAGE_PA) every frozen hitting group also makes one
+call to StatsAPI's season hitting line and keeps its plateAppearances, which the
+sabermetrics feed does not carry (fwar_vintage.freeze_pa), so the next freeze
+does not store that column null again.
+
 Without --write the tool only PLANS: it names every season it would fetch, the
 URLs, the call count and every refusal, and it touches neither the network nor
 the file. The freeze itself is EPOCH_D9_FREEZE's step, not this tool's author's.
@@ -76,10 +81,13 @@ def plan_text(existing: dict | None, seasons: list[int], refreeze: bool, today=N
             refused.append(f"{s}: {why}")
         else:
             order = FV._call_order(s)
-            n_calls += len(order)
+            # one PA line per hitting group (2026-10-15); a pre-2011 hitting group
+            # the feed answers empty makes no PA call, so this is the most a run makes
+            n_calls += len(order) + 1
             lines.append(f"  {s}: " + ", ".join(
-                f"{g} {FV.saber_feed.SABER_URLS[g].format(season=s)}" for g in order))
-    lines.append(f"  calls {n_calls}")
+                f"{g} {FV.saber_feed.SABER_URLS[g].format(season=s)}" for g in order)
+                + f", hitting PA line {FV.PA_LINE_URL.format(season=s)}")
+    lines.append(f"  calls {n_calls} (at most)")
     if refused:
         lines.append("  REFUSED (a --write run refuses whole): " + "; ".join(refused))
     return "\n".join(lines)
