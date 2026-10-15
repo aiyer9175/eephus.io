@@ -129,13 +129,17 @@ def test_the_builders_own_scan_agrees_and_catches_a_planted_offender(tmp_path):
 def test_only_the_builder_and_the_look_import_the_core():
     users = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in _modules()
                    if _imports(p) & CORE_NAMES and not p.name.startswith("test_"))
-    assert users == ["tools/build_ebr.py", "tools/ebr_gate.py"]
+    # tools/build_count_value.py reuses ebr's RE24 recipe for RE288
+    # (docs/ewar-2026-10-15/RE288_COUNT_VALUE_GATE.md part 3): a measurement, not a
+    # fitted consumer under I9, and scanned below for year-to-year statistics.
+    assert users == ["tools/build_count_value.py", "tools/build_ebr.py", "tools/ebr_gate.py"]
 
 
 def test_only_the_look_computes_a_year_to_year_statistic():
     forbidden = ("PAIRS", "persistence", "% 2", "split_half", "Spearman-Brown", "y + 1", "s + 1",
                  "season + 1")
-    for p in (ROOT / "ebr.py", ROOT / "tools" / "build_ebr.py"):
+    for p in (ROOT / "ebr.py", ROOT / "tools" / "build_ebr.py", ROOT / "count_value.py",
+              ROOT / "tools" / "build_count_value.py"):
         src = p.read_text(encoding="utf-8")
         assert not [t for t in forbidden if t in src], p.name
     gate = (ROOT / "tools" / "ebr_gate.py").read_text(encoding="utf-8")
