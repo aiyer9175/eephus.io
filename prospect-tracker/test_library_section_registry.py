@@ -92,7 +92,7 @@ def test_the_shelves_hold_the_planned_leaves():
     assert by == {
         "reference": ["terms", "guide", "formulas"],
         "methods": ["methodology"],
-        "evidence": ["source-comparison", "source-accuracy", "calibration",
+        "evidence": ["source-comparison", "source-accuracy", "calibration", "metric-atlas",
                      "models-ledger", "model-updates"],
         "sources": ["source-updates", "data-sources", "index"],
     }
@@ -176,7 +176,7 @@ def test_an_outbound_leaf_whose_page_is_not_built_stays_out(monkeypatch, tmp_pat
     assert 'href="/sources/"' in strip
     assert 'href="/models/"' not in strip and 'href="/models/updates/"' not in strip
     assert re.search(r'data-gl-shelf-chip="evidence"><span class="gl-shelf-name">Evidence</span>'
-                     r'<span class="gl-shelf-n">3</span>', strip)
+                     r'<span class="gl-shelf-n">4</span>', strip)
     monkeypatch.undo()
     # the Model Updates leaf appears once its page is built (LIBRARY_12)
     built = (ROOT / "models" / "updates" / "index.html").is_file()

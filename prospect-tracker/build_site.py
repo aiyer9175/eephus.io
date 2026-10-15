@@ -8983,6 +8983,7 @@ GLOSSARY_VIEWS = (
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
     {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
+    {"id": "metric-atlas", "shelf": "evidence", "label": "What Predicts the Majors", "body": "metric-atlas-body"},
     # The old in-page registry view (view value "models") forwards to /models/
     # (LIBRARY_7, glossary.js FORWARDS); the strip lists the ledger here.
     {"id": "models-ledger", "shelf": "evidence", "label": "Models", "href": "/models/"},
@@ -10610,6 +10611,7 @@ PAGE_INDEX_VIEWS = (
     ("/glossary/#view=methodology", None, "how eFV, consensus FV, the Arkmetrics and the value framework are built"),
     ("/glossary/#view=source-comparison", None, "eFV against each prospect source on the same graduates"),
     ("/glossary/#view=source-accuracy", None, "which source grades which cohort better"),
+    ("/glossary/#view=metric-atlas", None, "which minor-league statistics predict reaching the majors, and what each adds to consensus FV"),
     ("/glossary/#view=source-updates", None, "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"),
 )
 
