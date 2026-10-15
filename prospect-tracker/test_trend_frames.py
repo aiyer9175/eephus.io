@@ -322,6 +322,25 @@ def test_a_pruned_season_fails_the_memo_too(fx):
         T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], **fx["kw"])
 
 
+def test_without_swings_the_frame_needs_no_swing_season(fx):
+    """The exporter's fallback (league_trends_export, plan 3.4): with a needed
+    swing season missing, a frame built with_swings=False has the pitcher and
+    batter tables and no swing rows, under its own memo; the full frame still
+    refuses, naming the season."""
+    for p in fx["days"].glob(f"{FRAME_SEASON - 1}-*.csv"):
+        p.unlink()
+    with pytest.raises(T.SwingSeasonsMissing):
+        T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], **fx["kw"])
+    kw = dict(fx["kw"], memo_dir=fx["tmp"] / "noswing_memo")
+    f = T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], with_swings=False, **kw)
+    assert len(f.games) == 20 and len(f.pit) == 80 and len(f.swings) == 0
+    assert f.meta["swing"]["seasons"] == [] and f.meta["swing"]["source"] is None
+    assert f.meta["swing"]["as_of"] is None and f.prior_cut == {}
+    g = T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], with_swings=False, **kw)
+    assert g.meta["key"] == f.meta["key"]
+    assert not (fx["kw"]["memo_dir"] / str(FRAME_SEASON) / "meta.json").exists()
+
+
 def test_the_memo_returns_the_same_frame(fx):
     a = T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], **fx["kw"])
     b = T.pitch_game_frame(FRAME_SEASON, swing_dir=fx["days"], **fx["kw"])

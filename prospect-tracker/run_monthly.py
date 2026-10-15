@@ -558,6 +558,15 @@ SCHEDULED_EXPORTS = (
     # .cache/baserunning/preview/ only. Appended BELOW franchise_export, at the
     # end, so nothing above mgmt_export moves.
     "baserunning_export",
+    # League Trends (daily 9e-pre0i, monthly 6b4n; league_trends_export, plan
+    # Part 8 League Trends 5.4). The exporter REFUSES on a stale frame, a
+    # missing eval artifact, a bar in code that differs from the artifact, club
+    # identity under the floor or a payload over its budget, keeping the last
+    # good file, and files ok=False here; a missing swing season (the swing
+    # families left off) files ok=False too, naming the seasons. While
+    # MLBSTATS_TRENDS_LIVE is False it writes .cache/league_trends/preview/
+    # only. Appended at the end, so nothing above mgmt_export moves.
+    "league_trends_export",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -1811,6 +1820,83 @@ def _league_teams_payloads(log: logging.Logger, label: str) -> dict:
                           label, name)
             out[name] = "failed"
     log.info("%s: %s", label, ", ".join(f"{k} {v}" for k, v in out.items()))
+    return out
+
+
+def _league_trends_nightly(log: logging.Logger, label: str) -> dict:
+    """League Trends' daily refresh (plan Part 8 League Trends 5.4; daily step
+    9e-pre0i, and monthly 6b4n after its live check): three parts in order,
+    each best-effort so a failed refresh never stops the export that follows.
+
+      (a) the pitch sidecar (tools/build_pitch_physics.py), incremental by
+          game_pk for the live season, completed seasons frozen; it writes
+          only .cache/pbp_physics/, never the corpus;
+      (b) the Savant bat-tracking day file of each new game date of the live
+          season (savant_days.run; owner answer TR-Q3 (a), so only while
+          trend_frames.SWING_SOURCE is "savant_days"; 1.5 s throttle,
+          fail-soft, its own savant_days ingest row; never
+          .cache/swing_pitches/);
+      (c) league_trends_export.export(), which while MLBSTATS_TRENDS_LIVE is
+          False writes only .cache/league_trends/preview/league_trends.json.
+
+    Display only: no model, no priced cell and no vintage snapshot reads any
+    of it. Files `league_trends_export` into the ingest ledger (ok=False on a
+    refusal, a raise or a missing swing season, the seasons named) and a
+    heartbeat per part. Returns {"label", "physics", "savant_days", "export"}."""
+    import job_heartbeat as _hb
+    out: dict = {"label": label}
+    # (a) the pitch sidecar
+    try:
+        from tools import build_pitch_physics as _bpp
+        _res = _bpp.build()
+        out["physics"] = {"covers_through": _res.get("covers_through"), "wrote": _res.get("wrote")}
+        _hb.record("league_trends_physics", ok=True,
+                   result=f"through {_res.get('covers_through')}, wrote {_res.get('wrote')}")
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: pitch sidecar refresh failed - the sidecar on disk stands", label)
+        _hb.record("league_trends_physics", ok=False, result=str(_e)[:120])
+    # (b) the Savant day files (TR-Q3 (a) only)
+    try:
+        import trend_frames as _tf
+        if _tf.SWING_SOURCE == "savant_days":
+            import savant_days as _sd
+            _sv = _sd.run([_sd.live_season()], echo=log.info)
+            _n = sum(1 for r in _sv["results"] if r["status"] == "written")
+            out["savant_days"] = {"written": _n, "stopped": _sv["stopped"]}
+            _hb.record("league_trends_savant_days", ok=_sv["stopped"] is None,
+                       result=(f"{_n} dates written" + (f"; stopped: {_sv['stopped']}"
+                                                        if _sv["stopped"] else ""))[:200])
+        else:
+            out["savant_days"] = {"skipped": f"swing source {_tf.SWING_SOURCE}"}
+            log.info("%s: swing source %s, no day file fetched", label, _tf.SWING_SOURCE)
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: Savant day files failed - the files on disk stand", label)
+        _hb.record("league_trends_savant_days", ok=False, result=str(_e)[:120])
+    # (c) the payload
+    try:
+        import league_trends_export as _lte
+        _ex = _lte.export(log=log.info)
+        out["export"] = _ex
+        where = "data/" if _lte.MLBSTATS_TRENDS_LIVE else ".cache/league_trends/preview/"
+        if _ex.get("refused"):
+            _ok, _msg, _n = False, f"refused, the last good file stands: {_ex['refused']}", 0
+        else:
+            _n = int(_ex.get("players") or 0)
+            _msg = (f"{_ex['as_of']}: {_n} cards, {_ex['events']} events, "
+                    f"false per day {_ex['false_per_day']} -> {where}")
+            _ok = not _ex.get("swing_missing")
+            if _ex.get("swing_missing"):
+                _msg += ("; swing families left off, swing seasons missing "
+                         + " ".join(str(s) for s in _ex["swing_missing"]))
+            if _ex.get("left_off"):
+                _msg += "; left off " + " ".join(_ex["left_off"])
+        _hb.record("league_trends_export", ok=_ok, result=_msg[:200])
+        _record_ingest("league_trends_export", _ok, _n, _msg[:200], "mlb", log)
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: league trends export failed - the previous payload stands", label)
+        _hb.record("league_trends_export", ok=False, result=str(_e)[:120])
+        _record_ingest("league_trends_export", False, 0,
+                       f"league trends export raised: {_e}"[:200], "mlb", log)
     return out
 
 
@@ -4349,6 +4435,31 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 except Exception:
                     log.exception("daily: league, team and drawer payloads failed - "
                                   "the previous files stand - continuing")
+
+        # --- 9e-pre0i. League Trends (dark) ---------------------------------
+        # Plan Part 8 League Trends 5.4 (task TR_3_EXPORT_PIPELINE_DARK): the
+        # pitch sidecar, the Savant day file of each new game date (TR-Q3 (a))
+        # and league_trends_export, which writes only
+        # .cache/league_trends/preview/ while MLBSTATS_TRENDS_LIVE is False.
+        # Placed after P8.2's frames step 9e-pre0h (League Trends reads its
+        # game lines and series), after the 9e-pre vintage snapshot, 9e-pre0c
+        # and the Baserunning step 9e-pre0b2: display only, so no model, no
+        # priced cell and nothing the snapshot freezes reads it. Not an epoch
+        # artifact and never on its frozen rebuild list. The label is the next
+        # free 9e-pre0 letter at commit time (ruling T9), pinned by its title
+        # in test_league_trends_export_contract.py. `chained` skips the night
+        # monthly 6b4n ran the same three parts after its live check. Never
+        # aborts.
+        with _step("9e-pre0i. League Trends (league_trends preview)", log):
+            if chained:
+                log.info("daily: SKIP 9e-pre0i: monthly 6b4n just ran the League Trends "
+                         "step (chained)")
+            else:
+                try:
+                    _league_trends_nightly(log, "daily 9e-pre0i")
+                except Exception:
+                    log.exception("daily: league trends failed - the previous payload "
+                                  "stands - continuing")
 
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
@@ -7593,6 +7704,41 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _league_teams_payloads(log, "6b4l")
             except Exception:
                 log.exception("league, team and drawer payloads failed - continuing")
+
+        # --- 6b4n. League Trends live check (dark) ---------------------------
+        # Plan Part 8 League Trends 5.4: the calibration lab's live_check
+        # refresh only (tools/league_trends_calibrate.live_check_refresh: the
+        # live season's tests, flags and placebo count per family against the
+        # held-out quasi-Poisson bound). It NEVER changes a bar: a family that
+        # fails is left off the served list until the next season's
+        # re-calibration, and bars change only in a reviewed commit after a
+        # season completes. Then the daily League Trends step's three parts, so
+        # the payload reads the new verdicts; the chained daily skips its
+        # 9e-pre0i twin. After 6b4k and the other Part 8 monthly steps (6b4l,
+        # 6b4m). The label is the next free 6b4 letter at commit time (ruling
+        # T9), pinned by its title. Writes .cache/league_trends/ only while
+        # dark. Additive; never aborts.
+        with _step("6b4n. League Trends live check (league_trends preview)", log):
+            try:
+                import job_heartbeat as _hb
+                from tools import league_trends_calibrate as _ltc
+                _lc = _ltc.live_check_refresh(log=log.info)
+                _off = sorted(k for k, v in (_lc.get("families") or {}).items() if v == "left off")
+                _hb.record("league_trends_live_check", ok=True,
+                           result=(f"{_lc.get('season')} as of {_lc.get('as_of')}: left off "
+                                   f"{' '.join(_off) or 'none'}")[:200])
+            except Exception as _e:
+                log.exception("league trends live check failed - the eval artifact stands - "
+                              "continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("league_trends_live_check", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+            try:
+                _league_trends_nightly(log, "6b4n")
+            except Exception:
+                log.exception("league trends refresh failed - continuing")
 
         # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

@@ -487,6 +487,34 @@ ARTIFACTS = (
                  "shipped by both deploy consumers."),
     },
     {
+        "file": "league_trends.json", "group": "mlb",
+        "title": "League Trends",
+        "what": ("Changes in a player's own measured mechanics (fastball velocity and "
+                 "movement, pitch mix, reliever entry Leverage Index, bat speed and swing "
+                 "shape) that clear a calibrated bar against his earlier games, the "
+                 "expected number from game-to-game noise beside them, the rotation, "
+                 "new-pitch and lineup events, the club rows and the season-over-season "
+                 "league cards."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_league_trends_export_contract.py",
+        "note": ("Descriptive: as_of is the last game date in the frame, and each "
+                 "family's expected false entries a day is its published per-test "
+                 "placebo tail times the tests run that day. Absent until the League "
+                 "Trends flip."),
+    },
+    {
+        "file": "league_trends_eval.json", "group": "mlb",
+        "title": "League Trends false-trend calibration",
+        "what": ("Per family and season, the real tests and the placebo shuffles at every "
+                 "bar on the grid, the bar each policy chooses, the held-out check and "
+                 "the monthly live check of the current season."),
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_league_trends_export_contract.py",
+        "note": ("The bars change only in a reviewed commit after a season completes; "
+                 "the monthly step rewrites the live check alone. Absent until the "
+                 "League Trends flip."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",

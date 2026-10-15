@@ -75,6 +75,7 @@ same trait.
 
 Run:
     python tools/league_trends_calibrate.py [--refresh] [--jobs 3] [--out PATH]
+    python tools/league_trends_calibrate.py --live-check   (monthly: the live_check block only)
 """
 from __future__ import annotations
 
@@ -1152,6 +1153,61 @@ def _load_tables(lab_dir: Path, plan: dict, prefix: str = "") -> dict:
     return out
 
 
+def live_check_refresh(*, lab_dir: Path = LAB_DIR, path: Optional[Path] = None,
+                       out: Optional[Path] = None, refresh: bool = False,
+                       log: Callable = print) -> dict:
+    """The monthly live check (plan 5.4; run_monthly's League Trends monthly
+    step). The live season's tests, flags and placebo count per family at the
+    artifact's own chosen strict bar, held against the quasi-Poisson 99th
+    percentile with the artifact's own dispersion phi (held_out), written into
+    the artifact's ``live_check`` block ONLY. It never changes a bar: bars,
+    served, families, policy, shrink, placebo_sd, pool, rd_band and league_env
+    are copied through unchanged, and generated_at keeps the calibration's
+    stamp. A family the check finds above its bound is left off by the
+    exporter until the next season's re-calibration. Measures only the live
+    season (memoised like the full run) and reads the fit seasons' tables from
+    the lab memo, raising when one is missing. Returns the new block."""
+    src = Path(path or eval_path())
+    art = json.loads(src.read_text(encoding="utf-8")) if src.exists() else None
+    if not art:
+        raise RuntimeError(f"no eval artifact at {src}; run the full lab first")
+    pol = TD.BAR_POLICY
+    season = int(art["policy"]["live_season"])
+    phi_d = float(art["policy"]["held_out"]["phi"])
+    fams = all_families()
+    keys = sorted(k for k, f in (art.get("families") or {}).items()
+                  if k in fams and (f.get("chosen") or {}).get(pol))
+    m = measure_season(season, keys, lab_dir=Path(lab_dir), refresh=refresh, log=log)
+    plan: dict = {}
+    for k in keys:
+        for s in needed_seasons(fams[k]):
+            if s != season:
+                plan.setdefault(s, []).append(k)
+    tables = _load_tables(Path(lab_dir), plan)
+    verdicts, detail = {}, {}
+    for k in keys:
+        tb = {s: tables[s][k] for s in needed_seasons(fams[k]) if s != season}
+        tb[season] = m["tables"][k]
+        rec = fits_and_counts(k, tb, {season: m["dates"]}, [season])
+        ch = art["families"][k]["chosen"][pol]
+        h = held_out(rec["seasons"][season], float(ch["tail_per_test"]), phi_d,
+                     f"{float(ch['bar']):g}")
+        verdicts[k] = h["verdict"]
+        detail[k] = {f: h[f] for f in ("bar", "dates", "tests", "flags", "flags_per_day",
+                                       "false_per_day", "placebo_sum", "lam", "bound",
+                                       "verdict")}
+    block = {"season": season, "as_of": m.get("covers_through"), "policy": pol,
+             "phi": _r(phi_d, 4), "families": verdicts, "detail": detail,
+             "refreshed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    new = dict(art)
+    new["live_check"] = block
+    write_artifact(new, Path(out or src))
+    left = sorted(k for k, v in verdicts.items() if v == "left off")
+    log(f"  live check {season} as of {block['as_of']}: {len(keys)} families, "
+        f"left off {left or 'none'}; no bar changed")
+    return block
+
+
 def live_flag() -> bool:
     try:
         import importlib
@@ -1185,7 +1241,17 @@ def main(argv=None) -> int:
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--lab-dir", type=Path, default=LAB_DIR)
+    ap.add_argument("--live-check", action="store_true",
+                    help="refresh only the artifact's live_check block (monthly; no bar moves)")
     a = ap.parse_args(argv)
+    if a.live_check:
+        try:
+            blk = live_check_refresh(lab_dir=a.lab_dir, out=a.out, refresh=a.refresh)
+        except (RuntimeError, OSError, KeyError) as e:
+            print(f"refused, nothing written: {e}")
+            return 2
+        print(json.dumps({"live_check": blk["families"], "as_of": blk["as_of"]}, indent=1))
+        return 0
     try:
         art = run(refresh=a.refresh, jobs=a.jobs, out=a.out, lab_dir=a.lab_dir)
     except TF.SwingSeasonsMissing as e:
