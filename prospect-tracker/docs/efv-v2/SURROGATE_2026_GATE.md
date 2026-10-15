@@ -1,8 +1,29 @@
 # Surrogate outcomes of the 2026 MiLB season: SURROGATE_2026_GATE
 
-Registration status: DRAFT
+Registration status: REGISTERED
 
 Owner answer at draft commit (efv2026 OQ1): A (own gate; every section below applies).
+
+Owner answer at registration (efv2026 OQ1): A. Own gate, no ship weight (recorded 2026-10-01 in `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, as are the five below).
+
+Owner answer at registration (efv2026 OQ2): A. Freeze; long horizons only: W3 at RT 2031 the single long-run primary, R3 at RT 2029 descriptive, no one-season surrogate read (S4 of s6.2 never runs, and the guard's `lv2026_surrogate` purpose stays closed).
+
+Owner answer at registration (efv2026 OQ3): A. Wait for R-VM look 2.
+
+Owner answer at registration (efv2026 OQ4): A. Leave the level-norm blend's New-Year flip; pin pure norms; disclose; the 12-20 fallback (moot since the step Z entry of 2026-10-03, s8.12).
+
+Owner answer at registration (efv2026 OQ5): A. Defer the hitter-lean test until after this REGISTERED commit, every 2026-list player excluded and counted; read-only, descriptive, read once.
+
+Owner answer at registration (efv2026 OQ6): A. Release the 2028 and 2029 cohorts at R-VM look 3's record, by the dated B9b amendment to `EFV_V2_GATE.md` (b2ed1107, Q10); label reads of registered long-run frames only.
+
+REGISTERED 2026-10-15 (task SG_7, on HEAD e9fc3a3c of `efv-conviction-2026-08-08`). The
+status line above reads REGISTERED; every item marked PENDING at the draft is filled (Q1,
+Q9, s5.1, s8.11, s8.13, s11); the precondition states of s1 are re-taken against that HEAD,
+and all ten hold; section 12 is empty. This commit carries this file alone. Its sha is the
+one `tools/efv_surrogate_look.py` finds at run time (`registered_sha`) and hands to
+`efv_surrogate_guard`. Registering measures nothing and moves no served number. No calendar
+date gated it (owner decision EW3-5, 2026-10-14). The draft paragraph below is kept as the
+record of the draft.
 
 THIS IS A DRAFT. It is committed so its text is dated before any association, tabulation or
 model fit between a surrogate outcome of the 2026 MiLB season and any rater score, label,
@@ -90,18 +111,18 @@ receipt `served_model.receipt.hit.timing.admission` at 64bf1bb3, lane copy
 
 ## 1. Preconditions (all must hold before the status line changes)
 
-| id | precondition | state at this draft |
+| id | precondition | state at registration (2026-10-15, re-checked against HEAD e9fc3a3c) |
 |---|---|---|
-| Q1 | The ETA FanGraphs-blend look is recorded: `data/eta_eval.json` carries block `fg_blend_gate_2026_09_25` (`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md` s6), recorded at be53132d (2026-09-30 19:22); and this lane's pre-look counts of that look's own outcome (V 2024 frame players who debuted in 2026, 63 / 72, and in 2025-26, 136 / 153, counted 2026-09-30 13:01 with no score joined) and the lv_2026 overlap (212 / 207) are disclosed in a dated addendum under ETA s8 (task SG_A; its commit sha PENDING here) and in s8.11 | record MET (be53132d); addendum MET (SG_A, b912d0f2, 2026-10-08) |
-| Q2 | The ten 2026 season files are frozen as a TRACKED copy `data/milb_season_frozen/2026/` equal row for row to the 2026-09-30 refetch, sha256-pinned in `data/efv_surrogate_pins_2026.json` with each level's last scheduled regular-season date; the 2026 sport-1 files reduced to their person-id sets (`mlb_event_ids_{hitting,pitching}.json`, no stat column) and pinned; the transfer seasons (2010 to 2019, 2021 to 2025; sport 1 as ids only) pinned by canonical content hash; pure-2026 level norms derived from the frozen copy in `data/milb_norms_2026_pure.json`; `.gitattributes` `-text` lines for every file this gate writes (s11) | MET (SG_1, a946cc73, 2026-10-09; its pins enter s11 at registration) |
-| Q3 | fWAR label freeze receipt with per-side coverage (`FWAR_LABEL_EPOCH_GATE.md` P1). The round-5 text also required the F-LV floors (EV-05, `data/efv_lv_floor.json`); they were never built, `EFV_V2_GATE.md` registered without them (s11.2 P2, waived by EW2-6), and no clause of this gate reads them (s4: measured floors are not a precondition of the status line; s9's draft-time floors scale the lv_dev E_cond floor), so this revision drops them | MET (the epoch's step Z entry, 2026-10-03, label `fwar@2026-10-02-0341299c20ec`; `EFV_V2_GATE.md` s11.2 P1) |
-| Q4 | The surrogate guard exists and is tested: refuses R-LV for every sha before any sha check; refuses every read before this file is REGISTERED; enforces the frame schedule by purpose (s2.3); REFUSES, never drops, while any in-window 2025-or-later debutant lacks its owning look's record (s8.1); refuses any 2026 outcome before Q1's record; this gate's code never calls `guard_score_request`; look records read only from the files s2.3 names; no calendar day refused (Q7); `efv_vintage_frame.py` at the git blob s11 pins (09430d3b211c67a480b51aff0dbfb27d8f4ca669 at this commit, the blob SG_2's test pins; c9d5a29d4dfda710792b854b61983625e9c1367e at 64bf1bb3 and 26b446d9, before 6fd30aee and fc5b9cc0); the identity path imports no debut or MLB column (AST test) | BUILT, not yet as revised: the guard (SG_2, 0d6e20a7) and the builder (SG_3, 33db18fd) are committed and tested, but the guard reads look records only from `data/efv_v2_gate.json` and its `blocked_day` still refuses the four waived dates and the reserved-read day, so both are amended to s2.3 and Q7 of this revision before the status line changes |
-| Q5 | The V 2026 rater freeze `data/efv_surrogate_frame_2026.json` exists, taken after Q1's record from the pre-epoch universe: SG_4 (before epoch step C) did not run, so the step A snapshot (`../_pre_epoch_fwar_2026-10/`, 3ae607a2) stands in, with the efv2026 lane's pre-step-A universe bundle for the inputs that snapshot lacks (orchestrator answer SG4B-Q1, 2026-10-14), and the freeze is taken from it after step Z (task SG_4B), with the provider `ewar_v2` and RESOLVED_THROUGH 2025 asserted for every label and `career_war` read it makes (HEAD's defaults have read `"fwar"`, `war_source.py:182`, and 2026, `efv_dataset.py:274`, since the epoch's steps D+U and F of 2026-10-03); recording the provider and the `career_war` basis it read; sha-pinned; re-freeze refused; the scored V2 object named exactly as s2.2; the zero-information twin's scores and the per-row head indices e_time and e_skill frozen beside it (s4); row and identity counts re-taken (s8.13) | UNMET (task SG_4B; NOT NEEDED, and this gate never registers, under OQ1 = C or OQ2 = C) |
-| Q6 | Owner answers OQ1 to OQ6 (PLAN.md s7) | MET (2026-10-01; option A to all six) |
-| Q7 | The look runner (`tools/efv_surrogate_look.py`) refuses without this file's REGISTERED commit sha, pins inputs at start and end with the nightly idle, refuses a spent look, refuses in any session that runs another gate's look (a session rule, not a calendar day: owner decision EW3-5 of 2026-10-14 waived every look day and registered date, so the runner refuses no calendar date, and the eFV reserved-read day no longer exists, EW2-6 having taken that read on 2026-10-08), and writes the bootstrap SDs of every cell BEFORE it prints any point delta; its reporting path is tested on fixtures carrying None and NaN in every printed cell, and every look runs under the one-look crash protocol (tee first; on an exception after scoring began, STOP without rerunning, the look spent if marked, an owner question written; tasks SG_8, SG_9) | UNMET |
-| Q8 | R-VM look 1's record exists before S3, because T3's V 2022 rows include 2025 debutants inside the window and the guard refuses the read without it (s8.1); the record is `data/_labs/efv_v3/efv_v3_confirm.json`, which `EFV_V2_GATE.md` s11.1 names the look record for R-VM look 1 | MET (2026-10-08, gate sha e7931ce4; decision EW2-6 moved the read from 2026-12-01 to that day) |
-| Q9 | Input pins (s11) re-taken at registration; the fold scheme, the first scored vintage and the n each clause is read on written into s5, including whether the V-1 rung derivation of s3 passed its reproduction test or the registered fallback of s2.1 applies | PENDING (SG_3's test reproduced `level_rank` on all 4,178 V 2015-2019 rows read inside the pinned store, 33db18fd) |
-| Q10 | Under OQ6 = A, the dated one-sentence amendment to `EFV_V2_GATE.md` s5 B9b (R-VM look 3's record releases, for the label reads of registered long-run frames only, the in-window debut cohorts no R-VM look owns) is committed by that document's own rules before this status line changes; under OQ6 = B nothing is owed here and both long-run reads stay deferred whole | UNMET (OQ6 = A, so the amendment is owed) |
+| Q1 | The ETA FanGraphs-blend look is recorded: `data/eta_eval.json` carries block `fg_blend_gate_2026_09_25` (`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md` s6), recorded at be53132d (2026-09-30 19:22); and this lane's pre-look counts of that look's own outcome (V 2024 frame players who debuted in 2026, 63 / 72, and in 2025-26, 136 / 153, counted 2026-09-30 13:01 with no score joined) and the lv_2026 overlap (212 / 207) are disclosed in a dated addendum under ETA s8 (task SG_A, commit b912d0f243c2fe3ec80504ee534b0409264b4017) and in s8.11 | MET: record be53132d (block `fg_blend_gate_2026_09_25` with its decision; `efv_surrogate_guard.eta_look_recorded()` True at HEAD); addendum b912d0f2 (SG_A, 2026-10-08), an ancestor of HEAD |
+| Q2 | The ten 2026 season files are frozen as a TRACKED copy `data/milb_season_frozen/2026/` equal row for row to the 2026-09-30 refetch, sha256-pinned in `data/efv_surrogate_pins_2026.json` with each level's last scheduled regular-season date; the 2026 sport-1 files reduced to their person-id sets (`mlb_event_ids_{hitting,pitching}.json`, no stat column) and pinned; the transfer seasons (2010 to 2019, 2021 to 2025; sport 1 as ids only) pinned by canonical content hash; pure-2026 level norms derived from the frozen copy in `data/milb_norms_2026_pure.json`; `.gitattributes` `-text` lines for every file this gate writes (s11) | MET (SG_1, a946cc73, 2026-10-09). Re-taken at registration: the ten frozen season files, the two event-id sets and the pure norms hash to their SG_1 pins on the working tree and on the git blob alike; the 200 transfer-season cells re-hash to their pins with 0 mismatches; the three `-text` lines are in `.gitattributes`; s11 carries the pins |
+| Q3 | fWAR label freeze receipt with per-side coverage (`FWAR_LABEL_EPOCH_GATE.md` P1). The round-5 text also required the F-LV floors (EV-05, `data/efv_lv_floor.json`); they were never built, `EFV_V2_GATE.md` registered without them (s11.2 P2, waived by EW2-6), and no clause of this gate reads them (s4: measured floors are not a precondition of the status line; s9's draft-time floors scale the lv_dev E_cond floor), so this revision drops them | MET (the epoch's step Z entry, 2026-10-03, label `fwar@2026-10-02-0341299c20ec`; `FWAR_LABEL_EPOCH_GATE.md` part 9, commit 73850ecc; `EFV_V2_GATE.md` s11.2 P1) |
+| Q4 | The surrogate guard exists and is tested: refuses R-LV for every sha before any sha check; refuses every read before this file is REGISTERED; enforces the frame schedule by purpose (s2.3); REFUSES, never drops, while any in-window 2025-or-later debutant lacks its owning look's record (s8.1); refuses any 2026 outcome before Q1's record; this gate's code never calls `guard_score_request`; look records read only from the files s2.3 names; no calendar day refused (Q7); `efv_vintage_frame.py` at the git blob s11 pins (09430d3b211c67a480b51aff0dbfb27d8f4ca669 at this commit, the blob SG_2's test pins; c9d5a29d4dfda710792b854b61983625e9c1367e at 64bf1bb3 and 26b446d9, before 6fd30aee and fc5b9cc0); the identity path imports no debut or MLB column (AST test) | MET. The guard (SG_2, 0d6e20a7) was amended to this revision at 88e81ff2 (2026-10-15): look 1 is read from `data/_labs/efv_v3/efv_v3_confirm.json` (`look_1_recorded`), looks 2 and 3 and the OQ6 release only from `data/efv_v2_gate.json`; `LOOK_DAYS` is empty and the reserved-read-day block is gone, so no calendar day is refused; the session-marker refusal stays. The builder is SG_3's (33db18fd). `efv_vintage_frame.py` reads blob 09430d3b at HEAD; `look_records()` at HEAD reads [rvm_look_1] |
+| Q5 | The V 2026 rater freeze `data/efv_surrogate_frame_2026.json` exists, taken after Q1's record from the pre-epoch universe: SG_4 (before epoch step C) did not run, so the step A snapshot (`../_pre_epoch_fwar_2026-10/`, 3ae607a2) stands in, with the efv2026 lane's pre-step-A universe bundle for the inputs that snapshot lacks (orchestrator answer SG4B-Q1, 2026-10-14), and the freeze is taken from it after step Z (task SG_4B), with the provider `ewar_v2` and RESOLVED_THROUGH 2025 asserted for every label and `career_war` read it makes (HEAD's defaults have read `"fwar"`, `war_source.py:182`, and 2026, `efv_dataset.py:274`, since the epoch's steps D+U and F of 2026-10-03); recording the provider and the `career_war` basis it read; sha-pinned; re-freeze refused; the scored V2 object named exactly as s2.2; the zero-information twin's scores and the per-row head indices e_time and e_skill frozen beside it (s4); row and identity counts re-taken (s8.13) | MET (SG_4B, 27b53534; `frozen_by` SG_4B, frozen_at 2026-10-15T11:48:10Z): sha256 1c7823316b697dbbf107416379e54711bd1e10dc270a7db6c998ed268b9cf9b8; rows 590 / 617 and person ids 522 / 570 re-taken equal (s8.13, s11.1); the V2 fold object named as s2.2, sha256 5ebddd8d; the twin (seed 20260931) and e_time, e_skill frozen beside it; provider `ewar_v2` and RESOLVED_THROUGH 2025 asserted; `career_war` 2,698 rows (ewar_v2 2,563, bbref 135); re-freeze refused by the tool |
+| Q6 | Owner answers OQ1 to OQ6 (PLAN.md s7) | MET (2026-10-01; option A to all six, `DECISIONS_FOR_OWNER.md` rows efv2026 OQ1 to OQ6), written into the header above, which `gate_header_records` reads |
+| Q7 | The look runner (`tools/efv_surrogate_look.py`) refuses without this file's REGISTERED commit sha, pins inputs at start and end with the nightly idle, refuses a spent look, refuses in any session that runs another gate's look (a session rule, not a calendar day: owner decision EW3-5 of 2026-10-14 waived every look day and registered date, so the runner refuses no calendar date, and the eFV reserved-read day no longer exists, EW2-6 having taken that read on 2026-10-08), and writes the bootstrap SDs of every cell BEFORE it prints any point delta; its reporting path is tested on fixtures carrying None and NaN in every printed cell, and every look runs under the one-look crash protocol (tee first; on an exception after scoring began, STOP without rerunning, the look spent if marked, an owner question written; tasks SG_8, SG_9) | MET (c2e158b7, 2026-10-15): `tools/efv_surrogate_look.py` is built and has never run. It refuses without this file's REGISTERED commit sha (found at run time), a spent look (artifact key or crash marker), another gate's look session, a busy pipeline, a missing ETA record or a missing look-1 record; it refuses no calendar day; it prints every bootstrap SD before any point; its reporting path is tested on fixtures (`test_efv_surrogate_look.py`) |
+| Q8 | R-VM look 1's record exists before S3, because T3's V 2022 rows include 2025 debutants inside the window and the guard refuses the read without it (s8.1); the record is `data/_labs/efv_v3/efv_v3_confirm.json`, which `EFV_V2_GATE.md` s11.1 names the look record for R-VM look 1 | MET (2026-10-08): `efv_v3_confirm.json` item EFV3_W3_SELECT_CONFIRM, role reserved, one_read, gate.sha e7931ce4, `gate.guards.r_vm_cohort_read` [2025] |
+| Q9 | Input pins (s11) re-taken at registration; the fold scheme, the first scored vintage and the n each clause is read on written into s5, including whether the V-1 rung derivation of s3 passed its reproduction test or the registered fallback of s2.1 applies | MET at this commit: pins re-taken (s11); s5.1 written. The s3 derivation PASSED its reproduction test (SG_3, 33db18fd: `level_rank` reproduced on 2,122 of 2,122 hitter and 2,056 of 2,056 pitcher V 2015-2019 rows read inside the pinned store), so the s2.1 fallback does not apply |
+| Q10 | Under OQ6 = A, the dated one-sentence amendment to `EFV_V2_GATE.md` s5 B9b (R-VM look 3's record releases, for the label reads of registered long-run frames only, the in-window debut cohorts no R-VM look owns) is committed by that document's own rules before this status line changes; under OQ6 = B nothing is owed here and both long-run reads stay deferred whole | MET (b2ed1107, 2026-10-15): the dated one-sentence B9b amendment in `EFV_V2_GATE.md`, committed alone while that file reads REGISTERED |
 
 ---
 
@@ -348,12 +369,52 @@ selection; "released" from one season.
 
 | clause | test | pass rule | governs |
 |---|---|---|---|
-| T1 faithfulness | rho(S_idx, L6 percentile) on lv_L6, per side, leave-one-vintage-out out-of-sample over V 2011-2016 (n 781 / 804 players when the s3 derivation of rung_pre and age_pre passes its reproduction test; under the s2.1 fallback V 2015-2016 only, player-grouped 5-fold, n written into this cell at registration); rows with status reserved_vm, censored_never or identity_conflict carry no L6 and leave with counts per side and vintage (s2.1, a selection that truncates arrival, disclosed); the rho on resolved (uncensored) rows alone printed beside; W3 on lv_dev_all secondary | one-sided 95 percent lower bound at least 0.50 on L6, on BOTH sides | S4 only. A fail closes level and arrival surrogates as value proxies for eFV permanently (kill rule 7) |
+| T1 faithfulness | rho(S_idx, L6 percentile) on lv_L6, per side, leave-one-vintage-out out-of-sample over V 2011-2016 (n 781 / 804 players when the s3 derivation of rung_pre and age_pre passes its reproduction test; under the s2.1 fallback V 2015-2016 only, player-grouped 5-fold; the derivation passed, so the fallback does not apply and the n is written in s5.1); rows with status reserved_vm, censored_never or identity_conflict carry no L6 and leave with counts per side and vintage (s2.1, a selection that truncates arrival, disclosed); the rho on resolved (uncensored) rows alone printed beside; W3 on lv_dev_all secondary | one-sided 95 percent lower bound at least 0.50 on L6, on BOTH sides | S4 only. A fail closes level and arrival surrogates as value proxies for eFV permanently (kill rule 7) |
 | T2 channel | on g_S against Y = R3 for every timing-head candidate (`efv_v2_model.V2_TIMING_KEYS`, `V2_ABSENCE_KEY`, on_40man, nov_add): (a) partial rho(g_S, R3 given u_c) with lower bound above 0; (b) the sign of each driver's slope given u_c on g_S equals its sign on R3, pooled and in each split where the driver exists (MiLB drivers: 2015-16 and 2017-19; others: 2011-13, 2014-16, 2017-19; under the s2.1 fallback 2015-16 and 2017-19 for every driver). `V2_ABSENCE_KEY` (`milb_absent`, `efv_v2_model.py:659`) is a MiLB driver here: `efv_v2_model.v2_row` sets it to 1.0 on every row with no MiLB block (`:721-733`), so it is the CONSTANT 1.0 on every V 2011-2014 row and carries no variation there. Handling, registered now: for every MiLB driver, `V2_ABSENCE_KEY` included, (a), (b) and (c) are scored ONLY on V 2015-2019 rows, so its pooled (b) is the V 2015-2019 pool and its splits are 2015-16 and 2017-19; its slope is never estimated on, and its (b) is never failed by, the V 2011-2014 rows, which stay in g_S's own fit and in the non-MiLB drivers' reads. A driver constant within a scored split is a registration error: the runner checks every driver's variance per scored split BEFORE it reads any outcome and STOPs there (no look is spent), and the handling of that driver goes to a dated amendment written from the variance check alone; (c) the ratio of the driver's UNSTANDARDIZED slope given u_c on g_S (a probability, calibrated on its training vintages) to its slope on R3 (0/1, a linear-probability fit), both on the probability scale, lies in [0.5, 2.0]: the band is centred at 1 for a channel-consistent driver, because R3 minus g_S is then uncorrelated with the driver given u_c (the round-2 band on standardized slopes of within-(side, V) percentiles was centred near 1/rho(g, R3), about 1.8 to 2.2 with a binary R3, and would have failed a valid g); (d) the bypass share 1 - rho(u_c, g_S) rho(g_S, Y) / rho(u_c, Y) is printed per side. The skill-head version (g_skill against W3) is printed descriptively only; S_idx and g_S never enter a skill head. Prior (s0): `level_rank` expected to pass (b), `age_rel_level` expected to fail (b) | (a), (b) and (c) hold for every driver. ANY (b) or (c) failure fails T for the auxiliary route and bars that driver from any head that reads g_S in 2027 | the 2027 timing auxiliary |
 | T3 comparability | rho(g_S, R3) on V 2011-2019 (fallback: V 2015-2019) against V 2022 (R3 at RT 2025, after Q8; one row per player, sides pooled); no later vintage is added (V 2023 is not read, s2.1) | PASS iff the CI95 of the Fisher-z difference lies entirely inside (-0.10, +0.10); anything else is a STOP: S4 never runs, the auxiliary route closes, and the lane may return only as a new registration disclosing this read. No re-basing after the read. S -> L6 comparability is ASSUMED and untestable until about RT 2031 | S4 and the auxiliary |
 | T4 do no harm | the S-only regime emulated: for each evaluation vintage V in 2017-2019 (fallback: V 2019 only), R3 is masked on training vintages V-3 to V-1 (unresolved at RT V-1) and imputed by g_S fitted on vintages up to V-4 (2011-2013 for V 2017, 2011-2014 for V 2018, 2011-2015 for V 2019; usable because s3 derives rung_pre and age_pre on those vintages); the timing head trained on resolved plus imputed rows against the incumbent (resolved rows only, `lv_training_rows`); within statistic, E_cond; plus a permuted-S twin | HARM iff the one-sided 95 percent upper bound of (augmented minus incumbent) is below 0 or the point is below -0.005; otherwise "not shown harmful, unpowered" (mde95 0.0155 on lv_dev is three times the effects in play, so T4 can fail but cannot certify). The real S beats its twin iff the one-sided 95 percent lower bound of (real minus twin) is above 0; otherwise g_S is regularisation only and is not admitted | the 2027 timing auxiliary |
 | T5 hygiene | test-enforced, asserted in the runner before any score | no V 2020 or 2021 row built; in a SURROGATE read (S3, S4) no MLB stat of any row and no debut event of a 2025-or-later debutant before the owning look's record; in a LONG-RUN read (R3 at RT 2029, W3 at RT 2031) no label of a 2025-or-later debutant except through the release path of s6.3 with its record present; no L6 ever computed for a 2025-or-later debutant; no read before Q1's record; the identity module imports no debut or MLB column; ABSENT sub-codes present; ABSENT_IDENTITY out of the primary with its count; exposure floors applied; the frozen 2026 copy's sha256 equals the pin; sport-1 files read only through `mlb_event_ids` (no stat column); MEX rows dropped wherever sportId 11 before 2021 is read; no ETA shadow row joined with a listing date at or after the frame row's window end; no org dated at or after the window end; no FV-cell grouping (the `test_efv_vintage_frame.py` scan extended); AP+ never imported; `efv_vintage_frame.py` at the git blob s11 pins (`git rev-parse HEAD:./efv_vintage_frame.py`; never a working-tree sha256, which drifts with CRLF, s11) | every read |
 | T6 multiplicity and transfer | surrogate-scale family: Holm m = 1 (S_idx); head-falsification family at S4: Holm m = 4 (e_time on residualized, club-demeaned CLIMB; e_skill on residualized PERF, the hitter scalar of s3; per side), one-sided in the direction of a LOSS, the e_time cell also printed within (side, rung_pre) strata as its sensitivity; long-run family: W3 at RT 2031 alone (m = 1), Bonferroni 0.025 each if a second endpoint is ever added by amendment; player- and club-clustered bootstrap, B 2000; the surrogate threshold effect (STE, Burzykowski and Buyse 2006) of the rater-level line, estimated on a registered family of large deliberate perturbations (plus or minus 0.03 and beyond), DESCRIPTIVE ONLY | no surrogate-scale result, whatever its size against the STE, permits any statement about long-run direction or value (s0.3, s6.2, H_S); the STE is printed as a description of the rater-level line and permits nothing | every read |
+
+### 5.1 Registered at the REGISTERED commit (Q9): fold schemes, first scored vintage, n
+
+- **The s3 derivation PASSED; the s2.1 fallback does not apply.** SG_3's test (33db18fd)
+  reproduced `efv_dataset`'s `level_rank` on 2,122 of 2,122 hitter and 2,056 of 2,056
+  pitcher V 2015-2019 rows read inside the pinned store. One V 2018 hitter row
+  (adrian_hernandez), whose frame `level_rank` was read off a 2005 AAA line below the pinned
+  store's 2010 floor, is ABSENT-pre here and is not counted as a reproduction failure (SG_3
+  owner question OQ-SG3-2, default A applied). A row with no V-1 line takes the latest
+  earlier in-store season as `rung_pre`, which is what the frame's `level_rank` reads (SG_3
+  OQ-SG3-1, default A applied; option B, the first in-store season, would fail the
+  reproduction and bring in the fallback). Every clause reads its primary scheme.
+- **n, re-taken at registration as frame membership only** (`efv_vintage_frame.build_frame`
+  rows and player keys per side on HEAD e9fc3a3c's universe; no grade, label or outcome read).
+  The runner prints the n each statistic is read on, and the no-L6 exits, at the read.
+
+| clause | fold scheme | first scored vintage | n (hit / pit) |
+|---|---|---|---|
+| T1 | leave-one-vintage-out over V 2011-2016, six outer folds; each fold's ridge penalty by inner leave-one-vintage-out on its five training vintages over the grid {1, 3, 10, 30, 100, 300, 1000} | V 2011 | lv_L6 3,100 rows (1,588 / 1,512), 781 / 804 players, before the exits of rows with no L6 (reserved_vm, censored_never, identity_conflict), counted per side and vintage at the read; W3 secondary on lv_dev_all 5,962 rows (3,053 / 2,909), 1,364 / 1,356 players (the draft's 1,363 / 1,357; 2,720 pooled either way) |
+| T2 | g_S forward-chained over lv_dev_all V 2011-2019 rows with resolved R3, each vintage predicted by a fit on the earlier ones, its penalty by an inner forward-chained split on the same grid; V 2011 and 2012 carry no forward value (D10) | V 2013 for g_S; MiLB drivers, `V2_ABSENCE_KEY` included, V 2015 | MiLB drivers on V 2015-2019: 4,457 rows (2,267 / 2,190), 1,156 / 1,140 players; splits 2015-16 802 / 793 rows and 2017-19 1,465 / 1,397. Other drivers: splits 2011-13 526 / 474, 2014-16 1,062 / 1,038, 2017-19 1,465 / 1,397 rows |
+| T3 | rho(g_S, R3) on V 2011-2019 (the forward g_S of T2) against V 2022 (the full g_S fit), one row per player, sides pooled; Fisher-z difference CI95 | V 2013 for the old era (V 2011 and 2012 carry no forward g_S, D10); V 2022 | V 2011-2019 frames 2,720 players before the forward-value and resolved-R3 restrictions, which the runner counts; V 2022 1,268 rows (655 / 613; the draft's 652 / 615 at the 2026-09-30 snapshot) |
+| T4 | evaluation vintages V 2017, 2018 and 2019; R3 masked on V-3 to V-1 and imputed by g_S fitted on V 2011 to V-4 (2011-2013, 2011-2014, 2011-2015); incumbent on resolved rows only | V 2017 | evaluation rows 1,465 / 1,397 (V 2017 472 / 469, V 2018 450 / 439, V 2019 543 / 489) |
+| T5 | asserted before any score | every read | every row the read builds |
+| T6 | paired bootstrap B 2000, seed 20260930, by player and by as-of parent club; Holm m = 1 for S_idx; the head family (m = 4) belongs to S4, which does not run under the recorded OQ2 = A | as the clause read | as the clause read |
+
+- **The builder's defaults, registered as part of the frozen specification** (SG_3,
+  `efv_surrogate.py` blob 2853ba7c): D1 `rung_pre` for a row with no V-1 line is the latest
+  earlier in-store season; D2 ABSENT-pre rows take the within-(side, V) median `rung_pre` and
+  `age_pre` (flagged), and a missing store age takes the median `age_pre` (flagged); D3
+  short-season A is rung 1.5; D4 S4's full-season exposure is the 0.9 quantile of the
+  level's floor qualifiers' summed exposure in that season; D5 ABSENT_KNOWN when a
+  `data/tj_surgery.json` record is dated V-1-01-01 to V-09-30; D6 a missing S2 or S4 takes
+  the id-resolved (side, V) mean, as S3; D7 club intercepts shrink by n / (n + k),
+  k = sigma2 / tau2 (method of moments); D8 residual maps carry one intercept per `rung_pre`
+  value plus a common `age_pre` slope (OLS); D9 the transaction fallback for the as-of org is
+  the last event before V-01-01 whose destination resolves to a parent club, and the board
+  route reads the latest in-window point only; D10 the g_S penalty by an inner
+  forward-chained split, V 2011 and 2012 getting no forward value; D11 the PERF norm falls
+  back to the prior season's pure norm, else missing, with no static prior; D12 `age_pre`
+  uses StatsAPI store ages on both sides (a within-store construct).
 
 ---
 
@@ -626,8 +687,8 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
     to that look and ride as descriptive raters only, admitted under kill rule 3(ii). This
     lane counted V 2024 debuts BEFORE the look (2026: 63 / 72; 2025-26: 136 / 153;
     `facts2026.json`, 2026-09-30 13:01), with no score joined; ETA s8 carried no disclosure of
-    those counts at HEAD 26b446d9, and task SG_A appends it as a dated addendum (commit sha
-    PENDING, filled at registration).
+    those counts at HEAD 26b446d9, and task SG_A appended it as a dated addendum (commit
+    b912d0f243c2fe3ec80504ee534b0409264b4017, 2026-10-08).
 12. **The norm flip inside the epoch.** If `FWAR_LABEL_EPOCH_GATE.md` part 9 carries no
     step Z entry by 2026-12-20, the 2027-01-01 flip moves every served 2026 rel-rate inside
     the epoch window (v1, provisional, chips; not the V2 order); OQ4 A carries the owner's
@@ -647,7 +708,10 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
     the rows the split touched, and freezes the matched rows (the touched rows excluded and
     counted, a selection on an identity repair, not on an outcome); a larger or unexplained
     mismatch STOPs before the freeze file is written. The registration carries the re-taken
-    and matched counts (Q9).
+    and matched counts (Q9): 590 / 617 rows and 522 / 570 person ids per side, equal to
+    s2.2 as amended by s11.1 (SG_4B, 27b53534, the freeze file's `counts` block); recount
+    none; no row excluded (the one split-touched row, michael_massey__sa3037259, is frozen
+    like any other).
 
 ---
 
@@ -694,12 +758,13 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
 | Q1 the ETA s8 addendum with this lane's pre-look counts (SG_A) | DONE b912d0f2 (2026-10-08) | no |
 | Q2 frozen copy, pins, event-id sets, pure norms, snapshot, `-text` lines (SG_1) | DONE a946cc73 (2026-10-09) | no |
 | Q3 the fWAR label freeze (the epoch's step Z entry) | DONE 2026-10-03 | no |
-| Q4 guard, builder (SG_2, SG_3) | built 0d6e20a7 and 33db18fd; the record source and `blocked_day` amended to this revision before the REGISTERED commit | no |
+| Q4 guard, builder (SG_2, SG_3) | DONE 0d6e20a7 and 33db18fd; the record source and `blocked_day` amended to this revision at 88e81ff2 (2026-10-15) | no |
 | ledger frames (SG_5) | DONE 82393b46 | no |
-| Q5 the V 2026 rater freeze (SG_4B; SG_4 did not run before step C) | after SG_0, from the step A snapshot and the universe bundle of Q5 | no |
+| Q5 the V 2026 rater freeze (SG_4B; SG_4 did not run before step C) | DONE 27b53534 (2026-10-15), from the step A snapshot and the universe bundle of Q5 | no |
 | Q8 R-VM look 1's record (`EFV_V2_GATE.md` s11.1) | DONE 2026-10-08 | not this gate's |
-| Q10 the GATE B9b amendment for the cohorts no look owns (OQ6 = A) | before the REGISTERED commit | no |
-| REGISTERED commit, alone, s12 empty | once Q1 to Q10 all hold; no calendar date | no |
+| Q10 the GATE B9b amendment for the cohorts no look owns (OQ6 = A) | DONE b2ed1107 (2026-10-15) | no |
+| Q7 the look runner `tools/efv_surrogate_look.py` (built and fixture-tested, never run) | DONE c2e158b7 (2026-10-15) | no |
+| REGISTERED commit, alone, s12 empty | DONE 2026-10-15, this commit (Q1 to Q10 all held at HEAD e9fc3a3c); no calendar date | no |
 | S3 transfer read | after the REGISTERED commit; no calendar day blocks it (EW3-5); never beside another gate's look | old cohorts and V 2022 only |
 | S4 lv_2026 read (OQ2 = B only; void under the recorded OQ2 = A) | only if T1 and T3 pass; after Q1; after R-VM look 2's record, which needs the 2027 season | yes, once |
 | SG_10 the `efv_labels` release path (dated amendment with its test) | after OQ6; before RT 2029 | no |
@@ -708,10 +773,10 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
 
 ---
 
-## 11. Pins (PENDING; taken at Q2 and Q5, re-taken at registration)
+## 11. Pins (taken at Q2 and Q5, re-taken at registration on 2026-10-15)
 
 - `data/milb_season_frozen/2026/{hitting,pitching}_{11,12,13,14,16}.json` (tracked copies of
-  the cache files, 2.3 MB in all): sha256 PENDING; rows hitting / pitching AAA 927 / 1,268,
+  the cache files, 2.3 MB in all): sha256 as listed below; rows hitting / pitching AAA 927 / 1,268,
   AA 830 / 1,044, A+ 837 / 1,090, A 979 / 1,328, Rookie 1,602 / 2,062; PA = BF per level
   171,799; 156,270; 151,429; 151,705; 163,736; the cache fetched 2026-09-27 15:50 local and
   identical to the 2026-09-30 refetch. Last scheduled regular-season dates (StatsAPI
@@ -719,7 +784,7 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   DSL 08-18. The gitignored cache is never read by this gate FOR SEASON 2026; other seasons
   are read from it with fetch=False after the canonical hash check below.
 - `data/milb_season_frozen/2026/mlb_event_ids_{hitting,pitching}.json`: the sorted set of
-  person ids with a regular-season sport-1 line in 2026, per group, sha256 PENDING. No
+  person ids with a regular-season sport-1 line in 2026, per group, sha256 as listed below. No
   sport-1 stat is copied into the tree (the 2026 sport-1 files hold MLB lines of the R-VM
   2026 cohort); the source cache files are pinned in the pins file by a canonical hash over
   their id column only, and the builder's MLB top code reads only these sets (s3).
@@ -728,9 +793,18 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   person id, sport, league; the field projection the builder reads: id, level or sport,
   league, pa, bf, ab, h, 2b, 3b, hr, bb, so, hbp, sf, ip, g, gs, age, avg, obp, slg, ops,
   era; `league_norms` reads obp, slg, avg, ops and era at `milb_history.py:258-275`, so they
-  are in the hash) PENDING; the builder verifies before use and reads with fetch=False.
-- `data/milb_norms_2026_pure.json`: sha256 PENDING (derived from the frozen copy).
-- `data/efv_surrogate_frame_2026.json`: sha256 PENDING; row counts 590 / 617 as re-taken
+  are in the hash) in `data/efv_surrogate_pins_2026.json` `transfer_seasons` (SG_1, 200 cells),
+  re-computed at registration by `tools/milb_season_freeze.transfer_hashes` with fetching
+  disabled: 200 of 200 equal, 0 mismatches; the builder verifies before use and reads with
+  fetch=False.
+- `data/milb_norms_2026_pure.json`: sha256
+  493e5f0d30465d5d679031f50649b0c447ee40ddbacb328502e684c985fdeeb8 (derived from the frozen
+  copy; equal to the pins file's `pure_norms_sha256`).
+- `data/efv_surrogate_frame_2026.json`: sha256
+  1c7823316b697dbbf107416379e54711bd1e10dc270a7db6c998ed268b9cf9b8 (rows_sha256
+  45d4a81cd7d2fc46b1a5646a233fee893384b09f7c9edd76190c535e140dceac; `frozen_by` SG_4B,
+  27b53534; the V2 fold object sha256
+  5ebddd8dc88d92a2f370048fb470934ddfa55b82231d32c74217741ac7df9201); row counts 590 / 617 as re-taken
   (s8.13); the V2 fold object's own sha and fold receipt, the twin's scores and the head
   indices inside it; the provider and `career_war` basis it read.
 - **Line endings.** `core.autocrlf` is true on the Windows tree, so a sha256 of a tracked
@@ -764,6 +838,45 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   `data/efv_v2_assembly.json` sha256
   35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823 (the P5 weights). The
   fold object reads neither re-taken file.
+
+- **Re-taken at registration (2026-10-15, HEAD e9fc3a3c).** Every `-text` data file
+  below hashes the same on the working tree and on its git blob, and each equals its SG_1 or
+  SG_4B pin:
+  - `data/milb_season_frozen/2026/`: `hitting_11.json`
+    fb60ec2f8d7444578433e3cecd82082961fd61354951e1384dab2af9d6a63d18, `hitting_12.json`
+    722b7169bf299108e065d48e420f4cc79e92567f28e852067ac33b31850382f8, `hitting_13.json`
+    2c9e81caeac5052cd0f4f5645944aee3029bf394704e6e08f8792e730f115b61, `hitting_14.json`
+    59eff07517e39455e767ab952007b02c27790ee530d08f1e6a96a4ad3317783e, `hitting_16.json`
+    8d1d073c2e19f0a36633438de19e904f0546786cb0b2fb9d87943b687a0e9dd1, `pitching_11.json`
+    c0d1521cb1a1522dadeeff2898f2475d5af42cc5342e295aaa01cbf75ca41b12, `pitching_12.json`
+    f293c38c190020f0633b267b3c0150f639a7763eaf84c7d2bf39cee82183e7d2, `pitching_13.json`
+    cc6292d4f4594df70c2d2cf7fa0325706309aaff33c18d37199e8cdf2daa5699, `pitching_14.json`
+    a392dad18f0ba8408210c060d372a2595c399caf4dfa19181ff948acccd25077, `pitching_16.json`
+    5006d93457bccaff7b62cfca2563cbbb2636fb06df17ad83ec46a863f519e2e2.
+  - `mlb_event_ids_hitting.json` (751 ids)
+    8480bac986770205ab5499e364b8461d02ec054ba1b7539a9aa6ec74b05d0baf and
+    `mlb_event_ids_pitching.json` (868 ids)
+    e31c000f0f524500ed902573ff70c5d1e620d898b9cd2db7328cae31038ef57f.
+  - `data/efv_surrogate_pins_2026.json`
+    ffd6f2ae1df606235257d48c52e7ca4ddf3d7249772b925e44549753e5488af5; the norms and the
+    frozen frame as above.
+  - Source files by git blob id, each clean in the working tree: `efv_vintage_frame.py`
+    09430d3b211c67a480b51aff0dbfb27d8f4ca669, `efv_v2_model.py`
+    cd6d142f1c4bb11607ca4c84f163bda5bfa4d570, `data/efv_v2_assembly.json`
+    3c88265353f295e03620ac443ced507a7179cc5b, `efv_surrogate.py`
+    2853ba7c8e17a4ced1ccdb93959db34cf42f2e0c, `efv_surrogate_guard.py`
+    ba45dff188a9b3ba9ba79ec96d88db3e6e017022, `tools/efv_surrogate_look.py`
+    da07ae8123996cb0dd330f03f8378f64452a66fc. Recorded beside them for audit, not as pins:
+    `tools/efv_surrogate_freeze_2026.py` 1cf5d99c5fb8243ec801c31de6ebdf44990cf67b,
+    `tools/milb_season_freeze.py` c698b7a43ec4a6021f30528a9c8d8e4971fed399, `efv_labels.py`
+    7ccfee59251ee49c769b79306b4e3933f81319aa, `efv_v2_stat.py`
+    0a82e0de482c93cd5572fd913d8eac34eb135980, `efv_identity.py`
+    04f8b15900b2de94c97aa2968171ec886675736b, `efv_dataset.py`
+    59e9c32567d8f40c55ed51d9b3b85946b2df6490, `milb_history.py`
+    fd9a9c0a44bb35ea202f5bd12af7e4bdbe5d7b48.
+  - The fold object of s2.2 was fitted with the step A head's code (8a1c5b7f), whose blobs
+    the freeze file records in its `code` block; S3 reads the transfer frames with the
+    blobs pinned above.
 
 ### 11.1 Amendment, dated 2026-10-14 (SG4B-Q2 = A; made while this file reads DRAFT): s2.2 and s8.13 re-baselined to the step A head's identity counts
 
