@@ -38,7 +38,7 @@ amendment under part 10, never an edit. The read runs ONCE (part 7).
     `r_t - k r_{t-1} = alpha + beta (age_{t-1} - 27) + sum_p (s_{t,p} - k s_{t-1,p}) D_p + e`
     where r is the source's fielding runs per 1,277.7 fielded innings, s the fielded-innings
     shares, k the persistence of the glove (grid 0.00 to 0.95 by 0.01, the value with the least
-    weighted squared error), age Baseball-Reference's season age. Conditioning on r_{t-1} is
+    weighted squared error), age Baseball-Reference's season age. (Superseded by amendment A1.) Conditioning on r_{t-1} is
     what keeps a move made after a bad year from being read as position difficulty (regression
     to the mean).
   - within-season rows (Savant only, the one source that splits fielding runs by position): the
@@ -200,4 +200,41 @@ fold, and the squared-error version of every dMAE.
 
 ## 10. Amendments
 
-(None.)
+### 2026-10-15, A1 to A4, before the read
+
+Made after the fixture dry run and before any fit or score on real data (the only real-data output
+so far is the loader smoke's row counts). The fixture code and the checks below are in the task's
+output directory and in `tools/ladder_v2_lab.py --dry-run`.
+
+- **A1. Part 1 (b), the across-season equation.** Registered:
+  `r_t - k r_{t-1} = alpha + beta (age - 27) + sum_p (s_{t,p} - k s_{t-1,p}) D_p`, k on a grid.
+  The dry run on fixtures built the way every real source is built (fielding runs centred within
+  position and season) showed this form returns a compressed ladder whatever the truth: with runs
+  centred, the average glove at every position reads zero, so the stayers (share change zero, most
+  rows) pull every D_p to one value. On a centred fixture with planted target SS +7.93, 1B -8.85
+  (moves following bad years) it returned SS +3.88, 1B -3.78; with random moves, SS +2.28 against
+  +7.22. Replaced by the form that a glove prior centred on the player's previous position implies
+  (centring makes that prior the position's own rung):
+  `r_t = alpha + beta (age_{t-1} - 27) + k r_{t-1} + sum_p (s_{t,p} - s_{t-1,p}) D_p + e`,
+  k a linear coefficient. Stayers set alpha, beta and k; switchers identify D. Same fixtures: SS
+  +9.64, 1B -9.57 against +7.93, -8.85 (selection); SS +6.36, 1B -7.65 against +7.22, -8.13
+  (random). The plain first difference (k = 1) was checked and rejected: SS +15.71 under
+  selection, because a move made after a bad year reads as position difficulty.
+- **A2. Part 5 (A), the scoring predictor.** Registered `T_t_hat = a_L + k_L T_{t-1}`. Replaced by
+  the predictor the A1 model implies for a ladder L:
+  `T_t_hat = a_L + k_L r_{t-1} + sum_p s_{t-1,p} L_p`, with (a_L, k_L) by WLS of
+  `T_t - sum_p s_{t-1,p} L_p` on [1, r_{t-1}] over the fold's training rows. On the centred
+  fixtures, scoring ladders at 0, 0.5, 0.8, 1.0, 1.2 and 1.5 times the planted target, the
+  registered predictor's switcher MAE was lowest at 1.2 under selection (6.153 against 6.164 at
+  1.0, a flat profile); the A2 predictor's was lowest at 1.0 under selection (5.718) and with
+  random moves (5.800).
+- **A3. Parts 1 (a) and 2, the v1 refit inputs.** Baseball-Reference `runs_position` and PA are read
+  from `.cache/war_daily/bat.parquet` (the BREF file part 2 already names; position-player rows,
+  stints summed) instead of `data/mlb_def_history.json`, whose 2026 rows are a June vintage
+  (94,886 PA against 183,849 in the war_daily frame) while the StatsAPI innings are full-season.
+  The construction is `_ladder_design`'s (min 200 PA, residual DH exposure) on those records.
+- **A4. Part 7, the fixtures.** Rebuilt centred within position and season, with moves after bad
+  years, DH regulars and the null cells part 7 lists.
+
+Nothing else changes: candidates, sources, floors, folds, weights, the C and DH rules, the pass
+rule and the seeds stand as registered.
