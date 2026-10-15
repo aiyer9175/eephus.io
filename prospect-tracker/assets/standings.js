@@ -615,6 +615,8 @@
 
     function render() {
       if (!app.S) return;
+      // #team=CODE opens its detail row once per arrival (plan 5.2)
+      if (app.route.team && !app.teamOpened) { app.open = app.route.team; app.teamOpened = true; }
       var v = view(), cs = cols(), O = ours();
       var x = { view: v, cols: cs, sort: app.route.sort || null, mine: mine(), mineOnly: !!app.route.mine, team: app.route.team,
         ours: O, model: O && O.regular ? O.regular.model_id : null };
@@ -760,7 +762,7 @@
       go(r);
     });
     window.addEventListener("popstate", function () { app.route = parse(location.hash); if (app.IX) sync(); });
-    window.addEventListener("hashchange", function () { app.route = parse(location.hash); app.scrolled = false; if (app.IX) sync(); });
+    window.addEventListener("hashchange", function () { app.route = parse(location.hash); app.scrolled = false; app.teamOpened = false; if (app.IX) sync(); });
     var band = null;
     window.addEventListener("resize", function () {
       var w = width(), b = w >= 1024 ? 2 : w >= 768 ? 1 : 0;

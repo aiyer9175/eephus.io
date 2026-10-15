@@ -10482,6 +10482,14 @@ def build_robots() -> str:
     )
 
 
+def _standings_page_live() -> bool:
+    try:
+        import standings_core
+    except ImportError:
+        return False
+    return bool(getattr(standings_core, "STANDINGS_LIVE", False))
+
+
 def sitemap_pages() -> list[tuple]:
     """The canonical public surfaces as (path, changefreq, priority): the one
     page list sitemap.xml and the Library's Page Index both read."""
@@ -10501,6 +10509,9 @@ def sitemap_pages() -> list[tuple]:
         ("/ledger/", "daily", "0.7"),
         ("/franchise/", "daily", "0.7"),
         ("/scores/", "hourly", "0.8"),
+        # /standings/ (STANDINGS_8), only while standings_core.STANDINGS_LIVE
+        # is True, the flag that writes the published page.
+        *((("/standings/", "daily", "0.8"),) if _standings_page_live() else ()),
         # /dynasty/, /redraft/ and /dfs/ are retired addresses the 404 page
         # forwards into /fantasy/ (RETIRED_ROUTES), so they are deliberately
         # absent here (same treatment as /teams/). Their content is one
@@ -10572,6 +10583,8 @@ PAGE_INDEX_NAMES = {
     # The shelf page of Awards / HoF: the nav leaf points at /awards/ since
     # AWARDS_11, and /hof/ is reached from the module strip on both pages.
     "/hof/": "Hall of Fame",
+    # Reached from the Scores / Standings strip; the nav leaf is /scores/.
+    "/standings/": "MLB Standings",
 }
 
 # One line per page: what a reader finds there.
@@ -10582,6 +10595,7 @@ PAGE_INDEX_PURPOSE = {
     "/collegesavant/pitcher_index.html": "percentile profiles for college pitchers",
     "/franchise/": "one page per club: the Franchise Index and its three branches",
     "/scores/": "MLB scores by date: win probability, box scores and Stars of the Game",
+    "/standings/": "MLB standings: division, wild card, league and MLB tables, sortable, with the race charts",
     "/fa/": "the free-agent class: projected contracts, rational value against price, deal verdicts and team fits",
     "/projections/": "five-year WAR projections for every MLB player, with club-control surplus",
     "/mlbstats/": "MLB leaderboards: eWAR and the plus-stat boards, by season or year range",

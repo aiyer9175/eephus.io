@@ -1367,3 +1367,26 @@ def test_ties_print_as_w_l_t_in_the_detail_row(sel_site, pw, sel_docs):
             r = rows[code]
             assert rec == (f"{r['w']}-{r['l']}-{r['t']}" if r["t"] else f"{r['w']}-{r['l']}"), (code, rec)
         no_errors(page)
+
+
+@pytest.mark.parametrize("width", [390, 1280])
+def test_the_team_hash_highlights_scrolls_and_opens_the_detail_once(ins_site, pw, width):
+    """STANDINGS_8 (plan 5.2, the Franchise SEASON tiles' target): #team=CODE
+    highlights the row, scrolls it into view and opens its detail row; a close
+    after arrival stays closed, and a new #team= opens the new club's row."""
+    with serve_site(ins_site) as base, standings_page(base, pw, width=width, hash_="#team=TBR") as page:
+        page.wait_for_selector("#st-d-TBR", timeout=5000)
+        assert page.locator("tr.st-hl").evaluate_all("els => els.map(e => e.dataset.code)") == ["TBR"]
+        assert page.locator('.st-more[data-code="TBR"]').get_attribute("aria-expanded") == "true"
+        box = page.locator('tr.st-hl').bounding_box()
+        assert box and 0 <= box["y"] < page.evaluate("window.innerHeight")
+        page.locator('.st-more[data-code="TBR"]').click()
+        page.wait_for_timeout(80)
+        assert page.locator("#st-d-TBR").count() == 0
+        page.locator('.st-more[data-code="NYY"]').click()
+        page.wait_for_timeout(80)
+        assert page.locator("#st-d-NYY").count() == 1 and page.locator("#st-d-TBR").count() == 0
+        set_hash(page, "#team=LAD")
+        page.wait_for_selector("#st-d-LAD", timeout=5000)
+        assert page.locator(".st-detail").count() == 1
+        no_errors(page)
