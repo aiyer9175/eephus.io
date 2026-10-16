@@ -1,6 +1,6 @@
 {
 "meta": {
-"generated_at": "2026-10-15",
+"generated_at": "2026-10-16",
 "calibration": {
 "version": "isotonic-real-v3-todaypriced-2026-10-09",
 "enabled": true,
@@ -311,7 +311,7 @@
 "hit": [],
 "pit": []
 },
-"dark_basis": "the live read's own receipt (efv5_combined.live_columns), as of 2026-10-15",
+"dark_basis": "the live read's own receipt (efv5_combined.live_columns), as of 2026-10-16",
 "season_read": {
 "read_season": 2026,
 "list_year": 2026,
@@ -378209,7 +378209,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.1,
@@ -378785,7 +378785,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.84,
@@ -379941,7 +379941,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.17,
@@ -380130,7 +380130,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.03,
@@ -380648,7 +380648,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.43,
@@ -380932,7 +380932,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.84,
@@ -381210,7 +381210,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 14.41,
@@ -382771,7 +382771,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.27,
@@ -382897,7 +382897,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.88,
@@ -382992,7 +382992,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.74,
@@ -383197,7 +383197,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.69,
@@ -383905,7 +383905,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.28,
@@ -384283,7 +384283,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.85,
@@ -384594,7 +384594,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.7,
@@ -384796,7 +384796,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.99,
@@ -384877,7 +384877,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.32,
@@ -384986,7 +384986,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 1.99,
@@ -385363,7 +385363,7 @@
 "krp_plus": 117.9,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 11.16,
@@ -386683,7 +386683,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.99,
@@ -386886,7 +386886,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.89,
@@ -387069,7 +387069,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.03,
@@ -387170,7 +387170,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.72,
@@ -387777,7 +387777,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.44,
@@ -387965,7 +387965,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.7,
@@ -388357,7 +388357,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.53,
@@ -388466,7 +388466,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.38,
@@ -388748,7 +388748,7 @@
 "krp_plus": 95.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.65,
@@ -389356,7 +389356,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.45,
@@ -389470,7 +389470,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 1.84,
@@ -389551,7 +389551,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.47,
@@ -389658,7 +389658,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 11.23,
@@ -389766,7 +389766,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.78,
@@ -389968,7 +389968,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.26,
@@ -390170,7 +390170,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.11,
@@ -390359,7 +390359,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 12.86,
@@ -390550,7 +390550,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.8,
@@ -390644,7 +390644,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.63,
@@ -390745,7 +390745,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.87,
@@ -390935,7 +390935,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 12.45,
@@ -391132,7 +391132,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.52,
@@ -391322,7 +391322,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.88,
@@ -391410,7 +391410,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.49,
@@ -391701,7 +391701,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 11.02,
@@ -391810,7 +391810,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.81,
@@ -392009,7 +392009,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.18,
@@ -393121,7 +393121,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.43,
@@ -393208,7 +393208,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.35,
@@ -393614,7 +393614,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.53,
@@ -393701,7 +393701,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.02,
@@ -394194,7 +394194,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.63,
@@ -394309,7 +394309,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.06,
@@ -394410,7 +394410,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.33,
@@ -394974,7 +394974,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.55,
@@ -395075,7 +395075,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.14,
@@ -395587,7 +395587,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 2.88,
@@ -395789,7 +395789,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.36,
@@ -396548,7 +396548,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.7,
@@ -396748,7 +396748,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.39,
@@ -396957,7 +396957,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.55,
@@ -397350,7 +397350,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.45,
@@ -397634,7 +397634,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.12,
@@ -397930,7 +397930,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.21,
@@ -398310,7 +398310,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.36,
@@ -398514,7 +398514,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.51,
@@ -398697,7 +398697,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.76,
@@ -399001,7 +399001,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.64,
@@ -399075,7 +399075,7 @@
 "krp_plus": 100.6,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.03,
@@ -399176,7 +399176,7 @@
 "krp_plus": 102.9,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.93,
@@ -399291,7 +399291,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.69,
@@ -399481,7 +399481,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.04,
@@ -400182,7 +400182,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.52,
@@ -400276,7 +400276,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.96,
@@ -400378,7 +400378,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.92,
@@ -400472,7 +400472,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.65,
@@ -400776,7 +400776,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.15,
@@ -400973,7 +400973,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.07,
@@ -401067,7 +401067,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.0,
@@ -401175,7 +401175,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.58,
@@ -401262,7 +401262,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.43,
@@ -401458,7 +401458,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.93,
@@ -401552,7 +401552,7 @@
 "krp_plus": 99.6,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 12.97,
@@ -401965,7 +401965,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.96,
@@ -402261,7 +402261,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.47,
@@ -402654,7 +402654,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.05,
@@ -402741,7 +402741,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.27,
@@ -403340,7 +403340,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.01,
@@ -404054,7 +404054,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.4,
@@ -404235,7 +404235,7 @@
 "krp_plus": 93.8,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 11.17,
@@ -404343,7 +404343,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.46,
@@ -404647,7 +404647,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.28,
@@ -404849,7 +404849,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.48,
@@ -405121,7 +405121,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.51,
@@ -405222,7 +405222,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 20.82,
@@ -405418,7 +405418,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.82,
@@ -405634,7 +405634,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.47,
@@ -406100,7 +406100,7 @@
 "krp_plus": 101.8,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 15.61,
@@ -406208,7 +406208,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.81,
@@ -406417,7 +406417,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.64,
@@ -406512,7 +406512,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.15,
@@ -406821,7 +406821,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 2.96,
@@ -407010,7 +407010,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 12.73,
@@ -407614,7 +407614,7 @@
 "krp_plus": 103.8,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.0,
@@ -407932,7 +407932,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.66,
@@ -408019,7 +408019,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.43,
@@ -408127,7 +408127,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.73,
@@ -408316,7 +408316,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.77,
@@ -408417,7 +408417,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 15.92,
@@ -409317,7 +409317,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.41,
@@ -410010,7 +410010,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.52,
@@ -410213,7 +410213,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.76,
@@ -411477,7 +411477,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.06,
@@ -411679,7 +411679,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.77,
@@ -412184,7 +412184,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.7,
@@ -412478,7 +412478,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.08,
@@ -412565,7 +412565,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.26,
@@ -412660,7 +412660,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.42,
@@ -413059,7 +413059,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.34,
@@ -413249,7 +413249,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.23,
@@ -413351,7 +413351,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.13,
@@ -413641,7 +413641,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.87,
@@ -413823,7 +413823,7 @@
 "krp_plus": 100.3,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.13,
@@ -414228,7 +414228,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.72,
@@ -414536,7 +414536,7 @@
 "krp_plus": 102.1,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.52,
@@ -414852,7 +414852,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.17,
@@ -415122,7 +415122,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.87,
@@ -418522,7 +418522,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 2.22,
@@ -418812,7 +418812,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.39,
@@ -418913,7 +418913,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.24,
@@ -419114,7 +419114,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.83,
@@ -419233,7 +419233,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.68,
@@ -419341,7 +419341,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.0,
@@ -419415,7 +419415,7 @@
 "krp_plus": 100.9,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 12.06,
@@ -419638,7 +419638,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.46,
@@ -419915,7 +419915,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.11,
@@ -420308,7 +420308,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.17,
@@ -421011,7 +421011,7 @@
 "krp_plus": 111.7,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.41,
@@ -421522,7 +421522,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.19,
@@ -422014,7 +422014,7 @@
 "krp_plus": 97.9,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.98,
@@ -422709,7 +422709,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.97,
@@ -423019,7 +423019,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.79,
@@ -423114,7 +423114,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.54,
@@ -423385,7 +423385,7 @@
 "krp_plus": 102.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.75,
@@ -423493,7 +423493,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.76,
@@ -424075,7 +424075,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 12.36,
@@ -425632,7 +425632,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.56,
@@ -425820,7 +425820,7 @@
 "krp_plus": 86.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 26.74,
@@ -426251,7 +426251,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.5,
@@ -426535,7 +426535,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.61,
@@ -426845,7 +426845,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.8,
@@ -426933,7 +426933,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.81,
@@ -427041,7 +427041,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.43,
@@ -427128,7 +427128,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.12,
@@ -427337,7 +427337,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.83,
@@ -429189,7 +429189,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.5,
@@ -429839,7 +429839,7 @@
 "krp_plus": 103.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.05,
@@ -430061,7 +430061,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 2.81,
@@ -430243,7 +430243,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.93,
@@ -430446,7 +430446,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.5,
@@ -432060,7 +432060,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 16.09,
@@ -432165,7 +432165,7 @@
 "krp_plus": 102.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.11,
@@ -432280,7 +432280,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.31,
@@ -432489,7 +432489,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.78,
@@ -432909,7 +432909,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.01,
@@ -433287,7 +433287,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.5,
@@ -433381,7 +433381,7 @@
 "krp_plus": 103.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 12.33,
@@ -433689,7 +433689,7 @@
 "krp_plus": 101.0,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.66,
@@ -434894,7 +434894,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.65,
@@ -435932,7 +435932,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.24,
@@ -436035,7 +436035,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.9,
@@ -436412,7 +436412,7 @@
 "krp_plus": 120.0,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 15.45,
@@ -436625,7 +436625,7 @@
 "krp_plus": 100.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.6,
@@ -436747,7 +436747,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 12.12,
@@ -436841,7 +436841,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.79,
@@ -437144,7 +437144,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.68,
@@ -437333,7 +437333,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.06,
@@ -437435,7 +437435,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.73,
@@ -437543,7 +437543,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.16,
@@ -437745,7 +437745,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.71,
@@ -440084,7 +440084,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.73,
@@ -440583,7 +440583,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.23,
@@ -440683,7 +440683,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.63,
@@ -440899,7 +440899,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.52,
@@ -441273,7 +441273,7 @@
 "krp_plus": 102.3,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 14.83,
@@ -441836,7 +441836,7 @@
 "krp_plus": 81.5,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.63,
@@ -441958,7 +441958,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.74,
@@ -442133,7 +442133,7 @@
 "krp_plus": 91.5,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.03,
@@ -442445,7 +442445,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.31,
@@ -442546,7 +442546,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.05,
@@ -442647,7 +442647,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.36,
@@ -443127,7 +443127,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.27,
@@ -443235,7 +443235,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.39,
@@ -443518,7 +443518,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.31,
@@ -443632,7 +443632,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 11.72,
@@ -444037,7 +444037,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.49,
@@ -444124,7 +444124,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.25,
@@ -444635,7 +444635,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.68,
@@ -444837,7 +444837,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.9,
@@ -445277,7 +445277,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.33,
@@ -445378,7 +445378,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.43,
@@ -446240,7 +446240,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.05,
@@ -446436,7 +446436,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.51,
@@ -446624,7 +446624,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.07,
@@ -446718,7 +446718,7 @@
 "krp_plus": 101.6,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.77,
@@ -446826,7 +446826,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.54,
@@ -447137,7 +447137,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.39,
@@ -447743,7 +447743,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.2,
@@ -447945,7 +447945,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.68,
@@ -448032,7 +448032,7 @@
 "krp_plus": 100.0,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.85,
@@ -449238,7 +449238,7 @@
 "krp_plus": 100.1,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 13.81,
@@ -449554,7 +449554,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.71,
@@ -449773,7 +449773,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.99,
@@ -451169,7 +451169,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.69,
@@ -451375,7 +451375,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.97,
@@ -451567,7 +451567,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.32,
@@ -451668,7 +451668,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.15,
@@ -451776,7 +451776,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.81,
@@ -452065,7 +452065,7 @@
 "krp_plus": 108.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.98,
@@ -452473,7 +452473,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.91,
@@ -452587,7 +452587,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.47,
@@ -453091,7 +453091,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.39,
@@ -453287,7 +453287,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.33,
@@ -453493,7 +453493,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.64,
@@ -454005,7 +454005,7 @@
 "krp_plus": 107.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.37,
@@ -454100,7 +454100,7 @@
 "krp_plus": 101.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.49,
@@ -454839,7 +454839,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.64,
@@ -455318,7 +455318,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.97,
@@ -455412,7 +455412,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 10.99,
@@ -455744,7 +455744,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 10.95,
@@ -456049,7 +456049,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.58,
@@ -456441,7 +456441,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.58,
@@ -456529,7 +456529,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.7,
@@ -456931,7 +456931,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.7,
@@ -457039,7 +457039,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.95,
@@ -457245,7 +457245,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.83,
@@ -457537,7 +457537,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.55,
@@ -457638,7 +457638,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.02,
@@ -458003,7 +458003,7 @@
 "krp_plus": 100.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.57,
@@ -458119,7 +458119,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.04,
@@ -458206,7 +458206,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.56,
@@ -458733,7 +458733,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.52,
@@ -459047,7 +459047,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.97,
@@ -459611,7 +459611,7 @@
 "krp_plus": 93.6,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 10.42,
@@ -459908,7 +459908,7 @@
 "krp_plus": 102.4,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 10.45,
@@ -460124,7 +460124,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.25,
@@ -460232,7 +460232,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.57,
@@ -460528,7 +460528,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.57,
@@ -460723,7 +460723,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.85,
@@ -460925,7 +460925,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.61,
@@ -461236,7 +461236,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.12,
@@ -461537,7 +461537,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 14.09,
@@ -462017,7 +462017,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.13,
@@ -462119,7 +462119,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.39,
@@ -462505,7 +462505,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.92,
@@ -462613,7 +462613,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.95,
@@ -463062,7 +463062,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.67,
@@ -463171,7 +463171,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.36,
@@ -463283,7 +463283,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.82,
@@ -463363,7 +463363,7 @@
 "krp_plus": 120.3,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.91,
@@ -463674,7 +463674,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.04,
@@ -463775,7 +463775,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.39,
@@ -463856,7 +463856,7 @@
 "krp_plus": 103.9,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.78,
@@ -464356,7 +464356,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 13.98,
@@ -464465,7 +464465,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 3.16,
@@ -464850,7 +464850,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.13,
@@ -464951,7 +464951,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.07,
@@ -465052,7 +465052,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.62,
@@ -465153,7 +465153,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 10.76,
@@ -465355,7 +465355,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.54,
@@ -465450,7 +465450,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 10.61,
@@ -465656,7 +465656,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.07,
@@ -465771,7 +465771,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 3.07,
@@ -465871,7 +465871,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.3,
@@ -465972,7 +465972,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.74,
@@ -466086,7 +466086,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.37,
@@ -466400,7 +466400,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 6.68,
@@ -466872,7 +466872,7 @@
 "krp_plus": 89.5,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 18.3,
@@ -467074,7 +467074,7 @@
 "krp_plus": 104.1,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 13.31,
@@ -467277,7 +467277,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.45,
@@ -467480,7 +467480,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 4.03,
@@ -467889,7 +467889,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.14,
@@ -468274,7 +468274,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.81,
@@ -468564,7 +468564,7 @@
 "krp_plus": 98.2,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 16.63,
@@ -468686,7 +468686,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 2.87,
@@ -468780,7 +468780,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.4,
@@ -468881,7 +468881,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 5.28,
@@ -469592,7 +469592,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.53,
@@ -469679,7 +469679,7 @@
 "krp_plus": 100.8,
 "factors": [
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 19.48,
@@ -469788,7 +469788,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 7.77,
@@ -470299,7 +470299,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 6.41,
@@ -470981,7 +470981,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 8.94,
@@ -471089,7 +471089,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.6,
@@ -471372,7 +471372,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 8.86,
@@ -471484,7 +471484,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 9.02,
@@ -471610,7 +471610,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.6,
@@ -471711,7 +471711,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 7.32,
@@ -471913,7 +471913,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 4.97,
@@ -472001,7 +472001,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "up",
 "mag": 9.81,
@@ -474701,7 +474701,7 @@
 "unit": "percentile points"
 },
 {
-"label": "Popup rate allowed",
+"label": "Low popup rate allowed grades up (with his other drivers equal, fewer popups went with more WAR in training)",
 "driver": "scr_w2b_pu_p",
 "dir": "down",
 "mag": 5.64,

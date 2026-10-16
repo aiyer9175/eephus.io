@@ -683,3 +683,31 @@ def test_artifact_carries_the_label_block_and_the_design(artifact):
         assert g["reserved_vm_pins"] == []
         assert g["gate_sha"] is None
     assert math.isfinite(artifact["elapsed_s"])
+
+
+def test_ba_comparisons_read_the_raw_grade():
+    """PEER-5 (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 5): the Baseball America
+    comparator reads BA's raw grade. From the first adjusted-grade season the stored FV is
+    risk-adjusted, so the raw grade under _extras is read and an entry without one is left
+    out; before it the stored grade is the raw grade."""
+    import baseballamerica_csv as BAC
+    first = BAC.ADJUSTED_GRADE_FIRST_SEASON
+
+    def pt(day, fv, raw=None, espn=None):
+        ps = {"baseballamerica": {"fv_published": fv}}
+        if raw is not None:
+            ps["baseballamerica"]["tools"] = {"_extras": {"ba_raw_grade": raw}}
+        if espn is not None:
+            ps["espn"] = {"fv_published": espn}
+        return {"snapshot_date": day, "per_source": ps}
+
+    rec = {"points": [pt(f"{first}-02-01", 45.0, raw=55.0, espn=50.0),
+                      pt(f"{first}-03-01", 40.0),
+                      pt(f"{first - 1}-02-01", 50.0),
+                      pt(f"{first - 1}-03-01", 45.0, raw=45.0),
+                      pt(f"{first - 1}-07-01", 60.0, raw=60.0)]}
+    assert M._ba_raw_by_year(rec) == {first: 55.0, first - 1: 50.0}
+    assert M._extra_grades(rec, first) == {"baseballamerica": 55.0, "espn": 50.0}
+    assert M._extra_grades(rec, first - 1) == {"baseballamerica": 50.0}
+    assert M._extra_grades({"points": [pt(f"{first}-02-01", 45.0)]}, first) == {}
+    assert M._extra_grades(None, first) == {}

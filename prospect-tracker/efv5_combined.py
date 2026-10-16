@@ -1503,7 +1503,10 @@ CHIP_LABELS_V5: dict[str, str] = {
     "scr_w2p_csw_p": "Called plus swinging strike rate vs level",
     "scr_w2p_k_resid_p": "Strikeouts beyond whiff rate",
     "scr_w2p_fstrike_p": "First-pitch strike rate vs level",
-    "scr_w2b_pu_p": "Popup rate allowed",
+    # CON-3 (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 4): the slope is negative, so the
+    # label says which way the rate moves the grade and why
+    "scr_w2b_pu_p": ("Low popup rate allowed grades up (with his other drivers equal, "
+                     "fewer popups went with more WAR in training)"),
     "scr_w4p_pop_pit": "Minor league line translated to future WAR",
     "scr_w2r_panel_pit": "Outside prospect lists vs consensus",
     "scr_rpt_conviction_pit": "Scouting report conviction",
@@ -2211,6 +2214,11 @@ def history_columns(side: str, points: list[tuple], *, today: str | None = None,
 #   3. REPORT drift: a key whose served nonzero share passes DRIFT_RATIO times its training
 #      share (and by DRIFT_MIN_GAP) is named in the receipt and its family's status says
 #      "drift" (the IL family on both sides on 2026-10-15).
+#   4. REPORT spread (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 3, report only): the SD
+#      among a key's served nonzero values against the SD among its nonzero training
+#      values, written as spread_ratio when both sides have SPREAD_MIN_NONZERO nonzero
+#      values, and the key named under "spread" when the ratio passes SPREAD_RATIO. It
+#      changes no value, clip, withhold or family status.
 # Nothing here touches a training number: the support is read off production_train.
 
 #: A column whose nonzero production training values come from fewer read seasons than
@@ -2219,15 +2227,19 @@ SUPPORT_MIN_SEASONS = 2
 #: Drift report thresholds (served nonzero share against the training share).
 DRIFT_RATIO = 2.0
 DRIFT_MIN_GAP = 0.05
+#: Spread report (served nonzero SD against the training nonzero SD), the same 2x rule.
+SPREAD_RATIO = DRIFT_RATIO
+SPREAD_MIN_NONZERO = 20
 _SUPPORT: dict = {}
 
 
 def training_support(side: str, *, log=print) -> dict:
-    """{candidate key: {"n", "nonzero", "nonzero_share", "nonzero_seasons", "min", "max"}}
-    over the production training rows' non-None values of the side (memoized per
-    process); nonzero_seasons counts the read seasons (the MiLB season a row read at its
-    decision year and matrix cutoff) with a nonzero value; min and max are None for a key
-    with no training value."""
+    """{candidate key: {"n", "nonzero", "nonzero_share", "nonzero_seasons", "nonzero_sd",
+    "min", "max"}} over the production training rows' non-None values of the side
+    (memoized per process); nonzero_seasons counts the read seasons (the MiLB season a row
+    read at its decision year and matrix cutoff) with a nonzero value; nonzero_sd is the SD
+    among the nonzero values (None under two); min and max are None for a key with no
+    training value."""
     if side in _SUPPORT:
         return _SUPPORT[side]
     train = production_train(side, log=log)
@@ -2245,22 +2257,41 @@ def training_support(side: str, *, log=print) -> dict:
         ss = {season[id(r)] for r in have if float(r["v2"][k]) != 0.0}
         out[k] = {"n": int(vals.size), "nonzero": nz,
                   "nonzero_share": round(nz / vals.size, 4) if vals.size else 0.0,
-                  "nonzero_seasons": len(ss),
+                  "nonzero_seasons": len(ss), "nonzero_sd": _nonzero_sd(vals),
                   "min": float(vals.min()) if vals.size else None,
                   "max": float(vals.max()) if vals.size else None}
     _SUPPORT[side] = out
     return out
 
 
+def _nonzero_sd(vals) -> float | None:
+    """The SD (ddof 1) among the nonzero values; None under two."""
+    nz = np.asarray([v for v in vals if v != 0.0], dtype=np.float64)
+    return float(nz.std(ddof=1)) if nz.size >= 2 else None
+
+
+def spread_ratio(served_vals, train: dict) -> float | None:
+    """Served nonzero SD over the training nonzero SD, when both sides have at least
+    SPREAD_MIN_NONZERO nonzero values and the training SD is positive; else None."""
+    nz = [v for v in served_vals if v is not None and v != 0.0]
+    t_sd = train.get("nonzero_sd")
+    if (len(nz) < SPREAD_MIN_NONZERO or int(train.get("nonzero") or 0) < SPREAD_MIN_NONZERO
+            or not t_sd or t_sd <= 0):
+        return None
+    return round(_nonzero_sd(nz) / float(t_sd), 4)
+
+
 def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=print) -> dict:
     """cols ({name: {slot: value | None}}) held to the production training support (the
     block above): clipped into the training [min, max], withheld (None) where the training
     column's nonzero values span fewer than SUPPORT_MIN_SEASONS read seasons, drift named. `receipt`, when a
-    dict, takes {"support": {key: ...}} and each drifting family's status."""
+    dict, takes {"support": {key: ...}} and each drifting family's status, and (report
+    only) each key's spread_ratio and the keys whose spread passes SPREAD_RATIO."""
     sup = training_support(side, log=log)
     cands = candidates()
     out, rep = {}, {}
     drift_fams: dict = {}
+    spread_fams: dict = {}
     for n, mp in cols.items():
         k = cands[n]["key"]
         s = sup.get(k) or {"n": 0, "nonzero": 0, "nonzero_share": 0.0, "nonzero_seasons": 0,
@@ -2295,6 +2326,11 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
                     and share - s["nonzero_share"] > DRIFT_MIN_GAP):
                 r["drift"] = True
                 drift_fams.setdefault(_family_of(n), []).append(k)
+            # report only: the spread among nonzero values, before the clip
+            r["spread_ratio"] = spread_ratio(vals, s)
+            if r["spread_ratio"] is not None and r["spread_ratio"] > SPREAD_RATIO:
+                r["spread"] = True
+                spread_fams.setdefault(_family_of(n), []).append(k)
         rep[k] = r
     if receipt is not None:
         receipt["support"] = rep
@@ -2309,6 +2345,11 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
                 note["reason"] = ("served nonzero share above "
                                   f"{DRIFT_RATIO:g}x the training share for {sorted(ks)}; "
                                   "values clipped to the training range")
+        for fam, ks in spread_fams.items():
+            note = fams.get(fam)
+            if note is not None:
+                note["spread"] = sorted(ks)
+        receipt["spread"] = sorted(k for k, r in rep.items() if r.get("spread"))
         receipt["withheld"] = sorted(k for k, r in rep.items() if r["withheld"])
         receipt["clipped"] = sum(r["clipped_low"] + r["clipped_high"] for r in rep.values())
     return out

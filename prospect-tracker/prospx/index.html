@@ -35826,7 +35826,7 @@ function efvDetailCard(p) {
           const magTxt = isFinite(Number(f.mag)) ? Number(f.mag).toFixed(2) : " - ";
           return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
             <span style="color:${col};font-weight:700;width:10px;text-align:center;">${up ? "▲" : "▼"}</span>
-            <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(f.label)}</span>
+            <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(f.label)}">${escapeHtml(f.label)}</span>
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;flex-shrink:0;">${magTxt}</span>
             <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
           </div>`;

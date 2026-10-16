@@ -470,3 +470,13 @@ Spearman difference +0.0123 (CI95 -0.012 to +0.034) on the vintage-matched frame
 (2026-10-15)." Under R it reads +0.0056 (-0.019 to +0.029) and -0.0096 (-0.031 to +0.012); V5's
 own (if nothing flips) -0.0203 (-0.053 to +0.013) and -0.0107 (-0.041 to +0.018). Every reading
 is a tie; none may say "beats consensus".
+
+## Note 2026-10-16 (EFV_PIT_AUDIT_FIXES)
+
+The pitcher list-year loss in section 12.3 (RT minus V5 -0.0307, fold pit|2017 -0.0898) is a cross-fit
+effect of the harness: with lv_dev pit|2017 left out, the pitcher arrival term was nonzero on 16 scored
+rows of the pool (the vm_dev 2017 cohort), and the fold's arrival weight came from them (ratio 1.895,
+clipped to 1.0). At the served weights the pitcher read on lv_dev is -0.0035 against V5 (CI95 -0.0107 to
++0.0037). `cross_fitted` now holds a term lit on fewer than 100 pool rows at 0
+(docs/efv-v2/EFV_PIT_AUDIT_FIXES.md, data/_labs/efv5/efv5_refit_pit_reread.json). The read above is not
+rerun and its artifact is unchanged.

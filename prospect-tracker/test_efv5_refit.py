@@ -190,6 +190,86 @@ def test_cross_fitting_leaves_each_fold_out():
     assert cf["f0"]["w_skill"] > allw and cf["f1"]["w_skill"] < cf["f0"]["w_skill"]
 
 
+def _guard_packs(thin_rows: int, seed: int = 11):
+    """Four folds: e_skill dense with a planted ratio of 0.5; e_time nonzero only in fold
+    f3, on `thin_rows` rows, where it carries a planted positive slope."""
+    rng = np.random.default_rng(seed)
+    packs = []
+    for i in range(4):
+        n = 300
+        u_c = rng.random(n)
+        e_s = rng.normal(0, 0.2, n)
+        e_t = np.zeros(n)
+        if i == 3:
+            e_t[:thin_rows] = rng.normal(0, 0.2, thin_rows)
+        u_y = 0.4 * u_c + 0.2 * e_s + 0.6 * e_t + rng.normal(0, 0.05, n)
+        ols = {"keys": [f"k{i}_{j}" for j in range(n)], "u_c": u_c, "u_y": u_y,
+               "e_s": e_s, "e_t": e_t}
+        packs.append({"fold_id": f"f{i}", "side": "pit", "ols": ols})
+    return packs
+
+
+def test_the_cross_fit_guard_holds_a_thin_term_at_zero():
+    """VAL-1 (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 1): a head term lit on fewer than
+    CROSSFIT_MIN_NONZERO scored rows of a left-out pool leaves its OLS at weight 0; a dense
+    term recovers its planted ratio; the unguarded harness is the old rule."""
+    assert X.CROSSFIT_MIN_NONZERO == 100
+    packs = _guard_packs(16)
+    old = X.cross_fitted(packs, min_nonzero=0)
+    cf = X.cross_fitted(packs)
+    for fid in ("f0", "f1", "f2"):
+        # the pool keeps fold f3, whose 16 rows alone light e_time: the old rule fits it
+        assert old[fid]["w_time"] > 0
+        assert cf[fid]["held_at_zero"] == ["e_time"] and cf[fid]["w_time"] == 0.0
+        assert cf[fid]["nonzero"]["e_time"] == 16
+        rest = [p for p in packs if p["fold_id"] != fid]
+        u_c, u_y, e_s, _e_t = X._pool(rest)
+        want = X.ols_ratios(u_c, u_y, e_s, np.zeros_like(u_c))
+        assert cf[fid]["w_skill"] == pytest.approx(want["w_skill"], abs=1e-12)
+        assert cf[fid]["w_skill_ratio"] == pytest.approx(0.5, abs=0.05)   # planted recovery
+    # leaving out f3 leaves no e_time at all: both rules drop it
+    assert cf["f3"]["w_time"] == old["f3"]["w_time"] == 0.0
+    # a term lit on 100 rows or more is fitted as before
+    dense = _guard_packs(150)
+    assert X.cross_fitted(dense)["f0"]["held_at_zero"] == []
+    assert X.cross_fitted(dense)["f0"]["w_time"] == pytest.approx(
+        X.cross_fitted(dense, min_nonzero=0)["f0"]["w_time"])
+
+
+def test_the_cross_fit_guard_null_term_earns_no_weight():
+    """The null comparator: an e_skill carrying no outcome signal gets a ratio near 0."""
+    rng = np.random.default_rng(13)
+    packs = []
+    for i in range(4):
+        n = 400
+        u_c = rng.random(n)
+        e_s = rng.normal(0, 0.2, n)
+        u_y = 0.4 * u_c + rng.normal(0, 0.05, n)
+        packs.append({"fold_id": f"f{i}", "side": "pit",
+                      "ols": {"keys": [f"k{i}_{j}" for j in range(n)], "u_c": u_c, "u_y": u_y,
+                              "e_s": e_s, "e_t": np.zeros(n)}})
+    for w in X.cross_fitted(packs).values():
+        assert abs(w["w_skill_ratio"]) < 0.1 and w["w_skill"] < 0.1
+
+
+def test_the_served_weight_reread_artifact():
+    """Section 2's read, when it has run: the unguarded cache reproduced the artifact, the
+    guard held only the thin pitcher arrival term, the planted check recovered and the
+    served-weights read sits above its permutation null."""
+    if not X.REREAD_PATH.exists():
+        pytest.skip("the re-read has not run in this tree")
+    d = json.loads(X.REREAD_PATH.read_text(encoding="utf-8"))
+    assert d["role"] == "development" and d["adjudicates"] is False
+    assert d["guard_min_nonzero"] == X.CROSSFIT_MIN_NONZERO
+    held = {k: v["held_at_zero"] for k, v in d["cross_fitted_guarded"].items() if v["held_at_zero"]}
+    assert held == {"lv_dev|pit|2017": ["e_time"]}
+    assert d["cross_fitted_as_read"]["lv_dev|pit|2017"]["w_time"] == 1.0
+    assert d["planted"]["recovered"] is True
+    assert d["null"]["observed"] > d["null"]["q975"]
+    for cell in ("lv_dev", "vm_dev", "both"):
+        assert d["read"][cell]["served_vs_V5"]["delta"] is not None
+
+
 # ---------------------------------------------------------------------------
 # 4. the claim and the stored read
 # ---------------------------------------------------------------------------

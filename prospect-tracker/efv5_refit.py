@@ -93,6 +93,10 @@ POP_COLUMNS = {"hit": "w4p_pop_hit", "pit": "w4p_pop_pit"}
 #: Section 4: the weight bootstrap.
 WEIGHT_B = 2000
 WEIGHT_SEED = 20261016
+#: The cross-fit guard (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 1, owner decision EW3-36):
+#: a head term nonzero on fewer scored rows than this in a left-out pool leaves that pool's
+#: OLS and its fold weight is held at 0.
+CROSSFIT_MIN_NONZERO = 100
 #: Section 6: a candidate may trail V5 by at most this much on either frame.
 MAX_TRAIL = 0.005
 #: Section 4: the descriptive objective grid.
@@ -589,15 +593,24 @@ def weights_from(packs: list[dict]) -> dict:
     return ols_ratios(*_pool(packs))
 
 
-def cross_fitted(packs: list[dict]) -> dict:
-    """{fold id: the weights of the pool with that fold left out}."""
+def cross_fitted(packs: list[dict], *, min_nonzero: int = CROSSFIT_MIN_NONZERO) -> dict:
+    """{fold id: the weights of the pool with that fold left out}. The guard
+    (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 1): a head term nonzero on fewer than
+    `min_nonzero` scored rows of the pool leaves the pool's OLS, as an all-zero term does,
+    and its weight is held at 0 (in the 2026-10-15 read the pitcher arrival weight of fold
+    lv_dev pit|2017 came from the 16 vm_dev 2017 rows alone)."""
     out = {}
     for p in packs:
         rest = [q for q in packs if q["fold_id"] != p["fold_id"]]
-        w = weights_from(rest)
+        u_c, u_y, e_s, e_t = _pool(rest)
+        nz = {"e_skill": int(np.count_nonzero(e_s)), "e_time": int(np.count_nonzero(e_t))}
+        held = sorted(k for k, v in nz.items() if v < int(min_nonzero))
+        z = np.zeros_like(u_c)
+        w = ols_ratios(u_c, u_y, z if "e_skill" in held else e_s, z if "e_time" in held else e_t)
         out[p["fold_id"]] = {"w_skill": w["w_skill"], "w_time": w["w_time"],
                              "w_skill_ratio": w["w_skill_ratio"],
-                             "w_time_ratio": w["w_time_ratio"]}
+                             "w_time_ratio": w["w_time_ratio"],
+                             "nonzero": nz, "held_at_zero": held}
     return out
 
 
@@ -1380,6 +1393,152 @@ def twin_read(p0: dict, packs: dict, weights_cf: dict, b1: dict, scored_vm: list
     return out
 
 
+# ---------------------------------------------------------------------------
+# the re-read at the served weights (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 2)
+# ---------------------------------------------------------------------------
+
+REREAD_PATH = LAB_DIR / "efv5_refit_pit_reread.json"
+REREAD_PERM = 1000
+REREAD_SEED = 20261016
+REREAD_NOISE_SD = 0.3
+_RR = {"served": "rr_served", "read": "rr_read", "guard": "rr_guard"}
+
+
+def reread_rows(packs: list[dict], p0: dict, weights: dict[str, dict], side: str) -> list[dict]:
+    """The side's scored rows of both development frames, each carrying the RT order under
+    every weight set in `weights` ({name: {fold id: {"w_skill", "w_time"}}}), V5's order
+    (phase 0) and consensus; group is frame|side|year so the two frames never share one."""
+    out = []
+    for p in packs:
+        if p["side"] != side:
+            continue
+        fid, fold = p["fid"], int(p["fold"])
+        pos = {k: i for i, k in enumerate(p["keys"])}
+        v5 = p0["orders"][fid]
+        for c in p0["scored"][fid]:
+            if c["side"] != side or int(c["year"]) != fold or c["key"] not in pos:
+                continue
+            i = pos[c["key"]]
+            g = dict(c["grades"])
+            g[KEY["V5"]] = float(v5[(side, fold, c["key"])])
+            for name, ws in weights.items():
+                w = ws[p["fold_id"]]
+                g[_RR[name]] = float(p["u_c"][i] + w["w_skill"] * p["e_s"][i]
+                                     + w["w_time"] * p["e_t"][i])
+            out.append(dict(c, grades=g, group=f"{fid}|{c['group']}", fid=fid, fold=fold,
+                            fold_id=p["fold_id"], _uc=float(p["u_c"][i]),
+                            _es=float(p["e_s"][i]), _et=float(p["e_t"][i])))
+    return out
+
+
+def _within_point(rows: list[dict], key: str) -> float | None:
+    return within_of(rows, key)["within"]
+
+
+def served_weight_reread(cache_dir: Path, *, side: str = "pit", B: int = 2000,
+                         n_perm: int = REREAD_PERM, log=print) -> dict:
+    """Section 2 of docs/efv-v2/EFV_PIT_AUDIT_FIXES.md, once: the side's RT read at the
+    served weights, as read (cross-fitted) and under the cross-fit guard, against V5 and
+    consensus, with a permutation null and a planted-recovery check. Reads the re-fit's
+    cached builds only; decides nothing."""
+    BT, _B4 = _tools()
+    cache_dir = Path(cache_dir)
+    with (cache_dir / "packs_RT.pkl").open("rb") as fh:
+        packs, _rec = pickle.load(fh)
+    with (cache_dir / "phase0.pkl").open("rb") as fh:
+        p0 = pickle.load(fh)
+    mine = [p for p in packs if p["side"] == side]
+    fit = json.loads(FIT_PATH.read_text(encoding="utf-8"))
+    as_read = fit["weights_cross_fitted"]["RT"][side]
+    # the unguarded harness on the cache must reproduce the artifact's weights exactly
+    repro = cross_fitted(mine, min_nonzero=0)
+    for fid_, w in as_read.items():
+        for k in ("w_skill", "w_time"):
+            if abs(float(repro[fid_][k]) - float(w[k])) > 1e-12:
+                raise RuntimeError(f"the cache does not reproduce {fid_} {k}: "
+                                   f"{repro[fid_][k]} against {w[k]}")
+    guard = cross_fitted(mine)
+    served_w = json.loads(WEIGHTS_PATH.read_text(encoding="utf-8"))["weights"][side]
+    served = {p["fold_id"]: {"w_skill": float(served_w["w_skill"]),
+                             "w_time": float(served_w["w_time"])} for p in mine}
+    rows = reread_rows(mine, p0, {"served": served, "read": as_read, "guard": guard}, side)
+    comps = (("served_vs_V5", _RR["served"], KEY["V5"]),
+             ("served_vs_consensus", _RR["served"], BT.CONS),
+             ("read_vs_V5", _RR["read"], KEY["V5"]),
+             ("read_vs_consensus", _RR["read"], BT.CONS),
+             ("guard_vs_V5", _RR["guard"], KEY["V5"]),
+             ("guard_vs_consensus", _RR["guard"], BT.CONS),
+             ("V5_vs_consensus", KEY["V5"], BT.CONS))
+    cells = [("lv_dev", [r for r in rows if r["fid"] == "lv_dev"]),
+             ("vm_dev", [r for r in rows if r["fid"] == "vm_dev"]), ("both", rows)]
+    cells += [(f"lv_dev|{side}|{y}", [r for r in rows if r["fid"] == "lv_dev" and r["fold"] == y])
+              for y in sorted({r["fold"] for r in rows if r["fid"] == "lv_dev"})]
+    read = {}
+    for name, sel in cells:
+        blk = {"n": len(sel), "raters": {k: _within_point(sel, k) for k in
+                                         (_RR["served"], _RR["read"], _RR["guard"], KEY["V5"],
+                                          BT.CONS)}}
+        for cname, a, b in comps:
+            blk[cname] = _keep(BT.paired(sel, a, b, "within", B=B, seed=BT.SEED))
+        read[name] = blk
+        log(f"  {name}: n {len(sel)}, served minus V5 {blk['served_vs_V5'].get('delta')}, "
+            f"minus consensus {blk['served_vs_consensus'].get('delta')}")
+    # the null comparator: e_skill permuted among each fold's test rows
+    rng = np.random.default_rng(REREAD_SEED)
+    cons_w = _within_point(rows, BT.CONS)
+    obs = read["both"]["raters"][_RR["served"]] - cons_w
+    by_fold: dict = {}
+    for j, r in enumerate(rows):
+        by_fold.setdefault(r["fold_id"], []).append(j)
+    ws_, wt_ = float(served_w["w_skill"]), float(served_w["w_time"])
+    null = []
+    for _ in range(int(n_perm)):
+        es = np.asarray([r["_es"] for r in rows])
+        for ix in by_fold.values():
+            ix = np.asarray(ix)
+            es[ix] = es[rng.permutation(ix)]
+        perm = [dict(r, grades=dict(r["grades"], _null=r["_uc"] + ws_ * es[j] + wt_ * r["_et"]))
+                for j, r in enumerate(rows)]
+        null.append(_within_point(perm, "_null") - cons_w)
+    na = np.asarray(null)
+    null_blk = {"n_perm": int(n_perm), "seed": REREAD_SEED, "observed": round(float(obs), 5),
+                "q025": round(float(np.quantile(na, 0.025)), 5),
+                "q975": round(float(np.quantile(na, 0.975)), 5),
+                "share_at_or_above_observed": round(float((na >= obs).mean()), 4)}
+    log(f"  null: observed {null_blk['observed']}, null 95% {null_blk['q025']} to "
+        f"{null_blk['q975']}, share at or above {null_blk['share_at_or_above_observed']}")
+    # planted recovery: the outcome replaced by u_c + k * e_skill + noise
+    planted = {}
+    for k in (0.0, 1.0):
+        prng = np.random.default_rng(REREAD_SEED)
+        eps = prng.normal(0.0, REREAD_NOISE_SD, len(rows))
+        pr = [dict(r, outcome=dict(r["outcome"], war=r["_uc"] + k * r["_es"] + float(eps[j])))
+              for j, r in enumerate(rows)]
+        planted[f"k{k:g}"] = _keep(BT.paired(pr, _RR["served"], BT.CONS, "within", B=B,
+                                             seed=BT.SEED))
+    lb1 = (planted["k1"].get("ci95") or [None])[0]
+    d0 = planted["k0"].get("delta")
+    recovered = bool(lb1 is not None and lb1 > 0 and d0 is not None and d0 <= 0)
+    log(f"  planted: k 1 {planted['k1'].get('delta')} {planted['k1'].get('ci95')}, "
+        f"k 0 {d0}; recovered {recovered}")
+    doc = {"schema": 1, "item": "EFV_PIT_AUDIT_FIXES", "produced_by": f"{TOOL} --reread-served",
+           "role": "development", "adjudicates": False,
+           "doc": "docs/efv-v2/EFV_PIT_AUDIT_FIXES.md", "owner_decision": "EW3-36 (2026-10-16)",
+           "side": side, "source_fit": FIT_PATH.relative_to(ROOT).as_posix(),
+           "source_fit_generated_at": fit.get("generated_at"),
+           "served_weights": {"w_skill": ws_, "w_time": wt_,
+                              "source": WEIGHTS_PATH.relative_to(ROOT).as_posix()},
+           "cross_fitted_as_read": as_read, "cross_fitted_guarded": guard,
+           "guard_min_nonzero": CROSSFIT_MIN_NONZERO, "B": int(B), "seed": BT.SEED,
+           "read": read, "null": null_blk,
+           "planted": {"noise_sd": REREAD_NOISE_SD, "seed": REREAD_SEED, **planted,
+                       "recovered": recovered},
+           "code": _code(), "generated_at": BT._now()}
+    BT.write_doc(doc, REREAD_PATH)
+    log(f"wrote {REREAD_PATH}")
+    return doc
+
+
 def ledger_rows(doc: dict, cand: str, *, artifact: Path, date_: str, now_iso: str) -> list[dict]:
     """Two development rows (model efv_v5_refit, the candidate read), as the v5 fit wrote."""
     import efv_progress as P
@@ -1589,6 +1748,9 @@ def main(argv=None) -> int:
     ap.add_argument("--ledger-path", default=None)
     ap.add_argument("--store-weights", action="store_true",
                     help="rewrite data/efv5_refit_weights.json from the read and its cache")
+    ap.add_argument("--reread-served", action="store_true",
+                    help="the pitcher re-read at the served weights from the read's cache "
+                         "(docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 2), once")
     a = ap.parse_args(argv)
     BT, _B4 = _tools()
 
@@ -1604,6 +1766,16 @@ def main(argv=None) -> int:
                                                          / "progress_ledger.jsonl")
         r = append_ledger(doc, cand, artifact=FIT_PATH, ledger_path=led)
         log(f"progress ledger: appended {len(r['appended'])} rows, {r['n_rows']} rows")
+        return 0
+    if a.reread_served:
+        if not (FIT_PATH.exists() and WEIGHTS_PATH.exists() and a.cache):
+            log("refused: the fit artifact, the weights file and --cache are needed")
+            return 2
+        if REREAD_PATH.exists():
+            log(f"refused: {REREAD_PATH} exists; the re-read runs once")
+            return 2
+        B = BT.B_DEFAULT if a.B is None else int(a.B)
+        served_weight_reread(Path(a.cache), B=B, log=log)
         return 0
     if a.store_weights:
         if not (FIT_PATH.exists() and a.cache):

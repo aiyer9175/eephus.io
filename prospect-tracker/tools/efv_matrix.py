@@ -530,13 +530,47 @@ def _records_by_key(*universes) -> dict:
     return out
 
 
+def _ba_raw_by_year(rec: dict) -> dict:
+    """{year: the largest Baseball America RAW grade published in that year's preseason
+    window} (PEER-5, docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 5). An eFV-vs-BA
+    comparison reads BA's raw grade (tools._extras.ba_raw_grade), never the risk-adjusted
+    grade BA's boards carry as the FV from baseballamerica_csv.ADJUSTED_GRADE_FIRST_SEASON
+    on. Before that season no adjustment existed and the stored grade is the raw grade;
+    from it on, an entry without its raw grade is left out."""
+    import baseballamerica_csv as BAC
+    out: dict = {}
+    for pt in (rec.get("points") or []):
+        sd = str(pt.get("snapshot_date") or "")
+        try:
+            year = int(sd[:4])
+        except ValueError:
+            continue
+        if not (SB._WINDOW_START_MMDD <= sd[4:] < SB._WINDOW_END_MMDD):
+            continue
+        ps = (pt.get("per_source") or {}).get("baseballamerica") or {}
+        raw = ((ps.get("tools") or {}).get("_extras") or {}).get("ba_raw_grade")
+        if raw is None and year < BAC.ADJUSTED_GRADE_FIRST_SEASON:
+            raw = ps.get("fv_published")
+        if raw is None:
+            continue
+        out[year] = max(out.get(year, float(raw)), float(raw))
+    return out
+
+
 def _extra_grades(rec: dict | None, year: int) -> dict:
-    """Baseball America and ESPN in the same preseason window, when they graded the row."""
+    """Baseball America (its raw grade, _ba_raw_by_year) and ESPN in the same preseason
+    window, when they graded the row."""
     if not rec:
         return {}
     inw, _ = SB._all_source_grades_by_year(rec)
     yr = inw.get(year) or {}
-    return {s: float(yr[s]) for s in ("baseballamerica", "espn") if yr.get(s) is not None}
+    out = {}
+    ba = _ba_raw_by_year(rec).get(year)
+    if ba is not None:
+        out["baseballamerica"] = ba
+    if yr.get("espn") is not None:
+        out["espn"] = float(yr["espn"])
+    return out
 
 
 def rows_from_vm(frame_id: str, sb_rows: list[dict], side_of: dict, milb_of: dict,

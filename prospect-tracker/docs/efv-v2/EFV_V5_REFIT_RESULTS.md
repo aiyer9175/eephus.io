@@ -52,14 +52,23 @@ leave-one-year-out sensitivity reads 0.43, still half the served value.
 - Hitters: the re-fit gains +0.029 (list years) and +0.057 (debut cohorts, CI95 +0.008 to
   +0.102) over the served v5, and now sits level with consensus (-0.0035 and +0.0067, both
   intervals across zero) where the served v5 trailed by 0.032 and 0.051.
-- Pitchers: level with the served v5 on the debut cohorts (+0.008) and behind it on the list
-  years (-0.031, CI95 -0.053 to -0.008). The loss sits in one fold (2017, -0.09), the only fold
-  where the leave-one-fold-out pitcher arrival weight jumped to its cap of 1.0; the served
-  pitcher arrival weight is 0, and at the served weights the in-sample pitcher read is within
-  0.001 of the served v5's (0.2212 against 0.2220, both frames pooled).
+- Pitchers: level with the served v5 on the debut cohorts (+0.008) and, as read, behind it on
+  the list years (-0.031, CI95 -0.053 to -0.008). Restated 2026-10-16 (EFV_PIT_AUDIT_FIXES,
+  `data/_labs/efv5/efv5_refit_pit_reread.json`): that loss is a cross-fit effect of the read's
+  harness, not of the served head. It sits in one fold (2017, -0.090), where the pool left
+  after removing that fold lit the pitcher arrival term on 16 scored rows only (the 2017 debut
+  cohort), so the fold's arrival weight came from those 16 rows (ratio 1.89, clipped to 1.0).
+  The served pitcher arrival weight is 0. Read at the served weights (skill 1.0, arrival 0),
+  the pitcher head is level with the served v5 on the list years (-0.0035, CI95 -0.0107 to
+  +0.0037) and with consensus (+0.0085, CI95 -0.0187 to +0.0344); both frames pooled, -0.0009
+  against v5 and +0.0107 against consensus (CI95 -0.0127 to +0.0345), a tie. The harness now
+  holds such a thin term at 0 (`efv5_refit.CROSSFIT_MIN_NONZERO`, 100 rows); with that guard
+  the read gives -0.0037 against v5 on the list years.
 - The rule (pooled over both frames, and no frame behind by more than 0.005): RT +0.0072 pooled
   (list years -0.0002, debut cohorts +0.0326), R +0.0066 (+0.0011, +0.0258). Both pass; RT is
-  prepared because its pooled gain is the larger, as registered.
+  prepared because its pooled gain is the larger, as registered. These figures are the read's
+  as run; the pitcher fold 2017 effect above is inside the list-year figure, and they were not
+  re-read.
 
 At the board's own timing (each debut-cohort row read on 15 October of the season before, against
 the consensus that stood then), the re-fit orders later WAR better than that consensus (+0.036,
