@@ -398,9 +398,40 @@ def window(cutoff: str) -> tuple[date, date, int] | None:
     return date(first, 1, 1), cut, last
 
 
-def asof(person_id, cutoff: str, index: dict | None = None) -> dict:
+#: EFV_PIT_DRIFT_REBASE R1 (docs/efv-v2/EFV_PIT_DRIFT_REBASE.md section 3): the months of a
+#: winter carry-over (a severe stint activated from 1 October, re-placed by 30 April).
+CARRY_END_FROM_MONTH = 10
+CARRY_START_TO_MONTH = 4
+
+
+def _known(day, cut: date) -> bool:
+    return bool(day) and _d(day) < cut
+
+
+def new_episode(s: dict, prev: dict | None, cut: date) -> bool:
+    """R1's training definition of a 60-day count: False for a severe stint that is not a
+    new injury episode as the training-era feed recorded one. A DUPLICATE ended by a
+    following placement on its own start day (the feed reported one placement twice); a
+    CARRY-OVER placed from 1 January to 30 April when `prev`, the person's previous
+    counted severe stint, ended by activation from 1 October of the year before. Only
+    facts announced before `cut` are read."""
+    if (s.get("how") == "next_placement" and s.get("end") == s.get("start")
+            and _known(s.get("end_announced"), cut)):
+        return False
+    if prev is not None and prev.get("how") == "activated" and prev.get("end") \
+            and _known(prev.get("end_announced"), cut):
+        pe, ps = _d(prev["end"]), _d(s["start"])
+        if (pe.month >= CARRY_END_FROM_MONTH and ps.year == pe.year + 1
+                and ps.month <= CARRY_START_TO_MONTH):
+            return False
+    return True
+
+
+def asof(person_id, cutoff: str, index: dict | None = None, *, episodes: bool = False) -> dict:
     """The five columns of one person read as of `cutoff` (module docstring), raw
-    (untransformed). None on every column without an id or a covered window."""
+    (untransformed). None on every column without an id or a covered window. With
+    `episodes` (the served read under efv5_combined.DRIFT_REBASE_ON only) il_60day_pre
+    counts injury episodes (new_episode); every other column is unchanged."""
     out = {c: None for c in COLUMNS}
     try:
         pid = int(person_id) if person_id is not None else None
@@ -413,6 +444,7 @@ def asof(person_id, cutoff: str, index: dict | None = None) -> dict:
     idx = stint_index() if index is None else index
     n = sev = days = 0
     open_at = 0
+    prev_sev = None
     for s in idx.get(pid, ()):
         placed = _d(s["placed"])
         if placed >= cut:
@@ -421,7 +453,9 @@ def asof(person_id, cutoff: str, index: dict | None = None) -> dict:
             continue
         n += 1
         if s["severe"] and s["severe_announced"] and _d(s["severe_announced"]) < cut:
-            sev += 1
+            if not episodes or new_episode(s, prev_sev, cut):
+                sev += 1
+                prev_sev = s
         known_end = (_d(s["end"]) if s["end"] and s["end_announced"]
                      and _d(s["end_announced"]) < cut else None)
         end = min(known_end or cut, cut)

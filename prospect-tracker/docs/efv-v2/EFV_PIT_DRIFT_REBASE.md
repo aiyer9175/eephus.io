@@ -181,3 +181,97 @@ before and after. eFV prints to one decimal (nearest). Hitters are checked uncha
 - D-4 the dev analog reads a fold's test rows as the served read and its training rows without
   twins as the support.
 - D-5 one flag for R1 and R2 together (the owner chose both).
+
+## 10. The read (appended by the run, 2026-10-16; development frames)
+
+Run: `python -u efv5_pit_rebase.py --run --cache <scratch>/wdq/EFV_FIX_B_REFIT/cache --today
+2026-10-16` after the registration commit 9c0aa963 (artifact `data/_labs/efv5/efv5_pit_rebase.json`,
+generated 2026-10-16T22:09:24Z; E_cond B 2000, seed 20260906; placebo, planted and realization
+seed 20261016). No reserved row was built; nothing was cut by consensus-FV level.
+
+### 10.1 Receipts
+
+- Parity: the cached RT fold heads reproduce the cached e_skill exactly on all ten pitcher folds;
+  the stored 60-day definition reproduces every stored test value (1,397 lv_dev and 543 vm_dev
+  test rows).
+- R2 factors on the folds (training nonzero SD over test nonzero SD, the seven keys): lv_dev 2017
+  0.91 to 1.06, 2018 0.99 to 1.13, 2019 0.82 to 0.94; no vm_dev fold reaches 20 nonzero test values
+  on any key, so no vm_dev fold is rescaled. Rows whose e_skill moves under C: 119, 107 and 99 on
+  the lv_dev folds, 4 on vm_dev.
+- R1 on the folds: 5 test rows change their 60-day count (lv_dev 2019: 1; vm_dev 2023: 4). On the
+  production training rows the episode count keeps the stored value on 1,335 of 1,345 pitcher rows
+  (99.26 percent).
+
+### 10.2 The development read (pitchers, within Spearman)
+
+| frame | n | S | C | C2 | C1 | W | consensus |
+|---|---|---|---|---|---|---|---|
+| lv_dev | 1,397 | 0.1714 | 0.1715 | 0.1714 | 0.1714 | 0.1724 | 0.1629 |
+| vm_dev | 424 | 0.3854 | 0.3853 | 0.3854 | 0.3853 | 0.3794 | 0.3674 |
+| both | 1,821 | 0.2198 | 0.2198 | 0.2198 | 0.2198 | 0.2192 | 0.2091 |
+
+Paired differences (E_cond CI95):
+
+| comparison | lv_dev | vm_dev | both |
+|---|---|---|---|
+| C minus S | +0.0001 (-0.0005 to +0.0007) | -0.00015 (-0.0009 to 0.0) | +0.00005 (-0.0004 to +0.0005) |
+| C2 minus S | +0.00006 (-0.0005 to +0.0006) | 0.0 | +0.00005 |
+| C1 minus S | +0.00004 (-0.0001 to +0.0002) | -0.00015 (-0.0009 to 0.0) | 0.0 |
+| W minus S (withhold null arm) | +0.00105 (-0.0060 to +0.0076) | -0.00608 (-0.0202 to +0.0070) | -0.00056 (-0.0070 to +0.0054) |
+| C minus consensus | +0.0086 (-0.0186 to +0.0347) | +0.0178 (-0.0212 to +0.0559) | +0.0107 (-0.0127 to +0.0346) |
+| S minus consensus | +0.0085 (-0.0187 to +0.0344) | +0.0180 (-0.0210 to +0.0561) | +0.0107 (-0.0127 to +0.0345) |
+
+- NULL (random-direction placebo, 1,000 draws): pooled C minus S +0.000042 against a null 95 percent
+  range of -0.00033 to +0.00028; 39.4 percent of draws at or above it. The rebase is not
+  distinguishable from a rescale of the same size in a random direction.
+- PLANTED RECOVERY: planting C reads C minus S -0.00029 (CI95 -0.0010 to +0.0002); planting S reads
+  -0.00047. Not recovered: the instrument cannot resolve a change this small.
+- Top-decile realization (realized share of the implied lift, top decile of the centered shift):
+  both frames S 0.400 (CI95 0.019 to 0.757), C 0.446 (0.062 to 0.816), C minus S +0.046 (CI95
+  +0.0003 to +0.117); bounded 0.689 to 0.773 (+0.084, CI95 +0.002 to +0.215). lv_dev C minus S
+  +0.105 (+0.002 to +0.279), all from the rescaled folds; vm_dev -0.0001. Reported; it enters no
+  rule.
+
+### 10.3 The ship rule (re-fit section 6, S in V5's place)
+
+| candidate | lv_dev minus S | vm_dev minus S | pooled (1,821 rows) | rule 1 | rule 2 | no frame below 0 |
+|---|---|---|---|---|---|---|
+| C | +0.0001 | -0.00015 | +0.000042 | yes | yes | no |
+| C2 | +0.00006 | 0.0 | +0.000046 | yes | yes | yes |
+| C1 | +0.00004 | -0.00015 | -0.000004 | no | yes | no |
+
+### 10.4 The board effect (live board of 2026-10-16, served path, flag off then on)
+
+- The flag-off board reproduces the served `data/xfv.json` grade on all 941 pitchers.
+- Dylan Jordan (consensus 44.15): 51.48, rank 6, to 51.02, rank 7.
+- Top 50 pitchers by eFV order, mean eFV minus consensus: +2.028 to +1.962. Mean absolute eFV minus
+  consensus over the 941 pitchers: 1.257 to 1.225.
+- Pitchers moving 1 or more grade points: 13; 3 or more: 0; largest 1.66 (Braxton Bragg, 44.24 to
+  45.90, rank 72 to 51, his 60-day count read as one episode). Others: Mason McGwire 42.50 to 40.90,
+  Cade Obermueller 44.15 to 42.57, Justin Campbell 42.75 to 44.24, Angel Jimenez 44.00 to 42.57, Talon
+  Haley 47.92 to 46.50, Nolan Perry 47.57 to 48.98, Allen Facundo 41.23 to 42.57, Brady Smith 49.15 to
+  47.90, JD Thompson 42.75 to 43.92 (the artifact lists 20).
+- Live factors: Single-A K columns 0.715 to 0.819 (spread ratios 1.22 to 1.40), Single-A batters faced
+  per game 1.015 (ratio 0.99). Contribution SD of the Single-A starter K rate 4.20 to 3.25 percentile
+  points (production training rows 2.45).
+- The 60-day count: served nonzero share 0.336 before and after (training 0.088), spread ratio 1.90
+  to 0.94, values clipped at the training max 4 to 0, contribution SD 4.38 to 2.94 points (production
+  training rows without twins 1.43). The residual share drift is the league's wider use of the
+  60-day and full-season lists; the rebuild does not remove it.
+- Hitters unchanged.
+
+## 11. The verdict (section 6)
+
+C passes the re-fit rule's two points only nominally (pooled +0.000042), the planted recovery
+failed, and vm_dev reads below 0 (-0.00015, from four rows R1 changed). The registered flip
+condition fails: NOTHING IS FLIPPED. `efv5_combined.DRIFT_REBASE_ON` stays False; the rule is
+built dark with its tests (registered keys and any 2x spread-flagged key rescaled to the training
+spread before the clip; the served 60-day count by injury episode), and no served number moves.
+
+Plain reading: the development frames carry almost none of the drift the owner chose to correct.
+Their factors sit between 0.82 and 1.13 and no vm_dev fold has enough Single-A values to rescale,
+while the live board's are 0.72 to 0.82; the feed's duplicate and carry-over 60-day placements
+are post-2021 bookkeeping that the development test rows barely contain. So the read can neither
+confirm nor refute the correction: it moves within Spearman by 0.0001, inside a random-direction
+placebo and below what the planted check resolves. Flipping it is a drift-correction choice for
+the owner, with the board effect of 10.4.
