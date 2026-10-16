@@ -1,0 +1,334 @@
+{
+ "boot": 2000,
+ "census": {
+  "2018": {
+   "catchers_at_floor": 66,
+   "n_fg": 66,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 66,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.8979789222190477,
+   "r_thr_vs_savant_stealing_runs": 0.3320196759793531,
+   "sd_per_1000_pitches": 0.7810920181297987,
+   "sd_runs": {
+    "BLK": 2.3401876061769746,
+    "CV2": 6.9787439202619,
+    "FRM": 6.326744982995945,
+    "THR": 1.778419021825001
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.11244672855341213,
+    "FRM": 0.821875687988813,
+    "THR": 0.06494020642301862
+   }
+  },
+  "2019": {
+   "catchers_at_floor": 66,
+   "n_fg": 66,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 66,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.947889374580126,
+   "r_thr_vs_savant_stealing_runs": 0.7182694461212871,
+   "sd_per_1000_pitches": 0.7603748526861411,
+   "sd_runs": {
+    "BLK": 2.295691351347561,
+    "CV2": 7.817400998644165,
+    "FRM": 6.413681397522722,
+    "THR": 1.9386206527546526
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.08623870300757785,
+    "FRM": 0.6731161099546664,
+    "THR": 0.061497985580959015
+   }
+  },
+  "2021": {
+   "catchers_at_floor": 67,
+   "n_fg": 67,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 67,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.897850618843804,
+   "r_thr_vs_savant_stealing_runs": 0.6122719514419535,
+   "sd_per_1000_pitches": 0.6531284889424722,
+   "sd_runs": {
+    "BLK": 2.37954385928492,
+    "CV2": 6.235602506928632,
+    "FRM": 5.131862029126445,
+    "THR": 1.739590314177977
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.14562320398659453,
+    "FRM": 0.6773187490824862,
+    "THR": 0.07782822322298268
+   }
+  },
+  "2022": {
+   "catchers_at_floor": 64,
+   "n_fg": 64,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 64,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.9344292345593767,
+   "r_thr_vs_savant_stealing_runs": 0.4956544936358508,
+   "sd_per_1000_pitches": 0.7382650145266219,
+   "sd_runs": {
+    "BLK": 1.8358955358631235,
+    "CV2": 7.108696570021924,
+    "FRM": 5.91450645137375,
+    "THR": 1.4144840226000426
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.06669848624832767,
+    "FRM": 0.6922405975320909,
+    "THR": 0.03959279290880955
+   }
+  },
+  "2023": {
+   "catchers_at_floor": 68,
+   "n_fg": 68,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 68,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.9561770504334038,
+   "r_thr_vs_savant_stealing_runs": 0.667406479531783,
+   "sd_per_1000_pitches": 0.7462850332512306,
+   "sd_runs": {
+    "BLK": 1.7890970547100102,
+    "CV2": 7.686664772475551,
+    "FRM": 6.467916260608914,
+    "THR": 2.441805660973246
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.05417412669561624,
+    "FRM": 0.7080320133785957,
+    "THR": 0.10091281242436315
+   }
+  },
+  "2024": {
+   "catchers_at_floor": 64,
+   "n_fg": 64,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 64,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.9256387575582823,
+   "r_thr_vs_savant_stealing_runs": 0.5250046870441464,
+   "sd_per_1000_pitches": 0.6380478466984394,
+   "sd_runs": {
+    "BLK": 1.7511672889247045,
+    "CV2": 6.587448708641148,
+    "FRM": 5.758669715868325,
+    "THR": 1.9984227593777566
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.07066767107809492,
+    "FRM": 0.764204952399006,
+    "THR": 0.09203229259106797
+   }
+  },
+  "2025": {
+   "catchers_at_floor": 64,
+   "n_fg": 64,
+   "n_savant_blocking": 0,
+   "n_savant_throwing": 64,
+   "r_blk_vs_savant_blocking_runs": null,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.9441088607240566,
+   "r_thr_vs_savant_stealing_runs": 0.6888187710071794,
+   "sd_per_1000_pitches": 0.6071171733086195,
+   "sd_runs": {
+    "BLK": 1.6176933022360358,
+    "CV2": 6.817054712087599,
+    "FRM": 5.278264445783516,
+    "THR": 2.366103875126762
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.05631172296857047,
+    "FRM": 0.5994993696997507,
+    "THR": 0.12046865303988392
+   }
+  },
+  "2026": {
+   "catchers_at_floor": 69,
+   "n_fg": 69,
+   "n_savant_blocking": 69,
+   "n_savant_throwing": 69,
+   "r_blk_vs_savant_blocking_runs": 0.7903897854187787,
+   "r_cv2_vs_fangraphs_catcher_runs": 0.8255799317979046,
+   "r_thr_vs_savant_stealing_runs": 0.354252971366585,
+   "sd_per_1000_pitches": 0.5335156798865109,
+   "sd_runs": {
+    "BLK": 1.7462677824631727,
+    "CV2": 4.380118976429099,
+    "FRM": 3.430564253805852,
+    "THR": 1.9942593685769803
+   },
+   "variance_share_of_parts": {
+    "BLK": 0.1589460971867098,
+    "FRM": 0.6134219345877804,
+    "THR": 0.2072962602485312
+   }
+  }
+ },
+ "dry_run": {
+  "dry_run_pass": true,
+  "null": {
+   "r": 0.0659425261862216,
+   "rho": 0.08790181180596143,
+   "v_p_pass": false,
+   "v_s_pass": false
+  },
+  "planted": {
+   "r": 0.7482856526525241,
+   "rho": 0.7186440677966103,
+   "v_p_pass": true,
+   "v_s_pass": true
+  }
+ },
+ "eabs_beside_2026": {
+  "catchers_joined": 69,
+  "eabs_inside_cv2": false,
+  "eabs_raw_median": 5.999,
+  "eabs_raw_share_under_2_runs": 0.07246376811594203,
+  "r_cv2_vs_eabs_raw": 0.16302736722091501
+ },
+ "gate_doc": "docs/ewar/CATCHER_VALUE_2_GATE.md",
+ "generated_at": "2026-10-16T20:04:05+00:00",
+ "schema": 1,
+ "seconds": 65.2,
+ "seed": 20261016,
+ "sigma": {
+  "batter": 0.15,
+  "catcher": 0.15,
+  "pitcher": 0.15,
+  "umpire": 0.1
+ },
+ "v_p": {
+  "boot_sd": 0.10855016261929529,
+  "comparator_fangraphs": {
+   "hi95": 0.6816880497968025,
+   "lo95": 0.25550799367427046,
+   "n_pairs": 49,
+   "note": "reported beside, no weight",
+   "rho": 0.49602040816326526
+  },
+  "floor_called": 2000,
+  "hi95": 0.7317984226632065,
+  "lo95": 0.3102062269534772,
+  "mde95": 0.17856501750874074,
+  "n_pairs": 49,
+  "pass": true,
+  "rho": 0.543469387755102,
+  "twin_hi95": 0.3847433663122771,
+  "twin_lo95": -0.23071186635259897,
+  "twin_rho": 0.08622448979591836
+ },
+ "v_s": {
+  "beside_no_weight": {
+   "blk": {
+    "hi95": -0.060092303998580475,
+    "lo95": -0.2939002088283606,
+    "r": -0.18495601663063907
+   },
+   "fangraphs_season_not_held_out": {
+    "hi95": 0.1894821609443134,
+    "lo95": -0.041632602815317964,
+    "n_obs": 294,
+    "r": 0.07344714461987725
+   },
+   "frm": {
+    "hi95": 0.24398806510317492,
+    "lo95": 0.004015956704552007,
+    "r": 0.11853885436417502
+   },
+   "thr": {
+    "hi95": 0.06778617598946185,
+    "lo95": -0.16904739013619152,
+    "r": -0.05420937557209279
+   }
+  },
+  "boot_sd": 0.05827482773241256,
+  "hi95": 0.0969778558384296,
+  "lo95": -0.13219708156441604,
+  "mde95": 0.09586209161981867,
+  "n_catchers": 89,
+  "n_obs": 294,
+  "n_team_seasons": 60,
+  "pass": false,
+  "r": -0.02081203364923352,
+  "twin_hi95": 0.1766449240429415,
+  "twin_lo95": -0.05374370719552472,
+  "twin_r": 0.06300823439800203,
+  "twin_single_catcher_groups": 0
+ },
+ "v_s_simulation": {
+  "null": {
+   "beside_no_weight": {
+    "blk": {
+     "hi95": 0.11027218246508734,
+     "lo95": -0.2536039799166244,
+     "r": -0.061253388781652145
+    },
+    "frm": {
+     "hi95": 0.23505848804372284,
+     "lo95": -0.0567405598343021,
+     "r": 0.08473530178697614
+    },
+    "thr": {
+     "hi95": 0.122969955818793,
+     "lo95": -0.3011235674983447,
+     "r": -0.07783768566105684
+    }
+   },
+   "boot_sd": 0.08133799217633143,
+   "hi95": 0.15454443933072148,
+   "lo95": -0.17743481782213283,
+   "mde95": 0.1338009971300652,
+   "n_catchers": 76,
+   "n_obs": 156,
+   "n_team_seasons": 30,
+   "pass": false,
+   "r": -0.003324125041682711,
+   "twin_hi95": 0.1438371989825491,
+   "twin_lo95": -0.15759464435014087,
+   "twin_r": -0.0005092450384090132,
+   "twin_single_catcher_groups": 0
+  },
+  "pass": true,
+  "plant": "outcome = shuffled runs saved + 5 x the catcher's season CV2 per PA",
+  "planted": {
+   "beside_no_weight": {
+    "blk": {
+     "hi95": 0.447889263154851,
+     "lo95": 0.1651099911873803,
+     "r": 0.3123821732183592
+    },
+    "frm": {
+     "hi95": 0.6521855063112226,
+     "lo95": 0.42002086205658906,
+     "r": 0.5396551890643277
+    },
+    "thr": {
+     "hi95": 0.17473184966055688,
+     "lo95": -0.10977586260453896,
+     "r": 0.03728614116818221
+    }
+   },
+   "boot_sd": 0.06197124005649484,
+   "hi95": 0.6166603748113745,
+   "lo95": 0.36632067067441215,
+   "mde95": 0.10194268989293401,
+   "n_catchers": 76,
+   "n_obs": 156,
+   "n_team_seasons": 30,
+   "pass": true,
+   "r": 0.5062495216417938,
+   "twin_hi95": 0.07498993221780219,
+   "twin_lo95": -0.2731968854477662,
+   "twin_r": -0.08815558031051811,
+   "twin_single_catcher_groups": 0
+  }
+ },
+ "verdict": "NOT VALIDATED",
+ "version": "catcher_value_v2"
+}
