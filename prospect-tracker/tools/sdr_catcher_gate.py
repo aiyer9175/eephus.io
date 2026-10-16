@@ -336,8 +336,10 @@ def reported(rows: pd.DataFrame, targets: pd.DataFrame, e1p: pd.DataFrame,
                         if k not in ("sdr", "rfield", "savant")})
     last = int(rows.season.max()) if len(rows) else None
     b26 = rows[rows.season == last].sort_values("sdr", ascending=False)
-    rec = lambda r: {"player": r.player_name, "player_id": int(r.player_id),
-                     "innings": round(float(r.inn), 1), "sdr_runs": round(float(r.sdr), 1)}
+    def rec(r):
+        return {"player": r.player_name, "player_id": int(r.player_id),
+                "innings": round(float(r.inn), 1), "sdr_runs": round(float(r.sdr), 1)}
+
     r6 = {"season": last, "n": int(len(b26)), "top": [rec(r) for r in b26.head(10).itertuples()],
           "bottom": [rec(r) for r in b26.tail(10).iloc[::-1].itertuples()]}
     return {"R1_consecutive_pairs": r1, "R2_full_sdr_on_targets": r2, "R3_total_cell": r3,
