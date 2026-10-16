@@ -145,10 +145,25 @@ def _mlbam_set(db_path: Path = DB_PATH) -> set[int]:
         return set()
     con = sqlite3.connect(str(db_path))
     try:
-        rows = con.execute(
-            "select distinct mlbam from players where mlbam is not null"
-        ).fetchall()
-        return {int(r[0]) for r in rows if r[0] is not None}
+        # The live players table is keyed by player_key and carries no mlbam
+        # column (found 2026-10-15 by the first real drop: the original query
+        # raised OperationalError). The mlbam id lives in player_photos and
+        # mlb_trade_players (storage.load_mlbam_player_keys reads the first);
+        # a players.mlbam column, where a database has one, is read too.
+        sources = (("players", "mlbam"), ("player_photos", "mlbam_id"),
+                   ("mlb_trade_players", "mlbam_id"))
+        out: set[int] = set()
+        for table, col in sources:
+            cols = {r[1] for r in con.execute(f"pragma table_info({table})")}
+            if col not in cols:
+                continue
+            for (v,) in con.execute(
+                    f"select distinct {col} from {table} where {col} is not null"):
+                try:
+                    out.add(int(v))
+                except (TypeError, ValueError):
+                    continue
+        return out
     finally:
         con.close()
 
