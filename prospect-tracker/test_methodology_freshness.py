@@ -389,6 +389,8 @@ MODEL_GLOSSARY = {
     # Position fit entry that composes it.
     "positional_ladder_v2": ["positional_ladder", "position_fit"],
     "positional_ladder_v3": ["positional_ladder"],
+    # eABS v0 (EWAR_T4_EABS, 2026-10-15): the ABS challenges board, documented by its own entry.
+    "eabs": ["eabs"],
     # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
     # grade and a pitcher grade of the same number on the same realized-outcome
     # scale. It changes the DISPLAYED eFV, so the eFV entry documents it.

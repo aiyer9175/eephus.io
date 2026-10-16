@@ -162,7 +162,7 @@ def stability_block(path: Path = STABILITY) -> dict | None:
     prim = doc.get("primary") or {}
     seasons = (doc.get("constants") or {}).get("seasons") or []
     return {"registration": doc.get("registration"), "generated_at": doc.get("generated_at"),
-            "frame": (f"AAA {seasons[0]} to {seasons[-1]}, consecutive seasons" if seasons else None),
+            "frame": (f"AAA {seasons[0]} to {seasons[-1]} (consecutive seasons)" if seasons else None),
             "dispositions": {k: v.get("disposition") for k, v in prim.items()},
             "rho": {k: _r((v.get("real") or {}).get("rho"), 4) for k, v in prim.items()},
             "mde95": {k: _r((v.get("real") or {}).get("mde95"), 4) for k, v in prim.items()}}

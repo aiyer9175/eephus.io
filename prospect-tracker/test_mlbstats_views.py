@@ -1031,7 +1031,8 @@ FROZEN_KEYS = {
 BOARD_ARRAYS = {"rel": "REL_COLS", "sp": "STARTER_COLS", "hit": "HITTER_COLS", "def": "DEFENSE_COLS",
                 "levbat": "BAT_LEV_COLS", "levsp": "STARTER_LEV_COLS", "relteam": "TEAM_COLS",
                 "spteam": "STARTER_TEAM_COLS", "hitteam": "HITTER_TEAM_COLS", "defteam": "DEFENSE_TEAM_COLS",
-                "war": "WAR_COLS", "warteam": "WAR_TEAM_COLS", "br": "BR_COLS", "brteam": "BR_TEAM_COLS"}
+                "war": "WAR_COLS", "warteam": "WAR_TEAM_COLS", "br": "BR_COLS", "brteam": "BR_TEAM_COLS",
+                "abbat": "AB_COLS", "abcat": "AB_COLS", "abpit": "AB_COLS"}
 # The view ids a deep link can name (rcols= / scols= / hcols= / dcols= / bcols=).
 FROZEN_VIEWS = {"rel": ["standard", "skill", "value", "leverage", "pitches", "all"],
                 "sp": ["standard", "skill", "value", "pitches", "all"],
@@ -1395,12 +1396,14 @@ def test_the_count_names_the_qualified_gate_the_closed_drawer_hides():
     one filter deliberately left out of the count."""
     calls = re.findall(r"filtBtn\(filtCount\(([^)]*)\)\)", JS)
     # Six boards plus the Baserunning board (EBR_2_BUILD_DARK), whose
-    # filters bar sits in the page source whatever the flag says.
-    assert len(calls) == 7, calls
+    # filters bar sits in the page source whatever the flag says, plus the ABS
+    # Challenges board (EWAR_T4_EABS), which has no qualified gate: every
+    # challenge is a whole event, so its count carries false there.
+    assert len(calls) == 8, calls
     flags = [c.split(",")[-1].strip() for c in calls]
     assert flags == ["!qualifiedOnly", "!starterQualifiedOnly", "!hitterQualifiedOnly",
                      "!leverageQualifiedOnly", "!defenseQualifiedOnly", "!brQualifiedOnly",
-                     "!warQualifiedOnly"], flags
+                     "false", "!warQualifiedOnly"], flags
     i = JS.index("function filtCount(")
     assert "qualOff ? 1 : 0" in JS[i:i + 300], JS[i:i + 300]
 

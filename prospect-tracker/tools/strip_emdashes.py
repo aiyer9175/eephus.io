@@ -112,6 +112,9 @@ TARGETS: list[str] = [
     # Trade Machine partner screen (W08_2_PARTNER_SCREEN_FLIP, 2026-10-09): the
     # writer of the slice the /trademachine/ panel reads, whose labels land in it.
     "trade_partner_screen.py",
+    # eABS (EWAR_T4_EABS, 2026-10-15): the exporter whose labels land in the
+    # /mlbstats/ Challenges payload.
+    "eabs_export.py",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.
     "models/index.html",
