@@ -237,3 +237,127 @@ not a grade input, and moves no number. FEW and NO-LINE print nothing.
   source); no projections retrain; the fWAR label epoch's runbook untouched;
   `backtest.run_backtest` never called; the served grade does not move in this task (every
   new served path is behind `RELIEVER_ADJ_ON = False`).
+
+## 11. The read (appended by the run, 2026-10-15 local, 2026-10-16 UTC; development frames)
+
+Run: `python -u efv_reliever_adj.py --run --cache <the re-fit read's cache> --work <scratch>`
+after the registration commit f073c92a (the module was uncommitted at run time, so the
+artifact's code block names f073c92a and the module's sha256), artifact
+`data/_labs/efv5/efv_reliever_adj_fit.json` (generated 2026-10-16T03:01:53Z; label
+`fwar@2026-10-02-0341299c20ec`; E_cond B 2000, seed 20260906; E1 and E2 bootstrap B 2000,
+seed 20261017). It ran once, in 193 seconds. No reserved row was built; nothing was cut by
+consensus-FV level.
+
+### 11.1 Receipts
+
+- Cache: the re-fit read's `build1.pkl` (sha256 ddf20b31...) and `packs_RT.pkl` (sha256
+  b0495a10...), read only.
+- Parity: Z recomputed RT's committed pitcher within Spearman exactly (lv_dev 0.1442, vm_dev
+  0.3853). The live board recomputed from RT's production fit gives Brandon Clarke 49.81,
+  rank 13, the served 49.8 and rank 13.
+- C's refit path with the normalization switched off reproduces RT's fold head exactly
+  (largest e_skill difference 0.0 on vm_dev 2023, checked before the read).
+- Classes on the pitcher scored rows: lv_dev STARTER 844, SHORT-START 106, RELIEF 322, FEW 32,
+  NO-LINE 93 (1,397); vm_dev STARTER 324, SHORT-START 13, RELIEF 73, FEW 6, NO-LINE 8 (424).
+  On the 941 live board pitchers (read season 2026): STARTER 390, SHORT-START 83, RELIEF 340,
+  FEW 35, NO-LINE 93. Brandon Clarke reads SHORT-START (2026: 10 G, 10 GS, 29.2 IP, 2.97 IP
+  per start, 12.1 BF per appearance).
+
+### 11.2 E1, realized share of the shift by role (pooled; player-clustered CI95)
+
+| role | n | rho | CI95 |
+|---|---|---|---|
+| STARTER (with FEW, NO-LINE) | 1,307 | 0.349 | 0.029 to 0.827 |
+| SHORT-START | 119 | 0.170 | -0.879 to 1.110 |
+| RELIEF | 395 | 0.176 | -0.197 to 0.661 |
+| non-starter pooled | 514 | 0.084 | -0.247 to 0.439 |
+| non-starter minus STARTER | | -0.265 | -0.814 to 0.144 |
+
+Per frame, non-starter minus STARTER: lv_dev -0.092 (-0.892 to +0.491), vm_dev -0.741 (-2.223
+to +0.622). E1 reads the order's whole shift as the read served it; in lv_dev fold 2017 that
+shift carries the timing term at weight 1.0 (RT's cross-fitted clip), whose realized sign is
+negative, which pulls every lv_dev share down (vm_dev STARTER 1.357). B's rule, which splits
+the skill term from the timing term, reads the skill shift's pooled ratios as REF 1.690,
+SHORT-START 2.496, RELIEF 0.295 (section 11.4).
+
+### 11.3 E2, the audit's D4 measure on model-up rows (top fifth of the centered shift)
+
+| role | n | mean residual (CI95) | mean implied | realized fraction |
+|---|---|---|---|---|
+| STARTER | 233 | +0.058 (+0.014 to +0.100) | +0.106 | 0.55 |
+| SHORT-START | 22 | +0.026 (-0.106 to +0.147) | +0.059 | 0.44 |
+| RELIEF | 112 | -0.020 (-0.061 to +0.023) | +0.043 | -0.46 |
+| non-starter | 134 | -0.013 (-0.054 to +0.027) | +0.046 | -0.27 |
+
+### 11.4 The candidates (pitcher within Spearman, minus Z; E_cond CI95)
+
+| candidate | lv_dev (n 1,397) | vm_dev (n 424) | pooled (n 1,821) |
+|---|---|---|---|
+| A ROLE-HEAD | +0.0038 (-0.0136 to +0.0217) | -0.0090 (-0.0446 to +0.0284) | +0.0009 (-0.0163 to +0.0180) |
+| B ROLE-SHRINK | +0.0029 (-0.0040 to +0.0098) | +0.0055 (-0.0073 to +0.0190) | +0.0035 (-0.0029 to +0.0098) |
+| C WORKLOAD | -0.0055 (-0.0156 to +0.0048) | -0.0069 (-0.0277 to +0.0150) | -0.0058 (-0.0150 to +0.0034) |
+
+Raters on the same rows (within): lv_dev Z 0.1442, A 0.1481, B 0.1472, C 0.1388, consensus
+0.1629, Pipeline 0.1880, FanGraphs 0.1433; vm_dev Z 0.3853, A 0.3763, B 0.3908, C 0.3785,
+consensus 0.3674, Pipeline 0.3624, FanGraphs 0.3261.
+
+B's production weights (every fold pooled): REF 1.0 (ratio 1.690), SHORT-START 1.0 (ratio
+2.496), RELIEF 0.295, timing 0. Its cross-fitted RELIEF weight runs 0.07 to 0.53 by fold; REF
+and SHORT-START clip at 1.0 in every fold. A's production role term: g_RELIEF -0.226, d_RELIEF
+-0.042, g_SHORT-START +0.014, d_SHORT-START +0.089 (a_uc 0.167), DS-08 weight 0.834. C's
+production slopes on log BF per appearance: CSW -0.338, K beyond whiff -0.128, the population
+rank +0.257, the strikeout cells -0.001 to -0.035; skill lambda 1000; DS-08 weight 0.673.
+
+### 11.5 The null comparator, the permuted-role null and the recovery check
+
+- Permuted-role null (decides nothing): B's pooled difference over 200 permutations has mean
+  -0.0011, 95th percentile +0.0012, maximum +0.0096; the real +0.0035 sits at the 98.5th
+  percentile. A over 50 permutations: mean -0.0070, 95th percentile +0.0005; the real +0.0009
+  at the 96th.
+- Planted-effect recovery (sigma 1.879 matches RT's pooled pitcher within 0.1987 under the
+  null plant; 200 replications each): E1 recovers the plant (NULL: rho_nonstarter mean 1.005,
+  sd 0.345; PLANT k = 0.4: mean 0.417, sd 0.325). B passes the ship rule in 1 percent of the
+  replications under NULL and in 1 percent under PLANT (its mean pooled difference -0.0107 and
+  -0.0056). The recovery rule is NOT met: at this label noise the ship rule cannot see a
+  non-starter shift realized at 40 percent through B, so a fail here is not evidence that no
+  usage effect exists.
+
+### 11.6 The sensitivity grid (decides nothing)
+
+Across the 18 cells (GS / G 0.4, 0.5, 0.6; IP / GS 3.0, 3.5, 4.0; the read-season rule and the
+two-season window) the non-starter share rho runs 0.016 to 0.203 against STARTER 0.296 to
+0.368, and B's pooled point difference runs +0.0012 to +0.0052; every cell leaves the
+non-starter share below the starter share and B above Z by a point estimate.
+
+### 11.7 The board effect (live board of 2026-10-15; RT as served against each candidate)
+
+| | A | B | C |
+|---|---|---|---|
+| Brandon Clarke (consensus 45.9; served 49.8, rank 13) | 52.3, rank 4 | 49.8, rank 13 | 49.8, rank 15 |
+| pitchers moved by 1 or more of 941 | 291 | 83 | 61 |
+| largest move | 8.1 | 4.3 | 2.0 |
+| RELIEF mean eFV minus consensus, before to after | -0.33 to -0.56 | -0.33 to -0.12 | -0.33 to -0.16 |
+| SHORT-START mean eFV minus consensus | +0.57 to +4.32 | +0.57 to +0.40 | +0.57 to +0.50 |
+
+Under B the movers are relievers the model lifts (Micah Ashman 45.2 to 40.9, Sandro Santana
+44.2 to 40.0, Matt Jachec 44.2 to 40.9) and relievers it puts below consensus come back up
+(Dylan Lesko 36.6 to 39.4, consensus 42.5);
+the artifact lists the 20 largest short-start and relief movers of each candidate.
+
+## 12. The verdict (section 6)
+
+| candidate | pooled minus Z (CI95) | lower bound above 0 | no frame below -0.005 | passes |
+|---|---|---|---|---|
+| A | +0.0009 (-0.0163 to +0.0180) | no | no (vm_dev -0.0090) | no |
+| B | +0.0035 (-0.0029 to +0.0098) | no | yes | no |
+| C | -0.0058 (-0.0150 to +0.0034) | no | no (both frames) | no |
+
+No candidate passes; nothing is prepared, nothing is built to serve, and the served pitcher
+order is unchanged. The recovery check failed its own rule (B passes 1 percent of the time
+under a planted 60 percent over-prediction), so the read cannot separate "no usage effect"
+from "an effect the development frames are too noisy to resolve". The point estimates lean
+the owner's way for relievers (E2: model-up relievers realize none of their shift; B's
+relief ratio 0.29) and against it for short starters (B's short-start ratio 2.5, E2 0.44
+against starters' 0.55). Brandon Clarke reads SHORT-START, a class whose model-up calls were
+realized at least as well as starters' on these frames. The usage label goes on the PROSPX
+card regardless (section 9).

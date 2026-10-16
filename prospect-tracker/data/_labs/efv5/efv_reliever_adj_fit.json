@@ -1,0 +1,3013 @@
+{
+ "schema": 1,
+ "item": "EFV_RELIEVER_ADJ",
+ "produced_by": "efv_reliever_adj.py",
+ "generated_at": "2026-10-16T03:01:53Z",
+ "role": "development",
+ "adjudicates": false,
+ "doc": "docs/efv-v2/EFV_RELIEVER_ADJ.md",
+ "owner_decision": "EW3-31 (2026-10-15)",
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "code": {
+  "commit": "f073c92a",
+  "tool": "efv_reliever_adj.py",
+  "tool_sha256": "3b21d8bbc1051cdf464abfe12de1c1d26ca5cc12a64025cd6a75c385139621fb",
+  "efv5_refit_sha256": "d47f0c99eaacbca68541bf2ec4d01845ff14b5a1b73654b7a815c325499ba3c3",
+  "doc": "docs/efv-v2/EFV_RELIEVER_ADJ.md",
+  "doc_sha256": "e518cee562f476257573d495934ee385d66182e7462f835611c616ce29468c6e"
+ },
+ "comparator": "Z: the served re-fit RT (pitchers), recomputed from its committed read",
+ "cache": {
+  "build1.pkl": {
+   "sha256": "ddf20b31f09ad6c053e1d4825c5f6d29e767ab0432aa2b2bfe59a50061f36b04",
+   "bytes": 31467807
+  },
+  "packs_RT.pkl": {
+   "sha256": "b0495a106951215fe3b85a052754e0d1998427a599bea22ed2820ed3111a5aaa",
+   "bytes": 364698
+  }
+ },
+ "parity": {
+  "lv_dev": {
+   "recomputed": 0.1442,
+   "committed": 0.1442
+  },
+  "vm_dev": {
+   "recomputed": 0.3853,
+   "committed": 0.3853
+  }
+ },
+ "classification": {
+  "min_g": 5,
+  "gs_share_cut": 0.5,
+  "ip_per_gs_cut": 3.5,
+  "window": "rule",
+  "counts_scored_rows": {
+   "lv_dev": {
+    "STARTER": 844,
+    "SHORT-START": 106,
+    "RELIEF": 322,
+    "FEW": 32,
+    "NO-LINE": 93
+   },
+   "vm_dev": {
+    "STARTER": 324,
+    "SHORT-START": 13,
+    "RELIEF": 73,
+    "FEW": 6,
+    "NO-LINE": 8
+   }
+  },
+  "counts_live": {
+   "STARTER": 390,
+   "SHORT-START": 83,
+   "RELIEF": 340,
+   "FEW": 35,
+   "NO-LINE": 93
+  },
+  "live_read_season": 2026,
+  "brandon_clarke": {
+   "role": "SHORT-START",
+   "read_season": 2026,
+   "seasons": [
+    2026
+   ],
+   "g": 10,
+   "gs": 10,
+   "ip": "29.2",
+   "outs": 89,
+   "bf": 121,
+   "gs_share": 1.0,
+   "ip_per_g": 2.966666666666667,
+   "ip_per_gs": 2.966666666666667,
+   "bf_per_g": 12.1
+  }
+ },
+ "E1_realized_share": {
+  "pooled": {
+   "n": {
+    "STARTER": 1307,
+    "SHORT-START": 119,
+    "RELIEF": 395
+   },
+   "B": 2000,
+   "seed": 20261017,
+   "unit": "player cluster",
+   "STARTER": {
+    "est": 0.3491,
+    "ci95": [
+     0.0294,
+     0.8268
+    ]
+   },
+   "SHORT-START": {
+    "est": 0.1704,
+    "ci95": [
+     -0.8786,
+     1.1095
+    ]
+   },
+   "RELIEF": {
+    "est": 0.1756,
+    "ci95": [
+     -0.1974,
+     0.6605
+    ]
+   },
+   "NONSTARTER": {
+    "est": 0.0837,
+    "ci95": [
+     -0.2465,
+     0.4385
+    ]
+   },
+   "NONSTARTER_minus_STARTER": {
+    "est": -0.2653,
+    "ci95": [
+     -0.8139,
+     0.1441
+    ]
+   }
+  },
+  "lv_dev": {
+   "n": {
+    "STARTER": 969,
+    "SHORT-START": 106,
+    "RELIEF": 322
+   },
+   "B": 2000,
+   "seed": 20261017,
+   "unit": "player cluster",
+   "STARTER": {
+    "est": 0.097,
+    "ci95": [
+     -0.3152,
+     0.7355
+    ]
+   },
+   "SHORT-START": {
+    "est": -0.2454,
+    "ci95": [
+     -1.8793,
+     0.9767
+    ]
+   },
+   "RELIEF": {
+    "est": 0.1837,
+    "ci95": [
+     -0.2859,
+     0.9177
+    ]
+   },
+   "NONSTARTER": {
+    "est": 0.0046,
+    "ci95": [
+     -0.4452,
+     0.4241
+    ]
+   },
+   "NONSTARTER_minus_STARTER": {
+    "est": -0.0924,
+    "ci95": [
+     -0.8915,
+     0.4914
+    ]
+   }
+  },
+  "vm_dev": {
+   "n": {
+    "STARTER": 338,
+    "SHORT-START": 13,
+    "RELIEF": 73
+   },
+   "B": 2000,
+   "seed": 20261017,
+   "unit": "player cluster",
+   "STARTER": {
+    "est": 1.3567,
+    "ci95": [
+     0.6853,
+     2.6826
+    ]
+   },
+   "SHORT-START": {
+    "est": 2.8025,
+    "ci95": [
+     0.688,
+     6.4293
+    ]
+   },
+   "RELIEF": {
+    "est": -0.0022,
+    "ci95": [
+     -1.1381,
+     1.5626
+    ]
+   },
+   "NONSTARTER": {
+    "est": 0.6155,
+    "ci95": [
+     -0.377,
+     2.1756
+    ]
+   },
+   "NONSTARTER_minus_STARTER": {
+    "est": -0.7413,
+    "ci95": [
+     -2.2233,
+     0.6215
+    ]
+   }
+  }
+ },
+ "E2_d4": {
+  "model_up": "top fifth of the centered shift within (frame, fold)",
+  "STARTER": {
+   "n": 233,
+   "mean_resid": 0.0579,
+   "mean_resid_ci95": [
+    0.0143,
+    0.1002
+   ],
+   "mean_implied": 0.1058,
+   "realized_fraction": 0.5477
+  },
+  "SHORT-START": {
+   "n": 22,
+   "mean_resid": 0.0257,
+   "mean_resid_ci95": [
+    -0.1055,
+    0.1471
+   ],
+   "mean_implied": 0.0588,
+   "realized_fraction": 0.4365
+  },
+  "RELIEF": {
+   "n": 112,
+   "mean_resid": -0.0201,
+   "mean_resid_ci95": [
+    -0.061,
+    0.0226
+   ],
+   "mean_implied": 0.0433,
+   "realized_fraction": -0.4632
+  },
+  "NONSTARTER": {
+   "n": 134,
+   "mean_resid": -0.0126,
+   "mean_resid_ci95": [
+    -0.0538,
+    0.0269
+   ],
+   "mean_implied": 0.0459,
+   "realized_fraction": -0.2739
+  }
+ },
+ "raters_within": {
+  "lv_dev": {
+   "Z": 0.1442,
+   "A": 0.1481,
+   "B": 0.1472,
+   "C": 0.1388,
+   "prospx_consensus": 0.1629,
+   "mlb_pipeline": 0.188,
+   "fangraphs": 0.1433
+  },
+  "vm_dev": {
+   "Z": 0.3853,
+   "A": 0.3763,
+   "B": 0.3908,
+   "C": 0.3785,
+   "prospx_consensus": 0.3674,
+   "mlb_pipeline": 0.3624,
+   "fangraphs": 0.3261
+  }
+ },
+ "reads": {
+  "A": {
+   "frames": {
+    "lv_dev": {
+     "delta": 0.00382,
+     "ci95": [
+      -0.0136,
+      0.0217
+     ],
+     "n": 1397,
+     "a": 0.14807,
+     "b": 0.14425,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": -0.00902,
+     "ci95": [
+      -0.0446,
+      0.0284
+     ],
+     "n": 424,
+     "a": 0.37632,
+     "b": 0.38534,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   },
+   "pooled": {
+    "delta": 0.00092,
+    "ci95": [
+     -0.0163,
+     0.018
+    ],
+    "n": 1821,
+    "n_clusters": 1001,
+    "a": 0.19966,
+    "b": 0.19874,
+    "status": "derived",
+    "p_gt_0": 0.5545,
+    "mde95": 0.0144
+   },
+   "vs_consensus": {
+    "lv_dev": {
+     "delta": -0.01479,
+     "ci95": [
+      -0.0432,
+      0.0121
+     ],
+     "n": 1397,
+     "a": 0.14807,
+     "b": 0.16286,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": 0.00888,
+     "ci95": [
+      -0.0399,
+      0.0555
+     ],
+     "n": 424,
+     "a": 0.37632,
+     "b": 0.36744,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   }
+  },
+  "B": {
+   "frames": {
+    "lv_dev": {
+     "delta": 0.00294,
+     "ci95": [
+      -0.004,
+      0.0098
+     ],
+     "n": 1397,
+     "a": 0.14719,
+     "b": 0.14425,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": 0.00547,
+     "ci95": [
+      -0.0073,
+      0.019
+     ],
+     "n": 424,
+     "a": 0.39081,
+     "b": 0.38534,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   },
+   "pooled": {
+    "delta": 0.00352,
+    "ci95": [
+     -0.0029,
+     0.0098
+    ],
+    "n": 1821,
+    "n_clusters": 1001,
+    "a": 0.20226,
+    "b": 0.19874,
+    "status": "derived",
+    "p_gt_0": 0.855,
+    "mde95": 0.0054
+   },
+   "vs_consensus": {
+    "lv_dev": {
+     "delta": -0.01566,
+     "ci95": [
+      -0.0497,
+      0.0168
+     ],
+     "n": 1397,
+     "a": 0.14719,
+     "b": 0.16286,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": 0.02337,
+     "ci95": [
+      -0.0132,
+      0.0572
+     ],
+     "n": 424,
+     "a": 0.39081,
+     "b": 0.36744,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   }
+  },
+  "C": {
+   "frames": {
+    "lv_dev": {
+     "delta": -0.00547,
+     "ci95": [
+      -0.0156,
+      0.0048
+     ],
+     "n": 1397,
+     "a": 0.13878,
+     "b": 0.14425,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": -0.00688,
+     "ci95": [
+      -0.0277,
+      0.015
+     ],
+     "n": 424,
+     "a": 0.37846,
+     "b": 0.38534,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   },
+   "pooled": {
+    "delta": -0.00579,
+    "ci95": [
+     -0.015,
+     0.0034
+    ],
+    "n": 1821,
+    "n_clusters": 1001,
+    "a": 0.19295,
+    "b": 0.19874,
+    "status": "derived",
+    "p_gt_0": 0.109,
+    "mde95": 0.0076
+   },
+   "vs_consensus": {
+    "lv_dev": {
+     "delta": -0.02408,
+     "ci95": [
+      -0.0559,
+      0.0064
+     ],
+     "n": 1397,
+     "a": 0.13878,
+     "b": 0.16286,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    },
+    "vm_dev": {
+     "delta": 0.01102,
+     "ci95": [
+      -0.0299,
+      0.0507
+     ],
+     "n": 424,
+     "a": 0.37846,
+     "b": 0.36744,
+     "reading": "development only; CI95 spans zero",
+     "status": "derived"
+    }
+   }
+  }
+ },
+ "z_vs_consensus": {
+  "lv_dev": {
+   "delta": -0.01861,
+   "ci95": [
+    -0.0554,
+    0.0155
+   ],
+   "n": 1397,
+   "a": 0.14425,
+   "b": 0.16286,
+   "reading": "development only; CI95 spans zero",
+   "status": "derived"
+  },
+  "vm_dev": {
+   "delta": 0.0179,
+   "ci95": [
+    -0.0211,
+    0.056
+   ],
+   "n": 424,
+   "a": 0.38534,
+   "b": 0.36744,
+   "reading": "development only; CI95 spans zero",
+   "status": "derived"
+  }
+ },
+ "weights": {
+  "B_cross_fitted": {
+   "lv_dev|pit|2017": {
+    "ratio|REF": 1.9891,
+    "ratio|SHORT-START": 1.7702,
+    "ratio|RELIEF": 0.0718,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.0718,
+    "ratio|time": 2.3291,
+    "w|time": 1.0
+   },
+   "lv_dev|pit|2018": {
+    "ratio|REF": 1.664,
+    "ratio|SHORT-START": 3.1579,
+    "ratio|RELIEF": 0.4762,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.4762,
+    "ratio|time": -0.4621,
+    "w|time": 0.0
+   },
+   "lv_dev|pit|2019": {
+    "ratio|REF": 1.4364,
+    "ratio|SHORT-START": 2.5808,
+    "ratio|RELIEF": 0.2259,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.2259,
+    "ratio|time": -0.4497,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2017": {
+    "ratio|REF": 1.6878,
+    "ratio|SHORT-START": 2.5433,
+    "ratio|RELIEF": 0.2853,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.2853,
+    "ratio|time": -0.5353,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2018": {
+    "ratio|REF": 1.6608,
+    "ratio|SHORT-START": 2.4457,
+    "ratio|RELIEF": 0.3103,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.3103,
+    "ratio|time": -0.5154,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2019": {
+    "ratio|REF": 1.6689,
+    "ratio|SHORT-START": 2.5073,
+    "ratio|RELIEF": 0.2052,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.2052,
+    "ratio|time": -0.5119,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2020": {
+    "ratio|REF": 1.572,
+    "ratio|SHORT-START": 2.4294,
+    "ratio|RELIEF": 0.2952,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.2952,
+    "ratio|time": -0.5073,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2021": {
+    "ratio|REF": 1.7871,
+    "ratio|SHORT-START": 2.4965,
+    "ratio|RELIEF": 0.527,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.527,
+    "ratio|time": -0.5314,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2022": {
+    "ratio|REF": 1.7019,
+    "ratio|SHORT-START": 2.7433,
+    "ratio|RELIEF": 0.2697,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.2697,
+    "ratio|time": -0.5265,
+    "w|time": 0.0
+   },
+   "vm_dev|pit|2023": {
+    "ratio|REF": 1.757,
+    "ratio|SHORT-START": 2.4081,
+    "ratio|RELIEF": 0.1623,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.1623,
+    "ratio|time": -0.5485,
+    "w|time": 0.0
+   }
+  },
+  "A_role_term_by_fold": {
+   "lv_dev|pit|2017": {
+    "coef": {
+     "intercept": 0.39433,
+     "u_c": 0.24107,
+     "e": 0.4827,
+     "g|SHORT-START": -0.00502,
+     "g|RELIEF": -0.25944,
+     "d|SHORT-START": 0.03548,
+     "d|RELIEF": -0.04772
+    },
+    "n": 339,
+    "n_by_role": {
+     "REF": 231,
+     "SHORT-START": 12,
+     "RELIEF": 96
+    }
+   },
+   "lv_dev|pit|2018": {
+    "coef": {
+     "intercept": 0.43545,
+     "u_c": 0.15308,
+     "e": 0.35976,
+     "g|SHORT-START": -0.16216,
+     "g|RELIEF": -0.10432,
+     "d|SHORT-START": 0.00622,
+     "d|RELIEF": -0.04405
+    },
+    "n": 749,
+    "n_by_role": {
+     "REF": 497,
+     "SHORT-START": 35,
+     "RELIEF": 217
+    }
+   },
+   "lv_dev|pit|2019": {
+    "coef": {
+     "intercept": 0.44018,
+     "u_c": 0.13728,
+     "e": 0.32504,
+     "g|SHORT-START": 0.00696,
+     "g|RELIEF": -0.15856,
+     "d|SHORT-START": -0.00215,
+     "d|RELIEF": -0.03076
+    },
+    "n": 1118,
+    "n_by_role": {
+     "REF": 751,
+     "SHORT-START": 58,
+     "RELIEF": 309
+    }
+   },
+   "vm_dev|pit|2017": {
+    "coef": {
+     "intercept": 0.50306,
+     "u_c": 0.20883,
+     "e": 0.62023,
+     "g|SHORT-START": -31.74057,
+     "g|RELIEF": -0.0743,
+     "d|SHORT-START": 6.48821,
+     "d|RELIEF": -0.25814
+    },
+    "n": 191,
+    "n_by_role": {
+     "REF": 144,
+     "SHORT-START": 2,
+     "RELIEF": 45
+    }
+   },
+   "vm_dev|pit|2018": {
+    "coef": {
+     "intercept": 0.46231,
+     "u_c": 0.24576,
+     "e": 0.56631,
+     "g|SHORT-START": -2.02997,
+     "g|RELIEF": -0.10304,
+     "d|SHORT-START": 0.78955,
+     "d|RELIEF": -0.17329
+    },
+    "n": 251,
+    "n_by_role": {
+     "REF": 188,
+     "SHORT-START": 2,
+     "RELIEF": 61
+    }
+   },
+   "vm_dev|pit|2019": {
+    "coef": {
+     "intercept": 0.49827,
+     "u_c": 0.17966,
+     "e": 1.0533,
+     "g|SHORT-START": 0.40342,
+     "g|RELIEF": -0.30295,
+     "d|SHORT-START": 0.06794,
+     "d|RELIEF": -0.1173
+    },
+    "n": 354,
+    "n_by_role": {
+     "REF": 269,
+     "SHORT-START": 5,
+     "RELIEF": 80
+    }
+   },
+   "vm_dev|pit|2020": {
+    "coef": {
+     "intercept": 0.48743,
+     "u_c": 0.1925,
+     "e": 0.58523,
+     "g|SHORT-START": -0.16816,
+     "g|RELIEF": 0.17446,
+     "d|SHORT-START": 0.22053,
+     "d|RELIEF": -0.08313
+    },
+    "n": 513,
+    "n_by_role": {
+     "REF": 391,
+     "SHORT-START": 7,
+     "RELIEF": 115
+    }
+   },
+   "vm_dev|pit|2021": {
+    "coef": {
+     "intercept": 0.44268,
+     "u_c": 0.21159,
+     "e": 0.52507,
+     "g|SHORT-START": -0.08348,
+     "g|RELIEF": -0.06515,
+     "d|SHORT-START": 0.28555,
+     "d|RELIEF": -0.04737
+    },
+    "n": 717,
+    "n_by_role": {
+     "REF": 539,
+     "SHORT-START": 12,
+     "RELIEF": 166
+    }
+   },
+   "vm_dev|pit|2022": {
+    "coef": {
+     "intercept": 0.46262,
+     "u_c": 0.16334,
+     "e": 0.44058,
+     "g|SHORT-START": 0.00056,
+     "g|RELIEF": -0.23824,
+     "d|SHORT-START": 0.1845,
+     "d|RELIEF": -0.05503
+    },
+    "n": 915,
+    "n_by_role": {
+     "REF": 684,
+     "SHORT-START": 18,
+     "RELIEF": 213
+    }
+   },
+   "vm_dev|pit|2023": {
+    "coef": {
+     "intercept": 0.4502,
+     "u_c": 0.17716,
+     "e": 0.44561,
+     "g|SHORT-START": -0.07725,
+     "g|RELIEF": -0.25236,
+     "d|SHORT-START": 0.08318,
+     "d|RELIEF": -0.04011
+    },
+    "n": 1132,
+    "n_by_role": {
+     "REF": 829,
+     "SHORT-START": 26,
+     "RELIEF": 277
+    }
+   }
+  },
+  "A_cross_fitted": {
+   "lv_dev|pit|2017": {
+    "w_skill": 0.7122,
+    "w_time": 1.0,
+    "w_skill_ratio": 0.7122,
+    "w_time_ratio": 2.9085
+   },
+   "lv_dev|pit|2018": {
+    "w_skill": 0.7673,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.7673,
+    "w_time_ratio": -0.3407
+   },
+   "lv_dev|pit|2019": {
+    "w_skill": 0.6784,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6784,
+    "w_time_ratio": -0.342
+   },
+   "vm_dev|pit|2017": {
+    "w_skill": 0.8977,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.8977,
+    "w_time_ratio": -0.3931
+   },
+   "vm_dev|pit|2018": {
+    "w_skill": 0.9594,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.9594,
+    "w_time_ratio": -0.3706
+   },
+   "vm_dev|pit|2019": {
+    "w_skill": 0.8196,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.8196,
+    "w_time_ratio": -0.3642
+   },
+   "vm_dev|pit|2020": {
+    "w_skill": 0.7718,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.7718,
+    "w_time_ratio": -0.3628
+   },
+   "vm_dev|pit|2021": {
+    "w_skill": 0.9506,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.9506,
+    "w_time_ratio": -0.3705
+   },
+   "vm_dev|pit|2022": {
+    "w_skill": 0.9293,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.9293,
+    "w_time_ratio": -0.3916
+   },
+   "vm_dev|pit|2023": {
+    "w_skill": 0.8566,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.8566,
+    "w_time_ratio": -0.3898
+   }
+  },
+  "C_cross_fitted": {
+   "lv_dev|pit|2017": {
+    "w_skill": 0.813,
+    "w_time": 1.0,
+    "w_skill_ratio": 0.813,
+    "w_time_ratio": 1.8549
+   },
+   "lv_dev|pit|2018": {
+    "w_skill": 0.6712,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6712,
+    "w_time_ratio": -0.4304
+   },
+   "lv_dev|pit|2019": {
+    "w_skill": 0.6167,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6167,
+    "w_time_ratio": -0.4279
+   },
+   "vm_dev|pit|2017": {
+    "w_skill": 0.6617,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6617,
+    "w_time_ratio": -0.4674
+   },
+   "vm_dev|pit|2018": {
+    "w_skill": 0.6503,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6503,
+    "w_time_ratio": -0.4458
+   },
+   "vm_dev|pit|2019": {
+    "w_skill": 0.6449,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6449,
+    "w_time_ratio": -0.4469
+   },
+   "vm_dev|pit|2020": {
+    "w_skill": 0.5946,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.5946,
+    "w_time_ratio": -0.4363
+   },
+   "vm_dev|pit|2021": {
+    "w_skill": 0.7399,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.7399,
+    "w_time_ratio": -0.4625
+   },
+   "vm_dev|pit|2022": {
+    "w_skill": 0.7022,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.7022,
+    "w_time_ratio": -0.4747
+   },
+   "vm_dev|pit|2023": {
+    "w_skill": 0.6673,
+    "w_time": 0.0,
+    "w_skill_ratio": 0.6673,
+    "w_time_ratio": -0.4707
+   }
+  },
+  "C_by_fold": {
+   "lv_dev|pit|2017": {
+    "lam": 300.0,
+    "workload": {
+     "k_rel": [
+      -0.04048,
+      2.6612
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.1853,
+      2.7097
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.11816,
+      2.7097
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.02546,
+      2.7097
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.13879,
+      2.7097
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.08674,
+      2.7097
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.01375,
+      2.7097
+     ],
+     "scr_w2p_csw_p": [
+      -0.35058,
+      2.7211
+     ],
+     "scr_w2p_cstr_p": [
+      -0.07564,
+      2.7211
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.14502,
+      2.7211
+     ],
+     "scr_w4p_pop_pit": [
+      0.16768,
+      2.6815
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "lv_dev|pit|2018": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.04209,
+      2.6587
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.21332,
+      2.6995
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.12877,
+      2.6995
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.02481,
+      2.6995
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.15712,
+      2.6995
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.09106,
+      2.6995
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.01617,
+      2.6995
+     ],
+     "scr_w2p_csw_p": [
+      -0.40031,
+      2.7003
+     ],
+     "scr_w2p_cstr_p": [
+      -0.0114,
+      2.7003
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.1828,
+      2.7003
+     ],
+     "scr_w4p_pop_pit": [
+      0.16256,
+      2.6794
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "lv_dev|pit|2019": {
+    "lam": "inf",
+    "workload": {
+     "k_rel": [
+      -0.03863,
+      2.662
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.1807,
+      2.6904
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.11259,
+      2.6904
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.02602,
+      2.6904
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.13087,
+      2.6904
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.07991,
+      2.6904
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.01446,
+      2.6904
+     ],
+     "scr_w2p_csw_p": [
+      -0.4022,
+      2.6986
+     ],
+     "scr_w2p_cstr_p": [
+      -0.03591,
+      2.6986
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.19822,
+      2.6986
+     ],
+     "scr_w4p_pop_pit": [
+      0.18274,
+      2.6827
+     ]
+    },
+    "nonzero": [
+     "k_rel"
+    ]
+   },
+   "vm_dev|pit|2017": {
+    "lam": "inf",
+    "workload": {
+     "k_rel": [
+      -0.02235,
+      2.756
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.0253,
+      2.7581
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.01044,
+      2.7581
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      0.00399,
+      2.7581
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.03112,
+      2.7581
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.01311,
+      2.7581
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      0.0012,
+      2.7581
+     ],
+     "scr_w2p_csw_p": [
+      -0.37695,
+      2.7463
+     ],
+     "scr_w2p_cstr_p": [
+      -0.0788,
+      2.7463
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.14838,
+      2.7463
+     ],
+     "scr_w4p_pop_pit": [
+      0.20101,
+      2.756
+     ]
+    },
+    "nonzero": [
+     "k_rel"
+    ]
+   },
+   "vm_dev|pit|2018": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02354,
+      2.7482
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.03275,
+      2.7535
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.01894,
+      2.7535
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.0016,
+      2.7535
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.03159,
+      2.7535
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.01529,
+      2.7535
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.00546,
+      2.7535
+     ],
+     "scr_w2p_csw_p": [
+      -0.38082,
+      2.7435
+     ],
+     "scr_w2p_cstr_p": [
+      -0.05329,
+      2.7435
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.15624,
+      2.7435
+     ],
+     "scr_w4p_pop_pit": [
+      0.18567,
+      2.7559
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "vm_dev|pit|2019": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02583,
+      2.7738
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.06014,
+      2.7687
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.02834,
+      2.7687
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.00187,
+      2.7687
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.04724,
+      2.7687
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.02433,
+      2.7687
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.00054,
+      2.7687
+     ],
+     "scr_w2p_csw_p": [
+      -0.34297,
+      2.7612
+     ],
+     "scr_w2p_cstr_p": [
+      0.00125,
+      2.7612
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.1413,
+      2.7612
+     ],
+     "scr_w4p_pop_pit": [
+      0.21651,
+      2.7794
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "vm_dev|pit|2020": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02709,
+      2.7674
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.05357,
+      2.7653
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.026,
+      2.7653
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.00701,
+      2.7653
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.04317,
+      2.7653
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.02596,
+      2.7653
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      -0.00399,
+      2.7653
+     ],
+     "scr_w2p_csw_p": [
+      -0.34129,
+      2.7579
+     ],
+     "scr_w2p_cstr_p": [
+      0.01132,
+      2.7579
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.13681,
+      2.7579
+     ],
+     "scr_w4p_pop_pit": [
+      0.2179,
+      2.7712
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_all_all_k_minus_bb",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_young_all_k_minus_bb",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "vm_dev|pit|2021": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02945,
+      2.7431
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.03788,
+      2.7468
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.01572,
+      2.7468
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.00256,
+      2.7468
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.02946,
+      2.7468
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.0158,
+      2.7468
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      0.00084,
+      2.7468
+     ],
+     "scr_w2p_csw_p": [
+      -0.36903,
+      2.7412
+     ],
+     "scr_w2p_cstr_p": [
+      0.0246,
+      2.7412
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.13031,
+      2.7412
+     ],
+     "scr_w4p_pop_pit": [
+      0.23005,
+      2.749
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_all_all_k_minus_bb",
+     "scr_g5_pit_A_all_all_k_pct",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "vm_dev|pit|2022": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02997,
+      2.7301
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.03791,
+      2.7356
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.01544,
+      2.7356
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      -0.00068,
+      2.7356
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.0302,
+      2.7356
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.01682,
+      2.7356
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      0.0018,
+      2.7356
+     ],
+     "scr_w2p_csw_p": [
+      -0.40312,
+      2.7305
+     ],
+     "scr_w2p_cstr_p": [
+      -0.02669,
+      2.7305
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.14708,
+      2.7305
+     ],
+     "scr_w4p_pop_pit": [
+      0.23028,
+      2.7353
+     ]
+    },
+    "nonzero": [
+     "k_rel",
+     "scr_g5_pit_A_all_all_k_pct",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   },
+   "vm_dev|pit|2023": {
+    "lam": 1000.0,
+    "workload": {
+     "k_rel": [
+      -0.02996,
+      2.6972
+     ],
+     "scr_g5_pit_A_all_all_k_pct": [
+      -0.03713,
+      2.707
+     ],
+     "scr_g5_pit_A_young_all_k_pct": [
+      -0.01161,
+      2.707
+     ],
+     "scr_g5_pit_A_all_SP_k_pct": [
+      0.00159,
+      2.707
+     ],
+     "scr_g5_pit_A_all_all_k_minus_bb": [
+      -0.02979,
+      2.707
+     ],
+     "scr_g5_pit_A_young_all_k_minus_bb": [
+      -0.01327,
+      2.707
+     ],
+     "scr_g5_pit_A_all_SP_k_minus_bb": [
+      0.00426,
+      2.707
+     ],
+     "scr_w2p_csw_p": [
+      -0.37699,
+      2.7042
+     ],
+     "scr_w2p_cstr_p": [
+      -0.03014,
+      2.7042
+     ],
+     "scr_w2p_k_resid_p": [
+      -0.14321,
+      2.7042
+     ],
+     "scr_w4p_pop_pit": [
+      0.24227,
+      2.7061
+     ]
+    },
+    "nonzero": [
+     "scr_g5_pit_A_all_all_k_pct",
+     "scr_g5_pit_A_young_all_k_pct",
+     "scr_g5_pit_A_all_SP_k_pct",
+     "scr_g5_pit_A_all_SP_k_minus_bb",
+     "scr_g5_pit_A_all_SP_bf_per_g",
+     "scr_t5_pit_AAA_all_all_fb_fut",
+     "scr_w2i_stints_skill_pit",
+     "scr_w2i_days_skill_pit",
+     "scr_w2i_sixty_skill_pit",
+     "scr_w2i_open_skill_pit",
+     "scr_w2i_recur_skill_pit",
+     "scr_w2p_cstr_p",
+     "scr_w2p_csw_p",
+     "scr_w2p_k_resid_p",
+     "scr_w2p_fstrike_p",
+     "scr_w2b_pu_p",
+     "scr_w4p_pop_pit",
+     "scr_w2s_brk_pit",
+     "scr_w2s_cmd_pit"
+    ]
+   }
+  }
+ },
+ "ship": {
+  "rule": "pitcher rows; pooled over lv_dev and vm_dev, within Spearman minus Z with CI95 lower bound above 0, and minus Z >= -0.005 on each frame",
+  "candidates": {
+   "A": {
+    "pooled_delta": 0.00092,
+    "pooled_ci95": [
+     -0.0163,
+     0.018
+    ],
+    "frame_deltas": {
+     "lv_dev": 0.00382,
+     "vm_dev": -0.00902
+    },
+    "rule_pooled_lower_above_zero": false,
+    "rule_no_frame_trails": false,
+    "passes": false
+   },
+   "B": {
+    "pooled_delta": 0.00352,
+    "pooled_ci95": [
+     -0.0029,
+     0.0098
+    ],
+    "frame_deltas": {
+     "lv_dev": 0.00294,
+     "vm_dev": 0.00547
+    },
+    "rule_pooled_lower_above_zero": false,
+    "rule_no_frame_trails": true,
+    "passes": false
+   },
+   "C": {
+    "pooled_delta": -0.00579,
+    "pooled_ci95": [
+     -0.015,
+     0.0034
+    ],
+    "frame_deltas": {
+     "lv_dev": -0.00547,
+     "vm_dev": -0.00688
+    },
+    "rule_pooled_lower_above_zero": false,
+    "rule_no_frame_trails": false,
+    "passes": false
+   }
+  },
+  "passing": [],
+  "prepared": null
+ },
+ "permuted_role_null": {
+  "B": {
+   "K": 200,
+   "seed": 20261018,
+   "mean": -0.00105,
+   "p95": 0.00119,
+   "max": 0.0096,
+   "real": 0.00352,
+   "real_percentile": 0.985
+  },
+  "A": {
+   "K": 50,
+   "seed": 20261018,
+   "mean": -0.00697,
+   "p95": 0.00048,
+   "max": 0.00812,
+   "real": 0.00092,
+   "real_percentile": 0.96
+  }
+ },
+ "grid": [
+  {
+   "window": "rule",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1244,
+    "SHORT-START": 73,
+    "RELIEF": 365,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.2957,
+    "SHORT-START": 0.4496,
+    "RELIEF": 0.1984,
+    "NONSTARTER": 0.2029,
+    "NONSTARTER_minus_STARTER": -0.0928
+   },
+   "b_pooled_delta": 0.00309
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1197,
+    "SHORT-START": 120,
+    "RELIEF": 365,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3376,
+    "SHORT-START": 0.1072,
+    "RELIEF": 0.2006,
+    "NONSTARTER": 0.0894,
+    "NONSTARTER_minus_STARTER": -0.2482
+   },
+   "b_pooled_delta": 0.0031
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1137,
+    "SHORT-START": 180,
+    "RELIEF": 365,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3277,
+    "SHORT-START": 0.3341,
+    "RELIEF": 0.2018,
+    "NONSTARTER": 0.0933,
+    "NONSTARTER_minus_STARTER": -0.2343
+   },
+   "b_pooled_delta": 0.00321
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1215,
+    "SHORT-START": 72,
+    "RELIEF": 395,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3065,
+    "SHORT-START": 0.6232,
+    "RELIEF": 0.1738,
+    "NONSTARTER": 0.1916,
+    "NONSTARTER_minus_STARTER": -0.1148
+   },
+   "b_pooled_delta": 0.00349
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1168,
+    "SHORT-START": 119,
+    "RELIEF": 395,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3491,
+    "SHORT-START": 0.1704,
+    "RELIEF": 0.1756,
+    "NONSTARTER": 0.0837,
+    "NONSTARTER_minus_STARTER": -0.2653
+   },
+   "b_pooled_delta": 0.00352
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1108,
+    "SHORT-START": 179,
+    "RELIEF": 395,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3393,
+    "SHORT-START": 0.4107,
+    "RELIEF": 0.1766,
+    "NONSTARTER": 0.0898,
+    "NONSTARTER_minus_STARTER": -0.2494
+   },
+   "b_pooled_delta": 0.00363
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1177,
+    "SHORT-START": 72,
+    "RELIEF": 433,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3365,
+    "SHORT-START": 0.6184,
+    "RELIEF": 0.0789,
+    "NONSTARTER": 0.1185,
+    "NONSTARTER_minus_STARTER": -0.218
+   },
+   "b_pooled_delta": 0.0025
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1133,
+    "SHORT-START": 116,
+    "RELIEF": 433,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3656,
+    "SHORT-START": 0.2911,
+    "RELIEF": 0.0798,
+    "NONSTARTER": 0.0603,
+    "NONSTARTER_minus_STARTER": -0.3053
+   },
+   "b_pooled_delta": 0.00256
+  },
+  {
+   "window": "rule",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1074,
+    "SHORT-START": 175,
+    "RELIEF": 433,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3538,
+    "SHORT-START": 0.4929,
+    "RELIEF": 0.0802,
+    "NONSTARTER": 0.0738,
+    "NONSTARTER_minus_STARTER": -0.28
+   },
+   "b_pooled_delta": 0.00259
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1266,
+    "SHORT-START": 69,
+    "RELIEF": 347,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3087,
+    "SHORT-START": 0.435,
+    "RELIEF": 0.1092,
+    "NONSTARTER": 0.1333,
+    "NONSTARTER_minus_STARTER": -0.1755
+   },
+   "b_pooled_delta": 0.0049
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1211,
+    "SHORT-START": 124,
+    "RELIEF": 347,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.328,
+    "SHORT-START": 0.3872,
+    "RELIEF": 0.1107,
+    "NONSTARTER": 0.0693,
+    "NONSTARTER_minus_STARTER": -0.2588
+   },
+   "b_pooled_delta": 0.00483
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.4,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1144,
+    "SHORT-START": 191,
+    "RELIEF": 347,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3285,
+    "SHORT-START": 0.424,
+    "RELIEF": 0.1116,
+    "NONSTARTER": 0.0749,
+    "NONSTARTER_minus_STARTER": -0.2535
+   },
+   "b_pooled_delta": 0.00482
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1235,
+    "SHORT-START": 69,
+    "RELIEF": 378,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3458,
+    "SHORT-START": 0.4518,
+    "RELIEF": 0.0999,
+    "NONSTARTER": 0.1168,
+    "NONSTARTER_minus_STARTER": -0.2291
+   },
+   "b_pooled_delta": 0.00507
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1180,
+    "SHORT-START": 124,
+    "RELIEF": 378,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3669,
+    "SHORT-START": 0.402,
+    "RELIEF": 0.1013,
+    "NONSTARTER": 0.0555,
+    "NONSTARTER_minus_STARTER": -0.3114
+   },
+   "b_pooled_delta": 0.00515
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.5,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1113,
+    "SHORT-START": 191,
+    "RELIEF": 378,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3676,
+    "SHORT-START": 0.4411,
+    "RELIEF": 0.102,
+    "NONSTARTER": 0.0596,
+    "NONSTARTER_minus_STARTER": -0.308
+   },
+   "b_pooled_delta": 0.00511
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 3.0,
+   "counts": {
+    "STARTER": 1179,
+    "SHORT-START": 69,
+    "RELIEF": 434,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3505,
+    "SHORT-START": 0.4226,
+    "RELIEF": -0.0363,
+    "NONSTARTER": 0.0225,
+    "NONSTARTER_minus_STARTER": -0.328
+   },
+   "b_pooled_delta": 0.00117
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 3.5,
+   "counts": {
+    "STARTER": 1126,
+    "SHORT-START": 122,
+    "RELIEF": 434,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3559,
+    "SHORT-START": 0.4939,
+    "RELIEF": -0.036,
+    "NONSTARTER": 0.0161,
+    "NONSTARTER_minus_STARTER": -0.3399
+   },
+   "b_pooled_delta": 0.00121
+  },
+  {
+   "window": "two",
+   "gs_share_cut": 0.6,
+   "ip_per_gs_cut": 4.0,
+   "counts": {
+    "STARTER": 1060,
+    "SHORT-START": 188,
+    "RELIEF": 434,
+    "FEW": 38,
+    "NO-LINE": 101
+   },
+   "rho": {
+    "STARTER": 0.3569,
+    "SHORT-START": 0.4865,
+    "RELIEF": -0.0357,
+    "NONSTARTER": 0.0347,
+    "NONSTARTER_minus_STARTER": -0.3222
+   },
+   "b_pooled_delta": 0.00118
+  }
+ ],
+ "recovery": {
+  "sigma": 1.87926,
+  "target_within": 0.1987,
+  "reps": 200,
+  "B": 200,
+  "seed": 20261019,
+  "plants": {
+   "NULL": {
+    "k": {
+     "STARTER": 1.0,
+     "SHORT-START": 1.0,
+     "RELIEF": 1.0
+    },
+    "seconds": 44.3,
+    "rho_STARTER": {
+     "mean": 1.0098,
+     "sd": 0.3279,
+     "p05": 0.5998,
+     "p95": 1.6235
+    },
+    "rho_SHORT-START": {
+     "mean": 1.0228,
+     "sd": 0.6201,
+     "p05": 0.0467,
+     "p95": 2.0851
+    },
+    "rho_RELIEF": {
+     "mean": 0.994,
+     "sd": 0.4153,
+     "p05": 0.4013,
+     "p95": 1.8045
+    },
+    "rho_NONSTARTER": {
+     "mean": 1.0054,
+     "sd": 0.3454,
+     "p05": 0.5148,
+     "p95": 1.6405
+    },
+    "b_pooled_delta": {
+     "mean": -0.01066,
+     "sd": 0.01046
+    },
+    "b_pass_rate": 0.01,
+    "b_lower_above_0_rate": 0.01
+   },
+   "PLANT": {
+    "k": {
+     "STARTER": 1.0,
+     "SHORT-START": 0.4,
+     "RELIEF": 0.4
+    },
+    "seconds": 44.1,
+    "rho_STARTER": {
+     "mean": 1.003,
+     "sd": 0.2752,
+     "p05": 0.6029,
+     "p95": 1.5042
+    },
+    "rho_SHORT-START": {
+     "mean": 0.4255,
+     "sd": 0.6799,
+     "p05": -0.7627,
+     "p95": 1.602
+    },
+    "rho_RELIEF": {
+     "mean": 0.4083,
+     "sd": 0.3728,
+     "p05": -0.1707,
+     "p95": 0.9944
+    },
+    "rho_NONSTARTER": {
+     "mean": 0.4167,
+     "sd": 0.3245,
+     "p05": -0.0918,
+     "p95": 0.9667
+    },
+    "b_pooled_delta": {
+     "mean": -0.0056,
+     "sd": 0.00942
+    },
+    "b_pass_rate": 0.01,
+    "b_lower_above_0_rate": 0.01
+   }
+  },
+  "recovery_rule": "under PLANT E1 recovers rho_nonstarter within 0.15 of 0.4 on average and B passes in at least half the replications; under NULL B passes in at most 10 percent",
+  "can_see_the_plant": false
+ },
+ "production": {
+  "B": {
+   "weights": {
+    "ratio|REF": 1.68997,
+    "ratio|SHORT-START": 2.49558,
+    "ratio|RELIEF": 0.29475,
+    "w|REF": 1.0,
+    "w|SHORT-START": 1.0,
+    "w|RELIEF": 0.29475,
+    "ratio|time": -0.51137,
+    "w|time": 0.0
+   },
+   "coef": {
+    "intercept": 0.43682,
+    "u_c": 0.14702,
+    "e_skill|REF": 0.24846,
+    "e_skill|SHORT-START": 0.3669,
+    "e_skill|RELIEF": 0.04333,
+    "e_time": -0.07518,
+    "I|SHORT-START": -0.0143,
+    "I|RELIEF": -0.03485
+   },
+   "n": 1821
+  },
+  "A": {
+   "role_term": {
+    "intercept": 0.44605,
+    "u_c": 0.16713,
+    "e": 0.40152,
+    "g|SHORT-START": 0.0143,
+    "g|RELIEF": -0.22579,
+    "d|SHORT-START": 0.08943,
+    "d|RELIEF": -0.04209
+   },
+   "n": 1737,
+   "n_by_role": {
+    "REF": 1164,
+    "SHORT-START": 62,
+    "RELIEF": 511
+   },
+   "w_skill": 0.83389,
+   "w_time": 0.0
+  },
+  "C": {
+   "workload": {
+    "k_rel": [
+     -0.02674,
+     2.6141
+    ],
+    "scr_g5_pit_A_all_all_k_pct": [
+     -0.03534,
+     2.6297
+    ],
+    "scr_g5_pit_A_young_all_k_pct": [
+     -0.01119,
+     2.6297
+    ],
+    "scr_g5_pit_A_all_SP_k_pct": [
+     -0.00126,
+     2.6297
+    ],
+    "scr_g5_pit_A_all_all_k_minus_bb": [
+     -0.01387,
+     2.6297
+    ],
+    "scr_g5_pit_A_young_all_k_minus_bb": [
+     -0.00966,
+     2.6297
+    ],
+    "scr_g5_pit_A_all_SP_k_minus_bb": [
+     0.00394,
+     2.6297
+    ],
+    "scr_w2p_csw_p": [
+     -0.33784,
+     2.6287
+    ],
+    "scr_w2p_cstr_p": [
+     -0.03215,
+     2.6287
+    ],
+    "scr_w2p_k_resid_p": [
+     -0.12801,
+     2.6287
+    ],
+    "scr_w4p_pop_pit": [
+     0.25741,
+     2.6319
+    ]
+   },
+   "lam": 1000.0,
+   "w_skill": 0.6726,
+   "w_time": 0.0,
+   "skill_keys": [
+    "scr_g5_pit_A_all_all_k_minus_bb",
+    "scr_g5_pit_A_all_all_k_pct",
+    "scr_g5_pit_A_young_all_k_pct",
+    "scr_g5_pit_A_young_all_k_minus_bb",
+    "scr_g5_pit_A_all_SP_k_pct",
+    "scr_g5_pit_A_all_SP_k_minus_bb",
+    "scr_g5_pit_A_all_SP_bf_per_g",
+    "scr_t5_pit_AAA_all_all_fb_fut",
+    "scr_w2i_stints_skill_pit",
+    "scr_w2i_days_skill_pit",
+    "scr_w2i_sixty_skill_pit",
+    "scr_w2i_open_skill_pit",
+    "scr_w2i_recur_skill_pit",
+    "scr_w2p_cstr_p",
+    "scr_w2p_csw_p",
+    "scr_w2p_k_resid_p",
+    "scr_w2p_fstrike_p",
+    "scr_w2b_pu_p",
+    "scr_w4p_pop_pit",
+    "scr_w2s_brk_pit",
+    "scr_w2s_cmd_pit"
+   ],
+   "skill_beta": [
+    0.0,
+    0.00216,
+    0.00017,
+    0.0,
+    0.00682,
+    0.00236,
+    0.00182,
+    0.00352,
+    0.00643,
+    -0.00964,
+    -0.00443,
+    0.00123,
+    0.00399,
+    0.0044,
+    0.01672,
+    0.0134,
+    -0.00179,
+    -0.01592,
+    0.02545,
+    0.00405,
+    0.01417
+   ]
+  }
+ },
+ "board": {
+  "B": {
+   "n": 941,
+   "by_class": {
+    "STARTER": {
+     "n": 390,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.494,
+      "after": 1.515
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.306,
+      "after": 0.191
+     }
+    },
+    "SHORT-START": {
+     "n": 83,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.834,
+      "after": 1.848
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.571,
+      "after": 0.403
+     }
+    },
+    "RELIEF": {
+     "n": 340,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.909,
+      "after": 0.34
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.332,
+      "after": -0.115
+     }
+    },
+    "FEW": {
+     "n": 35,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.903,
+      "after": 0.824
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.289,
+      "after": -0.415
+     }
+    },
+    "NO-LINE": {
+     "n": 93,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.156,
+      "after": 0.969
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.471,
+      "after": -0.583
+     }
+    }
+   },
+   "moved_1_or_more": 83,
+   "max_move": 4.3,
+   "top20_short_or_relief": [
+    {
+     "player_key": "micah_ashman",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 45.2,
+     "after": 40.9,
+     "rank_before": 64,
+     "rank_after": 165
+    },
+    {
+     "player_key": "sandro_santana",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 44.2,
+     "after": 40.0,
+     "rank_before": 73,
+     "rank_after": 213
+    },
+    {
+     "player_key": "matt_jachec",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 44.2,
+     "after": 40.9,
+     "rank_before": 79,
+     "rank_after": 180
+    },
+    {
+     "player_key": "andrew_dunford",
+     "role": "RELIEF",
+     "consensus": 35.0,
+     "before": 31.8,
+     "after": 35.0,
+     "rank_before": 941,
+     "rank_after": 909
+    },
+    {
+     "player_key": "dylan_lesko",
+     "role": "RELIEF",
+     "consensus": 42.5,
+     "before": 36.6,
+     "after": 39.4,
+     "rank_before": 602,
+     "rank_after": 285
+    },
+    {
+     "player_key": "jordarlin_mendoza",
+     "role": "RELIEF",
+     "consensus": 39.4,
+     "before": 36.6,
+     "after": 38.8,
+     "rank_before": 597,
+     "rank_after": 391
+    },
+    {
+     "player_key": "ryan_forcucci",
+     "role": "SHORT-START",
+     "consensus": 37.6,
+     "before": 33.9,
+     "after": 31.8,
+     "rank_before": 940,
+     "rank_after": 941
+    },
+    {
+     "player_key": "josh_grosz",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 42.2,
+     "after": 40.1,
+     "rank_before": 127,
+     "rank_after": 210
+    },
+    {
+     "player_key": "austin_vernon",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 36.2,
+     "after": 38.1,
+     "rank_before": 666,
+     "rank_after": 450
+    },
+    {
+     "player_key": "carlson_reed",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 36.2,
+     "after": 38.1,
+     "rank_before": 660,
+     "rank_after": 448
+    },
+    {
+     "player_key": "landon_sims",
+     "role": "RELIEF",
+     "consensus": 40.2,
+     "before": 37.5,
+     "after": 39.2,
+     "rank_before": 539,
+     "rank_after": 323
+    },
+    {
+     "player_key": "chase_mobley",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 35.9,
+     "after": 37.6,
+     "rank_before": 683,
+     "rank_after": 461
+    },
+    {
+     "player_key": "maddux_bruns",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 36.6,
+     "after": 38.3,
+     "rank_before": 595,
+     "rank_after": 425
+    },
+    {
+     "player_key": "ben_simon",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 474,
+     "rank_after": 332
+    },
+    {
+     "player_key": "junseok_shim",
+     "role": "RELIEF",
+     "consensus": 40.2,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 500,
+     "rank_after": 306
+    },
+    {
+     "player_key": "kamden_edge",
+     "role": "RELIEF",
+     "consensus": 35.0,
+     "before": 37.6,
+     "after": 35.9,
+     "rank_before": 504,
+     "rank_after": 689
+    },
+    {
+     "player_key": "quinton_low",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 468,
+     "rank_after": 329
+    },
+    {
+     "player_key": "tyler_hampu",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 467,
+     "rank_after": 328
+    },
+    {
+     "player_key": "zac_leigh",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 488,
+     "rank_after": 338
+    },
+    {
+     "player_key": "jose_paulino",
+     "role": "RELIEF",
+     "consensus": 40.2,
+     "before": 42.5,
+     "after": 40.8,
+     "rank_before": 122,
+     "rank_after": 188
+    }
+   ],
+   "brandon_clarke": {
+    "role": "SHORT-START",
+    "consensus": 45.9,
+    "before": 49.8,
+    "after": 49.8,
+    "rank_before": 13,
+    "rank_after": 13
+   }
+  },
+  "A": {
+   "n": 941,
+   "by_class": {
+    "STARTER": {
+     "n": 390,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.494,
+      "after": 1.333
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.306,
+      "after": -0.2
+     }
+    },
+    "SHORT-START": {
+     "n": 83,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.834,
+      "after": 4.381
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.571,
+      "after": 4.319
+     }
+    },
+    "RELIEF": {
+     "n": 340,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.909,
+      "after": 0.591
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.332,
+      "after": -0.56
+     }
+    },
+    "FEW": {
+     "n": 35,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.903,
+      "after": 0.842
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.289,
+      "after": -0.375
+     }
+    },
+    "NO-LINE": {
+     "n": 93,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.156,
+      "after": 1.313
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.471,
+      "after": -0.826
+     }
+    }
+   },
+   "moved_1_or_more": 291,
+   "max_move": 8.1,
+   "top20_short_or_relief": [
+    {
+     "player_key": "micah_ashman",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 45.2,
+     "after": 37.6,
+     "rank_before": 64,
+     "rank_after": 515
+    },
+    {
+     "player_key": "ixan_henderson",
+     "role": "SHORT-START",
+     "consensus": 40.9,
+     "before": 41.4,
+     "after": 48.9,
+     "rank_before": 139,
+     "rank_after": 24
+    },
+    {
+     "player_key": "sandro_santana",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 44.2,
+     "after": 36.9,
+     "rank_before": 73,
+     "rank_after": 576
+    },
+    {
+     "player_key": "charlee_soto",
+     "role": "SHORT-START",
+     "consensus": 45.6,
+     "before": 42.6,
+     "after": 49.8,
+     "rank_before": 94,
+     "rank_after": 16
+    },
+    {
+     "player_key": "humberto_cruz",
+     "role": "SHORT-START",
+     "consensus": 44.4,
+     "before": 40.9,
+     "after": 48.0,
+     "rank_before": 157,
+     "rank_after": 27
+    },
+    {
+     "player_key": "lanhong_su",
+     "role": "SHORT-START",
+     "consensus": 39.2,
+     "before": 41.7,
+     "after": 48.7,
+     "rank_before": 134,
+     "rank_after": 25
+    },
+    {
+     "player_key": "justin_campbell",
+     "role": "SHORT-START",
+     "consensus": 41.4,
+     "before": 42.8,
+     "after": 49.8,
+     "rank_before": 90,
+     "rank_after": 15
+    },
+    {
+     "player_key": "matt_jachec",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 44.2,
+     "after": 37.6,
+     "rank_before": 79,
+     "rank_after": 496
+    },
+    {
+     "player_key": "moises_chace",
+     "role": "SHORT-START",
+     "consensus": 42.6,
+     "before": 40.9,
+     "after": 47.6,
+     "rank_before": 173,
+     "rank_after": 31
+    },
+    {
+     "player_key": "miguel_sime_jr",
+     "role": "SHORT-START",
+     "consensus": 44.2,
+     "before": 52.3,
+     "after": 59.0,
+     "rank_before": 3,
+     "rank_after": 1
+    },
+    {
+     "player_key": "jarlin_susana",
+     "role": "SHORT-START",
+     "consensus": 50.6,
+     "before": 51.5,
+     "after": 58.1,
+     "rank_before": 5,
+     "rank_after": 2
+    },
+    {
+     "player_key": "braden_nett",
+     "role": "SHORT-START",
+     "consensus": 44.2,
+     "before": 42.6,
+     "after": 49.0,
+     "rank_before": 108,
+     "rank_after": 19
+    },
+    {
+     "player_key": "yohanfer_santana",
+     "role": "SHORT-START",
+     "consensus": 41.2,
+     "before": 42.6,
+     "after": 49.0,
+     "rank_before": 117,
+     "rank_after": 21
+    },
+    {
+     "player_key": "landon_harmon",
+     "role": "SHORT-START",
+     "consensus": 44.2,
+     "before": 40.3,
+     "after": 46.1,
+     "rank_before": 197,
+     "rank_after": 39
+    },
+    {
+     "player_key": "joey_oakie",
+     "role": "SHORT-START",
+     "consensus": 42.6,
+     "before": 40.1,
+     "after": 45.9,
+     "rank_before": 211,
+     "rank_after": 47
+    },
+    {
+     "player_key": "kevin_defrank",
+     "role": "SHORT-START",
+     "consensus": 45.9,
+     "before": 40.1,
+     "after": 45.9,
+     "rank_before": 207,
+     "rank_after": 44
+    },
+    {
+     "player_key": "will_watson",
+     "role": "SHORT-START",
+     "consensus": 40.9,
+     "before": 40.2,
+     "after": 45.9,
+     "rank_before": 198,
+     "rank_after": 41
+    },
+    {
+     "player_key": "miguel_mendez",
+     "role": "SHORT-START",
+     "consensus": 42.6,
+     "before": 40.2,
+     "after": 45.9,
+     "rank_before": 201,
+     "rank_after": 42
+    },
+    {
+     "player_key": "jacob_steinmetz",
+     "role": "SHORT-START",
+     "consensus": 38.0,
+     "before": 40.0,
+     "after": 45.7,
+     "rank_before": 218,
+     "rank_after": 60
+    },
+    {
+     "player_key": "cade_obermueller",
+     "role": "SHORT-START",
+     "consensus": 39.2,
+     "before": 44.1,
+     "after": 49.8,
+     "rank_before": 82,
+     "rank_after": 14
+    }
+   ],
+   "brandon_clarke": {
+    "role": "SHORT-START",
+    "consensus": 45.9,
+    "before": 49.8,
+    "after": 52.3,
+    "rank_before": 13,
+    "rank_after": 4
+   }
+  },
+  "C": {
+   "n": 941,
+   "by_class": {
+    "STARTER": {
+     "n": 390,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.494,
+      "after": 1.184
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.306,
+      "after": 0.173
+     }
+    },
+    "SHORT-START": {
+     "n": 83,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.834,
+      "after": 1.468
+     },
+     "mean_efv_minus_consensus": {
+      "before": 0.571,
+      "after": 0.501
+     }
+    },
+    "RELIEF": {
+     "n": 340,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.909,
+      "after": 0.648
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.332,
+      "after": -0.164
+     }
+    },
+    "FEW": {
+     "n": 35,
+     "mean_abs_efv_minus_consensus": {
+      "before": 0.903,
+      "after": 0.709
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.289,
+      "after": -0.415
+     }
+    },
+    "NO-LINE": {
+     "n": 93,
+     "mean_abs_efv_minus_consensus": {
+      "before": 1.156,
+      "after": 0.865
+     },
+     "mean_efv_minus_consensus": {
+      "before": -0.471,
+      "after": -0.416
+     }
+    }
+   },
+   "moved_1_or_more": 61,
+   "max_move": 2.0,
+   "top20_short_or_relief": [
+    {
+     "player_key": "cade_obermueller",
+     "role": "SHORT-START",
+     "consensus": 39.2,
+     "before": 44.1,
+     "after": 42.4,
+     "rank_before": 82,
+     "rank_after": 123
+    },
+    {
+     "player_key": "dylan_lesko",
+     "role": "RELIEF",
+     "consensus": 42.5,
+     "before": 36.6,
+     "after": 38.3,
+     "rank_before": 602,
+     "rank_after": 443
+    },
+    {
+     "player_key": "charlee_soto",
+     "role": "SHORT-START",
+     "consensus": 45.6,
+     "before": 42.6,
+     "after": 44.2,
+     "rank_before": 94,
+     "rank_after": 77
+    },
+    {
+     "player_key": "janero_miller",
+     "role": "RELIEF",
+     "consensus": 45.7,
+     "before": 40.9,
+     "after": 42.5,
+     "rank_before": 163,
+     "rank_after": 121
+    },
+    {
+     "player_key": "jarold_rosado",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.2,
+     "rank_before": 463,
+     "rank_after": 357
+    },
+    {
+     "player_key": "sandro_santana",
+     "role": "RELIEF",
+     "consensus": 39.2,
+     "before": 44.2,
+     "after": 42.8,
+     "rank_before": 73,
+     "rank_after": 89
+    },
+    {
+     "player_key": "ben_simon",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 39.0,
+     "rank_before": 474,
+     "rank_after": 364
+    },
+    {
+     "player_key": "tyler_hampu",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 38.9,
+     "rank_before": 467,
+     "rank_after": 370
+    },
+    {
+     "player_key": "junseok_shim",
+     "role": "RELIEF",
+     "consensus": 40.2,
+     "before": 37.6,
+     "after": 38.9,
+     "rank_before": 500,
+     "rank_after": 379
+    },
+    {
+     "player_key": "quinton_low",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 38.9,
+     "rank_before": 468,
+     "rank_after": 376
+    },
+    {
+     "player_key": "zac_leigh",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 38.9,
+     "rank_before": 488,
+     "rank_after": 383
+    },
+    {
+     "player_key": "landon_sims",
+     "role": "RELIEF",
+     "consensus": 40.2,
+     "before": 37.5,
+     "after": 38.7,
+     "rank_before": 539,
+     "rank_after": 407
+    },
+    {
+     "player_key": "luis_gutierrez",
+     "role": "SHORT-START",
+     "consensus": 34.2,
+     "before": 36.2,
+     "after": 35.0,
+     "rank_before": 671,
+     "rank_after": 751
+    },
+    {
+     "player_key": "rj_dabovich",
+     "role": "RELIEF",
+     "consensus": 35.1,
+     "before": 37.6,
+     "after": 36.4,
+     "rank_before": 505,
+     "rank_after": 624
+    },
+    {
+     "player_key": "xavier_mitchell",
+     "role": "SHORT-START",
+     "consensus": 36.4,
+     "before": 38.9,
+     "after": 37.7,
+     "rank_before": 369,
+     "rank_after": 456
+    },
+    {
+     "player_key": "christian_chamberlain",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.6,
+     "after": 38.7,
+     "rank_before": 496,
+     "rank_after": 399
+    },
+    {
+     "player_key": "anyer_laureano",
+     "role": "RELIEF",
+     "consensus": 40.0,
+     "before": 37.7,
+     "after": 38.9,
+     "rank_before": 456,
+     "rank_after": 378
+    },
+    {
+     "player_key": "cameron_millar__sa3069267",
+     "role": "SHORT-START",
+     "consensus": 35.9,
+     "before": 38.8,
+     "after": 37.6,
+     "rank_before": 388,
+     "rank_after": 463
+    },
+    {
+     "player_key": "jace_beck",
+     "role": "RELIEF",
+     "consensus": 35.0,
+     "before": 37.5,
+     "after": 36.4,
+     "rank_before": 547,
+     "rank_after": 635
+    },
+    {
+     "player_key": "ryan_forcucci",
+     "role": "SHORT-START",
+     "consensus": 37.6,
+     "before": 33.9,
+     "after": 35.0,
+     "rank_before": 940,
+     "rank_after": 929
+    }
+   ],
+   "brandon_clarke": {
+    "role": "SHORT-START",
+    "consensus": 45.9,
+    "before": 49.8,
+    "after": 49.8,
+    "rank_before": 13,
+    "rank_after": 15
+   }
+  }
+ },
+ "served_check": {
+  "brandon_clarke": {
+   "served": 49.8,
+   "served_rank": 13,
+   "recomputed": 49.81,
+   "recomputed_rank": 13
+  }
+ },
+ "elapsed_s": 193.1
+}
