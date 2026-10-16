@@ -1939,6 +1939,138 @@ in it (that document's part 2) and stays S3's own arm.
 - Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.6 2026-10-16: Statcast's catcher runs, the catcher component S3c of candidate part 6 (clause (i), owner decisions EW3-38 and EW3-23)
+
+- **Owner answer, as recorded** (2026-10-16, `DECISIONS_FOR_OWNER.md` EW3-38, answering
+  SDR-CATCHER-Q1 with options (b) and (d) after `docs/sdr-2026-08-18/SDR_CATCHER_GATE.md` read
+  PARTIAL): "serve Savant's catcher runs (framing, blocking, throwing, total) on the MLB Stats
+  catcher board labelled as Statcast's, and register them as eWAR v3's catcher defense component for
+  the skill look". Part 1 gains this row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-38 (catcher) | The catcher reading of eWAR v3's fielding part | Statcast's catcher runs (framing, blocking and throwing, FRP at C as FanGraphs publishes them) are candidate part 6's catcher component S3c, scored by the skill look on 11.2's realized-runs rules and team guard; SDR at catcher is not handed on (SDR_CATCHER_GATE.md part 11.2, PARTIAL) | answered 2026-10-16 (`DECISIONS_FOR_OWNER.md`, EW3-38); registered by queue task STATCAST_CATCHER_RUNS |
+
+- **What this amendment departs from, disclosed.** Like 11.3 and 11.5 it changes items the sentence
+  above 11.1 says never change: candidate part 6 gains a catcher component with two cells of its
+  own, its Holm family grows by those two cells, and a rule for combining the component with S3 or
+  S3t is added. It does so only because the owner decided it (EW3-38) before the skill look ran, and
+  it is recorded as an owner override of that sentence for these items alone. 11.2.7 requires a part
+  registered after 11.2 to name its target, its B0 and its cells before any number; this amendment
+  does that. Unchanged: S3 and S3t (parts 9.4 and 11.5), every other candidate part, 11.2's targets
+  for the other components, its B1 rule, twin, team guard, secondary estimand, dispositions and their
+  precedence, the frame, the floors, the margin +0.02, B = 2,000 and seed 20261008, and every clock
+  of part 7.
+- **Pinned by** this file's own pin test (`test_ebr_gate_registration.py`).
+
+#### 11.6.1 The component S3c: definition
+
+```
+hitter i, season s (2016 on):
+  SC_i    = FRP on i's catcher row of FanGraphs' fielding leaderboard for season s
+            (fFRP + bFRP + tFRP: Statcast's framing, blocking and throwing runs as FanGraphs
+            publishes them); 0 when i has no catcher row
+  O_i     = sum over i's non-catcher rows r of that leaderboard of FRP_r
+  BC_i    = Fld_i + Frm_i - O_i        the base's catcher fielding: S3's Fld + Frm
+                                       (dem_plus.fld_total) less his fielding at other positions
+  g_cat,i = SC_i - BC_i                when i has a catcher row with innings at C above 0, else 0
+  d_cat,i = g_cat,i - PA_i * (sum_k g_cat,k) / (sum_k PA_k)    swar.recentre, per season, hitters
+  test value (part 9.4 form)   fWAR_i + d_cat,i / RPW_s
+```
+
+- **Source.** The cached FanGraphs fielding leaderboard files
+  `.cache/sdr/home/defense_plus/data/raw/fg_field_full_<season>.csv` (`tools/sdr_inhouse.py fetch`;
+  url, sha256 and fetch time per file in `.cache/sdr/fetch_manifest.json`), the files
+  `SDR_CATCHER_GATE.md` read as its incumbent I-S, and the series the MLB Stats catcher board serves
+  as Statcast's catcher runs (`data/statcast_catcher_runs.json`, task STATCAST_CATCHER_RUNS,
+  measurement only). The lab reads them as cached on look day, never fetched, and prints each file's
+  sha256 before any statistic.
+- SC enters unshrunk: it is Statcast's published number, and the shrink question belongs to S3
+  (11.6.3). Pitcher-batters carry 0 (S3's rule). A hitter whose catcher row has no FRP carries
+  g_cat 0.
+- **Invariants** (pinned by the lab's fixture test): (1) a hitter with no catcher row carries g_cat
+  0 before the re-centring; (2) when SC_i equals BC_i on every row, every d_cat is 0 and every test
+  value equals fWAR; (3) d_cat sums to 0 per season within 1e-9 runs; (4) a pitcher-batter carries
+  0; (5) the build never writes `data/ewar.json` and imports no `fg_leaderboards`.
+
+#### 11.6.2 How the skill look scores S3c
+
+- **Rows, the catcher frame.** The skill look's hitter pairs (Y, Y+1), predictor seasons 2021 to
+  2024 (2020 out on both sides), 200 PA in both seasons, restricted to hitters with 300 or more
+  innings at C in season Y (the SDR catcher gate's catcher floor). Elsewhere d_cat is the re-centring
+  term alone, so the cells read only the frame where the component departs from the base.
+- **Target and B0: 11.2.1's fielding row.** B0 is Fld + Frm in Y (S3's actual arm); the test value
+  is B0 + d_cat. The target follows 11.2.2's rule for a part led by Statcast: DRS (Sports Info
+  Solutions) in Y+1, summed over the player's positions, from the same cached leaderboard files: per
+  PA (rate cell) and in runs (total cell). SC reads Statcast; B0 carries FanGraphs' CFraming and its
+  Statcast blocking and throwing; DRS reads neither.
+- **Cells:** S3c C-rate and S3c C-cum, in candidate part 6's Holm family, which becomes {H-rate,
+  H-cum, C-rate, C-cum}, k = 4, or {H-rate, H-cum, S3t H-rate, S3t H-cum, C-rate, C-cum}, k = 6,
+  when S3t is scored (11.5.2, or an owner decision that makes S3t eligible).
+- **B1** by 11.2.1's rule with its own k for these cells: x the B0 rate per PA, m the season's
+  PA-weighted mean B0 rate on the catcher frame, r the pooled Pearson of the B0 rate in Y and DRS per
+  PA in Y+1 on the 2016 to 2018 predictor pairs at the same floors, fitted from B0 and the target
+  only (no SC, delta or test value read) and frozen with its log before the look.
+- **The twin, MDE95 and floors first, convention v2 primary with v1 required to agree in sign, the
+  dispositions and their precedence** are 11.2's, unchanged; the twin permutes d_cat within (season,
+  side, exposure decile) among the catcher frame's rows and adds it back to B0.
+- **Team guard (11.2.4)** on the hitter side (run differential and wins), over every hitter, with the
+  series fWAR_i + d_cat,i / RPW_s. **Secondary estimand (11.2.5)** on the catcher frame.
+- **Reported beside, deciding nothing:** the per-inning form of the SDR catcher gate on the skill
+  look's catcher pairs (SC and BC per inning at C in Y, on DRS per inning at C in Y+1, catchers at 300
+  or more innings at C in both seasons), and the size of g_cat per season (sd, max, top movers).
+
+#### 11.6.3 Admission, the combination with S3 or S3t, and copy
+
+- S3c qualifies by 11.2.6's rule: its C-rate cell WIN (components), its C-cum cell not LOSS and its
+  team guard NON-INFERIOR. It is a component, not an arm: it is admitted or not on its own cells,
+  whatever S3 and S3t read.
+- **Admitted alone:** the assembled series of 9.7 adds g_cat,i to g_i.
+- **Admitted with S3:** S3 shrinks the substituted total, g_fld,i = rel_i * (Fld_i + Frm_i - BC_i +
+  SC_i) - (Fld_i + Frm_i), with S3's own rel_i; g_cat is then not added a second time.
+- **Admitted with S3t:** S3t's catcher term (the sum of T_C,r over i's catcher rows) is replaced by
+  SC_i; the rest of T_i is unchanged.
+- The combinations are never scored (9.7: each admitted part was scored alone). **Not admitted:**
+  the catcher keeps the base's fielding, or S3's or S3t's handling of it where those are admitted.
+- **Copy** follows 11.2.6 with [component's runs] "fielding runs (from Sports Info Solutions' DRS)"
+  and the frame "catchers with 300 or more innings at C"; when S3c enters, the card names it "eWAR
+  skill: catcher defense (Statcast)". The served Statcast catcher columns carry no comparative
+  sentence from this look until part 12.2 holds a result.
+- eWAR realized (11.2.8) carries no S3c term under this registration.
+
+#### 11.6.4 What was read before this amendment, and before the skill look
+
+- **Prior reads on overlapping pairs.** `SDR_CATCHER_GATE.md` part 11.2 (2026-10-16), catchers at
+  300 or more innings at C in Y and Y+1, Y 2017 to 2025, 321 pairs: Savant's catcher runs per inning
+  at C (I-S, the SC series) ranked DRS per inning at C in Y+1 at 0.5177 and their own series in Y+1
+  at 0.6176, and persisted at 0.4208 on two-season-apart pairs. `docs/ewar/FIELDING_TRIANGULATION_GATE.md`
+  part 6, 234 pairs: the base's catcher fielding read 0.5149 on DRS per inning at C in Y+1. Those
+  pairs overlap the skill look's catcher pairs, so S3c's cells are not blind: SC and a form of BC
+  were each scored on the DRS target per inning there, though never against each other on this
+  frame, per PA, in totals or as a re-centred delta. The twin, B1 and the team guard carry the blind
+  weight, as 11.4.6 and 11.5.4 say of their parts.
+- **Census facts read for this amendment, same season only, no estimand.** FRP equals fFRP + bFRP +
+  tFRP within one run on every catcher row 2016 to 2026 (`SDR_CATCHER_GATE.md` part 0). bFRP is 0 on
+  every catcher row of 2016 and 2017 (Statcast blocking begins in 2018), so SC carries framing and
+  throwing only in those seasons. Against Savant's own leaderboards on 2018, 2021, 2024, 2025 and
+  2026: fFRP is Savant's framing run value rounded (mean absolute difference 0.24 to 0.26 runs, at
+  most 0.5), bFRP equals Savant's catcher blocking runs exactly, and tFRP lies within 2.74 runs of
+  Savant's catcher throwing runs (mean 0.27 to 0.44). On 2026's 60 catchers who played no other
+  position, FanGraphs' Fld lies within 0.8 runs of bFRP + tFRP (mean 0.30) and Frm equals CFraming
+  within 0.05, so for a full-time catcher g_cat is close to fFRP minus CFraming: the component's
+  departure from the base is Statcast's framing number in place of FanGraphs' framing number, plus
+  rounding.
+- **Registered expectations** (predictions from those priors, not measurements): the C-rate cell is
+  EQUIVALENT or UNRESOLVED (the two forms read 0.5177 and 0.5149 on overlapping per-inning cells);
+  the twin fails; the team guard is NON-INFERIOR, because a catcher-only departure is small against
+  the hitter side's sums.
+- The skill look (part 7.3) does not score S3c until `tools/swar_lab.py` implements 11.6.1 and 11.6.2
+  (the component, its source, the catcher frame, the DRS target, its B1 and twin) with a fixture test
+  carrying a null comparator and a planted recovery, and a dry run on fixtures with nulls passes, in
+  its own commit with no number of S3c computed (task EWV3_LAB_AMENDED_TARGETS).
+- Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
