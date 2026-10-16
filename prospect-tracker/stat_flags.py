@@ -429,19 +429,24 @@ TOOL_PLUS_GREEN  = 115
 TOOL_PLUS_RED    = 85
 
 
-def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
+def compute_tool_flags(tools: dict | None, is_pitcher: bool,
+                       grades: dict | None = None) -> list[dict]:
     """Green/red flags driven by scouting tool grades.
 
     Returns a list of flag dicts in the same shape compute_stat_flags
     emits so the UI can concatenate the two and let one renderer handle
     both. `tools` is the dict built by storage._compute_tool_composites
     (carries `grades` + composite_* fields; X+ indices may be missing if
-    this runs before the population-norm pass).
+    this runs before the population-norm pass). `grades`, when given, is
+    the per-tool map the flags read in place of tools["grades"]: the
+    export passes the SHOWN grades (ETOOLS_ALL_CALCS), the eTool's whole
+    grade where one passed and the consensus grade otherwise.
     """
     out: list[dict] = []
     if not tools:
         return out
-    grades = tools.get("grades") or {}
+    if grades is None:
+        grades = tools.get("grades") or {}
     labels = _TOOL_LABELS_PITCHER if is_pitcher else _TOOL_LABELS_HITTER
 
     for key, grade in grades.items():

@@ -1045,6 +1045,9 @@ MODEL_GLOSSARY = {
     "etool_ebat": ["etools", "ebat"],
     "etool_efb": ["etools", "efb"],
     "etool_ecmd": ["etools", "ecmd"],
+    # the eTool composite (ETOOLS_ALL_CALCS, 2026-10-15): the composites built from the
+    # shown grades; documented by its own entry and the Tool entry.
+    "etool_composite": ["etool_composite", "tool"],
 }
 
 

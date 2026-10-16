@@ -1,0 +1,1800 @@
+{
+ "item": "ETOOLS_ALL_CALCS",
+ "role": "development",
+ "gate_doc": "docs/tools-2026-10/ETOOLS_ALL_CALCS.md",
+ "R_TIP": {
+  "read": "R-TIP",
+  "ran_at": "2026-10-16T02:40:38Z",
+  "gate_sha": "f19387fb",
+  "seed": 20261030,
+  "B": 2000,
+  "margin_share": 0.05,
+  "frame": "eTools development frame, L_MLB, LOYO player-disjoint",
+  "universe": {
+   "mlb_line_before_board_year": 1128,
+   "identity_ambiguous": 232,
+   "identity_disagrees_with_record": 177,
+   "identity_no_candidate": 282,
+   "no_record": 158,
+   "duplicate_player": 4,
+   "rows": 8898
+  },
+  "seconds": 50.2,
+  "tools": {
+   "hit": {
+    "n": 1385,
+    "players": 602,
+    "mae_etool": 3.572846,
+    "mae_consensus": 4.380331,
+    "d": -0.807485,
+    "ub95": -0.645275,
+    "ci95": [
+     -0.996993,
+     -0.608783
+    ],
+    "margin": 0.219017,
+    "draws": 2000,
+    "verdict": "NON-INFERIOR",
+    "stat": "MLB K% (negated)",
+    "admitted": [
+     "k_rw",
+     "ppa_par",
+     "babip_rw"
+    ],
+    "folds": {
+     "2011": 32,
+     "2012": 94,
+     "2013": 108,
+     "2014": 122,
+     "2015": 154,
+     "2016": 141,
+     "2017": 147,
+     "2018": 154,
+     "2019": 165,
+     "2022": 147,
+     "2023": 86,
+     "2024": 35
+    },
+    "board_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ]
+   },
+   "game_pwr": {
+    "n": 1385,
+    "players": 602,
+    "mae_etool": 0.033523,
+    "mae_consensus": 0.034087,
+    "d": -0.000563,
+    "ub95": -0.000169,
+    "ci95": [
+     -0.001052,
+     -0.0001
+    ],
+    "margin": 0.001704,
+    "draws": 2000,
+    "verdict": "NON-INFERIOR",
+    "stat": "MLB ISO",
+    "admitted": [
+     "iso_rw",
+     "bb_fb"
+    ],
+    "folds": {
+     "2011": 32,
+     "2012": 94,
+     "2013": 108,
+     "2014": 122,
+     "2015": 154,
+     "2016": 141,
+     "2017": 147,
+     "2018": 154,
+     "2019": 165,
+     "2022": 147,
+     "2023": 86,
+     "2024": 35
+    },
+    "board_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ]
+   },
+   "fb": {
+    "n": 1932,
+    "players": 896,
+    "mae_etool": 3.584876,
+    "mae_consensus": 3.744026,
+    "d": -0.159149,
+    "ub95": -0.107192,
+    "ci95": [
+     -0.220624,
+     -0.098272
+    ],
+    "margin": 0.187201,
+    "draws": 2000,
+    "verdict": "NON-INFERIOR",
+    "stat": "pitcher K%",
+    "admitted": [
+     "k_rw",
+     "pbf_raw",
+     "pbp_swstr"
+    ],
+    "folds": {
+     "2011": 44,
+     "2012": 112,
+     "2013": 142,
+     "2014": 149,
+     "2015": 203,
+     "2016": 203,
+     "2017": 213,
+     "2018": 226,
+     "2019": 228,
+     "2022": 195,
+     "2023": 147,
+     "2024": 70
+    },
+    "board_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ]
+   },
+   "cmd": {
+    "n": 1931,
+    "players": 895,
+    "mae_etool": 1.930448,
+    "mae_consensus": 1.98708,
+    "d": -0.056632,
+    "ub95": -0.033456,
+    "ci95": [
+     -0.086947,
+     -0.028332
+    ],
+    "margin": 0.099354,
+    "draws": 2000,
+    "verdict": "NON-INFERIOR",
+    "stat": "pitcher BB% (negated)",
+    "admitted": [
+     "bb_rw",
+     "pbp_fstrike",
+     "pbf_par"
+    ],
+    "folds": {
+     "2011": 44,
+     "2012": 112,
+     "2013": 142,
+     "2014": 149,
+     "2015": 203,
+     "2016": 203,
+     "2017": 213,
+     "2018": 225,
+     "2019": 228,
+     "2022": 195,
+     "2023": 147,
+     "2024": 70
+    },
+    "board_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ]
+   }
+  }
+ },
+ "R_TV": {
+  "read": "R-TV",
+  "ran_at": "2026-10-16T02:58:40Z",
+  "gate_sha": "f19387fb",
+  "players": 6720,
+  "players_whose_stuff_plus_input_differs": 990,
+  "players_whose_output_differs": 320,
+  "differences": [
+   {
+    "player_key": "jose_rodriguez",
+    "value_etool": 5.2,
+    "value_consensus": 5.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brody_hopkins",
+    "value_etool": 14.0,
+    "value_consensus": 14.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ty_johnson",
+    "value_etool": 8.0,
+    "value_consensus": 8.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cooper_hjerpe",
+    "value_etool": 5.3,
+    "value_consensus": 5.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "austin_peterson",
+    "value_etool": 4.4,
+    "value_consensus": 4.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "hancel_rincon",
+    "value_etool": 5.6,
+    "value_consensus": 5.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luis_de_leon",
+    "value_etool": 13.7,
+    "value_consensus": 13.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "dylan_ross",
+    "value_etool": 3.6,
+    "value_consensus": 3.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cesar_perdomo",
+    "value_etool": 4.3,
+    "value_consensus": 4.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cade_winquest",
+    "value_etool": 5.1,
+    "value_consensus": 5.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "braxton_roxby",
+    "value_etool": 3.9,
+    "value_consensus": 3.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luis_perales",
+    "value_etool": 2.7,
+    "value_consensus": 2.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "andrew_sears",
+    "value_etool": 5.6,
+    "value_consensus": 5.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "kade_anderson",
+    "value_etool": 53.6,
+    "value_consensus": 53.6,
+    "tags_etool": [
+     "young_peak_plateau"
+    ],
+    "tags_consensus": [
+     "young_peak_plateau"
+    ]
+   },
+   {
+    "player_key": "ethan_pecko",
+    "value_etool": 5.2,
+    "value_consensus": 5.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "matt_wilkinson",
+    "value_etool": 5.5,
+    "value_consensus": 5.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ricky_tiedemann",
+    "value_etool": 6.3,
+    "value_consensus": 6.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "tanner_mcdougal",
+    "value_etool": 6.6,
+    "value_consensus": 6.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jackson_kent",
+    "value_etool": 8.0,
+    "value_consensus": 8.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "trent_harris",
+    "value_etool": 6.2,
+    "value_consensus": 6.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "tink_hence",
+    "value_etool": 2.1,
+    "value_consensus": 2.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "nick_frasso",
+    "value_etool": 3.7,
+    "value_consensus": 3.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "chen_zhongao_zhuang",
+    "value_etool": 2.1,
+    "value_consensus": 2.1,
+    "tags_etool": [
+     "command_pitcher_small_sample"
+    ],
+    "tags_consensus": [
+     "command_pitcher_small_sample"
+    ]
+   },
+   {
+    "player_key": "nate_lavender",
+    "value_etool": 2.2,
+    "value_consensus": 2.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "quinn_mathews",
+    "value_etool": 8.7,
+    "value_consensus": 8.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luke_murphy",
+    "value_etool": 3.7,
+    "value_consensus": 3.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "alex_cook",
+    "value_etool": 2.2,
+    "value_consensus": 2.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "alex_mcfarlane",
+    "value_etool": 4.4,
+    "value_consensus": 4.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "kohl_drake",
+    "value_etool": 5.3,
+    "value_consensus": 5.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cj_van_eyk",
+    "value_etool": 4.5,
+    "value_consensus": 4.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "yunior_tur",
+    "value_etool": 5.5,
+    "value_consensus": 5.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "emiliano_teodo",
+    "value_etool": 3.6,
+    "value_consensus": 3.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jean_cabrera",
+    "value_etool": 2.7,
+    "value_consensus": 2.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luis_gastelum",
+    "value_etool": 6.5,
+    "value_consensus": 6.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "owen_murphy",
+    "value_etool": 5.9,
+    "value_consensus": 5.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ben_peoples",
+    "value_etool": 3.1,
+    "value_consensus": 3.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "gabriel_hughes",
+    "value_etool": 4.8,
+    "value_consensus": 4.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "winston_santos",
+    "value_etool": 3.7,
+    "value_consensus": 3.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "miguel_ullola",
+    "value_etool": 5.7,
+    "value_consensus": 5.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jhancarlos_lara",
+    "value_etool": 2.5,
+    "value_consensus": 2.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "marco_raya",
+    "value_etool": 4.1,
+    "value_consensus": 4.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mitch_bratt",
+    "value_etool": 5.8,
+    "value_consensus": 5.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "julian_garcia",
+    "value_etool": 5.7,
+    "value_consensus": 5.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "daniel_espino",
+    "value_etool": 5.2,
+    "value_consensus": 5.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "eiberson_castellano",
+    "value_etool": 4.5,
+    "value_consensus": 4.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "antwone_kelly",
+    "value_etool": 5.4,
+    "value_consensus": 5.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "kade_morris",
+    "value_etool": 5.3,
+    "value_consensus": 5.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "samy_natera_jr",
+    "value_etool": 6.3,
+    "value_consensus": 6.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "chad_dallas",
+    "value_etool": 4.6,
+    "value_consensus": 4.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "zach_mccambley",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "robby_ahlstrom",
+    "value_etool": 3.9,
+    "value_consensus": 3.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "josh_white",
+    "value_etool": 4.5,
+    "value_consensus": 4.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mike_paredes",
+    "value_etool": 3.1,
+    "value_consensus": 3.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cameron_weston",
+    "value_etool": 4.2,
+    "value_consensus": 4.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "david_sandlin",
+    "value_etool": 4.6,
+    "value_consensus": 4.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "gage_jump",
+    "value_etool": 123.2,
+    "value_consensus": 123.2,
+    "tags_etool": [
+     "controlled_rotation_asset"
+    ],
+    "tags_consensus": [
+     "controlled_rotation_asset"
+    ]
+   },
+   {
+    "player_key": "brycen_mautz",
+    "value_etool": 5.5,
+    "value_consensus": 5.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "welinton_herrera",
+    "value_etool": 3.1,
+    "value_consensus": 3.1,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "yovanny_cruz",
+    "value_etool": 4.4,
+    "value_consensus": 4.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "adam_macko",
+    "value_etool": 2.8,
+    "value_consensus": 2.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brandan_bidois",
+    "value_etool": 3.9,
+    "value_consensus": 3.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "franco_aleman",
+    "value_etool": 3.7,
+    "value_consensus": 3.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "robby_snelling",
+    "value_etool": 11.9,
+    "value_consensus": 11.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "yoniel_curet",
+    "value_etool": 2.0,
+    "value_consensus": 2.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brendan_beck",
+    "value_etool": 2.8,
+    "value_consensus": 2.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "dax_fulton",
+    "value_etool": 4.1,
+    "value_consensus": 4.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "eric_cerantola",
+    "value_etool": 2.7,
+    "value_consensus": 2.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "william_kempner",
+    "value_etool": 3.9,
+    "value_consensus": 3.9,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "alec_gamboa",
+    "value_etool": 5.6,
+    "value_consensus": 5.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "josh_ekness",
+    "value_etool": 5.1,
+    "value_consensus": 5.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "john_klein",
+    "value_etool": 3.1,
+    "value_consensus": 3.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jake_bennett",
+    "value_etool": 7.0,
+    "value_consensus": 7.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "elmer_rodriguez",
+    "value_etool": 15.2,
+    "value_consensus": 15.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "riley_cornelio",
+    "value_etool": 4.2,
+    "value_consensus": 4.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "connor_prielipp",
+    "value_etool": 97.8,
+    "value_consensus": 97.8,
+    "tags_etool": [
+     "controlled_rotation_asset"
+    ],
+    "tags_consensus": [
+     "controlled_rotation_asset"
+    ]
+   },
+   {
+    "player_key": "kendry_rojas",
+    "value_etool": 6.8,
+    "value_consensus": 6.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "eduardo_rivera",
+    "value_etool": 5.9,
+    "value_consensus": 5.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "trevor_martin",
+    "value_etool": 5.1,
+    "value_consensus": 5.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "coleman_crow",
+    "value_etool": 4.5,
+    "value_consensus": 4.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cameron_foster",
+    "value_etool": 2.3,
+    "value_consensus": 2.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "gavin_collyer",
+    "value_etool": 4.1,
+    "value_consensus": 4.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "noah_schultz",
+    "value_etool": 57.7,
+    "value_consensus": 57.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "shane_drohan",
+    "value_etool": 7.2,
+    "value_consensus": 7.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "tyler_schweitzer",
+    "value_etool": 4.7,
+    "value_consensus": 4.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "riley_martin",
+    "value_etool": 2.8,
+    "value_consensus": 2.8,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "george_klassen",
+    "value_etool": 9.5,
+    "value_consensus": 9.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "tyler_uberstine",
+    "value_etool": 4.4,
+    "value_consensus": 4.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "andrew_painter",
+    "value_etool": 141.8,
+    "value_consensus": 141.8,
+    "tags_etool": [
+     "young_stuff_command_starter"
+    ],
+    "tags_consensus": [
+     "young_stuff_command_starter",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "jose_franco",
+    "value_etool": 4.1,
+    "value_consensus": 4.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "matt_pushard",
+    "value_etool": 5.2,
+    "value_consensus": 5.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "anthony_nunez",
+    "value_etool": 8.6,
+    "value_consensus": 8.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ryan_watson",
+    "value_etool": 7.7,
+    "value_consensus": 7.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "spencer_miles",
+    "value_etool": 10.2,
+    "value_consensus": 10.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "peyton_pallette",
+    "value_etool": 6.8,
+    "value_consensus": 6.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ryan_weiss",
+    "value_etool": 2.7,
+    "value_consensus": 2.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "walbert_urena",
+    "value_etool": 6.7,
+    "value_consensus": 6.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jedixson_paez",
+    "value_etool": 4.0,
+    "value_consensus": 4.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jose_corniell",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "hunter_barco",
+    "value_etool": 1.6,
+    "value_consensus": 1.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "trey_yesavage",
+    "value_etool": 168.9,
+    "value_consensus": 168.9,
+    "tags_etool": [
+     "controlled_rotation_asset",
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "controlled_rotation_asset",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "connelly_early",
+    "value_etool": 81.6,
+    "value_consensus": 81.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "nick_raquet",
+    "value_etool": 1.8,
+    "value_consensus": 1.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brandon_sproat",
+    "value_etool": 16.7,
+    "value_consensus": 16.7,
+    "tags_etool": [
+     "command_pitcher_small_sample"
+    ],
+    "tags_consensus": [
+     "command_pitcher_small_sample"
+    ]
+   },
+   {
+    "player_key": "hayden_harris",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "rolddy_munoz",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mitch_farris",
+    "value_etool": 1.8,
+    "value_consensus": 1.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mason_barnett",
+    "value_etool": 1.8,
+    "value_consensus": 1.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "payton_tolle",
+    "value_etool": 179.2,
+    "value_consensus": 179.2,
+    "tags_etool": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "jonah_tong",
+    "value_etool": 14.2,
+    "value_consensus": 14.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mccade_brown",
+    "value_etool": 4.8,
+    "value_consensus": 4.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "zach_maxwell",
+    "value_etool": 1.8,
+    "value_consensus": 1.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "bubba_chandler",
+    "value_etool": 154.2,
+    "value_consensus": 154.2,
+    "tags_etool": [
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "drew_sommers",
+    "value_etool": 8.2,
+    "value_consensus": 8.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "joel_peguero",
+    "value_etool": 2.2,
+    "value_consensus": 2.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "parker_messick",
+    "value_etool": 87.0,
+    "value_consensus": 87.0,
+    "tags_etool": [
+     "command_pitcher_small_sample",
+     "healthy_breakout_starter",
+     "productive_established_starter"
+    ],
+    "tags_consensus": [
+     "command_pitcher_small_sample",
+     "healthy_breakout_starter",
+     "productive_established_starter"
+    ]
+   },
+   {
+    "player_key": "luinder_avila",
+    "value_etool": 1.2,
+    "value_consensus": 1.2,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "cam_sanders",
+    "value_etool": 7.4,
+    "value_consensus": 7.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "carson_whisenhunt",
+    "value_etool": 2.0,
+    "value_consensus": 2.0,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "ryan_cusick",
+    "value_etool": 2.6,
+    "value_consensus": 2.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jayvien_sandridge",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "eduarniel_nunez",
+    "value_etool": 3.5,
+    "value_consensus": 3.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "andry_lara",
+    "value_etool": 3.8,
+    "value_consensus": 3.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jonathan_pintaro",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "chase_burns",
+    "value_etool": 268.9,
+    "value_consensus": 268.9,
+    "tags_etool": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "paul_gervase",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "didier_fuentes",
+    "value_etool": 41.3,
+    "value_consensus": 41.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jacob_misiorowski",
+    "value_etool": 185.7,
+    "value_consensus": 185.7,
+    "tags_etool": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "stuff_supported_pitcher",
+     "young_stuff_command_starter",
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter",
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "christian_montes_de_oca",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "dylan_smith",
+    "value_etool": 14.2,
+    "value_consensus": 14.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "andrew_hoffmann",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "blas_castano",
+    "value_etool": 0.8,
+    "value_consensus": 0.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "david_morgan",
+    "value_etool": 0.8,
+    "value_consensus": 0.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "mick_abel",
+    "value_etool": 42.0,
+    "value_consensus": 42.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "carson_palmquist",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ryan_rolison",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "elvis_alvarado",
+    "value_etool": 4.1,
+    "value_consensus": 4.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "blade_tidwell",
+    "value_etool": 1.8,
+    "value_consensus": 1.8,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "gunnar_hoglund",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [
+     "active_injured_starter_no_current_season"
+    ],
+    "tags_consensus": [
+     "active_injured_starter_no_current_season"
+    ]
+   },
+   {
+    "player_key": "luis_mey",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "tyler_owens",
+    "value_etool": 2.5,
+    "value_consensus": 2.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "aj_blubaugh",
+    "value_etool": 1.6,
+    "value_consensus": 1.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "doug_nikhazy",
+    "value_etool": 0.8,
+    "value_consensus": 0.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "zak_kent",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "sauryn_lao",
+    "value_etool": 5.2,
+    "value_consensus": 5.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "craig_yoho",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "logan_henderson",
+    "value_etool": 58.8,
+    "value_consensus": 58.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "zach_agnos",
+    "value_etool": 2.4,
+    "value_consensus": 2.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brandon_young",
+    "value_etool": 5.8,
+    "value_consensus": 5.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "matt_svanson",
+    "value_etool": 4.4,
+    "value_consensus": 4.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "justin_hagenman",
+    "value_etool": 3.6,
+    "value_consensus": 3.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "evan_sisk",
+    "value_etool": 4.6,
+    "value_consensus": 4.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jack_dashwood",
+    "value_etool": 2.2,
+    "value_consensus": 2.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cole_henry",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "shane_smith",
+    "value_etool": 7.0,
+    "value_consensus": 7.0,
+    "tags_etool": [
+     "command_pitcher_small_sample"
+    ],
+    "tags_consensus": [
+     "command_pitcher_small_sample"
+    ]
+   },
+   {
+    "player_key": "omar_cruz",
+    "value_etool": 3.3,
+    "value_consensus": 3.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "garrett_mcdaniels",
+    "value_etool": 5.0,
+    "value_consensus": 5.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "brad_lord",
+    "value_etool": 12.4,
+    "value_consensus": 12.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ryan_johnson",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "roki_sasaki",
+    "value_etool": 306.7,
+    "value_consensus": 306.7,
+    "tags_etool": [
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter"
+    ],
+    "tags_consensus": [
+     "controlled_rotation_asset",
+     "young_controlled_stuff_starter"
+    ]
+   },
+   {
+    "player_key": "trevor_mcdonald",
+    "value_etool": 5.0,
+    "value_consensus": 5.0,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "marc_church",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jackson_jobe",
+    "value_etool": 88.9,
+    "value_consensus": 88.9,
+    "tags_etool": [
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "edgardo_henriquez",
+    "value_etool": 39.4,
+    "value_consensus": 39.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "kumar_rocker",
+    "value_etool": 35.5,
+    "value_consensus": 35.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "andrew_walters",
+    "value_etool": 0.8,
+    "value_consensus": 0.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "seth_johnson",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luis_guerrero",
+    "value_etool": 4.0,
+    "value_consensus": 4.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "lake_bachar",
+    "value_etool": 4.5,
+    "value_consensus": 4.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jaden_hill",
+    "value_etool": 2.5,
+    "value_consensus": 2.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jairo_iriarte",
+    "value_etool": 2.8,
+    "value_consensus": 2.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "rhett_lowder",
+    "value_etool": 47.0,
+    "value_consensus": 47.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jonathan_bermudez",
+    "value_etool": 3.5,
+    "value_consensus": 3.5,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "ty_madden",
+    "value_etool": 7.1,
+    "value_consensus": 7.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "luis_peralta",
+    "value_etool": 0.8,
+    "value_consensus": 0.8,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jeff_criswell",
+    "value_etool": 1.4,
+    "value_consensus": 1.4,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "jack_neely",
+    "value_etool": 1.2,
+    "value_consensus": 1.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "julian_aguiar",
+    "value_etool": 1.4,
+    "value_consensus": 1.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "grant_holman",
+    "value_etool": 3.6,
+    "value_consensus": 3.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "orlando_ribalta",
+    "value_etool": 1.2,
+    "value_consensus": 1.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "parker_dunshee",
+    "value_etool": 3.0,
+    "value_consensus": 3.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "michael_mcgreevy",
+    "value_etool": 49.0,
+    "value_consensus": 49.0,
+    "tags_etool": [
+     "command_pitcher_small_sample"
+    ],
+    "tags_consensus": [
+     "command_pitcher_small_sample"
+    ]
+   },
+   {
+    "player_key": "chayce_mcdermott",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "river_ryan",
+    "value_etool": 2.0,
+    "value_consensus": 2.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "yilber_diaz",
+    "value_etool": 0.0,
+    "value_consensus": 0.0,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "cristian_mena",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "michael_mercado",
+    "value_etool": 3.6,
+    "value_consensus": 3.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jake_bloss",
+    "value_etool": 7.3,
+    "value_consensus": 7.3,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "adam_kloffenstein",
+    "value_etool": 3.2,
+    "value_consensus": 3.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "michel_otanez",
+    "value_etool": 0.9,
+    "value_consensus": 0.9,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "adam_mazur",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [
+     "injured_low_stuff_pitcher",
+     "active_injured_starter_no_current_season"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher",
+     "active_injured_starter_no_current_season"
+    ]
+   },
+   {
+    "player_key": "justin_sterner",
+    "value_etool": 1.4,
+    "value_consensus": 1.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "paul_skenes",
+    "value_etool": 180.6,
+    "value_consensus": 180.6,
+    "tags_etool": [
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "healthy_breakout_starter",
+     "productive_established_starter",
+     "young_elite_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "robert_gasser",
+    "value_etool": 4.2,
+    "value_consensus": 4.2,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "blake_walston",
+    "value_etool": 1.4,
+    "value_consensus": 1.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "anthony_maldonado",
+    "value_etool": 0.7,
+    "value_consensus": 0.7,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "kaiwei_teng",
+    "value_etool": 1.6,
+    "value_consensus": 1.6,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "jordan_leasure",
+    "value_etool": 1.4,
+    "value_consensus": 1.4,
+    "tags_etool": [],
+    "tags_consensus": []
+   },
+   {
+    "player_key": "justin_slaten",
+    "value_etool": 8.8,
+    "value_consensus": 8.8,
+    "tags_etool": [
+     "injured_low_stuff_pitcher"
+    ],
+    "tags_consensus": [
+     "injured_low_stuff_pitcher"
+    ]
+   },
+   {
+    "player_key": "yoshinobu_yamamoto",
+    "value_etool": 26.8,
+    "value_consensus": 26.8,
+    "tags_etool": [
+     "controlled_rotation_asset",
+     "productive_established_starter",
+     "validated_late_pitcher"
+    ],
+    "tags_consensus": [
+     "controlled_rotation_asset",
+     "productive_established_starter",
+     "validated_late_pitcher"
+    ]
+   },
+   {
+    "player_key": "kyle_hurt",
+    "value_etool": 6.1,
+    "value_consensus": 6.1,
+    "tags_etool": [],
+    "tags_consensus": []
+   }
+  ],
+  "seconds": 17.4,
+  "verdict": "KEEP CONSENSUS"
+ }
+}

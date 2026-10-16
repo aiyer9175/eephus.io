@@ -1171,7 +1171,7 @@
     var note = '<div class="mlbstats-note">Scouted role vs ' + gloss("starter shape", "starter_shape")
       + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 tool grades; no minors pitch "
       + "tracking). Descriptive shape screen, not a backtested model."
-      + (PAL_ETOOLS_ON ? " The shape reads the consensus grades; the bars show the " + gloss("eTool", "etools")
+      + (PAL_ETOOLS_ON ? " The shape and the bars read the shown grades: the " + gloss("eTool", "etools")
          + " where one passed (e) and the consensus grade elsewhere (c)." : "") + "</div>";
     ensureETools();
     var how = howBlock(esc(DATA.n_prospects || "") + " prospect pitchers scanned"

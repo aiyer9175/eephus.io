@@ -42,14 +42,15 @@
    ],
    "priority": 10,
    "definition": "Power mean (p = 4) of every 20-80 tool grade a prospect carries plus the FanGraphs physical grades, on the 20-80 scale. The exponent weights extreme tools: one elite grade lifts the composite more than balanced average grades do.",
-   "methodology": "Hitters: equal-weight power mean (p = 4) of hit, pwr, run, field, arm, pitch_sel and bat_ctrl plus the FanGraphs -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). Pitchers: the physicals (Frame, Athleticism, Delivery) join fb/sl/cb/ch in a p = 3 stuff power mean, then overall = 0.65·stuff + 0.35·cmd. Output is the raw power mean on the 20-80 scale (50 average, 60 plus, 70 elite), with no z-scoring. A 70 PWR / 45 HIT prospect (arithmetic mean 57.5) reads ~58 at p = 4 against ~57.6 at p = 3.",
+   "methodology": "Hitters: equal-weight power mean (p = 4) of hit, pwr, run, field, arm, pitch_sel and bat_ctrl plus the FanGraphs -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). Pitchers: the physicals (Frame, Athleticism, Delivery) join fb/sl/cb/ch in a p = 3 stuff power mean, then overall = 0.65·stuff + 0.35·cmd. Output is the raw power mean on the 20-80 scale (50 average, 60 plus, 70 elite), with no z-scoring. A 70 PWR / 45 HIT prospect (arithmetic mean 57.5) reads ~58 at p = 4 against ~57.6 at p = 3. Since 2026-10-15 it is built from the shown grades (an eTool where one passed); the consensus composite prints beside it (see eTool composite).",
    "formula": "Tool = (Σ tool_grade^4 / n)^(1/4)\nhitter inputs: hit, pwr, run, field, arm, pitch_sel, bat_ctrl, frame_fv, athl_fv\npitcher: Tool = 0.65 · power-mean(fb, sl, cb, ch, frame_fv, athl_fv, delivery_fv; p=3) + 0.35 · cmd",
    "example": "A 70 PWR / 45 HIT prospect with 50s elsewhere posts a Tool near 58, above the 57.5 arithmetic mean, because the p = 4 mean weights the 70.",
    "seeAlso": [
     "fv",
     "o_tool",
     "d_tool",
-    "tools_dvm_plus"
+    "tools_dvm_plus",
+    "etool_composite"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
@@ -70,13 +71,14 @@
    ],
    "priority": 11,
    "definition": "Weighted offensive composite on the 20-80 scale: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4.",
-   "methodology": "Weighted mean of the hitter's offensive 20-80 grades, output on the 20-80 scale (50 average, 60 plus, 70 elite). HIT and PWR carry 40% each; bat control and pitch selection fill out the profile; speed is a small term. Field and arm live in D-Tool.",
+   "methodology": "Weighted mean of the hitter's offensive 20-80 grades, output on the 20-80 scale (50 average, 60 plus, 70 elite). HIT and PWR carry 40% each; bat control and pitch selection fill out the profile; speed is a small term. Field and arm live in D-Tool. Since 2026-10-15 it is built from the shown grades (eHIT, ePOW, eSEL and eBAT where they passed); the consensus composite prints beside it.",
    "formula": "O-Tool = Σ w_i · grade_i / Σ w_i\nweights: HIT 0.40, PWR 0.40, BCTRL 0.10, PSEL 0.06, RUN 0.04",
    "example": "A 60 HIT / 60 PWR hitter with 50s elsewhere posts an O-Tool of 58.",
    "seeAlso": [
     "tool",
     "d_tool",
-    "speed_tool"
+    "speed_tool",
+    "etool_composite"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
@@ -97,7 +99,7 @@
    ],
    "priority": 12,
    "definition": "Weighted defensive composite (p = 3 power mean) on the 20-80 scale: DEF 60 / ARM 30 / RUN 10; catchers DEF 70 / ARM 30.",
-   "methodology": "Weighted power mean (p = 3) of the position player's defensive 20-80 grades, output on the 20-80 scale (50 average, 60 plus, 70 elite). Field carries 60%, arm 30% and run 10% (speed already feeds range through the field grade, so it is a small term). Catchers drop run and move field to 70%, because the catcher field grade absorbs framing, blocking and receiving. The p = 3 mean rewards an elite glove more than a plain weighted mean would.",
+   "methodology": "Weighted power mean (p = 3) of the position player's defensive 20-80 grades, output on the 20-80 scale (50 average, 60 plus, 70 elite). Field carries 60%, arm 30% and run 10% (speed already feeds range through the field grade, so it is a small term). Catchers drop run and move field to 70%, because the catcher field grade absorbs framing, blocking and receiving. The p = 3 mean rewards an elite glove more than a plain weighted mean would. Field, arm and speed have no passing eTool, so D-Tool reads the consensus grades; it is computed under the eTool composite rule and equals the consensus composite.",
    "formula": "D-Tool = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
    "example": "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tool near 62; a 50/50/50 baseline lands at 50.",
    "seeAlso": [
@@ -105,7 +107,36 @@
     "o_tool",
     "field_tool",
     "throw_tool",
-    "speed_tool"
+    "speed_tool",
+    "etool_composite"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "etool_composite",
+   "term": "eTool composite",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "eTool composite",
+    "Tool composite (eTools)",
+    "eTool Tool",
+    "eTools composite"
+   ],
+   "priority": 41,
+   "definition": "The Tool, O-Tool, D-Tool, FVStuff+ and Command composites built from the tool grades the site shows: the eTool where one passed (eHIT, ePOW, eSEL, eBAT, eFB, eCMD) and the consensus grade for every other tool. It is the composite the site shows, with the consensus composite beside it.",
+   "methodology": "Same formula, same inputs, one change: each tool with a passing eTool enters at its eTool instead of its consensus grade, and the one Power grade reads game power's eTool, as the card does. Frame, Athleticism and Delivery enter as before. The consensus composite is computed beside it and printed as 'cons N'. Draft, IFA and overseas players have no minor-league line, so there is no eTool for them and their composite is the consensus one. The composite is descriptive: it has no outcome test of its own (each eTool has its own). The flags, the same-grade tiebreak, the farm Tool Quality leaf and the Alchemy Lab starter shape read the same shown grades. POW+, HIT+ and DISC+ keep the consensus grades because each already blends in the minor-league rate an eTool is built from.",
+   "formula": "eTool composite = the composite formula on {eTool where passed, else consensus}; e.g. Tool = (sum g^4 / n)^(1/4) over hit, pwr (game power eTool), run, field, arm, pitch_sel, bat_ctrl, frame, athl",
+   "seeAlso": [
+    "tool",
+    "o_tool",
+    "d_tool",
+    "stuff_grade_plus",
+    "etools"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
@@ -593,13 +624,14 @@
    ],
    "priority": 42,
    "definition": "Scouting-grade pitch composite: power mean of fastball and secondary grades, z-scored across the prospect cohort.",
-   "methodology": "Power mean (p = 3) of the 20-80 Fastball, Slider, Curveball and Changeup grades, z-scored across the active-prospect cohort: 100 = cohort mean, 10 points = 1σ. pStuff+ measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. They diverge when results outrun or lag the scouting view. Formerly 'Stuff grade+'.",
+   "methodology": "Power mean (p = 3) of the 20-80 Fastball, Slider, Curveball and Changeup grades, z-scored across the active-prospect cohort: 100 = cohort mean, 10 points = 1σ. pStuff+ measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. They diverge when results outrun or lag the scouting view. Formerly 'Stuff grade+'. Since 2026-10-15 the stuff composite reads eFB where it passed (the shown fastball grade); the consensus index is kept beside it.",
    "formula": "FVStuff+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
    "example": "A 70 fastball / 60 slider / 55 curve / 50 change composite is ~62; with a cohort mean of 55 and σ of 6, FVStuff+ ≈ 112.",
    "seeAlso": [
     "stf_plus",
     "tool",
-    "fv"
+    "fv",
+    "etool_composite"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
@@ -1157,7 +1189,7 @@
    ],
    "priority": 40,
    "definition": "A scouting tool grade moved by the prospect's own minor-league stats: the consensus grade, plus what the stats that predict the tool's outcome say beyond it. Built for the tools where it beat the consensus grade on both outcomes: eHIT, ePOW, eSEL, eBAT, eFB, eCMD.",
-   "methodology": "Each tool grade has an outcome stat it predicts in the FanGraphs framework: the hit tool, MLB strikeout rate; game power, ISO; pitch selection, chase rate; bat control, zone contact; the fastball, a pitcher's strikeout rate; command, his walk rate. For each tool, minor-league stats dated before the list (translated across levels and leagues and shrunk toward the average by sample size) were tested for what they add to the consensus grade at predicting that stat, with each list year held out in turn and its players removed from the fit. Up to three that added with a lower bound above zero became the tool's sub-drivers. The eTool is the consensus grade plus each sub-driver's surprise (its value minus what the grade already implies), weighted on the grade scale. It passed only when it beat the consensus grade on both MLB players (among debuts) and the translated Double-A and Triple-A line.\n\nBefore any card shows one, four checks ran once: the 2026 boards against the development years (eFB sat outside them, so every eTool is centred on the board it scores), the gain on players who never reached Double-A or the majors, and two arithmetic fixes. Raw power, speed, field, arm and the secondary pitches keep the consensus grade.\n\nSince 2026-10-15 (owner decision) the eTool is the grade the site shows for these six tools wherever it prints a tool grade, marked e. It is a model grade, so it rounds to the nearest whole grade, like eFV; consensus tool grades round up and are marked c. The card keeps the consensus grade beside each eTool, with the 80% band and each sub-driver's push in grade points. Not in eFV, the tool composites or the POW+, HIT+ and DISC+ blends.",
+   "methodology": "Each tool grade has an outcome stat it predicts in the FanGraphs framework: the hit tool, MLB strikeout rate; game power, ISO; pitch selection, chase rate; bat control, zone contact; the fastball, a pitcher's strikeout rate; command, his walk rate. For each tool, minor-league stats dated before the list (translated across levels and leagues and shrunk toward the average by sample size) were tested for what they add to the consensus grade at predicting that stat, with each list year held out in turn and its players removed from the fit. Up to three that added with a lower bound above zero became the tool's sub-drivers. The eTool is the consensus grade plus each sub-driver's surprise (its value minus what the grade already implies), weighted on the grade scale. It passed only when it beat the consensus grade on both MLB players (among debuts) and the translated Double-A and Triple-A line.\n\nBefore any card shows one, four checks ran once: the 2026 boards against the development years (eFB sat outside them, so every eTool is centred on the board it scores), the gain on players who never reached Double-A or the majors, and two arithmetic fixes. Raw power, speed, field, arm and the secondary pitches keep the consensus grade.\n\nSince 2026-10-15 (owner decision) the eTool is the grade the site shows for these six tools wherever it prints a tool grade, marked e. It is a model grade, so it rounds to the nearest whole grade, like eFV; consensus tool grades round up and are marked c. The card keeps the consensus grade beside each eTool, with the 80% band and each sub-driver's push in grade points. Since ETOOLS_ALL_CALCS the tool composites (Tool, O-Tool, D-Tool, FVStuff+, Command), the tool flags, the tiebreaks and the Alchemy Lab starter shape read the eTools too. Not in eFV or the POW+, HIT+ and DISC+ blends, which already blend in the minor-league rates an eTool is built from.",
    "formula": "eTool = consensus + sum over sub-drivers j of c_j x (z_j - a_j - b_j x consensus - delta_j); band = eTool +/- 1.2816 x the fit's residual sd",
    "seeAlso": [
     "hit_tool",

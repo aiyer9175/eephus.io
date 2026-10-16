@@ -6772,7 +6772,7 @@ function renderETools() {
         <li>eHIT measures strikeout avoidance, the framework's hit outcome, not batting average.</li>
         <li>The MLB outcome exists only for players who debuted, and pitch selection and bat control read one MLB season (2026).</li>
         ${d.flag_etools_on
-          ? `<li>eFV does not read the eTools; its own registration decides whether they replace the consensus tool grades there. The Tool, O-Tool and D-Tool composites and the POW+, HIT+ and DISC+ blends still read the consensus grades.</li>`
+          ? `<li>eFV does not read the eTools; its own registration decides whether they replace the consensus tool grades there. The Tool, O-Tool, D-Tool, FVStuff+ and Command composites are built from the shown grades (an eTool where one passed), with the consensus composite printed beside them; the POW+, HIT+ and DISC+ blends still read the consensus grades, because each already blends in the minor-league rate an eTool is built from.</li>`
           : `<li>No eTool is on a player card or in eFV yet. eFV's own registration decides whether they replace the raw tool grades there.</li>`}
       </ol>
     </section>
