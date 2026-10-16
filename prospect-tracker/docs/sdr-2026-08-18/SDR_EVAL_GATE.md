@@ -275,3 +275,12 @@ read in `docs/sdr-2026-08-18/SDR_CATCHER_GATE.md` (registration committed alone 
 numbers): PARTIAL, nothing served. On G-A's own catcher pairs Savant's catcher runs (FRP at C)
 persist 0.6176 against SDR's 0.6145, so A5's catcher lead is a lead over B-Ref rfield only. Nothing
 above this note changes, and G-A's verdict stands.
+
+### Note 2026-10-16: the position-centred re-check is registered (owner decision EW3-33)
+
+SDR-GA-Q1 part 2: `docs/sdr-2026-08-18/SDR_POSCENTRED_GATE.md` (committed alone, before any of its
+numbers exists) re-asks C1 with SDR, OAA and rfield each centred within (primary position, season),
+with C2 and C5 unchanged, on the unseen 2026 to 2027 pairs only, read once not before 2027-11-01
+(task SDR_POSCENTRED_READ). The 2026 predictor files are frozen with their hashes. Until it reads,
+SDR stays outside eWAR (the catcher gate read PARTIAL, so no catcher part). Nothing above this note
+changes, and G-A's verdict stands.
