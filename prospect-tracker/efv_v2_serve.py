@@ -155,6 +155,13 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
         # SERVED since 2026-10-15 by OWNER OVERRIDE (decision EW3-10): eFV v5 COMBINED,
         # every atlas driver in one joint fit. It FAILED the EW3-9 ship rule of
         # docs/efv-v2/EFV_V5_COMBINED.md (a statistical tie with V2); the owner flipped it.
+        import efv5_refit as R5
+        if R5.EFV_V5_REFIT_ON:
+            # DARK (efv5_refit.EFV_V5_REFIT_ON is False): the registered re-fit of eFV v5
+            # COMBINED (docs/efv-v2/EFV_V5_REFIT.md), its stored production fit as read;
+            # the owner flips it with efv_w2_popmle.POP_REPAIR_ON.
+            _MODELS = R5.production_models()
+            return _MODELS
         _MODELS = V5C.production_models(weights=weights)
         return _MODELS
     if V5.EFV_V5_ON:
@@ -245,7 +252,11 @@ def served_disclosures(models: dict[str, dict] | None = None, *,
                              raw_by_key={r["player_key"]: r for r in live if r.get("player_key")},
                              receipt=rec, log=lambda *_a, **_k: None)
         receipts[side] = rec
-    return V5C.served_disclosures(models, receipts, today=today)
+    disc = V5C.served_disclosures(models, receipts, today=today)
+    import efv5_refit as R5
+    if R5.EFV_V5_REFIT_ON:
+        disc = R5.refit_disclosures(disc)
+    return disc
 
 
 def fingerprint_term() -> str:
@@ -266,6 +277,10 @@ def fingerprint_term() -> str:
         if T.EFV_TRACKING_HEAD_ON:
             # the head's flip changes who V2 reorders, so it trips the pinned fingerprint
             spec["tracking_head"] = {"blend_w": T.BLEND_W, "ships": sorted(T.shipped_sides())}
+        import efv5_refit as R5
+        if R5.EFV_V5_REFIT_ON:
+            # the re-fit's flip serves a stored fit, so its file trips the pinned fingerprint
+            spec["refit"] = hashlib.sha256(R5.WEIGHTS_PATH.read_bytes()).hexdigest()[:12]
         spec = json.dumps(spec, sort_keys=True)
         return f"{SERVED_MODEL_ID}@{hashlib.sha256(spec.encode()).hexdigest()[:8]}"
     except Exception:                                             # noqa: BLE001
@@ -386,7 +401,12 @@ def _with_live_candidates(side: str, rows: list[dict], live: list[dict], model: 
             if n.get("status") != "lit"}
     if dark:
         log.info("eFV v5 live columns %s: families not fully lit %s", side, dark)
-    return V5C.attach(rows, side, cols, V5C.LIVE_KIND)
+    rows = V5C.attach(rows, side, cols, V5C.LIVE_KIND)
+    if model.get("refit_transform"):
+        # the re-fit's variant RT (dark): the population column ranked within the board
+        import efv5_refit as R5
+        rows = R5.transform_live(rows, side)
+    return rows
 
 
 def score_live(side: str, live: list[dict], *, models: dict | None = None,
@@ -516,7 +536,13 @@ class HistoryGrader:
         d = str(d or "")[:10]
         if d >= self.today:
             return dict(self._cand_live.get(player_key) or {})
-        return dict(self._cand_hist.get((player_key, d)) or {})
+        out = dict(self._cand_hist.get((player_key, d)) or {})
+        if (getattr(self, "model", None) or {}).get("refit_transform"):
+            # the re-fit's variant RT (dark): a snapshot's population value placed in the
+            # live board's distribution, the scale the served heads read
+            import efv5_refit as R5
+            out = R5.transform_history(self.side, out)
+        return out
 
     def served_point(self, player_key: str, series: list[dict]) -> dict | None:
         """eFV v5 COMBINED: the served grade as a point dated the live read date ({"d",

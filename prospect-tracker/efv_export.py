@@ -496,9 +496,14 @@ def _served_model_meta() -> dict:
     import efv_v2_serve as _v2s
     if not _v2s.enabled():
         return {"model_id": "efv_v1", "grade_basis": "outcome_pooled"}
-    out = {"model_id": _v2s.SERVED_MODEL_ID, "grade_basis": _v2s.GRADE_BASIS,
+    import efv5_refit as _r5
+    # EFV_FIX_B_REFIT (dark): with the re-fit flipped, the board names the model it serves
+    # and prints the claim re-derived from the re-fit's own development read
+    refit = bool(_r5.EFV_V5_REFIT_ON)
+    out = {"model_id": _r5.SERVED_MODEL_ID if refit else _v2s.SERVED_MODEL_ID,
+           "grade_basis": _v2s.GRADE_BASIS,
            "registry": "data/model_registry.json#efv_v2",
-           "claim": _v2s.served_claim(),
+           "claim": _r5.served_claim() if refit else _v2s.served_claim(),
            "receipt": _v2s.model_receipt(),
            "who": ("every active prospect with a real consensus grade; rows whose "
                    "consensus is the last-resort constant are served by the "
