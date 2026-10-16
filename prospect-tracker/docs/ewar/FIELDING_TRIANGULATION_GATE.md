@@ -377,7 +377,101 @@ could not see it.
 
 ## 11. Results
 
-EMPTY.
+### 2026-10-16, the one read, OWNER-WAIVED EARLY READ (EW3-5). Verdict: FAIL
+
+`python tools/fielding_triangulation_lab.py read`, run once on the fit frozen at 81fbb8da
+(`data/_labs/fielding_triangulation_fit.json`, sha256 b52b2a7d...), after the fixture dry run;
+stdout and stderr teed to the task's output directory (read.log), exit 0. Record:
+`data/fielding_triangulation_eval.json` (sha256 67b08e93...). Inputs as part 1 names them;
+`.cache/war_daily/bat.parquet` sha256 e9571c42...fd55, modified 2026-10-16T03:48Z; fWAR vintage
+2026-10-02-57bf90f7143e. Rows 15,512 player-season-positions (2016 to 2026).
+
+Floors, printed first: L1 sd 0.0059, half-width 0.0115, MDE95 0.0098; L2 sd 0.0352, half-width
+0.0686, MDE95 0.0579.
+
+| Leg | Pairs | Triangulation | Comparator | Gap | LB95, UB95 | One-sided p, Holm threshold | Twin gap (LB95) | Result |
+|---|---|---|---|---|---|---|---|---|
+| L1 forward, mean of three systems | 1,227 player-season pairs, 408 players | see below | see below | +0.0107 | -0.0005, +0.0224 | 0.0300, 0.025 (not rejected) | -0.2788 (-0.3553), fails | FAIL |
+| L2 club runs allowed beyond FIP, Y+1 | 210 club-season pairs | 0.2831 | FanGraphs fielding 0.2329 | +0.0503 | -0.0251, +0.1122 | 0.1035, 0.05 (not rejected) | -0.3017 (-0.3489), fails | FAIL |
+
+- L1 by system: DRS(Y+1), triangulation without DRS and UZR 0.2908 against FRP 0.2841 (+0.0067);
+  FRP(Y+1), triangulation without Statcast 0.2835 against DRS 0.2795 (+0.0040); UZR(Y+1), 830
+  pairs, triangulation without UZR and DRS 0.2690 against FRP 0.2475 (+0.0215).
+- L2's club-clustered interval, beside: -0.0341 to +0.1393 (sd 0.0444). **NON-INFERIOR: no**
+  (gap minus 1.645 sd is -0.0076 under the player bootstrap, -0.0227 under the club bootstrap).
+- **What part 5.5 decides: S3t is NOT eligible.** Candidate part 6 keeps S3 as its only arm (Holm
+  k = 2) in the skill look; EBR_GATE.md 11.5's S3t cells are not computed.
+- Without pairs touching 2020: L1 gap +0.0135 on 1,006 pairs (DRS +0.0104, Statcast +0.0040, UZR
+  +0.0261); L2 triangulation 0.2645, FanGraphs fielding 0.2272.
+
+**Reported beside (part 5.6, deciding nothing).**
+
+- **SDR alone against the triangulation** (the EW3-20 amendment ask), on L1's pairs with the
+  matching SDR variant: SDR minus triangulation -0.0124, interval -0.0235 to -0.0016 (DRS 0.2706
+  against 0.2908; Statcast 0.2837 against 0.2835; UZR 0.2520 against 0.2690). SDR alone does not
+  beat the triangulation; on these cells the triangulation ranks next season's fielding better
+  than SDR alone, a reported cell, not a validation.
+- **S3 (DEM+'s shrink of FanGraphs fielding)** against the single comparator on the DRS and UZR
+  legs: +0.0115 (+0.0004 to +0.0230); triangulation minus S3 on those legs: +0.0026 (-0.0111 to
+  +0.0170). The triangulation does not separate from S3.
+- **Equal-weight blend** against the single comparator: -0.0181 (-0.0345 to -0.0016);
+  triangulation minus the equal-weight blend: +0.0289 (+0.0114 to +0.0459). The weights earn their
+  keep over averaging; averaging the readings does worse than one reading.
+- **L2 beside:** SDR 0.2507, S3 0.2334, B-Ref rfield 0.1992, FanGraphs fielding 0.2329.
+- **Catchers** (234 pairs, target DRS per inning at C in Y+1): the catcher components (framing and
+  throwing; blocking carries no weight, amendment A2) 0.4812 against the base's FRP + CFraming
+  0.5149, gap -0.0337 (-0.0621 to -0.0074): the shrunk components rank next season's catcher DRS
+  less well than the base's catcher fielding.
+- **Same-season agreement** of the triangulation (FULL) on non-catcher frame rows 2019 to 2026:
+  SDR 0.952, SDR without DRS 0.898, FRP 0.891, OAA 0.853, SDR without Statcast 0.829, DRS 0.820,
+  UZR 0.568.
+
+**Which readings carry weight (FULL, share of the absolute weights at 1,000 innings; part 5.6's
+0.10 rule; a minus sign marks a negative weight).**
+
+| Pos | SDR | OAA | DRS | UZR | FRP | Carry weight |
+|---|---|---|---|---|---|---|
+| 1B | 0.28 | -0.21 | 0.09 | 0.14 | 0.28 | FRP, SDR, OAA (negative), UZR |
+| 2B | 0.30 | 0.20 | 0.16 | -0.19 | 0.14 | all five |
+| 3B | 0.22 | -0.11 | 0.15 | 0.09 | 0.43 | FRP, SDR, DRS, OAA (negative) |
+| SS | 0.29 | 0.01 | 0.29 | -0.21 | 0.20 | SDR, DRS, FRP, UZR (negative) |
+| LF | 0.02 | 0.80 | 0.05 | 0.07 | 0.07 | OAA |
+| CF | 0.06 | -0.20 | 0.10 | -0.13 | 0.52 | FRP, OAA (negative), DRS, UZR (negative) |
+| RF | 0.47 | 0.11 | 0.02 | 0.02 | 0.39 | SDR, FRP, OAA |
+
+DEM+ carries no weight of its own at any position (nested in FRP, part 2). The data do not say
+"OAA in the outfield, DRS in the infield": OAA leads only in left field, FanGraphs' Statcast
+fielding (FRP) leads in centre and at third, SDR (itself a blend) in right, and DRS shares the
+lead only at shortstop. Negative weights mark readings whose noise the fit found shared with a
+stronger reading; with 56 to 72 cross-season pairs per position the weights are noisy, which is
+one reason the forward gain is small.
+
+**Per position (row-level pairs, 300+ innings at the position both seasons; mean of the three
+system gaps, interval; SDR alone minus triangulation, interval).**
+
+| Pos | Row pairs | Triangulation minus single | SDR minus triangulation |
+|---|---|---|---|
+| 1B | 164 | +0.0119 (-0.0229, +0.0405) | -0.0046 (-0.0439, +0.0374) |
+| 2B | 140 | +0.0067 (-0.0280, +0.0430) | +0.0090 (-0.0112, +0.0306) |
+| 3B | 164 | +0.0258 (-0.0054, +0.0595) | -0.0175 (-0.0462, +0.0124) |
+| SS | 171 | -0.0068 (-0.0327, +0.0196) | -0.0044 (-0.0364, +0.0263) |
+| LF | 131 | +0.0078 (-0.0550, +0.0681) | -0.0099 (-0.0489, +0.0314) |
+| CF | 154 | +0.0062 (-0.0197, +0.0346) | -0.0219 (-0.0587, +0.0110) |
+| RF | 149 | +0.0185 (-0.0132, +0.0477) | +0.0029 (-0.0230, +0.0286) |
+
+**Face validity, 2026 (top and bottom by triangulated runs; full lists in the record).** Centre
+field Crow-Armstrong +12.3, Rafaela +7.6; shortstop Winn +7.2, Witt +7.1, Perdomo +6.5, bottom
+Trea Turner -9.2, Adames -5.4; second base Wetherholt +10.8, Turang +8.6, bottom Altuve -6.8;
+third base Bregman +7.4, Durbin +6.6; catcher Dingler +8.9, bottom Stephenson -6.4. No absurdity
+found; the bottoms include the names G-A's SDR read flagged in 2026 (Trea Turner, Adames, Julio
+Rodriguez, -3.7 in centre). Some
+FanGraphs names carry a replacement character from the cached file's encoding (cosmetic).
+
+**What this licenses (part 6).** FAIL: no comparative sentence. The triangulation is not served,
+is not scored in the eWAR v3 skill look, and enters no WAR; candidate part 6 keeps S3. The
+registry gains the row `fielding_triangulation` (provisional, measured_not_adopted). A further
+read would need the unseen frame (predictor season 2026, outcome 2027) and its own registration;
+the frozen fit would be reused, not refitted.
 
 ## 12. Amendments
 
