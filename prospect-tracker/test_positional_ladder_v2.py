@@ -11,8 +11,10 @@
    network (A1) recovers the planted ladder, and the amended scoring predictor
    (A2) scores the planted ladder best. Hermetic.
 2. The record: the read's verdict follows its own intervals under the gate's
-   fixed-sequence rule, the served ladder artifact is the read's, and Position
-   Fit reads v2 exactly when the read passed it.
+   fixed-sequence rule and the ladder artifact is the read's. Since
+   LADDER_V2_REVERT (owner EW3-29, 2026-10-15) the verification record says an
+   all-zero fielding ladder ties v2, the registry row is refuted pending
+   re-read, and Position Fit reads v1 on one run scale.
 3. The one-run-scale rule (gate part 8): an average glove is worth the same at
    every fielding position, and the served rows obey it.
 4. The export bundle beside v1 and its generated README.
@@ -36,6 +38,7 @@ import ladder_v2 as L2  # noqa: E402
 import positional_fit as pf  # noqa: E402
 
 EVAL = ROOT / "data" / "positional_ladder_v2_eval.json"
+VERIFY = ROOT / "data" / "positional_ladder_v2_verify.json"
 V2 = ROOT / "data" / "positional_ladder_v2.json"
 PF = ROOT / "data" / "positional_fit.json"
 PF_UI = ROOT / "data" / "positional_fit_ui.json"
@@ -121,18 +124,84 @@ def test_the_served_ladder_artifact_is_the_reads():
     assert max(shifts) - min(shifts) <= 0.011
 
 
-def test_position_fit_reads_v2_exactly_when_the_read_passed_it():
-    ev = _json(EVAL)
-    passed = ev["verdict"]["step1_b_replaces_v1"]
-    assert pf.POSFIT_LADDER == ("v2" if passed else "v1")
+def _v2_row():
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    return next(m for m in reg["models"] if m["model_id"] == "positional_ladder_v2")
+
+
+def test_the_verification_finds_the_zero_ladder_ties_v2():
+    """LADDER_V2_REVERT: on the read's own scoring an all-zero fielding ladder is
+    not separable from v2, while the read's own v1 comparison reproduces."""
+    ver, ev = _json(VERIFY), _json(EVAL)
+    z = ver["zero_ladder"]
+    assert z["tests"]["v1_minus_b"]["dmae"] == pytest.approx(ev["tests"]["v1_minus_b_pooled"]["dmae"], abs=1e-4)
+    assert z["tests"]["v1_minus_b"]["ci95"] == pytest.approx(ev["tests"]["v1_minus_b_pooled"]["ci95"], abs=1e-4)
+    zb = z["tests"]["zero_minus_b"]
+    assert zb["ci95"][0] <= 0 < zb["ci95"][1]
+    assert ver["finding"] == {"zero_ties_v2": True,
+                              "v1_minus_b_reproduces_read": z["tests"]["v1_minus_b"]["dmae"],
+                              "status": "refuted pending re-read"}
+    assert z["monotone_toward_zero"]["v1"] is True
+    assert all(s["DH_rows"] == 0 for s in ver["rung_coverage"]["by_source"].values())
+    assert ver["seed"] == 20261015 and ver["draws"] == 2000
+
+
+def test_the_registry_row_is_refuted_pending_reread_and_quotes_the_record():
+    row = _v2_row()
+    ver = _json(VERIFY)
+    zb = ver["zero_ladder"]["tests"]["zero_minus_b"]
+    assert row["verdict"] == "provisional"
+    assert row["provisional_kind"] == "measured_not_adopted"
+    assert row["remeasure_pending"].startswith("Refuted pending re-read")
+    assert row["summary"].startswith("Refuted pending re-read")
+    for txt in (row["summary"], row["remeasure_pending"]):
+        assert f"{zb['dmae']:.3f}" in txt and f"{zb['ci95'][1]:.3f}" in txt
+    assert row["surface"].startswith("Nothing served")
+    v1 = next(m for m in json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))["models"]
+              if m["model_id"] == "positional_ladder")
+    assert "/pal/ Position Fit board" in v1["surface"] and "positional_ladder_v2" not in v1["surface"]
+    assert "RESTORED ON POSITION FIT 2026-10-15" in v1["notes"]
+
+
+def test_the_registration_script_is_idempotent():
+    import register_positional_ladder_v2 as R
+    reg, glo = R.REG.read_bytes(), R.GLO.read_bytes()
+    x = R._verify()
+    assert R.registry(x) == "registry unchanged"
+    assert R.glossary(x) == "glossary unchanged"
+    assert R.REG.read_bytes() == reg and R.GLO.read_bytes() == glo
+
+
+def test_position_fit_reads_v1_on_one_scale_while_v2_is_refuted():
+    """Position Fit values with v1 (the Baseball-Reference fit) and the payload
+    says so; the switcher ladder's state rides along from its registry row."""
+    assert pf.POSFIT_LADDER == "v1"
+    assert pf.POSFIT_ONE_SCALE is True
     fit = _json(PF)["fit"]
-    assert fit["ladder_posfit"]["basis"] == pf.POSFIT_LADDER
-    if passed:
-        assert fit["ladder_posfit"]["values"] == _json(V2)["values"]
-        ui = _json(PF_UI)["ladder"]
-        assert ui["basis"] == "v2"
-        assert ui["valuesDisplay"] == _json(V2)["identification"]["values_fielder_centred"]
-        assert ui["verdict"]["dmae"] == ev["tests"]["v1_minus_b_pooled"]["dmae"]
+    assert fit["ladder_posfit"]["basis"] == "v1"
+    assert fit["ladder_posfit"]["values"] == fit["ladder"]["values"]
+    assert "data/positional_ladder_v2.json" not in _json(PF)["sources"]
+    ui = _json(PF_UI)
+    assert ui["ladder"]["basis"] == "v1"
+    assert ui["ladder"]["values"] == fit["ladder"]["values"]
+    assert ui["ladder"]["valuesDisplay"] == fit["ladder"]["identification"]["values_fielder_centred"]
+    assert "ladderV1" not in ui and "verdict" not in ui["ladder"]
+    assert ui["oneScale"]["on"] is True
+    assert ui["oneScale"]["league_term_per_650pa"] == pytest.approx(pf.league_term(fit["ladder"]["values"]), abs=0.001)
+    row = _v2_row()
+    assert ui["ladderV2"] == {"modelId": "positional_ladder_v2", "verdict": row["verdict"],
+                              "provisionalKind": row["provisional_kind"], "summary": row["summary"],
+                              "view": "/glossary/#view=positional-ladder"}
+
+
+def test_the_v2_ladder_is_a_lab_artifact_off_the_webroot():
+    doc = _json(V2)
+    assert doc["status"].startswith("lab artifact, not served")
+    excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8").split()
+    assert "positional_ladder_v2.json" in excl
+    assert "positional_ladder_v2_eval.json" not in excl and "positional_ladder_v2_verify.json" not in excl
+    for js in ("pal.js", "glossary.js"):
+        assert "/data/positional_ladder_v2.json" not in (ROOT / "assets" / js).read_text(encoding="utf-8")
 
 
 def test_the_blocks_other_models_read_are_carried_not_refit():
@@ -211,6 +280,8 @@ def test_the_committed_readme_is_the_generated_one():
                            json.loads(rec.read_text(encoding="utf-8")) if rec.exists() else None)
     committed = (X.OUT_DIR / "README.md").read_text(encoding="utf-8").replace("\r\n", "\n")
     assert committed == text
+    assert "**v1 is the current ladder.**" in text
+    assert "## v2: the position-switcher ladder (lab artifact, under re-read)" in text
     assert chr(0x2014) not in text and chr(0x2013) not in text
 
 
@@ -276,9 +347,13 @@ def test_the_view_renders_at_390_without_a_page_scroll(browser, theme):
             page.close()
     assert not errors, errors
     assert out["theme"] == theme
-    assert out["shown"] and out["tables"] == 3 and out["rows0"] == 9
+    assert out["shown"] and out["tables"] == 4 and out["rows0"] == 9
     assert out["linkText"] == "Standalone version" and out["linkHref"] is None
     want = "%+.2f" % ev["tests"]["v1_minus_b_pooled"]["dmae"]
     assert want in out["text"], want
+    zb = _json(VERIFY)["zero_ladder"]["tests"]["zero_minus_b"]
+    assert ("%+.3f" % zb["dmae"]) in out["text"]
+    assert "Position Fit values with the Baseball-Reference ladder (v1)." in out["text"]
+    assert "Serves Position Fit" not in out["text"]
     assert out["scrollW"] == out["innerW"], "the page scrolls sideways at 390"
     assert out["frameRight"] <= out["innerW"]

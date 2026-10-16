@@ -43,13 +43,15 @@ THE ANSWER SHAPE
     positional-adjustment loss.
 
 THREE THINGS THIS MODEL DOES THAT THE NAIVE VERSION DOES NOT
-    1. The positional ladder Position Fit values with is the position-switcher
-       ladder v2 (ladder_v2.py, data/positional_ladder_v2.json): measured from what
-       the same players gain or lose in fielding runs when they change position,
-       on Baseball-Reference, FanGraphs and Savant fielding runs, and adopted
-       because it beat the Baseball-Reference inversion out of sample
-       (docs/ewar/LADDER_V2_GATE.md part 9). fit_ladder below is v1, that
-       inversion, still published as fit.ladder for DEM+ and the ladder export.
+    1. The positional ladder is RE-ESTIMATED from Baseball-Reference's own
+       construction rather than taken from the folklore table, on a rolling
+       six-season window that a forward-chained gate chose over the retired
+       2012-onward pool (see LADDER_WINDOW_SEASONS). The folklore ladder is wrong
+       by about 4.1 runs at 1B and treats 2B/3B/CF as one rung when the current
+       window says 5.12 / 3.62 / 4.14. The position-switcher ladder v2
+       (ladder_v2.py) served here on 2026-10-15 and was withdrawn the same day
+       (docs/ewar/LADDER_V2_GATE.md part 9): an all-zero fielding ladder scores
+       as well as it on the registered test. See POSFIT_LADDER.
     2. Single-season OAA is shrunk toward league average with a per-position
        reliability constant measured from year-over-year persistence. First base is
        the least reliable read in baseball (k = 2539 innings), shortstop the most
@@ -177,11 +179,13 @@ HEADLINE_MIN_PA = 250          # headline lists are regulars only
 HEADLINE_MIN_INN = 400.0
 
 # ---- which ladder Position Fit values with, and how (docs/ewar/LADDER_V2_GATE.md)
-#: "v2": the position-switcher ladder, the gate's verdict (part 9: pooled held-out
-#: dMAE +0.886 runs per 650 PA against the v1 refit, CI95 +0.717 to +1.059, every
-#: source and every fold). "v1" puts back the Baseball-Reference inversion. Either
-#: way the artifact's fit.ladder stays v1, because DEM+ and the ladder export read it.
-POSFIT_LADDER = "v2"
+#: "v1": the Baseball-Reference inversion (fit_ladder), served. "v2" reads the
+#: position-switcher ladder (data/positional_ladder_v2.json), which served from
+#: 2026-10-15 until the same day's verification (LADDER_V2_REVERT, owner EW3-29;
+#: gate part 9, refuted pending re-read): on the registered scoring an all-zero
+#: fielding ladder scores as well as v2, so the read measured no ladder. v2 stays a
+#: lab artifact until a re-read. Either way fit.ladder stays v1 (DEM+, the export).
+POSFIT_LADDER = "v1"
 LADDER_V2_PATH = DATA_DIR / "positional_ladder_v2.json"
 #: Gate part 8: the difficulty term inside a hitter's VALUE is the served ladder's
 #: own, so an average glove is worth the same at every fielding position. False

@@ -1,12 +1,12 @@
 {
  "schema_version": "1.0.0",
- "exported_at": "2026-10-15T22:56:46+00:00",
+ "exported_at": "2026-10-16T00:05:17+00:00",
  "source_artifact": "prospect-tracker/data/positional_ladder_v2.json",
  "source_eval": "prospect-tracker/data/positional_ladder_v2_eval.json",
  "read_at": "2026-10-15T18:27:23",
  "model_id": "positional_ladder_v2",
  "gate": "docs/ewar/LADDER_V2_GATE.md",
- "status": "served on Position Fit",
+ "status": "lab artifact, not served: refuted pending re-read (data/positional_ladder_v2_verify.json); Position Fit values with v1",
  "what_this_is": "The positional adjustment measured on players who changed position: the fielding runs the same player gains or loses when he moves, fit separately on Baseball-Reference runs_field, FanGraphs fld and Statcast fielding runs prevented, then pooled by inverse variance. Catcher keeps the v1 rung (too few catchers change position); DH is first base plus the first-base fielding of the players who DH.",
  "units": "runs per 650 PA (per 1,277.7 fielded innings), exposure-weighted sum zero",
  "method": "same-player position-switcher network: per fielding source (Baseball-Reference runs_field, FanGraphs fld, Savant FRP) a weighted least squares of next-season fielding runs on the change in innings shares with a glove persistence and an age term, plus Savant same-season pairs; sources pooled by inverse variance; DH = 1B + the 1B rate of DH-type seasons; C by the gate's part 3 rule",
@@ -425,5 +425,79 @@
    }
   },
   "note": "every column recentred on one exposure vector (gate part 4), so gaps and levels compare directly; the source legs are shifted to the v2 seven-position mean and carry the positions each source rates"
+ },
+ "verification": {
+  "source": "prospect-tracker/data/positional_ladder_v2_verify.json",
+  "generated_at": "2026-10-15",
+  "finding": {
+   "zero_ties_v2": true,
+   "v1_minus_b_reproduces_read": 0.8861,
+   "status": "refuted pending re-read"
+  },
+  "zero_minus_v2": {
+   "dmae": 0.0488,
+   "ci95": [
+    -0.0046,
+    0.1026
+   ],
+   "n_rows": 4141,
+   "n_players": 611
+  },
+  "v1_minus_zero": {
+   "dmae": 0.8374,
+   "ci95": [
+    0.6588,
+    1.0261
+   ],
+   "n_rows": 4141,
+   "n_players": 611
+  },
+  "mae_pooled": {
+   "v1": 7.4097,
+   "b": 6.5235,
+   "zero": 6.5723
+  },
+  "mae_by_scale": {
+   "v1": {
+    "0.0": 6.5587,
+    "0.25": 6.5837,
+    "0.5": 6.742,
+    "0.75": 7.0231,
+    "1.0": 7.4097,
+    "1.25": 7.8974
+   },
+   "b": {
+    "0.0": 6.5587,
+    "0.25": 6.5355,
+    "0.5": 6.5226,
+    "0.75": 6.519,
+    "1.0": 6.5235,
+    "1.25": 6.537
+   },
+   "fg_table": {
+    "0.0": 6.5587,
+    "0.25": 6.5669,
+    "0.5": 6.6873,
+    "0.75": 6.9115,
+    "1.0": 7.2307,
+    "1.25": 7.6372
+   }
+  },
+  "savant_league_rate_per_1277_7_inn": {
+   "1B": -0.93,
+   "2B": 0.21,
+   "3B": -0.09,
+   "SS": 0.57,
+   "LF": -3.14,
+   "CF": 4.3,
+   "RF": -1.63
+  },
+  "cf_minus_ss_by_source_leg": {
+   "BREF": 7.5,
+   "FG": 2.55,
+   "SAVANT": -0.62,
+   "SAVANT_centred": 2.77
+  },
+  "read_this": "zero is a ladder with every fielding position at 0 (C and DH as v2's), scored on the read's own rows, folds and draws; dMAE = MAE(first) - MAE(second), positive favours the second"
  }
 }

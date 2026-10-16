@@ -269,6 +269,60 @@ and +6.06 at 3B) swamped the glove. The conversion-accuracy claim is untouched b
 (Statcast D still predicts the rate at a new position). The flag count falls because a move
 between two fielding positions is now the glove alone (mean absolute gain 0.55 runs per 650 PA).
 
+### 2026-10-15, the verification: refuted pending re-read (LADDER_V2_REVERT, owner EW3-29)
+
+An independent adversarial check of the read above, then `python tools/ladder_v2_verify.py`, which
+records it on the read's own data, rows, folds, scoring (amendment A2) and draws (2,000, seed
+20261015): `data/positional_ladder_v2_verify.json`. Nothing in the read or its record changes. The
+read's v1-minus-b pooled dMAE reproduces exactly (+0.886, CI95 +0.717 to +1.059), so every number
+below is on the same footing.
+
+**Verdict: refuted as a ladder, pending a re-read.** Part 5's pass rule compared (b) only with the
+v1 refit; it had no null comparator. Scored the same way, a ladder with every fielding rung at zero
+(C and DH as the fold's b) ties b:
+
+| test (pooled, 4,141 rows, 611 players) | dMAE, runs per 650 PA | CI95 |
+| --- | ---: | --- |
+| zero minus b | +0.049 | -0.005 to +0.103 |
+| v1 refit minus zero | +0.837 | +0.659 to +1.026 |
+| zero minus b, across-season rows | +0.037 | -0.020 to +0.096 |
+| zero minus b, Savant same-season pairs | +0.120 | -0.004 to +0.232 |
+
+Pooled weighted MAE: b 6.524, zero 6.572, v1 refit 7.410. The read's +0.886 is therefore v1's
+spread costing error on this test, not b's ladder earning it.
+
+- **Shrinkage profile.** Each ladder multiplied by 0, 0.25, 0.5, 0.75, 1, 1.25: v1 7.410 at 1 falls
+  to 6.559 at 0 at every step (6.742 at 0.5); the FanGraphs table falls the same way (7.231 at 1);
+  b is flat (6.559 at 0, 6.519 at 0.75, 6.524 at 1). On this test, less spread is never worse; the
+  test cannot tell a right ladder from no ladder.
+- **Rungs the test cannot see.** Rows are built from fielded-innings shares, so the DH rung enters
+  no scored row (DH -6.48 was never tested), and C enters 13 rows with a C share change of 0.25 or
+  more (about 1% of the Baseball-Reference and FanGraphs scored weight).
+- **Savant FRP is not position-centred.** Summed over a position and season, Statcast fielding runs
+  prevented come to +4.30 runs per 1,277.7 innings at CF, -3.14 at LF and -1.63 at RF (2016-2026
+  pooled; CF and LF keep their sign in every season), where part 1 assumed every source centred within position.
+  Centred, the refit is a different ladder (gaps to SS: CF +3.39, LF -1.99, RF -1.43, 1B -4.68,
+  against the read's +1.09, +0.29, -0.01, -3.69) and it beats zero by +0.135 (CI95 +0.046 to
+  +0.224) on the centred rows: a lead for the re-read, not a result.
+- **Bridge rows.** The infield and outfield are placed on one ladder only by switchers who played
+  both: 462 Baseball-Reference rows, of which 68 moved half or more of their innings across and
+  carry 62% of that gap's information. Inside the infield alone the sources put 1B at -4.36, +0.74
+  and -3.18 runs from SS (Baseball-Reference, FanGraphs, Statcast). CF reads above SS on the
+  Baseball-Reference (+7.50), FanGraphs (+2.55) and centred Statcast (+2.77) legs; raw Statcast
+  reads -0.62.
+
+**What changes.** Position Fit values with v1 again (`positional_fit.POSFIT_LADDER = "v1"`), and
+part 8's one-run-scale composition stays: on v1 it gives demotion AUC 0.6631 against raw OAA
+0.6141, model minus raw OAA +0.049 (CI95 +0.022 to +0.076), so the demotion card still reads
+SEPARATES. The registry row positional_ladder_v2 is provisional (measured_not_adopted) with a
+refuted-pending-re-read line; `data/positional_ladder_v2.json` is a lab artifact kept off the
+webroot; the Library's Positional Ladder view prints v1 as used, the read and this check.
+
+**What a re-read needs** (a new registration, before any number): a zero ladder and scaled copies
+in the pass rule, so a ladder must beat no ladder; Savant FRP centred within position and season;
+a stated rule for rungs no scored row can see (DH, C); and a check that the infield to outfield
+gap is not set by a handful of rows.
+
 ## 10. Amendments
 
 ### 2026-10-15, A1 to A4, before the read

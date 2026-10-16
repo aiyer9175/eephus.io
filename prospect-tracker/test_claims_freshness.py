@@ -235,12 +235,13 @@ CLAIM_SURFACES = (
 # tol_mode "abs": |claim - actual| <= tol.
 # tol_mode "rel": |claim - actual| <= tol * |actual| (copy rounds).
 GLOSSARY_CLAIMS = (
-    # The positional ladder entry quotes the one read of docs/ewar/LADDER_V2_GATE.md
-    # (EWAR_LADDER_REDERIVE, 2026-10-15): the pooled held-out error gap to the
-    # Baseball-Reference inversion. Quoted to three decimals.
-    ("positional_ladder", "v2 pooled dMAE vs v1", r"its error was (0\.\d+) runs per 650 PA lower",
-     "data/positional_ladder_v2_eval.json",
-     ("tests", "v1_minus_b_pooled", "dmae"), "abs", 0.0005),
+    # The positional ladder entry quotes the verification of the one read of
+    # docs/ewar/LADDER_V2_GATE.md (LADDER_V2_REVERT, 2026-10-15): how much higher
+    # an all-zero fielding ladder's held-out error is than v2's. Quoted to three
+    # decimals.
+    ("positional_ladder", "zero ladder minus v2 dMAE", r"its error was (0\.\d+) runs per 650 PA higher",
+     "data/positional_ladder_v2_verify.json",
+     ("zero_ladder", "tests", "zero_minus_b", "dmae"), "abs", 0.0005),
     # war_pa_plus quotes its own honest loss: forward Spearman 0.3711 for
     # the rate index vs 0.4058 for plain season WAR (v2 convention, hit
     # pool). Measured on eWAR since the lab's 2026-09-11 re-point (audit

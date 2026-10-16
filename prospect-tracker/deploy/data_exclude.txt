@@ -59,6 +59,11 @@ wire_fv_first_seen.json
 # test_identity_collisions.py and by whoever works the repair queue.
 identity_collisions.json
 positional_fit.json
+# positional_ladder_v2.json: the position-switcher ladder (ladder_v2.py), a lab
+# artifact since LADDER_V2_REVERT (2026-10-15): Position Fit values with v1 and no
+# page fetches it; it never shipped (deploys deferred since 2026-10-01). Its read's
+# record and verification are eval artifacts and ship.
+positional_ladder_v2.json
 # comps.json (5.6 MB): the archetype-comps donor pool from the 2026-07-25
 # combinatorial sweep. The sweep returned NO SHIP (nested-CV lift negative,
 # selection bias 88-234%), comps_engine.py is unwired, and no page fetches

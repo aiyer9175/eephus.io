@@ -6619,14 +6619,16 @@ def build_pal() -> str:
     # written and were invisible to a search snippet. Length 211 chars and 24
     # words after the 2026-10-08 copy pass (share cards 25 words or fewer; 270
     # chars before it); this page has seven surfaces to name. 2026-10-15
-    # (EWAR_LADDER_REDERIVE): Position Fit's ladder is no longer
-    # Baseball-Reference's but the one measured on position switchers
-    # (docs/ewar/LADDER_V2_GATE.md), so the closing clause names that basis;
-    # 25 words.
+    # (LADDER_V2_REVERT, owner EW3-29): Position Fit values with our ladder
+    # fitted on Baseball-Reference positional runs again, after the position-
+    # switcher ladder (v2) served for one day and its verification found an
+    # all-zero ladder scores as well (docs/ewar/LADDER_V2_GATE.md part 9), so
+    # the closing clause names that basis and v2's state; 31 words.
     return page("Alchemy Lab - eephus.io", "pal", body,
                 "MLB role and position conversions: RP-to-SP, SP-to-RP, position fit, pitch-add, "
                 "reverse-platoon and prospect boards, the conversion backtest. Statcast arsenals and "
-                "velocity; a switcher-measured positional ladder.",
+                "velocity; our positional ladder, fitted on Baseball-Reference positional runs "
+                "(v2 under re-read).",
                 url=f"{SITE_ORIGIN}/pal/", image=module_share_image("pal"))
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
@@ -11102,46 +11104,24 @@ def build_positional_fit_payload() -> dict | None:
             "windowEval": _ladder_window_eval() if window_eval else None,
         }
 
-    # ---- which ladder the page prints (EWAR_LADDER_REDERIVE, 2026-10-15) -----
-    # Position Fit values with fit.ladder_posfit: the position-switcher ladder v2
-    # when docs/ewar/LADDER_V2_GATE.md passed it (data/positional_ladder_v2.json),
-    # else v1. fit.ladder stays v1, the Baseball-Reference inversion, and rides
-    # along as ladderV1 for the comparison column and the fallback renderer.
+    # ---- which ladder the page prints (LADDER_V2_REVERT, 2026-10-15) ---------
+    # Position Fit values with v1, the ladder fitted on Baseball-Reference's
+    # positional runs (fit.ladder; positional_fit.POSFIT_LADDER). The position-
+    # switcher ladder v2 served here on 2026-10-15 and was withdrawn the same
+    # day: its verification found an all-zero fielding ladder scores as well on
+    # the registered test (docs/ewar/LADDER_V2_GATE.md part 9). Its state is
+    # read from its registry row, so the page cannot call it served or validated
+    # while the row says otherwise. The one-run-scale composition stays.
     v1 = ladder
-    posfit = fit.get("ladder_posfit") or {}
-    if posfit.get("basis") == "v2":
-        ladder_out = _ladder_block(posfit, window_eval=False)
-        ev = _cached_data_json("positional_ladder_v2_eval.json") or {}
-        tests = ev.get("tests") or {}
-        prim = tests.get("v1_minus_b_pooled") or {}
-        acr = tests.get("v1_minus_b_across") or {}
-        folds = (ev.get("scores") or {}).get("by_fold") or {}
-        ladder_out.update({
-            "basis": "v2",
-            "source": posfit.get("source"),
-            "gate": posfit.get("gate"),
-            "cBranch": posfit.get("c_branch"),
-            "dhMu": posfit.get("dh_mu"),
-            "verdict": {
-                "artifact": "data/positional_ladder_v2_eval.json",
-                "readAt": str(ev.get("read_at") or "")[:10] or None,
-                "dmae": prim.get("dmae"), "ci95": prim.get("ci95"),
-                "nRows": prim.get("n_rows"), "nPlayers": prim.get("n_players"),
-                "dmaeAcross": acr.get("dmae"), "ci95Across": acr.get("ci95"),
-                "sourcesBetter": sum(1 for d in (tests.get("v1_minus_b_by_source") or {}).values()
-                                     if d and d.get("ci95") and d["ci95"][0] > 0),
-                "nSources": len(tests.get("v1_minus_b_by_source") or {}),
-                "foldsBetter": sum(1 for f in folds.values()
-                                   if f and f.get("b") and f.get("v1")
-                                   and f["b"]["mae"] < f["v1"]["mae"]),
-                "nFolds": len(folds),
-            },
-        })
-        ladder_v1 = _ladder_block(v1, window_eval=True)
-    else:
-        ladder_out = _ladder_block(v1, window_eval=True)
-        ladder_out["basis"] = "v1"
-        ladder_v1 = None
+    ladder_out = _ladder_block(v1, window_eval=True)
+    ladder_out["basis"] = (fit.get("ladder_posfit") or {}).get("basis") or "v1"
+    _v2row = next((m for m in ((_cached_data_json("model_registry.json") or {}).get("models") or [])
+                   if m.get("model_id") == "positional_ladder_v2"), None)
+    ladder_v2 = ({"modelId": "positional_ladder_v2",
+                  "verdict": _v2row.get("verdict"),
+                  "provisionalKind": _v2row.get("provisional_kind"),
+                  "summary": _v2row.get("summary"),
+                  "view": "/glossary/#view=positional-ladder"} if _v2row else None)
     return {
         "generated_at": src.get("generated_at"),
         "model": src.get("model"),
@@ -11157,7 +11137,7 @@ def build_positional_fit_payload() -> dict | None:
         "caveats": src.get("caveats"),
         "rngMeta": _rng_meta or None,
         "ladder": ladder_out,
-        "ladderV1": ladder_v1,
+        "ladderV2": ladder_v2,
         # Gate part 8: the one-run-scale composition, so the page can say a move
         # between fielding positions is the glove alone.
         "oneScale": fit.get("one_scale"),

@@ -167,12 +167,29 @@ def _render_ladder(pf: dict) -> str:
 
 
 def _v1_view(pf: dict) -> dict:
-    """The v1 renderer's payload: since 2026-10-15 the served ladder block is v2
-    (the switcher ladder) and v1, with its window note, rides as ladderV1."""
+    """The v1 renderer's payload. The served ladder block is v1 again since
+    LADDER_V2_REVERT (2026-10-15), so this is a copy; it still maps a v2-basis
+    payload carrying ladderV1 (the one-day EWAR_LADDER_REDERIVE shape) back."""
     pf = json.loads(json.dumps(pf))
     if (pf.get("ladder") or {}).get("basis") == "v2" and pf.get("ladderV1"):
         pf["ladder"] = dict(pf["ladderV1"], basis="v1")
     return pf
+
+
+def test_the_ladder_tab_prints_v1_on_one_scale_and_names_v2s_state():
+    """LADDER_V2_REVERT: the tab prints the Baseball-Reference ladder Position
+    Fit values with, the one-run-scale note, and the switcher ladder's state as
+    its registry row words it, never as served."""
+    pf = _load("positional_fit_ui.json")
+    assert pf["ladder"]["basis"] == "v1" and "ladderV1" not in pf
+    html = _render_ladder(pf)
+    assert "inverted from Baseball-Reference" in html
+    assert "One run scale.</strong>" in html
+    assert "Position-switcher ladder (v2).</strong> Not used on this page." in html
+    assert pf["ladderV2"]["summary"] in html
+    assert 'href="/glossary/#view=positional-ladder"' in html
+    assert "Switcher ladder (runs/650)" not in html and "It replaced the Baseball-Reference" not in html
+    assert "pfLadderV2" not in PAL_JS
 
 
 def test_the_window_note_reads_and_cites_the_recency_eval():
