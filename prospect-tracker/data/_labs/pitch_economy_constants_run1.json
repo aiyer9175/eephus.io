@@ -1,0 +1,47 @@
+{
+ "K_CL": {
+  "K": 171.71,
+  "K_infinite": false,
+  "floor": 200,
+  "nbar": 444.12,
+  "rho_full": 0.721176,
+  "rho_half": 0.563937,
+  "rows": 714,
+  "unit": "plate appearances"
+ },
+ "K_P": {
+  "K": 110.95,
+  "K_infinite": false,
+  "floor": 150,
+  "nbar": 284.51,
+  "rho_full": 0.719436,
+  "rho_half": 0.561812,
+  "rows": 607,
+  "unit": "plate appearances against starters"
+ },
+ "K_clamp": [
+  50.0,
+  20000.0
+ ],
+ "artifact": "pitch_economy_constants",
+ "by_reference": {
+  "K_B": 2.0,
+  "K_O": 120.0,
+  "source": "data/starter_workload_eval.json stage1.burn_in.priors"
+ },
+ "delta_tto": {
+  "late_pa": 47079,
+  "min_late": 30,
+  "starter_seasons": 384,
+  "unit": "runs per plate appearance (RE24 run value)",
+  "value": 0.03050995
+ },
+ "fit_seasons": [
+  2018,
+  2019
+ ],
+ "generated_at": "2026-10-16T02:01:23+00:00",
+ "git_head": "e05e51ed1ec27655d5c4b2fd0dacb05bd4f10ed4",
+ "registration": "docs/ewar/PITCH_ECONOMY_LAB.md part 7; EBR_GATE.md 11.3.6",
+ "version": "pitch_economy_v1"
+}
