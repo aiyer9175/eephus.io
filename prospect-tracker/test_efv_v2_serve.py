@@ -49,7 +49,12 @@ def test_the_artifact_serves_v2():
     doc = _xfv()
     if not S.enabled():
         pytest.skip("eFV V2 is switched off")
-    assert doc["meta"]["served_model"]["model_id"] == S.SERVED_MODEL_ID
+    # the registered eFV v5 re-fit (owner EFV-REFIT-1, 2026-10-15) serves under its own
+    # model id on the same V2 order-index form; with its flag off the board names V2
+    import efv5_refit as R5
+    want = R5.SERVED_MODEL_ID if R5.EFV_V5_REFIT_ON else S.SERVED_MODEL_ID
+    assert doc["meta"]["served_model"]["model_id"] == want
+    assert doc["meta"]["served_model"]["grade_basis"] == S.GRADE_BASIS
     assert _v2_rows(doc), "no active row is V2-graded"
 
 

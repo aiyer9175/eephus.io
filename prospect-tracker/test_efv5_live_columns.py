@@ -214,7 +214,15 @@ def test_live_values_never_leave_the_training_range(side):
     IL stints 26.9 against 5.2)."""
     _live_rows, rows, cols, _rec = _cols(side)
     got = _head_z_ranges(side, cols)
-    assert len(got) >= 10
+    # the measure runs on every candidate key the served heads carry (the re-fit's hitter
+    # skill head is the hit tool alone, so the hitter keys are its arrival head's), and a
+    # served candidate key with no values to compare fails here rather than passing unread
+    m = S.production_models()[side]
+    by_key = {X.candidates()[n]["key"] for n in cols}
+    served = {k for h in ("skill", "timing") for j, k in enumerate((m.get(h) or {}).get("keys") or [])
+              if k in by_key and float(m[h]["sd"][j]) != 0}
+    assert served, side
+    assert {k for k, *_r in got} == served, sorted(served - {k for k, *_r in got})
     for k, tmax, p99, lmax in got:
         assert lmax <= tmax + 1e-9, (k, tmax, lmax)
         assert p99 <= tmax + 1e-9, (k, tmax, p99)
@@ -365,14 +373,33 @@ def test_score_live_attaches_the_candidates_and_their_chips_print(side):
     keys = {X.candidates()[n]["key"] for n in X.side_candidates(side)}
     for pk, vals in cand.items():
         assert set(vals) == keys, pk
-    chips = [c for p in preds.values() for c in p["chips"] if c["driver"].startswith("scr_")]
-    assert chips, "no candidate chip on the live board"
+    # the drivers the served heads weight (a head at weight 0 moves nothing); under the
+    # re-fit (2026-10-15) that is the hit tool for hitters and the candidate columns of
+    # the joint skill head for pitchers
+    m = models[side]
+    moving = {k for h, w in (("skill", "w_skill"), ("timing", "w_time")) if (m.get(w) or 0) > 0
+              for j, k in enumerate((m.get(h) or {}).get("keys") or [])
+              if float(m[h]["beta"][j]) != 0.0}
+    assert moving, side
+    chips = [c for p in preds.values() for c in p["chips"] if c["driver"] in moving]
+    assert chips, f"no chip of a served driver on the live board ({sorted(moving)})"
+    assert not [c for p in preds.values() for c in p["chips"]
+                if c["driver"] not in moving and c.get("on_grade") is not False
+                and c["driver"].startswith("scr_")], "a chip names a driver the heads do not weight"
     for c in chips:
-        assert c["label"] == X.CHIP_LABELS_V5[c["driver"]]
+        if c["driver"].startswith("scr_"):
+            assert c["label"] == X.CHIP_LABELS_V5[c["driver"]]
+        else:
+            assert c["label"] == S.CHIP_LABELS[c["driver"]]
         assert c["mag"] >= S.CHIP_FLOOR_PCT - 1e-9
-    # the candidate keys move the order: the board is not the V2-keys-only read
     off = _score_live_v2(side, live, models, TODAY)
-    assert any(abs(preds[k]["order_idx"] - off[k]["order_idx"]) > 1e-9 for k in preds)
+    moved = any(abs(preds[k]["order_idx"] - off[k]["order_idx"]) > 1e-9 for k in preds)
+    if any(k.startswith("scr_") for k in moving):
+        # the candidate keys move the order: the board is not the V2-keys-only read
+        assert moved
+    else:
+        # no candidate key carries weight: the board is exactly the V2-keys-only read
+        assert not moved
 
 
 def test_the_card_takes_the_explainer_cut_under_v5():
@@ -605,13 +632,38 @@ def test_season_local_lines_equal_the_training_lines():
 
 
 def test_the_production_fit_still_reproduces_the_served_weights():
-    doc = json.loads(X.WEIGHTS_PATH.read_text(encoding="utf-8"))
+    """The served heads' driver table equals the one their own fit wrote: the re-fit's
+    (data/_labs/efv5/efv5_refit_fit.json production, the served candidate) while
+    efv5_refit.EFV_V5_REFIT_ON, else eFV v5 COMBINED's weights file."""
+    import efv5_refit as R5
+    refit = bool(R5.EFV_V5_REFIT_ON)
+    if refit:
+        cand = R5.served_candidate(json.loads(R5.WEIGHTS_PATH.read_text(encoding="utf-8")))
+        fit = json.loads(R5.FIT_PATH.read_text(encoding="utf-8"))
+        want = fit["production"][cand]["driver_tables"]
+    else:
+        want = json.loads(X.WEIGHTS_PATH.read_text(encoding="utf-8"))["weights"]
+
+    def _no_se(t):
+        # the stored re-fit head (efv5_refit._HEAD_FIELDS) keeps no standard errors, so
+        # the SE columns are compared only where the served model carries them
+        t = json.loads(json.dumps(t))
+        for head in (t.get("heads") or {}).values():
+            for r in (head or {}).get("drivers") or []:
+                for k in ("se", "weight_se_pct_equiv", "at_bound"):
+                    r.pop(k, None)
+        return t
+
     models = S.production_models()
     for side, m in models.items():
         if m.get("model_id") != X.MODEL_ID:
             pytest.skip("eFV v5 COMBINED is not the served model")
         got = json.loads(json.dumps(X.weights_table(m)))
-        assert got == doc["weights"][side], side
+        if refit:
+            got, exp = _no_se(got), _no_se(want[side])
+        else:
+            exp = want[side]
+        assert got == exp, side
 
 
 # ---------------------------------------------------------------------------
