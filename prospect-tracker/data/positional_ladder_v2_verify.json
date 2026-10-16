@@ -1,0 +1,688 @@
+{
+ "model": "positional_ladder_v2",
+ "kind": "verification of the one read",
+ "gate": "docs/ewar/LADDER_V2_GATE.md",
+ "task": "LADDER_V2_REVERT (owner decision EW3-29)",
+ "generated_at": "2026-10-15",
+ "read_record": "data/positional_ladder_v2_eval.json",
+ "seed": 20261015,
+ "draws": 2000,
+ "unit_innings": 1277.7,
+ "v1_served_artifact": {
+  "generated_at": "2026-10-15",
+  "seasons": [
+   2021,
+   2026
+  ]
+ },
+ "zero_ladder": {
+  "what": "The read's leave-one-season-out scoring (2016 to 2026, amendment A2's predictor), with an all-zero fielding ladder and scaled copies of v1 and v2 added in every fold. zero: every fielding rung 0, C and DH as the fold's v2. dMAE a minus b, positive favours b; paired player-cluster bootstrap.",
+  "mae_pooled": {
+   "v1": 7.4097,
+   "b": 6.5235,
+   "zero": 6.5723
+  },
+  "mae_by_scale": {
+   "v1": {
+    "0.0": 6.5587,
+    "0.25": 6.5837,
+    "0.5": 6.742,
+    "0.75": 7.0231,
+    "1.0": 7.4097,
+    "1.25": 7.8974
+   },
+   "b": {
+    "0.0": 6.5587,
+    "0.25": 6.5355,
+    "0.5": 6.5226,
+    "0.75": 6.519,
+    "1.0": 6.5235,
+    "1.25": 6.537
+   },
+   "fg_table": {
+    "0.0": 6.5587,
+    "0.25": 6.5669,
+    "0.5": 6.6873,
+    "0.75": 6.9115,
+    "1.0": 7.2307,
+    "1.25": 7.6372
+   }
+  },
+  "monotone_toward_zero": {
+   "v1": true,
+   "b": false,
+   "fg_table": true
+  },
+  "b_scale_at_lowest_mae": 0.75,
+  "mae_across": {
+   "v1": 6.8564,
+   "b": 6.1029,
+   "zero": 6.1399
+  },
+  "mae_within": {
+   "v1": 10.7361,
+   "b": 9.0528,
+   "zero": 9.1724
+  },
+  "mae_by_source": {
+   "BREF": {
+    "v1": 7.6349,
+    "b": 7.2015,
+    "zero": 7.2661
+   },
+   "FG": {
+    "v1": 6.4323,
+    "b": 5.7234,
+    "zero": 5.7818
+   },
+   "SAVANT": {
+    "v1": 7.9553,
+    "b": 6.6122,
+    "zero": 6.6424
+   }
+  },
+  "tests": {
+   "v1_minus_b": {
+    "dmae": 0.8861,
+    "ci95": [
+     0.717,
+     1.0587
+    ],
+    "n_rows": 4141,
+    "n_players": 611
+   },
+   "zero_minus_b": {
+    "dmae": 0.0488,
+    "ci95": [
+     -0.0046,
+     0.1026
+    ],
+    "n_rows": 4141,
+    "n_players": 611
+   },
+   "v1_minus_zero": {
+    "dmae": 0.8374,
+    "ci95": [
+     0.6588,
+     1.0261
+    ],
+    "n_rows": 4141,
+    "n_players": 611
+   },
+   "zero_minus_b_across": {
+    "dmae": 0.037,
+    "ci95": [
+     -0.0203,
+     0.0963
+    ],
+    "n_rows": 2949,
+    "n_players": 495
+   },
+   "zero_minus_b_within": {
+    "dmae": 0.1195,
+    "ci95": [
+     -0.0044,
+     0.2324
+    ],
+    "n_rows": 1192,
+    "n_players": 499
+   }
+  },
+  "n_rows": 4141,
+  "n_players": 611
+ },
+ "rung_coverage": {
+  "what": "Rows of the read's scoring that carry any innings at C, and a C share change of 0.25 or more; DH never enters a scored row, because the rows are built from fielded-innings shares and DH is not a fielded position.",
+  "by_source": {
+   "BREF": {
+    "scored_rows": 1017,
+    "across_rows": 1017,
+    "within_pairs": 0,
+    "C": {
+     "rows_any_c": 20,
+     "rows_c_change_025": 13,
+     "weight_share_any_c": 0.0172,
+     "weight_share_c_change_025": 0.0104
+    },
+    "DH_rows": 0
+   },
+   "FG": {
+    "scored_rows": 1017,
+    "across_rows": 1017,
+    "within_pairs": 0,
+    "C": {
+     "rows_any_c": 20,
+     "rows_c_change_025": 13,
+     "weight_share_any_c": 0.0172,
+     "weight_share_c_change_025": 0.0104
+    },
+    "DH_rows": 0
+   },
+   "SAVANT": {
+    "scored_rows": 2107,
+    "across_rows": 915,
+    "within_pairs": 1192,
+    "C": {
+     "rows_any_c": 0,
+     "rows_c_change_025": 0,
+     "weight_share_any_c": 0.0,
+     "weight_share_c_change_025": 0.0
+    },
+    "DH_rows": 0
+   }
+  }
+ },
+ "savant_centring": {
+  "what": "Statcast fielding runs prevented summed over a position and season do not net to zero: the league books runs at CF and takes them at LF and RF. Baseball-Reference and FanGraphs fielding runs sit near zero at every position. The refits below are b on all 2016 to 2026 rows.",
+  "savant_league_rate_per_1277_7_inn": {
+   "1B": {
+    "pooled_2016_2026": -0.93,
+    "by_season": {
+     "2016": 0.44,
+     "2017": -0.3,
+     "2018": -1.88,
+     "2019": -1.53,
+     "2020": -1.41,
+     "2021": 0.27,
+     "2022": -0.68,
+     "2023": -1.87,
+     "2024": -1.07,
+     "2025": -1.34,
+     "2026": -1.19
+    }
+   },
+   "2B": {
+    "pooled_2016_2026": 0.21,
+    "by_season": {
+     "2016": -0.12,
+     "2017": -0.3,
+     "2018": 0.26,
+     "2019": -1.06,
+     "2020": -0.17,
+     "2021": 0.72,
+     "2022": 0.65,
+     "2023": 0.24,
+     "2024": 0.62,
+     "2025": 0.06,
+     "2026": 1.2
+    }
+   },
+   "3B": {
+    "pooled_2016_2026": -0.09,
+    "by_season": {
+     "2016": 0.74,
+     "2017": 0.09,
+     "2018": -0.38,
+     "2019": 1.83,
+     "2020": -0.83,
+     "2021": -0.42,
+     "2022": -0.77,
+     "2023": 0.62,
+     "2024": -1.01,
+     "2025": -0.47,
+     "2026": -0.86
+    }
+   },
+   "SS": {
+    "pooled_2016_2026": 0.57,
+    "by_season": {
+     "2016": -1.33,
+     "2017": 0.3,
+     "2018": 2.03,
+     "2019": 0.56,
+     "2020": 1.57,
+     "2021": -0.69,
+     "2022": 0.59,
+     "2023": 0.62,
+     "2024": 1.16,
+     "2025": 1.6,
+     "2026": 0.46
+    }
+   },
+   "LF": {
+    "pooled_2016_2026": -3.14,
+    "by_season": {
+     "2016": -3.57,
+     "2017": -2.81,
+     "2018": -2.88,
+     "2019": -4.71,
+     "2020": -3.73,
+     "2021": -2.8,
+     "2022": -3.0,
+     "2023": -3.57,
+     "2024": -2.85,
+     "2025": -3.33,
+     "2026": -1.58
+    }
+   },
+   "CF": {
+    "pooled_2016_2026": 4.3,
+    "by_season": {
+     "2016": 2.77,
+     "2017": 3.52,
+     "2018": 4.03,
+     "2019": 4.65,
+     "2020": 4.22,
+     "2021": 4.53,
+     "2022": 4.96,
+     "2023": 5.25,
+     "2024": 4.81,
+     "2025": 5.4,
+     "2026": 3.06
+    }
+   },
+   "RF": {
+    "pooled_2016_2026": -1.63,
+    "by_season": {
+     "2016": 0.59,
+     "2017": -1.33,
+     "2018": -1.59,
+     "2019": -0.38,
+     "2020": -1.82,
+     "2021": -1.86,
+     "2022": -2.58,
+     "2023": -2.11,
+     "2024": -2.26,
+     "2025": -2.85,
+     "2026": -1.91
+    }
+   }
+  },
+  "bref_implied_rate_per_1277_7_inn": {
+   "C": -0.01,
+   "1B": -0.21,
+   "2B": 0.26,
+   "3B": 0.66,
+   "SS": 1.68,
+   "LF": -0.22,
+   "CF": 2.59,
+   "RF": 0.32
+  },
+  "fg_implied_rate_per_1277_7_inn": {
+   "C": 0.59,
+   "1B": -0.04,
+   "2B": 0.55,
+   "3B": 0.69,
+   "SS": 1.59,
+   "LF": -1.21,
+   "CF": 2.95,
+   "RF": -0.39
+  },
+  "refit_gaps_vs_SS": {
+   "v2_as_read": {
+    "C": 9.86,
+    "1B": -3.69,
+    "2B": -2.45,
+    "3B": -2.44,
+    "SS": 0.0,
+    "LF": 0.29,
+    "CF": 1.09,
+    "RF": -0.01,
+    "DH": -6.8
+   },
+   "savant_centred": {
+    "C": 9.42,
+    "1B": -4.68,
+    "2B": -2.63,
+    "3B": -2.82,
+    "SS": 0.0,
+    "LF": -1.99,
+    "CF": 3.39,
+    "RF": -1.43,
+    "DH": -7.35
+   },
+   "bref_and_fg_only": {
+    "C": 11.08,
+    "1B": -2.57,
+    "2B": -1.89,
+    "3B": -1.0,
+    "SS": 0.0,
+    "LF": 0.65,
+    "CF": 4.48,
+    "RF": 1.69,
+    "DH": -5.63
+   },
+   "v1_served": {
+    "C": 1.5,
+    "1B": -17.78,
+    "2B": -4.26,
+    "3B": -5.76,
+    "SS": 0.0,
+    "LF": -15.77,
+    "CF": -5.24,
+    "RF": -15.9,
+    "DH": -23.08
+   }
+  },
+  "scoring_with_savant_centred_mae": {
+   "v1": 7.1244,
+   "b_centred": 6.4844,
+   "zero": 6.6195
+  },
+  "scoring_with_savant_centred_tests": {
+   "zero_minus_b_centred": {
+    "dmae": 0.135,
+    "ci95": [
+     0.0459,
+     0.2235
+    ],
+    "n_rows": 4141,
+    "n_players": 611
+   },
+   "v1_minus_zero": {
+    "dmae": 0.5049,
+    "ci95": [
+     0.322,
+     0.6939
+    ],
+    "n_rows": 4141,
+    "n_players": 611
+   }
+  }
+ },
+ "bridges": {
+  "what": "legs: each source's own ladder, read against shortstop (Statcast also with its runs centred). inside: the network fit on rows whose two seasons are entirely infield, or entirely outfield. span: switcher rows that played both the infield and the outfield across the two seasons (and rows with any first-base innings), binned by how much of the season's innings moved; information share is each bin's share of sum(weight x change squared), the quantity a least squares fit learns the gap from.",
+  "legs": {
+   "BREF": {
+    "gaps_vs_SS": {
+     "C": 2.41,
+     "1B": -2.45,
+     "2B": -1.02,
+     "3B": 0.15,
+     "SS": 0.0,
+     "LF": 1.97,
+     "CF": 7.5,
+     "RF": 2.96
+    },
+    "CF_minus_SS": 7.5
+   },
+   "FG": {
+    "gaps_vs_SS": {
+     "C": -2.71,
+     "1B": -2.65,
+     "2B": -2.44,
+     "3B": -1.75,
+     "SS": 0.0,
+     "LF": -0.21,
+     "CF": 2.55,
+     "RF": 0.87
+    },
+    "CF_minus_SS": 2.55
+   },
+   "SAVANT": {
+    "gaps_vs_SS": {
+     "1B": -4.3,
+     "2B": -2.81,
+     "3B": -3.2,
+     "SS": 0.0,
+     "LF": 0.03,
+     "CF": -0.62,
+     "RF": -0.88
+    },
+    "CF_minus_SS": -0.62
+   },
+   "SAVANT_centred": {
+    "gaps_vs_SS": {
+     "1B": -5.83,
+     "2B": -3.1,
+     "3B": -3.77,
+     "SS": 0.0,
+     "LF": -3.31,
+     "CF": 2.77,
+     "RF": -2.94
+    },
+    "CF_minus_SS": 2.77
+   }
+  },
+  "inside": {
+   "BREF": {
+    "infield": {
+     "n_switchers": 226,
+     "gaps_vs_SS": {
+      "1B": -4.36,
+      "2B": -1.6,
+      "3B": -0.87,
+      "SS": 0.0
+     }
+    },
+    "outfield": {
+     "n_switchers": 324,
+     "gaps_vs_CF": {
+      "LF": -5.14,
+      "CF": 0.0,
+      "RF": -4.97
+     }
+    }
+   },
+   "FG": {
+    "infield": {
+     "n_switchers": 226,
+     "gaps_vs_SS": {
+      "1B": 0.74,
+      "2B": -1.17,
+      "3B": -0.75,
+      "SS": 0.0
+     }
+    },
+    "outfield": {
+     "n_switchers": 324,
+     "gaps_vs_CF": {
+      "LF": -4.2,
+      "CF": 0.0,
+      "RF": -3.56
+     }
+    }
+   },
+   "SAVANT": {
+    "infield": {
+     "n_switchers": 208,
+     "gaps_vs_SS": {
+      "1B": -3.18,
+      "2B": -2.67,
+      "3B": -2.93,
+      "SS": 0.0
+     }
+    },
+    "outfield": {
+     "n_switchers": 297,
+     "gaps_vs_CF": {
+      "LF": -0.2,
+      "CF": 0.0,
+      "RF": -1.54
+     }
+    }
+   }
+  },
+  "span": {
+   "BREF": {
+    "switchers": 1017,
+    "infield_share": {
+     "rows": 462,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 161,
+       "information_share": 0.0049
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 96,
+       "information_share": 0.0556
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 137,
+       "information_share": 0.3201
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 68,
+       "information_share": 0.6194
+      }
+     ]
+    },
+    "first_base_share": {
+     "rows": 409,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 182,
+       "information_share": 0.0067
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 64,
+       "information_share": 0.0405
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 100,
+       "information_share": 0.2704
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 63,
+       "information_share": 0.6824
+      }
+     ]
+    }
+   },
+   "FG": {
+    "switchers": 1017,
+    "infield_share": {
+     "rows": 462,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 161,
+       "information_share": 0.0049
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 96,
+       "information_share": 0.0556
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 137,
+       "information_share": 0.3201
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 68,
+       "information_share": 0.6194
+      }
+     ]
+    },
+    "first_base_share": {
+     "rows": 409,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 182,
+       "information_share": 0.0067
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 64,
+       "information_share": 0.0405
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 100,
+       "information_share": 0.2704
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 63,
+       "information_share": 0.6824
+      }
+     ]
+    }
+   },
+   "SAVANT": {
+    "switchers": 915,
+    "infield_share": {
+     "rows": 414,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 143,
+       "information_share": 0.0052
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 88,
+       "information_share": 0.0576
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 123,
+       "information_share": 0.3351
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 60,
+       "information_share": 0.6021
+      }
+     ]
+    },
+    "first_base_share": {
+     "rows": 362,
+     "bins": [
+      {
+       "change_from": 0.0,
+       "change_to": 0.1,
+       "rows": 161,
+       "information_share": 0.0066
+      },
+      {
+       "change_from": 0.1,
+       "change_to": 0.25,
+       "rows": 56,
+       "information_share": 0.0395
+      },
+      {
+       "change_from": 0.25,
+       "change_to": 0.5,
+       "rows": 87,
+       "information_share": 0.2677
+      },
+      {
+       "change_from": 0.5,
+       "change_to": 1.0,
+       "rows": 58,
+       "information_share": 0.6861
+      }
+     ]
+    }
+   }
+  }
+ },
+ "finding": {
+  "zero_ties_v2": true,
+  "v1_minus_b_reproduces_read": 0.8861,
+  "status": "refuted pending re-read"
+ },
+ "runtime_s": 2.4
+}

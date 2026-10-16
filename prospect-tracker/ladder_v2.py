@@ -48,6 +48,7 @@ ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 EVAL_PATH = DATA_DIR / "positional_ladder_v2_eval.json"
 OUT_PATH = DATA_DIR / "positional_ladder_v2.json"
+VERIFY_PATH = DATA_DIR / "positional_ladder_v2_verify.json"
 
 #: The gate's unit: 650 PA x 1.9657 innings per PA, the served v1 conversion.
 UNIT_INN = 1277.7
@@ -711,6 +712,16 @@ def main() -> int:
         return 1
     payload = dict(payload)
     payload["verdict"] = ev.get("verdict")
+    # The read wrote status "served on Position Fit". Its verification
+    # (tools/ladder_v2_verify.py, LADDER_V2_REVERT 2026-10-15) found an all-zero
+    # fielding ladder scores as well, Position Fit went back to v1 and this file
+    # is a lab artifact; the record of the read itself is never edited.
+    if VERIFY_PATH.exists():
+        ver = json.loads(VERIFY_PATH.read_text(encoding="utf-8"))
+        st = (ver.get("finding") or {}).get("status")
+        if st:
+            payload["status"] = (f"lab artifact, not served: {st} "
+                                 f"(data/{VERIFY_PATH.name}); Position Fit values with v1")
     payload["identification"] = identification(payload["values"], payload["exposure_share"])
     OUT_PATH.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {OUT_PATH}")

@@ -6441,9 +6441,12 @@ function renderWarComparison() {
 }
 
 // ---- Methods > Positional Ladder (EWAR_LADDER_REDERIVE, owner EW3-25) ------
-// The position-switcher ladder (v2) beside the Baseball-Reference inversion
-// (v1) and FanGraphs, read from the record of the one registered read
-// (docs/ewar/LADDER_V2_GATE.md). Every number is the record's own; the view
+// The positional ladders side by side: v1, fitted on Baseball-Reference's
+// positional runs, which Position Fit values with, and the position-switcher
+// ladder (v2), read once on 2026-10-15 and withdrawn the same day
+// (LADDER_V2_REVERT, owner EW3-29). Two records feed it: the read's own
+// (docs/ewar/LADDER_V2_GATE.md) and its verification
+// (tools/ladder_v2_verify.py). Every number is a record's own; the view
 // formats and does no arithmetic. UPKEEP: the "Standalone version" line has no
 // link until the standalone page is published; its URL then goes in _pladUrl().
 function _pladUrl() { return ""; }
@@ -6452,10 +6455,13 @@ function _pladLoad() {
   if (_PLAD || _PLAD_LOADING) return;
   _PLAD_LOADING = true;
   const rerender = () => { if (_S.view === "positional-ladder") renderPositionalLadder(); };
-  fetch("/data/positional_ladder_v2_eval.json", { cache: "no-cache" })
-    .then(r => (r.ok ? r.json() : null))
-    .then(j => { _PLAD = (j && j.comparison && j.verdict) ? j : { __error: true }; _PLAD_LOADING = false; rerender(); })
-    .catch(() => { _PLAD = { __error: true }; _PLAD_LOADING = false; rerender(); });
+  const get = u => fetch(u, { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  Promise.all([get("/data/positional_ladder_v2_eval.json"), get("/data/positional_ladder_v2_verify.json")])
+    .then(([j, v]) => {
+      _PLAD = (j && j.comparison && j.verdict && v && v.zero_ladder) ? Object.assign({}, j, { __verify: v }) : { __error: true };
+      _PLAD_LOADING = false;
+      rerender();
+    });
 }
 
 function _pladNum(v, dp) {
@@ -6475,30 +6481,29 @@ function renderPositionalLadder() {
   const St = window.EephusState;
   const d = _PLAD;
   if (!d || d.__error) {
-    const msg = d ? "The positional ladder record could not be loaded." : "Loading the positional ladder...";
+    const msg = d ? "The positional ladder records could not be loaded." : "Loading the positional ladder...";
     el.innerHTML = St ? St.html(d ? "failed" : "loading", msg, "gl-plad-state")
       : `<div class="state-message gl-plad-state" role="status">${msg}</div>`;
     return;
   }
-  const v = d.verdict || {}, t = d.tests || {}, la = d.ladder_artifact || {};
+  const V = d.__verify || {};
+  const z = V.zero_ladder || {}, zt = z.tests || {}, zm = z.mae_pooled || {}, zs = z.mae_by_scale || {};
+  const sv = V.savant_centring || {}, br = V.bridges || {}, rc = (V.rung_coverage || {}).by_source || {};
+  const t = d.tests || {}, la = d.ladder_artifact || {};
   const cols = (d.comparison || {}).columns || {}, legs = (d.comparison || {}).source_legs_on_v2_zero || {};
   const pos = (d.comparison || {}).positions || [];
-  const served = v.step1_b_replaces_v1 === true;
+  const v1s = cols.v1_served || {};
   const vals = la.values || {}, ci = la.ci95 || {};
-  const p1 = t.v1_minus_b_pooled || {}, pa = t.v1_minus_b_across || {}, pd = t.b_minus_d_b_pooled || {};
-  const bySrc = t.v1_minus_b_by_source || {};
-  const nSrc = Object.keys(bySrc).length;
-  const srcBetter = Object.values(bySrc).filter(x => x && x.ci95 && x.ci95[0] > 0).length;
-  const folds = (d.scores || {}).by_fold || {};
-  const nFold = Object.keys(folds).length;
-  const foldBetter = Object.values(folds).filter(f => f && f.b && f.v1 && f.b.mae < f.v1.mae).length;
+  const p1 = t.v1_minus_b_pooled || {}, pd = t.b_minus_d_b_pooled || {};
+  const zb = zt.zero_minus_b || {}, v1z = zt.v1_minus_zero || {};
   const read = String(d.read_at || "").slice(0, 10);
+  const checked = String(V.generated_at || "").slice(0, 10);
   const fits = la.source_fits || {};
   const nC = Math.max(0, ...Object.values(fits).map(f => (f && f.n_c_change) || 0));
   const head = (labels) => `<thead><tr>${labels.map((c, i) => `<th scope="col"${i === 1 ? ' class="warc-e"' : ""}>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
   const ladderRows = pos.map(p => `<tr><th scope="row">${escapeHtml(p)}</th>`
-    + `<td class="warc-e"><b>${_pladNum(vals[p])}</b></td><td>${_pladCi(ci[p])}</td>`
-    + `<td>${_pladNum((cols.v1_served || {})[p])}</td><td>${_pladNum((cols.fg_inversion_2016_2026 || {})[p])}</td>`
+    + `<td class="warc-e"><b>${_pladNum(v1s[p])}</b></td><td>${_pladNum(vals[p])}</td><td>${_pladCi(ci[p])}</td>`
+    + `<td>${_pladNum((cols.fg_inversion_2016_2026 || {})[p])}</td>`
     + `<td>${_pladNum((cols.fg_table_rescaled || {})[p])}</td><td>${_pladNum((cols.offense_equalizing_2016_2026 || {})[p])}</td></tr>`).join("");
   const era = la.era_splits || {};
   const legRows = pos.map(p => `<tr><th scope="row">${escapeHtml(p)}</th>`
@@ -6506,61 +6511,90 @@ function renderPositionalLadder() {
     + `<td>${_pladNum((legs.BREF || {})[p])}</td><td>${_pladNum((legs.FG || {})[p])}</td><td>${_pladNum((legs.SAVANT || {})[p])}</td>`
     + `<td>${_pladNum(((era["2016-2020"] || {}).b || {})[p])}</td><td>${_pladNum(((era["2021-2026"] || {}).b || {})[p])}</td></tr>`).join("");
   const sc = ((d.scores || {}).pooled) || {};
-  const testRow = (label, key, test, vsLabel) => `<tr><th scope="row">${escapeHtml(label)}</th>`
-    + `<td class="warc-e">${sc[key] ? Number(sc[key].mae).toFixed(3) : "-"}</td>`
+  const mae3 = v => (v == null ? "-" : Number(v).toFixed(3));
+  const testRow = (label, mae, test, vsLabel) => `<tr><th scope="row">${escapeHtml(label)}</th>`
+    + `<td class="warc-e">${mae3(mae)}</td>`
     + `<td>${test ? `${_pladNum(test.dmae, 3)} <span class="gl-plad-ci">(${_pladCi(test.ci95, 3)})</span>` : "-"}</td>`
     + `<td>${escapeHtml(vsLabel || "")}</td></tr>`;
   const tests = [
-    testRow("Switcher ladder (served)", "b", t.v1_minus_b_pooled, "Baseball-Reference inversion"),
-    testRow("Switcher ladder, shrunk by season", "d_b", pd.dmae == null ? null : { dmae: pd.dmae, ci95: pd.ci95 }, "switcher ladder"),
-    testRow("Offense gap", "c", t.v1_minus_c_pooled, "Baseball-Reference inversion"),
-    testRow("FanGraphs, inverted", "fg_inv", t.v1_minus_fg_inv_pooled, "Baseball-Reference inversion"),
-    testRow("FanGraphs table", "fg_table", t.v1_minus_fg_table_pooled, "Baseball-Reference inversion"),
-    testRow("Baseball-Reference inversion, refit", "v1", null, ""),
+    testRow("Switcher ladder (v2)", (sc.b || {}).mae, t.v1_minus_b_pooled, "Baseball-Reference ladder, refit"),
+    testRow("Every fielding position at zero", zm.zero, v1z, "Baseball-Reference ladder, refit"),
+    testRow("Switcher ladder (v2)", (sc.b || {}).mae, zb, "every fielding position at zero"),
+    testRow("Switcher ladder, shrunk by season", (sc.d_b || {}).mae, pd.dmae == null ? null : { dmae: pd.dmae, ci95: pd.ci95 }, "switcher ladder"),
+    testRow("Offense gap", (sc.c || {}).mae, t.v1_minus_c_pooled, "Baseball-Reference ladder, refit"),
+    testRow("FanGraphs, inverted", (sc.fg_inv || {}).mae, t.v1_minus_fg_inv_pooled, "Baseball-Reference ladder, refit"),
+    testRow("FanGraphs table", (sc.fg_table || {}).mae, t.v1_minus_fg_table_pooled, "Baseball-Reference ladder, refit"),
+    testRow("Baseball-Reference ladder, refit", (sc.v1 || {}).mae, null, ""),
   ].join("");
-  const verdict = served
-    ? `<b>Serves Position Fit in the Alchemy Lab since ${escapeHtml(read)}.</b> Predicting the fielding plus positional runs of players who changed position, in seasons held out of the fit, its error was <b>${_pladNum(p1.dmae)}</b> runs per 650 PA lower than the Baseball-Reference inversion's (95% CI ${_pladCi(p1.ci95)}; ${Number(p1.n_rows || 0).toLocaleString()} position changes by ${Number(p1.n_players || 0).toLocaleString()} players). Lower on ${srcBetter} of ${nSrc} fielding sources and in ${foldBetter} of ${nFold} held-out seasons. On next-season runs alone: ${_pladNum(pa.dmae)} (${_pladCi(pa.ci95)}).`
-    : `<b>Did not replace the Baseball-Reference inversion.</b> Its held-out error against the inversion's: ${_pladNum(p1.dmae)} runs per 650 PA (95% CI ${_pladCi(p1.ci95)}).`;
+  const scaleKeys = Object.keys(zs.v1 || {});
+  const scaleRows = [["Baseball-Reference ladder", "v1"], ["FanGraphs table", "fg_table"], ["Switcher ladder (v2)", "b"]]
+    .map(([lab, k]) => `<tr><th scope="row">${escapeHtml(lab)}</th>${scaleKeys.map((s, i) => `<td${i === 0 ? ' class="warc-e"' : ""}>${mae3((zs[k] || {})[s])}</td>`).join("")}</tr>`).join("");
+  const rate = sv.savant_league_rate_per_1277_7_inn || {};
+  const rateOf = p => _pladNum((rate[p] || {}).pooled_2016_2026);
+  const lg = br.legs || {};
+  const cfss = k => _pladNum((lg[k] || {}).CF_minus_SS);
+  const span = (((br.span || {}).BREF) || {}).infield_share || {};
+  const big = (span.bins || [])[(span.bins || []).length - 1] || {};
+  const inside = br.inside || {};
+  const fb = k => _pladNum((((inside[k] || {}).infield || {}).gaps_vs_SS || {})["1B"]);
+  const cen = (sv.scoring_with_savant_centred_tests || {}).zero_minus_b_centred || {};
+  const cRows = ((rc.BREF || {}).C || {}).rows_c_change_025;
+  const verdict = `<b>Position Fit values with the Baseball-Reference ladder (v1).</b> The switcher ladder (v2) served there on ${escapeHtml(read)} and was withdrawn the same day; it is under re-read. `
+    + `Its read passed: predicting the fielding plus positional runs of players who changed position, in seasons held out of the fit, its error was ${_pladNum(p1.dmae)} runs per 650 PA lower than the Baseball-Reference ladder's (95% CI ${_pladCi(p1.ci95)}; ${Number(p1.n_rows || 0).toLocaleString()} position changes by ${Number(p1.n_players || 0).toLocaleString()} players). `
+    + `The check (${escapeHtml(checked)}) ran the same test with every fielding position at zero: that ladder's error was <b>${mae3(zb.dmae)}</b> runs per 650 PA higher than v2's (95% CI ${_pladCi(zb.ci95, 3)}), a tie, and ${mae3(v1z.dmae)} lower than the Baseball-Reference ladder's. `
+    + `So the read measured how much the Baseball-Reference ladder's spread costs on this test, not a ladder that v2 measured.`;
   const url = _pladUrl();
   el.innerHTML = `<div class="source-comp-wrap warc-wrap gl-plad">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Method and measurement · read once ${escapeHtml(read)}</div>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Method and measurement · read ${escapeHtml(read)} · checked ${escapeHtml(checked)}</div>
     <h2 class="meth-h">The positional ladder</h2>
-    <p class="meth-note">A positional adjustment says how many runs a position is worth against the average defensive position, per 650 plate appearances. This ladder measures it on players who changed position: if the same players gain three fielding runs moving from shortstop to first base, the two positions sit three runs apart.</p>
+    <p class="meth-note">A positional adjustment says how many runs a position is worth against the average defensive position, per 650 plate appearances. The site's ladder is fitted on Baseball-Reference's positional runs: it recovers what Baseball-Reference prices each position at. A second ladder, the switcher ladder, tried to measure it on players who changed position: if the same players gain three fielding runs moving from shortstop to first base, the two positions sit three runs apart.</p>
     <div class="wpm-explain" role="note">${verdict}</div>
-    <div class="warc-frame" role="region" tabindex="0" aria-label="The ladder beside Baseball-Reference and FanGraphs">
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The ladders side by side">
       <table class="warc-table"><caption>Runs per 650 PA. Every column sits on one zero, the exposure-weighted average defensive position, so gaps and levels compare directly.</caption>
-        ${head(["Position", "Switcher ladder", "95% CI", "Baseball-Reference", "FanGraphs, inverted", "FanGraphs table", "Offense gap"])}
+        ${head(["Position", "Baseball-Reference (used)", "Switcher ladder (v2, not used)", "v2 95% CI", "FanGraphs, inverted", "FanGraphs table", "Offense gap"])}
         <tbody>${ladderRows}</tbody></table>
     </div>
-    <p class="meth-note">Baseball-Reference: its positional runs inverted on innings shares (the ladder this one replaced). FanGraphs, inverted: the same inversion on FanGraphs' positional runs. FanGraphs table: the published table per 162 games, rescaled to 650 PA. Offense gap: the batting runs the league accepts at each position among regulars, the classic basis, shown for reference.</p>
-    <h3 class="meth-h3">By fielding source and era</h3>
-    <div class="warc-frame" role="region" tabindex="0" aria-label="The ladder by fielding source and era">
-      <table class="warc-table"><caption>Each source fit on its own, then shifted to the switcher ladder's zero. Statcast does not rate catchers.</caption>
-        ${head(["Position", "Switcher ladder", "Baseball-Reference fielding", "FanGraphs fielding", "Statcast", "2016 to 2020", "2021 to 2026"])}
-        <tbody>${legRows}</tbody></table>
-    </div>
-    <h3 class="meth-h3">The held-out test</h3>
+    <p class="meth-note">Baseball-Reference: its positional runs fitted on innings shares, the ladder Position Fit values with. FanGraphs, inverted: the same fit on FanGraphs' positional runs. FanGraphs table: the published table per 162 games, rescaled to 650 PA. Offense gap: the batting runs the league accepts at each position among regulars, the classic basis, shown for reference.</p>
+    <h3 class="meth-h3">The held-out test, with the zero ladder</h3>
     <div class="warc-frame" role="region" tabindex="0" aria-label="The held-out test">
-      <table class="warc-table"><caption>Weighted mean absolute error on players who changed position, each season 2016 to 2026 held out in turn. Lower error than the comparison is positive.</caption>
+      <table class="warc-table"><caption>Weighted mean absolute error on players who changed position, each season 2016 to 2026 held out in turn. Lower error than the comparison is positive. The zero rows are the check; the rest are the read.</caption>
         ${head(["Ladder", "Error", "Lower than comparison by (95% CI)", "Comparison"])}
         <tbody>${tests}</tbody></table>
     </div>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="Error as each ladder is scaled toward zero">
+      <table class="warc-table"><caption>The same test, each ladder multiplied by a factor (0 is every fielding position at zero). The Baseball-Reference ladder and the FanGraphs table lose accuracy at every step away from zero; v2's error barely moves.</caption>
+        ${head(["Ladder"].concat(scaleKeys.map(s => `x ${s}`)))}
+        <tbody>${scaleRows}</tbody></table>
+    </div>
+    <h3 class="meth-h3">What the check found</h3>
+    <ol class="meth-note">
+      <li>No zero comparator. The pass rule asked whether v2 beat the Baseball-Reference ladder, never whether it beat no ladder. It does not separate from no ladder: ${_pladNum(zb.dmae, 3)} runs (95% CI ${_pladCi(zb.ci95, 3)}).</li>
+      <li>Two rungs barely scored. The test is built from innings shares at the fielding positions, so the DH rung enters no scored row, and catcher enters ${cRows == null ? "-" : Number(cRows).toLocaleString()} rows with a real change in catching time.</li>
+      <li>Statcast's fielding runs are not centred within a position. Summed over a position and season they come to ${rateOf("CF")} runs per 1,277.7 innings in centre field, ${rateOf("LF")} in left and ${rateOf("RF")} in right, where Baseball-Reference's and FanGraphs' sit near zero. Centred, the refit is a different ladder, and it beats zero by ${_pladNum(cen.dmae, 3)} (95% CI ${_pladCi(cen.ci95, 3)}).</li>
+      <li>Thin bridges. The gap between the infield and the outfield is learned only from players who played both: ${Number(span.rows || 0).toLocaleString()} rows, of which ${Number(big.rows || 0).toLocaleString()} moved half or more of their innings and carry ${big.information_share == null ? "-" : Math.round(100 * big.information_share)}% of the information. Inside the infield alone, first base sits ${fb("BREF")}, ${fb("FG")} and ${fb("SAVANT")} runs from shortstop on the three sources. Centre field reads above shortstop on Baseball-Reference (${cfss("BREF")}), FanGraphs (${cfss("FG")}) and centred Statcast (${cfss("SAVANT_centred")}) fielding runs; raw Statcast reads ${cfss("SAVANT")}.</li>
+    </ol>
+    <h3 class="meth-h3">v2 by fielding source and era</h3>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The switcher ladder by fielding source and era">
+      <table class="warc-table"><caption>Each source fit on its own, then shifted to the switcher ladder's zero, as read. Statcast does not rate catchers.</caption>
+        ${head(["Position", "Switcher ladder", "Baseball-Reference fielding", "FanGraphs fielding", "Statcast", "2016 to 2020", "2021 to 2026"])}
+        <tbody>${legRows}</tbody></table>
+    </div>
     <p class="meth-note warc-link">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Standalone version</a>` : "Standalone version"}</p>
     <section class="warc-notes" aria-labelledby="plad-how-h">
-      <h3 class="meth-h3" id="plad-how-h">How it is measured</h3>
+      <h3 class="meth-h3" id="plad-how-h">How v2 was measured</h3>
       <ol>
         <li>Data: each player-season's fielding runs from Baseball-Reference (runs_field), FanGraphs (fielding runs, framing excluded) and Statcast (fielding runs prevented), and his innings at each position from MLB StatsAPI.</li>
         <li>Same player, next season: for a player with 300 or more fielded innings in two straight seasons, his fielding runs per 650 PA of innings are fit on last season's rate, his age and the change in where he played. Players who stayed put set the persistence and aging terms; players who moved set the gaps between positions. Statcast also adds same-season pairs, a player with 150 or more innings at two positions in one season.</li>
         <li>Each source gives one ladder. The three are averaged position by position, each weighted by its precision, and every rung's interval comes from ${escapeHtml(String(la.ci_draws || ""))} player-level bootstrap refits.</li>
         <li>Catcher and DH: ${la.c_branch === "carried_from_v1" ? `too few catchers change position to measure their rung (${nC} rows), so catcher keeps the Baseball-Reference rung against the average fielder` : "catcher is measured on the catchers who changed position"}. DH is first base plus the first-base fielding of the players who DH (${_pladNum(la.dh_mu)} runs per 650 PA).</li>
-        <li>The test: each season is held out in turn; every ladder is fit on the other seasons and scored on the held-out season's players who moved a quarter or more of their innings. The error is the gap between a player's fielding plus positional runs and what the ladder predicts from his previous season. The bar was set before the read: lower error than the Baseball-Reference inversion with a 95% interval above zero, from ${escapeHtml(String((d.seeds || {}).draws || ""))} player-level bootstrap draws.</li>
-        <li>The registration was amended once, before the read: on simulated data built like the real sources, the first registered equation flattened any ladder toward zero, so it was replaced by the form that recovers a planted ladder. Both were committed before the read.</li>
+        <li>The test: each season is held out in turn; every ladder is fit on the other seasons and scored on the held-out season's players who moved a quarter or more of their innings. The error is the gap between a player's fielding plus positional runs and what the ladder predicts from his previous season. The bar, set before the read: lower error than the Baseball-Reference ladder with a 95% interval above zero, from ${escapeHtml(String((d.seeds || {}).draws || ""))} player-level bootstrap draws.</li>
+        <li>The check reran that test unchanged, on the same rows, folds and draws, with the zero ladder and the scaled ladders added.</li>
       </ol>
-      <h3 class="meth-h3">What it does not claim</h3>
+      <h3 class="meth-h3">What this does not claim</h3>
       <ol>
-        <li>It is not in eWAR. eWAR's positional term takes it up only under its own gate.</li>
-        <li>The Defense board's Pos (ours) still uses the Baseball-Reference inversion.</li>
-        <li>A flat ladder among fielders says the same players field about as well, in runs, wherever they play. It says nothing about which players clubs choose to put at shortstop.</li>
+        <li>It does not say the Baseball-Reference ladder is right: that ladder is what Baseball-Reference prices positions at, and on this test its spread costs accuracy.</li>
+        <li>Neither ladder is in eWAR. The Defense board's Pos (ours) uses the Baseball-Reference ladder.</li>
+        <li>A re-read of v2 needs a zero comparator in its pass rule, Statcast runs centred within position, and rungs the test can see.</li>
       </ol>
     </section>
   </div>`;

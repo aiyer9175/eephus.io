@@ -176,6 +176,9 @@ TARGETS: list[str] = [
     # from the read in tools/ladder_v2_lab.py.
     "ladder_v2.py",
     "tools/ladder_v2_lab.py",
+    # Its verification (LADDER_V2_REVERT, 2026-10-15) writes the second record
+    # that view fetches.
+    "tools/ladder_v2_verify.py",
 ]
 
 EM = "—"

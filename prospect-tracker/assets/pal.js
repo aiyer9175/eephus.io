@@ -1473,98 +1473,8 @@
       + " 700 PA, and it is the FanGraphs ladder while this fit inverts Baseball-Reference.";
   }
 
-  // ---- the position-switcher ladder (v2), EWAR_LADDER_REDERIVE 2026-10-15 ---
-  // Position Fit values with the ladder docs/ewar/LADDER_V2_GATE.md passed:
-  // what the same players gain or lose in fielding runs when they change
-  // position, on three fielding sources. Every figure is read off the payload
-  // (ladder.verdict is the read's own eval artifact); the only arithmetic here
-  // is the subtotal row, which adds the printed cells exactly as the v1 table
-  // does, and the difference column, which subtracts two printed cells.
-  function pfLadderV2(L) {
-    var V1 = (PF && PF.ladderV1) || {};
-    var model = L.values || {};
-    var vals = L.valuesDisplay || model;
-    var v1d = V1.valuesDisplay || V1.values || {};
-    var fb = L.folkloreBasis || V1.folkloreBasis || null;
-    var fg = (fb && fb.folklore_rescaled) || {};
-    var ci = L.ci95 || {};
-    function shift(p) {
-      return (vals[p] != null && model[p] != null) ? vals[p] - model[p] : 0;
-    }
-    var sums = [0, 0, 0, 0], nIn = [0, 0, 0, 0];
-    function row(p, collect, tag) {
-      var c0 = pfSigned(vals[p], 2);
-      var c1 = v1d[p] != null ? pfSigned(v1d[p], 2) : "-";
-      var c2 = fg[p] != null ? pfSigned(fg[p], 2) : "-";
-      var c3 = (isFinite(Number(c0)) && isFinite(Number(c1))) ? pfSigned(Number(c0) - Number(c1), 2) : "-";
-      if (collect) {
-        [c0, c1, c2, c3].forEach(function (x, i) {
-          if (isFinite(Number(x))) { sums[i] += Number(x); nIn[i] += 1; }
-        });
-      }
-      var k = shift(p), c = ci[p];
-      return "<tr><td><strong>" + esc(p) + "</strong>" + (tag || "") + "</td>"
-        + "<td>" + c0 + "</td>"
-        + "<td>" + (c ? '<span class="proj-dim">' + pfSigned(c[0] + k, 2) + " to " + pfSigned(c[1] + k, 2) + "</span>" : "-") + "</td>"
-        + "<td>" + c1 + "</td><td>" + c2 + "</td>"
-        + "<td>" + (c3 === "-" ? "-" : '<span class="' + (Math.abs(Number(c3)) >= 3 ? "pal-hit" : "") + '">' + c3 + "</span>") + "</td></tr>";
-    }
-    var shown = POS_ORDER.filter(function (p) { return vals[p] != null; });
-    var rows = shown.filter(function (p) { return p !== "DH"; })
-      .map(function (p) { return row(p, true); }).join("");
-    var subTd = ' style="border-top:2px solid var(--border);border-bottom:2px solid var(--border);background:var(--bg-secondary)"';
-    function subCell(i) { return "<td" + subTd + ">" + (nIn[i] ? "<strong>" + pfSigned(sums[i], 2) + "</strong>" : "-") + "</td>"; }
-    rows += "<tr><td" + subTd + "><strong>Sum of the " + fInt(nIn[0]) + "</strong></td>" + subCell(0)
-      + "<td" + subTd + '><span class="proj-dim">' + (Math.abs(sums[0]) <= nIn[0] * 0.005 + 1e-9 ? "0 by construction, 2 dp rounding" : "does not add up, off by " + pfSigned(sums[0], 2)) + "</span></td>"
-      + subCell(1) + subCell(2) + subCell(3) + "</tr>";
-    rows += shown.filter(function (p) { return p === "DH"; })
-      .map(function (p) { return row(p, false, '<span class="proj-dim"> not in the sum</span>'); }).join("");
-    var W = L.verdict || {}, wc = W.ci95 || [];
-    var note = '<div class="mlbstats-note">' + gloss("Positional ladder", "positional_ladder")
-      + ", measured on position switchers: the fielding runs the same players gain or lose when they change position, on "
-      + "Baseball-Reference, FanGraphs and Statcast fielding runs, " + esc((L.seasons || [])[0]) + " to " + esc((L.seasons || [])[1]) + "."
-      + (W.dmae != null
-        ? " It replaced the Baseball-Reference inversion after predicting the fielding plus positional runs of players who changed "
-          + "position in held-out seasons with " + f2(W.dmae) + " runs per 650 PA less error (95% CI " + f2(wc[0]) + " to " + f2(wc[1])
-          + "; " + fThou(W.nRows) + " position changes by " + fThou(W.nPlayers) + " players; lower error on " + esc(W.sourcesBetter)
-          + " of " + esc(W.nSources) + " fielding sources and " + esc(W.foldsBetter) + " of " + esc(W.nFolds) + " held-out seasons; "
-          + esc(W.artifact || "") + (W.readAt ? ", " + esc(W.readAt) : "") + ")."
-        : "")
-      + "</div>";
-    var cdh = '<div class="mlbstats-note">'
-      + (L.cBranch === "carried_from_v1"
-        ? "Catcher keeps the Baseball-Reference rung: too few catchers change position to measure one. "
-        : "Catcher is measured on the catchers who changed position. ")
-      + "DH is first base plus the first-base fielding of the players who DH"
-      + (L.dhMu != null ? " (" + pfSigned(L.dhMu, 2) + " runs per 650 PA)" : "") + ".</div>";
-    var os = PF && PF.oneScale;
-    var scale = (os && os.on)
-      ? '<div class="mlbstats-note"><strong>One run scale.</strong> On this page an average glove is worth the same at every '
-        + "fielding position (" + pfSigned(os.league_term_per_650pa, 2) + " runs per 650 PA, the mean of the seven Statcast rungs), "
-        + "so a move between two fielding positions is priced by the player's glove alone. The ladder sets the DH comparison "
-        + "and which way is down the spectrum.</div>"
-      : "";
-    var id = L.identification || null;
-    var sumsNote = (id && id.sum_exposure_weighted != null)
-      ? '<div class="mlbstats-note"><strong>Centring.</strong> The eight fielding rungs sum to zero in every column, the '
-        + "folklore table's convention; the subtotal row adds the printed cells. DH"
-        + (vals.DH != null ? " (" + pfSigned(vals.DH, 2) + ")" : "") + " is outside the sum. The model's own zero is "
-        + "exposure-weighted (sum <strong>" + f2(id.sum_exposure_weighted) + "</strong> by construction); gaps between positions "
-        + "are identical on either basis, and the 95% interval is the model&rsquo;s bootstrap band shifted by the same constant.</div>"
-      : "";
-    return note + cdh + howBlock("Per fielding source, a weighted least squares of each player's fielding runs in a season on his "
-        + "previous season's, his age and the change in where he played; Statcast adds same-season pairs. The three sources are "
-        + "pooled by inverse variance. Baseball-Reference: the v1 inversion of its positional runs. FanGraphs: its published table "
-        + "per 162 games, rescaled to 650 PA.")
-      + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
-      + "<thead><tr><th>Pos</th><th>Switcher ladder (runs/650)</th><th>95% CI</th><th>Baseball-Reference</th>"
-      + "<th>FanGraphs table</th><th>Switcher minus B-Ref</th></tr></thead>"
-      + "<tbody>" + rows + "</tbody></table></div>" + sumsNote + scale + pfMethod();
-  }
-
   function pfLadder() {
     var L = (PF && PF.ladder) || {};
-    if (L.basis === "v2") return pfLadderV2(L);
     // WHICH COLUMN IS PRINTED. build_positional_fit_payload selects it: the
     // fielder-centred ladder, in which the eight fielding rungs sum to exactly
     // zero. That is the convention the folklore table uses, so the Difference
@@ -1742,10 +1652,32 @@
           + ") follow from it, not errors: DH is " + wDH + " of league exposure, not a ninth.</div>";
       }
     }
+    // ONE RUN SCALE (docs/ewar/LADDER_V2_GATE.md part 8), kept when the
+    // switcher ladder was withdrawn (LADDER_V2_REVERT, 2026-10-15): inside a
+    // hitter's value the difficulty term is this ladder's own, so an average
+    // glove is worth the same at every fielding position. The figure is the
+    // payload's (fit.one_scale), not computed here.
+    var os = PF && PF.oneScale;
+    var scale = (os && os.on)
+      ? '<div class="mlbstats-note"><strong>One run scale.</strong> On this page an average glove is worth the same at every '
+        + "fielding position (" + pfSigned(os.league_term_per_650pa, 2) + " runs per 650 PA, the mean of the seven Statcast rungs), "
+        + "so a move between two fielding positions is priced by the player's glove alone. The ladder sets the DH comparison "
+        + "and which way is down the spectrum.</div>"
+      : "";
+    // The position-switcher ladder (v2) served this tab on 2026-10-15 and was
+    // withdrawn the same day. Its state is its registry row's (payload
+    // ladderV2, read by build_positional_fit_payload), so this line follows
+    // the row and prints nothing if v2 is ever validated and served again.
+    var V2 = PF && PF.ladderV2;
+    var v2note = (V2 && V2.verdict && V2.verdict !== "validated" && V2.summary)
+      ? '<div class="mlbstats-note"><strong>Position-switcher ladder (v2).</strong> Not used on this page. '
+        + esc(V2.summary) + ' The read and its check: <a href="' + esc(V2.view || "/glossary/#view=positional-ladder")
+        + '">Positional Ladder</a> in the Library.</div>'
+      : "";
     return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
       + "<thead><tr><th>Pos</th><th>Fitted (runs/650)</th><th>95% CI</th><th>Folklore</th>"
       + "<th>Diff, as quoted</th><th>Diff, same basis</th></tr></thead>"
-      + "<tbody>" + rows + "</tbody></table></div>" + sums + pfMethod();
+      + "<tbody>" + rows + "</tbody></table></div>" + sums + scale + v2note + pfMethod();
   }
 
   // The OAA comparator, READ off the paired difference (model minus raw OAA)
