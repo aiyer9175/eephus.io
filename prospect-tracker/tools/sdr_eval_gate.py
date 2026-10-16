@@ -696,8 +696,10 @@ def milb_artifact() -> dict:
             "n_usable": n_usable,
             "transition_pct_milb_to_mlb": matrix,
             "position_hold": hold,
-            "disclosed_difference": ("Will's usage spine carried DH starts; StatsAPI fielding "
-                                     "lines have none, so no player's MLB primary position is DH here."),
+            "disclosed_difference": ("Will's usage spine came from his playing_time_model, which "
+                                     "is not in the repo; the spine here is StatsAPI MLB fielding "
+                                     "games started 2000 to 2026 (DH included), so the cohort "
+                                     "differs from his 2026-06-18 run (462 players there)."),
         },
         "licenses": "no public MiLB SDR claim",
     }

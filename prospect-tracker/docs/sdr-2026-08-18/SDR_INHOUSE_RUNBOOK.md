@@ -35,7 +35,7 @@ unless `--force`; `drop` rebuilds the same bytes from the same cache.
 | poptime_<y>.csv | Savant poptime CSV | 2016-2026 | |
 | arm_<y>.csv | Savant arm-strength CSV | 2020-2026 | Savant publishes from 2020 |
 | blocking_<y>.csv | Savant catcher-blocking CSV | 2018-2026 | Will's 25 URL (`?year=`) returns the current season for every year; the adapter uses the season_start/season_end form and refuses a file whose start_year is wrong |
-| usage_spine.parquet (his playing_time_model) | built from `.cache/statsapi_field/fld_<y>.json` (StatsAPI MLB season fielding) | 2000-2026 | no DH starts (fielding lines carry none) |
+| usage_spine.parquet (his playing_time_model) | built from `.cache/statsapi_field/fld_<y>.json` (StatsAPI MLB season fielding) | 2000-2026 | DH games started come from the same lines; his own spine builder is not in the repo, so cohort counts can differ from his |
 | milb_fielding.parquet | built from `.cache/statsapi_field_season/fld_v2_{11,12}_<y>.json` | 2005-2026 | Will's per-player yearByYear pull, summed the same way; every id pre-cached so his stage makes no request |
 
 ## Stage inventory (what each reads; what runs here)

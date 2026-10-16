@@ -144,6 +144,24 @@ def test_identity_misses_are_reported_not_bound(tmp_path):
     assert any("never auto-bound" in w for w in v["warnings"])
 
 
+def test_identity_reads_the_live_schema(tmp_path):
+    """The live players table has no mlbam column; the ids live in
+    player_photos and mlb_trade_players (2026-10-15 defect: the query raised)."""
+    db = tmp_path / "p.db"
+    con = sqlite3.connect(str(db))
+    con.execute("create table players (player_key text, player_name text)")
+    con.execute("create table player_photos (mlbam_id text, player_key text)")
+    con.execute("insert into player_photos values ('999001', 'a_b')")
+    con.execute("create table mlb_trade_players (mlbam_id integer)")
+    con.execute("insert into mlb_trade_players values (999002)")
+    con.commit(); con.close()
+    assert si._mlbam_set(db) == {999001, 999002}
+    p = tmp_path / "sdr_defense_card__2026-08-18.parquet"
+    _defense_frame().to_parquet(p)
+    v = si.validate(p, "sdr_defense_card", db_path=db)
+    assert v["census"]["identity"]["resolved_mlbam"] == 2
+
+
 # ---------------------------------------------------------------------------
 # acceptance: census first, append-only ledger, load-through-manifest
 # ---------------------------------------------------------------------------

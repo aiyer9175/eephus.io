@@ -116,6 +116,9 @@ def test_patches_match_wills_files_exactly_once():
         out = S.apply_patches(src06, S.patches_06(2019, v))
         assert "YEARS = list(range(2016, 2020))" in out
         assert "cur = F[F.year == 2019].copy()" in out
+        if v != "full":
+            assert 'TOT = ["OAA", "DRS", "FRP"]' in out      # diagnostics keep every system
+            assert "else 0.0) for c in TOT}" in out
     card = (S.WILL / "build_defense_card.py").read_text(encoding="utf-8")
     out = S.apply_patches(card, S.patches_card(2018))
     assert '"defense_card_2018.parquet"' in out

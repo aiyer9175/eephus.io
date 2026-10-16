@@ -95,12 +95,16 @@ SAVANT_HDRS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap
 
 # Variants of 06 for the leave-one-source-out cell of the amended estimand
 # (EBR_GATE.md 11.2.2): the full blend, the blend without DRS, and the blend
-# without the Statcast system (OAA and FRP are one system).
+# without the Statcast system (OAA and FRP are one system). The removed system's
+# weight in blend() is set to 0; TOT itself stays whole because 06's own
+# diagnostic block indexes every system's z column (a first attempt that
+# shortened TOT crashed there, 2026-10-15).
 TOT_VARIANTS = {
     "full": None,
     "no_drs": '["OAA", "FRP"]',
     "no_statcast": '["DRS"]',
 }
+BLEND_WEIGHT_LINE = "    w = {c: max(rel[c], 0.05) for c in TOT}"
 
 _last = [0.0]
 
@@ -287,9 +291,10 @@ def patches_06(season: int, variant: str = "full") -> list[tuple[str, str]]:
         ('"06_defense_plus_2025.csv"', f'"06_defense_plus_{season}{sfx}.csv"'),
         ('"06_total_oos.csv"', f'"06_total_oos_{season}{sfx}.csv"'),
     ]
-    tot = TOT_VARIANTS[variant]
-    if tot is not None:
-        p.append(('TOT = ["OAA", "DRS", "FRP"]', f"TOT = {tot}"))
+    keep = TOT_VARIANTS[variant]
+    if keep is not None:
+        p.append((BLEND_WEIGHT_LINE,
+                  f"    w = {{c: (max(rel[c], 0.05) if c in {keep} else 0.0) for c in TOT}}"))
     return p
 
 
@@ -376,8 +381,10 @@ POS15 = ["C", "SS", "CF", "2B", "3B", "RF", "LF", "1B", "DH"]
 def build_usage_spine():
     """mlbam_id, season, gs_total, gs_<pos>: MLB games started by position per
     player-season, from .cache/statsapi_field/fld_<year>.json (StatsAPI season
-    fielding, sportId 1). Will's spine also carried DH starts; fielding lines
-    have none, so gs_dh is absent and his stage fills it with 0 (disclosed)."""
+    fielding, sportId 1; its lines carry DH games started too, so gs_dh is
+    filled from the feed). Will's own spine builder lives in his
+    playing_time_model, which is not in the repo, so his cohort count (462 on
+    2026-06-18) is not expected to match exactly (disclosed in the artifact)."""
     import pandas as pd                              # noqa: PLC0415
     rows = []
     for p in sorted(STATSAPI_MLB.glob("fld_*.json")):

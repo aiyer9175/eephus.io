@@ -1,0 +1,73 @@
+{
+ "generated_at": "2026-10-15",
+ "streams": {
+  "sdr_defense_card": {
+   "path": "sdr_defense_card__2026-10-15.csv",
+   "rows": 3466,
+   "census": {
+    "identity": {
+     "distinct_ids": 955,
+     "resolved_mlbam": 781,
+     "unresolved": 174,
+     "unresolved_sample": [
+      134181,
+      150029,
+      400284,
+      405395,
+      408045,
+      408234,
+      408236,
+      408252,
+      408314,
+      425772,
+      425783,
+      425877,
+      429666,
+      430832,
+      430945,
+      430947,
+      434563,
+      434658,
+      435062,
+      435063
+     ]
+    },
+    "rows_by_season": {
+     "2017": 362,
+     "2018": 369,
+     "2019": 380,
+     "2020": 135,
+     "2021": 370,
+     "2022": 367,
+     "2023": 373,
+     "2024": 385,
+     "2025": 354,
+     "2026": 371
+    },
+    "rows_by_level": {
+     "MLB": 3466
+    },
+    "rows_by_position": {
+     "C": 544,
+     "CF": 450,
+     "3B": 426,
+     "RF": 422,
+     "2B": 416,
+     "1B": 412,
+     "LF": 402,
+     "SS": 394
+    },
+    "component_coverage": {
+     "range_runs": 2922,
+     "arm_runs": 1274,
+     "framing_runs": 544,
+     "blocking_runs": 483,
+     "dp_runs": 1648
+    }
+   },
+   "warnings": [
+    "174 of 955 distinct player_id values do not resolve to a known mlbam (reported, never auto-bound by name)"
+   ]
+  }
+ }
+}
