@@ -1,6 +1,6 @@
 # eFV output map test (EFV_OUTPUT_MAP_TEST): registration
 
-Registration status: REGISTERED
+Registration status: REGISTERED; READ ONCE 2026-10-16 (sections 11 and 12)
 
 Registered 2026-10-16, committed ALONE, before the code of this task exists and before any
 number of its read is computed. Owner decision EW3-35 (`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`,
@@ -196,3 +196,68 @@ stratum. If any of Q1 to Q4 fails, no outcome is read and the result is the refu
 - D-5: verdicts per side; the map may change on one side only.
 - D-6: constants H_SMOOTH 0.01, H_SLOPE 0.02, B 2000, K_PLANT 100, B_PLANT 1000, seed 20261016,
   guard 0.002, SIZE at most 0.10, POWER 0.80, Holm at 0.05 over six tests.
+
+## 11. The read (2026-10-16, once; `python efv_output_map.py --run`)
+
+Artifact: `data/_labs/efv5/efv_output_map_test.json` (role development, adjudicates false; tool
+sha256 a6bcf27a, registration commit b03fff43, label fwar@2026-10-02). Elapsed 88 s.
+
+Checks, all held before any outcome was read: Q1 the 20 cached fold models match the fit
+artifact's receipts; Q2 the cross-fitted RT within reproduces the fit artifact exactly (lv_dev
+hit 0.1913, vm_dev hit 0.4021, lv_dev pit 0.1442, vm_dev pit 0.3853) and the served-weight
+pitcher within reproduces the re-read (0.2198); Q3 no reserved fold; Q4 the live board
+reproduces (u_c to 5e-7, map A to the served one-decimal grade within 0.05 on all 1,055 hitters
+and 941 pitchers); 0 scored rows whose test-row consensus differs from the scored one. Rows:
+hitters 1,871 (lv_dev 1,465, vm_dev 406), pitchers 1,821 (1,397, 424).
+
+Movement (mean abs(g - c) on the development test rows, outcome-free): hitters A 1.19, B 0.87,
+C 1.25, D 1.94; pitchers A 1.46, B 1.12, C 1.53, D 2.49. So N_B is the rank map at m 0.700
+(hitters) and 0.703 (pitchers); C and D move more than A and N_C = N_D = A.
+
+PRIMARY, delta MSE against A (positive: the candidate is closer), pooled both frames, per-side
+curve, CI95 player-clustered, B 2000:
+
+| side | map | delta MSE | CI95 | delta MAE | lv_dev MSE | vm_dev MSE | planted power / size |
+|---|---|---|---|---|---|---|---|
+| hit | B | -2.993 | -5.095 to -1.114 | -0.131 | -0.310 | -12.674 | 1.00 / 0.00 |
+| hit | C | +0.235 | -1.142 to +1.606 | +0.007 | -0.060 | +1.302 | 0.65 / 0.00 |
+| hit | D | -4.817 | -7.443 to -2.550 | -0.239 | -1.017 | -18.528 | 1.00 / 0.00 |
+| pit | B | -1.302 | -3.693 to +1.616 | -0.146 | -0.416 | -4.224 | 0.99 / 0.00 |
+| pit | C | +0.036 | -0.346 to +0.418 | +0.005 | -0.010 | +0.190 | 0.48 / 0.00 |
+| pit | D | -3.819 | -6.731 to -0.616 | -0.323 | -1.143 | -12.635 | 1.00 / 0.00 |
+
+D0 (no smoothing) reads as D (hitters -4.797, pitchers -3.779): the smoothing does nothing.
+Sensitivity instruments agree in sign for B and D (pooled curve: hitters B -3.727, D -5.912;
+pitchers B -1.022, D -2.710; Clemens table: hitters B -2.711, D -4.112; pitchers B -1.577, D
+-3.946); C is +0.350 and +0.246 on hitters, -0.053 and -0.036 on pitchers.
+
+Rank guard (map's ordering minus A, within Spearman): hitters B -0.0054 pooled (lv_dev -0.0067),
+C -0.0003 (lv_dev -0.0012, vm_dev +0.0027), D 0 by construction; pitchers B -0.0154 (vm_dev
+-0.0381, CI95 -0.0725 to -0.0043), C +0.0026, D 0.
+
+Comparators: A against Z (consensus) delta MSE hitters -0.849 (CI95 -2.249 to +0.249), pitchers
+-0.770 (-3.132 to +0.643): the served map ties consensus on grade magnitude. Calibration slope
+of the label on the implied value (1 is calibrated): hitters A 0.76, B 0.57, C 0.77, D 0.52,
+Z 0.81; pitchers A 0.75, B 0.56, C 0.75, D 0.46, Z 0.83. Every map spreads the implied value
+wider than the label supports, and the maps that carry the shift's full magnitude onto the
+grade (B, D) spread it most.
+
+Holm over the six tests: no hypothesis rejected (smallest one-sided p 0.369, C on hitters).
+
+## 12. The verdict
+
+Nothing passes on either side; nothing is built, no flag is added and no served number moves.
+
+- B and D are NULL on both sides (planted power 0.99 to 1.00): carrying the order's shift onto
+  the grade scale through the consensus quantile function makes the grade magnitude worse, not
+  better, resolvably so on hitters (B, D) and for D on pitchers. The rank map's compression is
+  what keeps large shifts from overstating the implied value.
+- C (the density-damped rank map) is UNRESOLVED on both sides (power 0.65 hitters, 0.48
+  pitchers): it ties A on magnitude (+0.235 and +0.036) and on rank (-0.0003 and +0.0026). On the
+  live board it holds Sebastian Walcott at 55.6 (rank 8) against the served 49.3 (rank 33),
+  moves 16 hitters and 47 pitchers by 3 grades or more against A, and halves the hitter mean
+  abs(eFV - consensus) (0.30 against 0.56); the read cannot say whether that is closer to what
+  the players delivered.
+- The served map stays. Walcott's -6.3 is the rank map working as registered (DS-07): his own
+  shift is -0.12 points, and the 26 hitters the hit tool term pushed past him take the grades
+  above his.
