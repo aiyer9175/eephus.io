@@ -1046,11 +1046,9 @@ def board_effect(rows: list[dict], usages: list[dict], before: dict, after: dict
     return out
 
 
-def roles_doc(rows_live: list[dict], *, season: int, book: RoleBook | None = None,
-              generated_at: str | None = None) -> dict:
+def roles_doc(rows_live: list[dict], *, season: int, generated_at: str | None = None) -> dict:
     """data/efv_pitcher_roles.json: the usage reading of every live board pitcher (the card
     label of section 9). A statement of usage; no grade reads it."""
-    book = book or RoleBook(live_season=season)
     players = {}
     counts = {r: 0 for r in ROLES}
     for r in rows_live:
@@ -1091,11 +1089,11 @@ def export_roles(*, out: Path | None = None, today: str | None = None, log=print
     today = today or date.today().isoformat()
     season = int(V5C.live_read(today)["season"])
     live = json.loads(D.live_matrix_path(SIDE).read_text(encoding="utf-8"))
-    rows = S.live_rows(SIDE, live, today=today)
+    rows = [r for r in live if r.get("player_key") and S.gradeable(r)]
     doc = roles_doc(rows, season=season)
     p = Path(out or ROLES_PATH)
     p.parent.mkdir(parents=True, exist_ok=True)
-    txt = json.dumps(doc, indent=1, ensure_ascii=False, sort_keys=False) + "\n"
+    txt = json.dumps(doc, ensure_ascii=False, separators=(",", ":")) + "\n"
     p.write_text(txt, encoding="utf-8", newline="\n")
     log(f"wrote {p} ({len(doc['players'])} pitchers, read season {season}: {doc['counts']})")
     return doc

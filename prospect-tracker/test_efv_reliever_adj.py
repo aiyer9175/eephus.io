@@ -183,7 +183,65 @@ def test_no_reserved_vintage_is_built():
 
 
 # ---------------------------------------------------------------------------
-# 4. gate compliance
+# 4. the card label (section 9)
+# ---------------------------------------------------------------------------
+
+def test_the_roles_artifact_matches_its_rule():
+    if not X.ROLES_PATH.exists():
+        pytest.skip("the usage labels have not been exported in this tree")
+    doc = json.loads(X.ROLES_PATH.read_text(encoding="utf-8"))
+    players = doc["players"]
+    assert sum(doc["counts"].values()) == len(players)
+    for pk, r in players.items():
+        if r["role"] == X.NO_LINE:
+            assert "label" not in r
+            continue
+        outs = int(r["ip"].split(".")[0]) * 3 + int(r["ip"].split(".")[1])
+        assert X.classify(r["g"], r["gs"], outs) == r["role"], pk
+        assert ("label" in r) == (r["role"] in X.LABEL_WORD), pk
+        assert max(r["seasons"]) <= doc["read_season"]
+    for ch in (chr(0x2014), chr(0x2013)):
+        assert ch not in X.ROLES_PATH.read_text(encoding="utf-8")
+
+
+def test_export_roles_writes_where_it_is_told(monkeypatch, tmp_path):
+    import efv_dataset as D
+    live = tmp_path / "live.json"
+    live.write_text(json.dumps([
+        {"player_key": "a", "mlbam_id": 1, "consensus_fv_raw": 45.0},
+        {"player_key": "b", "mlbam_id": 2, "consensus_fv_raw": 40.0},
+        {"player_key": "c", "mlbam_id": 3, "consensus_fv_raw": None}]), encoding="utf-8")
+    monkeypatch.setattr(D, "live_matrix_path", lambda side: live)
+    monkeypatch.setattr(X, "season_usage", lambda s: {1: (10.0, 10.0, 89.0, 121.0)} if s == 2026 else {})
+    out = tmp_path / "roles.json"
+    doc = X.export_roles(out=out, today="2026-10-15", log=lambda *_a: None)
+    assert out.exists() and set(doc["players"]) == {"a", "b"}
+    assert doc["players"]["a"]["role"] == X.SHORT and doc["players"]["b"]["role"] == X.NO_LINE
+    assert doc["read_season"] == 2026
+
+
+def test_the_card_prints_the_label_for_pitchers_only():
+    html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert 'fetch("/data/efv_pitcher_roles.json"' in html
+    i = html.index("function efvDetailCard(p)")
+    body = html[i:html.index("\nfunction ", i + 10)]
+    assert 'x.side === "P" ? pitcherUsageHTML(p) : ""' in body
+    fn = html[html.index("function pitcherUsageHTML(p)"):]
+    fn = fn[:fn.index("\n}") + 2]
+    assert "escapeHtml(r.label)" in fn and "does not move the grade" in fn
+
+
+def test_the_regen_writes_the_labels_when_persisting():
+    src = (ROOT / "efv_export.py").read_text(encoding="utf-8")
+    i = src.index("def regen_all(")
+    body = src[i:src.index("\nif __name__", i)]
+    j = body.index("if persist:\n        with _regen_stage(\"valuation_curve\"")
+    assert body.index('_regen_stage("pitcher_roles"') > j
+    assert "efv_reliever_adj.export_roles(" in body
+
+
+# ---------------------------------------------------------------------------
+# 5. gate compliance
 # ---------------------------------------------------------------------------
 
 def test_the_module_groups_nothing_by_consensus_fv_level():

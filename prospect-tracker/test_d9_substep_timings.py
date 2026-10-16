@@ -44,6 +44,7 @@ REBUILD_SUBSTEPS = (
 REGEN_STAGES = (
     "dataset", "score", "backgrade", "history", "tools", "ungraded",
     "provisional_v2", "reliability", "consolidate", "valuation_curve", "statcast_alevel",
+    "pitcher_roles",
 )
 
 
@@ -277,6 +278,7 @@ def test_regen_all_runs_every_stage_through_the_hook(monkeypatch):
         "provisional_v2": _module("provisional_v2", build=rec("provisional_v2")),
         "efv_reliability": _module("efv_reliability", build=rec("reliability")),
         "statcast_alevel_export": _module("statcast_alevel_export", run=rec("statcast_alevel")),
+        "efv_reliever_adj": _module("efv_reliever_adj", export_roles=rec("pitcher_roles")),
     }
     for name, mod in stubs.items():
         monkeypatch.setitem(sys.modules, name, mod)
@@ -298,7 +300,7 @@ def test_regen_all_runs_every_stage_through_the_hook(monkeypatch):
                      "score.run", "score.run_live", "score.run", "score.run_live",
                      "backgrade", "history", "tools.run", "tools.run_live", "ungraded",
                      "provisional_v2", "reliability", "consolidate", "valuation_curve",
-                     "statcast_alevel"]
+                     "statcast_alevel", "pitcher_roles"]
 
 
 def test_regen_all_without_a_hook_still_times_its_stages(monkeypatch, caplog):
@@ -320,7 +322,8 @@ def test_regen_all_without_a_hook_still_times_its_stages(monkeypatch, caplog):
     stages = [m.group(1) for m in
               (re.match(r"regen_all stage (\S+) done", r.getMessage()) for r in caplog.records)
               if m]
-    # persist=False skips provisional_v2, the valuation curve and the signal bake
+    # persist=False skips provisional_v2, the valuation curve, the signal bake and the
+    # pitcher usage labels
     assert stages == ["dataset", "score", "backgrade", "history", "tools", "ungraded",
                       "reliability", "consolidate"]
 
