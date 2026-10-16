@@ -26,7 +26,7 @@ rest.
 
 v3 has four parts, each fit on a fold's training seasons only.
 
-**(a) Within-group shapes from switchers.** Two groups: the infield IF3 = {2B, 3B, SS} and the
+**(a) Within-group shapes from switchers.** (Superseded by amendment A1.) Two groups: the infield IF3 = {2B, 3B, SS} and the
 outfield OF3 = {LF, CF, RF}. 1B is NOT in either group (its level is anchored, part 1 c). Per
 fielding source S (part 2) and group G, one weighted least squares fit of a difficulty vector D
 over the positions of G:
@@ -191,4 +191,38 @@ a passing ladder exists).
 
 ## 10. Amendments
 
-(none)
+### 2026-10-15, A1 and A2, before the read
+
+Made after the fixture dry run (`tools/ladder_v3_lab.py --dry-run` on ladder_v2_lab's fixtures)
+and before any fit or score on real data: no real fielding run has been fitted or scored, and no
+simulation has been run on the real design. The probes are in the task's output directory.
+
+- **A1. Part 1 (a), the within-group fit.** The registered persistence form attenuates the gaps.
+  On the part 6 construction over the fixture design (no selection), seeds 7, 8 and 9, its
+  recovery ratios were 2B 0.80 / 0.83 / 0.53, 3B 0.45 / 0.86 / 0.62, LF 1.09 / 0.81 / 1.01, RF
+  0.82 / 0.85 / 0.73, and on the native fixture (moves after bad years) 0.66, 0.80, 0.73, 0.65.
+  The cause: the form centres a player's glove on the rung of the position he played last season
+  and shrinks his deviation from it by the persistence (k1 + k2 about 0.6 on the fixtures), so when
+  his own level differs from that position's average (a career shortstop who played second base
+  last season) the true part of his deviation is shrunk as well, and the gap reads at about the
+  persistence times its size. Replaced by the player fixed-effects form, which conditions on the
+  player's own level over every season of the fit (the multi-season player type of item 4):
+  `r_{m,t} = a_m + beta (age_t - 27) + sum_{p in G} s_{t,p} D_p + e` over the player-seasons with
+  at least 150 innings rated by S and at least 95% of them in G (shares renormalised over G), age
+  present, players with at least two such seasons in the fit's seasons; weight innings / 1,000;
+  solved by within-player weighted demeaning; plus the Statcast same-season pairs inside G as
+  registered; the identification row, the shapes and the pooling unchanged. A fold drops the
+  held-out season's rows. Same fixtures: ratios 2B 1.05 / 0.90 / 1.06, 3B 1.03 / 1.04 / 1.44, LF
+  1.47 / 0.89 / 0.99, RF 0.96 / 0.89 / 0.81; native fixture 0.96, 1.24, 1.04, 0.93. The dry run's
+  two-seed means: 1.02, 0.99, 1.20, 0.98; under the selection stress 1.02, 1.00, 1.19, 0.98; under
+  the familiarity stress 0.84, 0.92, 1.09, 0.89. Part 8's "alternation round counts" become each
+  fit's player and mover counts.
+- **A2. Recorded, no change: the scoring's preference.** On the fixtures both the part 4
+  predictor and v2's A2 predictor score 0.75 x a planted ladder slightly better than 1.0 x on the
+  across-season rows (native fixture, part 4 predictor: 4.430 against 4.444; part 6 construction
+  on the fixture design: 6.749 against 6.798), and 0 x worst (4.903, 7.225). The test separates a
+  ladder from no ladder, with a mild lean toward compression that works against any candidate; it
+  stays as registered.
+
+Nothing else changes: the anchor, C, the comparators, the scoring, the simulation, the pass rule
+and the seeds stand as registered.
