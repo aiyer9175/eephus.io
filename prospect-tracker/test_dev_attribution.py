@@ -130,6 +130,27 @@ def test_tool_growth_is_credited_by_tenure():
     assert pa.tool_growth["LAD"]["hit"] == pytest.approx(3.0)
 
 
+def test_each_outlet_observation_carries_the_one_power_grade_powerdvm_reads():
+    """storage.TOOL_GROUPS["pwr"] reads `pwr`; the outlets print game and raw power, so
+    without the consolidation PowerDvM+ was null on every club (ETOOLS_DVM_GATE 0.3)."""
+    assert DA.consolidate_pwr({"game_pwr": 45.0, "raw_pwr": 60.0})["pwr"] == 52.5
+    assert DA.consolidate_pwr({"game_pwr": 45.0, "raw_pwr": 50.0})["pwr"] == 47.5
+    assert DA.consolidate_pwr({"game_pwr": 40.0})["pwr"] == 40.0
+    assert DA.consolidate_pwr({"raw_pwr": 55.0})["pwr"] == 55.0
+    assert "pwr" not in DA.consolidate_pwr({"hit": 50.0})
+    assert DA.consolidate_pwr({"pwr": 50.0, "game_pwr": 40.0})["pwr"] == 50.0
+    con = sqlite3.connect(":memory:")
+    con.execute("CREATE TABLE snapshots (id INTEGER, player_key TEXT, source TEXT, snapshot_date TEXT, "
+                "fv REAL, tools_json TEXT, status TEXT)")
+    con.executemany("INSERT INTO snapshots VALUES (?,?,?,?,?,?,?)", [
+        (1, "p", "fangraphs", "2019-03-01", 45, json.dumps({"game_pwr": 40, "raw_pwr": 50}), "active"),
+        (2, "p", "fangraphs", "2020-03-01", 45, json.dumps({"game_pwr": 50, "raw_pwr": 50}), "active")])
+    obs = DA.load_observations(con)
+    assert [o[2]["pwr"] for o in obs["p"]["fangraphs"]] == [45.0, 50.0]
+    pa = _attribute(obs["p"], [_tx("2018-06-20", "SGN", 116, "Detroit Tigers")], current="DET")
+    assert pa.tool_growth["DET"]["pwr"] == pytest.approx(1.5)
+
+
 # --------------------------------------------------------------------------
 # On the database and the served rows
 # --------------------------------------------------------------------------

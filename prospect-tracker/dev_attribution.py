@@ -77,6 +77,23 @@ TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "pitch_sel", "bat_c
              "throw", "fb", "sl", "cb", "ch", "ct", "cmd")
 
 
+def consolidate_pwr(tools: dict) -> dict:
+    """Add the one Power grade `pwr` to an outlet's tool map by consensus.py's rule
+    (the half-grade mean of game and raw power when both are printed, else the one
+    printed). storage.TOOL_GROUPS["pwr"] reads this key; without it PowerDvM+ had no
+    tenure growth on any club (docs/farm-attribution-2026-09-25/ETOOLS_DVM_GATE.md 0.3).
+    An outlet's own `pwr` is kept."""
+    if "pwr" not in tools:
+        g, r = tools.get("game_pwr"), tools.get("raw_pwr")
+        if g is not None and r is not None:
+            tools["pwr"] = round(((g + r) / 2) * 2) / 2
+        elif g is not None:
+            tools["pwr"] = g
+        elif r is not None:
+            tools["pwr"] = r
+    return tools
+
+
 def _days(a: str, b: str) -> int:
     try:
         return (date.fromisoformat(b[:10]) - date.fromisoformat(a[:10])).days
@@ -391,6 +408,8 @@ def load_observations(con, keys: set[str] | None = None) -> dict[str, dict[str, 
                          if k in TOOL_KEYS and isinstance(v, (int, float)) and 20 <= v <= 80}
             except (ValueError, TypeError, AttributeError):
                 tools = None
+        if tools:
+            consolidate_pwr(tools)
         out[key][src][d[:10]] = (d[:10], float(fv), tools or None)
     return {k: {s: [by_d[d] for d in sorted(by_d)] for s, by_d in srcs.items()} for k, srcs in out.items()}
 
