@@ -146,3 +146,67 @@ def test_no_ladder_artifact_unless_v3_passed():
         assert not L3.OUT_PATH.exists()
     import positional_fit as pf
     assert pf.POSFIT_LADDER == "v1"
+
+
+def test_the_registry_row_quotes_the_record_and_the_script_is_idempotent():
+    import register_positional_ladder_v3 as R3
+    ev = _eval()
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    rows = [m["model_id"] for m in reg["models"]]
+    assert rows.index("positional_ladder_v3") == rows.index("positional_ladder_v2") + 1
+    row = next(m for m in reg["models"] if m["model_id"] == "positional_ladder_v3")
+    z = ev["tests"]["zero_minus_v3_pooled"]
+    assert f"{z['dmae']:.3f}" in row["summary"] and f"{z['ci95'][1]:+.3f}" in row["summary"]
+    assert row["eval_artifact"] == "data/positional_ladder_v3_eval.json"
+    assert row["provisional_kind"] == "measured_not_adopted"
+    assert row["summary"].startswith("Passed" if ev["verdict"]["passed"] else "Failed the re-read")
+    before = R3.R2.REG.read_bytes()
+    assert R3.registry(R3.figures()) == "registry unchanged"
+    assert R3.R2.REG.read_bytes() == before
+
+
+@pytest.fixture(scope="module")
+def browser():
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        try:
+            b = p.chromium.launch(headless=True)
+        except Exception as exc:
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        yield b
+        b.close()
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_the_library_view_prints_the_reread_at_390(browser, theme):
+    from conftest import serve_site
+    ev = _eval()
+    errors: list[str] = []
+    with serve_site() as base:
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.add_init_script(f'try {{ localStorage.setItem("prospect-tracker.theme", "{theme}"); }} catch (e) {{}}')
+        page.on("pageerror", lambda e: errors.append(e.message))
+        try:
+            page.goto(base + "glossary/index.html#view=positional-ladder", wait_until="load", timeout=15_000)
+            page.wait_for_selector("#positional-ladder-body .warc-table", timeout=10_000)
+            out = page.evaluate("""() => {
+              const el = document.getElementById('positional-ladder-body');
+              const t = el.querySelectorAll('.warc-table');
+              return { text: el.textContent, tables: t.length,
+                       crit: t.length > 2 ? t[1].querySelectorAll('tbody tr').length : 0,
+                       lad: t.length > 2 ? t[2].querySelectorAll('tbody tr').length : 0,
+                       scrollW: document.documentElement.scrollWidth, innerW: innerWidth };
+            }""")
+        finally:
+            page.close()
+    assert not errors, errors
+    assert out["tables"] == 6 and out["crit"] == 5 and out["lad"] == 9
+    t = out["text"]
+    assert "The re-read (v3, " + ev["read_at"][:10] + ")" in t
+    assert ("v3 did not pass; Position Fit keeps the Baseball-Reference ladder." in t) != ev["verdict"]["passed"]
+    z = ev["tests"]["zero_minus_v3_pooled"]
+    assert ("%+.3f" % z["dmae"]) in t
+    assert "it is under re-read" not in t
+    assert out["scrollW"] == out["innerW"], "the page scrolls sideways at 390"

@@ -187,7 +187,84 @@ a passing ladder exists).
 
 ## 9. Results
 
-(empty until the read)
+### 2026-10-15, the one read
+
+`python tools/ladder_v3_lab.py --read`, run once after amendment A1 (commit b4675e45), stdout and
+stderr teed to the task's output directory (read.log). The fixture dry run finished clean first.
+Exit 0, 13 s. Record: `data/positional_ladder_v3_eval.json`.
+
+Rows: the v2 read's scored set (BREF 4,448 across-season rows, 1,450 switchers; FG 4,149, 1,364;
+Statcast 2,294, 915, plus 1,192 same-season pairs), Statcast now centred; season rows for the
+group fits BREF 10,777, FG 10,162, Statcast 5,722; 2,651 regulars for the anchor. Scored: 4,141
+held-out rows, 611 players.
+
+**Verdict (part 7): v3 FAILS (criteria 1, 3 and 5).**
+
+| criterion | measured | result |
+| --- | --- | --- |
+| 1. zero minus v3, pooled | +0.037 runs per 650 PA, CI95 -0.076 to +0.150 | fail |
+| 2. v1 refit minus v3, pooled | +0.438, CI95 +0.353 to +0.524 | pass |
+| 3. pooled MAE v3 6.481 below v1 x 0.25 / 0.5 / 0.75 / 1 / 1.25 and the FanGraphs table | 6.403 / 6.445 / 6.626 / 6.918 / 7.311; 6.804 | fail (x 0.25 and x 0.5 lower) |
+| 4. zero minus v3, next-season rows | -0.062, CI95 -0.178 to +0.050 | pass |
+| 5. recovery ratios, mean of 5 seeds | 2B 0.88, 3B 1.03, LF 0.75, RF 0.87 | fail (LF) |
+
+v1 stays on Position Fit; no v3 ladder artifact is written or published (EW3-29).
+
+Printed, deciding nothing:
+
+- By row kind: on the Statcast same-season pairs v3 beats zero by +0.633 (CI95 +0.340 to +0.934;
+  MAE 9.087 against 9.720); on the across-season rows zero is lower (5.986 against 6.048). By
+  source, zero minus v3: Baseball-Reference +0.049 (-0.092 to +0.192), FanGraphs -0.085 (-0.228
+  to +0.055), Statcast +0.118 (-0.029 to +0.263). v3 is below zero in 7 of 11 held-out seasons.
+- The shapes alone (every level at 0) against zero: +0.036 (-0.057 to +0.134). The offense ladder
+  alone minus v3: +0.268 (+0.188 to +0.350). v1 refit minus zero: +0.400 (+0.232 to +0.565).
+- v2's A2 predictor: zero minus v3 +0.002 (-0.119 to +0.119); v1 minus v3 +0.493.
+- The v2 vector as read scores MAE 6.435 (zero minus it +0.083, CI95 +0.034 to +0.132), but it is
+  one fixed vector fit on every season, the held-out ones included, so it is not a held-out result.
+- Simulation: the five seeds spread widely (2B 0.53 to 1.49, 3B 0.58 to 1.37, LF 0.35 to 0.88, RF
+  0.58 to 1.15): on the real design the movers inside a group (151 infield and 243 outfield
+  players whose share at a position ranges by 0.25 or more) are too few to pin a gap to a fifth of
+  its size. Selection stress 0.90, 1.03, 0.77, 0.88; familiarity stress 0.83, 0.88, 0.70, 0.84.
+  Power: on seed 7 the scoring separates the planted ladder from zero by +0.191 (CI95 +0.060 to
+  +0.323), so the test can see a ladder of the FanGraphs table's spread when it is there.
+
+**The candidate as fit on 2016-2026** (recorded, not served; runs per 650 PA on the exposure-
+weighted zero; CI95 from 400 player-cluster refits of the whole pipeline, the anchor included):
+
+| Pos | v3 | CI95 | v1 served | offense anchor | FG table |
+| --- | ---: | --- | ---: | ---: | ---: |
+| C | +10.37 | +9.77 to +11.01 | +10.88 | +5.14 | +12.44 |
+| SS | +4.61 | +2.49 to +6.83 | +9.38 | +5.89 | +8.06 |
+| 2B | +0.90 | -1.10 to +2.96 | +5.12 | +4.53 | +3.67 |
+| 3B | +0.22 | -1.90 to +2.33 | +3.62 | -2.56 | +3.67 |
+| CF | +4.20 | +2.14 to +6.05 | +4.14 | +4.61 | +3.67 |
+| LF | -3.81 | -5.98 to -1.86 | -6.39 | -0.61 | -5.09 |
+| RF | -3.26 | -5.49 to -1.28 | -6.52 | -4.86 | -5.09 |
+| 1B | -5.93 | -9.65 to -3.13 | -8.40 | -5.26 | -9.47 |
+| DH | -8.44 | -15.05 to -2.18 | -13.70 | -7.77 | -13.85 |
+
+- Gaps inside the groups: 2B to SS -3.71, 3B to SS -4.40 (v1 -4.26, -5.76); LF to CF -8.02, RF to
+  CF -7.46 (v1 -10.53, -10.66). Anchored: 1B to SS -10.54; infield level minus outfield level
+  +2.87.
+- The three sources now agree on the shape inside each group (exposure-weighted zero within the
+  group): infield SS +2.84 / +2.29 / +2.86, 2B -2.25 / -0.94 / -0.75, 3B -0.46 / -1.22 / -1.94;
+  outfield CF +6.24 / +4.15 / +5.37, LF -3.77 / -2.85 / -2.64, RF -2.27 / -1.18 / -2.55
+  (Baseball-Reference / FanGraphs / Statcast centred).
+- Statcast league rates before centring, runs per 1,277.7 innings: CF +4.30, LF -3.14, RF -1.63,
+  1B -0.93, SS +0.57, 2B +0.21, 3B -0.09.
+
+**Reading.** Measured inside a group on the same players, with the player's own level held fixed,
+shortstop and centre field are the hard spots and every source agrees, with gaps 0.70 to 0.87
+times v1's. That is a shape, not a ladder this test can certify: the held-out scoring does
+not separate it from an all-zero fielding ladder, v1 shrunk to a quarter or a half scores lower,
+and the real design is too thin to recover a planted left-field gap to the registered tolerance.
+The same-season Statcast pairs, the rows that see a within-group gap most directly, favour v3
+clearly; the across-season rows, seven in ten of the scored rows, do not.
+
+**What changes.** Nothing served moves. Position Fit values with v1 on one run scale, as since
+LADDER_V2_REVERT. The registry gains `positional_ladder_v3` (not adopted), the Library's
+Positional Ladder view prints this re-read, and no ladder artifact or standalone page is
+published.
 
 ## 10. Amendments
 

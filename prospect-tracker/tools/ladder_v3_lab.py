@@ -254,6 +254,7 @@ def run(recs_raw: dict, e9: dict, v1_served: dict, v2_vec, boot_draws: int, ci_d
         "model": "positional_ladder_v3_eval",
         "gate": GATE,
         "registered_commit": REGISTERED_COMMIT,
+        "amended_commit": "b4675e45",
         "generated_at": _dt.date.today().isoformat(),
         "read_at": _dt.datetime.now().isoformat(timespec="seconds"),
         "unit_innings": L2.UNIT_INN,
