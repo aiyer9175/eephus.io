@@ -381,4 +381,19 @@ EMPTY.
 
 ## 12. Amendments
 
-EMPTY.
+### A1, 2026-10-16, before the fit and the read (no real number computed)
+
+Made while building the code on fixtures only (`test_fielding_triangulation.py`), before
+`data/_labs/fielding_triangulation_fit.json` exists and before any reading was related to another
+season on real data. Part 5.2 defines a player-season's rate of a reading as its runs over his
+frame rows divided by their innings, and part 3.1 centres every reading within (position, season)
+for the model, but part 5 does not say whether its rates are the centred ones. They are: every
+reading, comparator, target, SDR, S3 and equal-weight cell of parts 5.2 and 5.6 uses part 3.1's
+centred rate, and a player-season's rate is the innings-weighted mean of his rows' centred rates.
+The catcher cell centres the base's catcher fielding (FRP + CFraming) and DRS at C within season
+among catcher rows the same way. Reason: Statcast's outfield OAA and FRP are not centred within
+position by their publishers, so an uncentred target or comparator ranks a player who keeps his
+position by that position's league level, which no reading's skill explains (G-A's post-hoc note,
+`docs/sdr-2026-08-18/SDR_EVAL_GATE.md`). L2's base stays the vintage's Fld + Frm, as registered.
+S3 on L1 is rel x the centred FRP rate, rel = innings / (innings + K), K the innings-weighted mean
+of `dem_plus.K_INN` over the player's frame rows. Nothing else changes.
