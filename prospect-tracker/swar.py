@@ -78,7 +78,7 @@ import sem_plus
 
 #: Version of this construction. A changed EM+ constant, ladder module or
 #: replica pitcher chain is a new construction and a new registration.
-SWAR_VERSION = "swar/1"
+SWAR_VERSION = "swar/2"   # swar/2: the preview also carries part 11.3 (S2b, R2, RA9*)
 
 #: The six wOBA events, in fwar_frame's and league_constants' key order.
 BAT_EVENTS = F.WOBA_KEYS

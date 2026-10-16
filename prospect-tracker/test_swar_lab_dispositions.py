@@ -245,7 +245,51 @@ def test_the_registered_parameters():
     fams = {p: list(L.PART_CELLS[p]["cells"]) for p in L.PARTS}
     assert fams == {"position": ["H-rate", "H-cum"],
                     "batting": ["HEM+ H-rate", "HEM+ H-cum", "xHEM+ H-rate", "xHEM+ H-cum"],
-                    "pitching": ["P-rate", "P-cum"], "fielding": ["H-rate", "H-cum"]}
+                    "pitching": ["P-rate", "P-cum", "S2b P-rate", "S2b P-cum"],
+                    "fielding": ["H-rate", "H-cum"]}
+    assert L.PITCHING_ARMS == {"S2": ("P-rate", "P-cum"), "S2b": ("S2b P-rate", "S2b P-cum")}
+    assert L.PITCHING_ARM_RULE == "a"
+
+
+# --------------------------------------------------------------------------
+# the pitching basis (EBR_GATE.md part 11.3.5): two arms, one Holm family
+# --------------------------------------------------------------------------
+
+BOTH_P = {"P-rate": L.WIN_COMPONENTS, "P-cum": L.EQUIVALENT,
+          "S2b P-rate": L.WIN_COMPONENTS, "S2b P-cum": L.UNRESOLVED}
+
+
+def test_one_qualifying_pitching_arm_enters_alone():
+    out = L.admit(L.PART_PITCHING, dict(BOTH_P, **{"S2b P-cum": L.LOSS}), A)
+    assert out["admitted"] and out["arm"] == "S2" and not out["needs_contrast"]
+    out = L.admit(L.PART_PITCHING, dict(BOTH_P, **{"P-rate": L.WIN_REGRESSION}), A)
+    assert out["admitted"] and out["arm"] == "S2b"
+    # S2's cells alone (no S2b cell scored) behave as before part 11.3
+    out = L.admit(L.PART_PITCHING, {"P-rate": L.WIN_COMPONENTS, "P-cum": L.EQUIVALENT}, A)
+    assert out["admitted"] and out["arm"] == "S2"
+
+
+def test_both_pitching_arms_need_the_contrast_and_s2b_enters_only_above_zero():
+    out = L.admit(L.PART_PITCHING, BOTH_P, A)
+    assert out["needs_contrast"] and not out["admitted"]
+    out = L.admit(L.PART_PITCHING, dict(BOTH_P, contrast={"lo95": 0.003}), A)
+    assert out["admitted"] and out["arm"] == "S2b"
+    for lo in (0.0, -0.004, None):
+        out = L.admit(L.PART_PITCHING, dict(BOTH_P, contrast={"lo95": lo}), A)
+        assert out["admitted"] and out["arm"] == "S2"
+    assert not L.admit(L.PART_PITCHING, dict(BOTH_P, contrast={"lo95": 0.01}), dict(A, void=True))["admitted"]
+
+
+def test_the_s2b_cells_take_the_pitching_parts_b1_and_transport_clauses():
+    win = cell(part=L.PART_PITCHING, gap=0.03, lo95=0.01, hi95=0.05, lo90=0.012, hi90=0.045,
+               b1_lo95=0.004, twin_lo95=-0.01, transport=False)
+    assert L.disposition(win) == L.WIN_REGRESSION
+    assert L.disposition(dict(win, transport=True)) == L.WIN_COMPONENTS
+    s = L._sentence(L.PART_PITCHING, {"P-rate": {"disposition": L.LOSS},
+                                      "S2b P-rate": {"disposition": L.WIN_COMPONENTS, "gap": 0.03,
+                                                     "lo95": 0.01, "hi95": 0.05, "n_pairs": 700}},
+                    {"arm": "S2b"}, "look")
+    assert s.startswith("ranked the next season's fWAR better than fWAR itself did") and "700 pairs" in s
 
 
 def test_b1_constants_are_frozen_with_their_fit_log():

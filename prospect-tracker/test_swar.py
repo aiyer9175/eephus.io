@@ -99,8 +99,14 @@ def _hit_stat(h):
 
 def _pit_stat(p):
     _m, g, gs, ip, tbf, k, bb, hbp, hr = p[:9]
+    # the fields part 11.3 reads, derived from the row so every fixture line is coherent
+    sf = max(0, tbf // 150)
+    ab = tbf - bb - hbp - sf
+    hits = int(round(0.22 * (ab - k))) + hr
     return {"gamesPlayed": g, "gamesStarted": gs, "outs": int(round(ip * 3)), "battersFaced": tbf,
-            "strikeOuts": k, "baseOnBalls": bb, "hitByPitch": hbp, "homeRuns": hr}
+            "strikeOuts": k, "baseOnBalls": bb, "hitByPitch": hbp, "homeRuns": hr,
+            "atBats": ab, "hits": hits, "doubles": hits // 5, "triples": hits // 40,
+            "intentionalWalks": bb // 10, "sacFlies": sf, "runs": int(round(ip * 0.48 + hr * 0.5))}
 
 
 class FixtureInputs(B.Inputs):
@@ -152,6 +158,26 @@ class FixtureInputs(B.Inputs):
 
     def ladder(self, season):
         return json.loads(json.dumps(LADDER))
+
+    # -- part 11.3's inputs: a Savant pitcher value for most rows (one left out),
+    # every fielder and pitcher on one or two clubs, no runner record
+    def savant_pitcher(self, season):
+        return {p[0]: (0.300 + 0.002 * (p[0] % 9), 0.305 + 0.003 * (p[0] % 7))
+                for p in PITCHERS if p[0] != 205}
+
+    def fielding_by_team(self, season):
+        out = {}
+        for h in HITTERS:
+            out[h[0]] = {pos: {"T1" if h[0] % 2 else "T2": inn} for pos, inn in h[12].items()}
+        for p in PITCHERS:
+            if p[0] == 203:
+                out.setdefault(p[0], {})["P"] = {"T1": p[3] * 0.4, "T2": p[3] * 0.6}
+            else:
+                out.setdefault(p[0], {})["P"] = {"T1" if p[0] % 2 else "T2": p[3]}
+        return out
+
+    def runner_record(self, season):
+        return None
 
     def pitcher_chain(self, season, count_map=None):
         """A stand-in for the replica's feed-only arm: FIP on the (overridden)
@@ -600,7 +626,8 @@ def test_the_preview_carries_the_registered_fields_and_the_census(built):
         for p in swar.HITTER_PARTS:
             assert h["parts"][p]["test"] == pytest.approx(h["fwar"] + h["parts"][p]["d"] / blk["rpw"], abs=2e-6)
     for x in blk["pitchers"]:
-        assert set(x["parts"]) == set(swar.HR_VARIANTS)
+        assert set(x["parts"]) == (set(swar.HR_VARIANTS) | {"pb_" + v for v in swar.HR_VARIANTS}
+                                   | {"realized"})
         for v in swar.HR_VARIANTS:
             assert x["parts"][v]["test"] == pytest.approx(x["fwar"] + x["parts"][v]["delta"], abs=2e-6)
             assert "lb_dwar0" in x["parts"][v]
