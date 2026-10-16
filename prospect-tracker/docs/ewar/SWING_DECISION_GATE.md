@@ -6,7 +6,7 @@ ALONE, with its pin test `test_ewar_innovate_registration.py`, before the measur
 and before any number of its estimands is computed. A change after the first number is a dated
 note in part 8 that says what changed and why, never an edit above it.
 
-STATUS: REGISTERED, RESULTS EMPTY.
+STATUS: REGISTERED; TEST X READ 2026-10-16 (NOT VALIDATED); TEST E WAITS FOR DATA (part 8).
 
 ## 0. What it is and what it is for
 
@@ -161,4 +161,38 @@ only in `.cache/ewar_innovate_ledger/swing_decision/`.
 
 ## 8. Results and dated notes
 
-EMPTY.
+### 8.1 2026-10-16: the swing value at the pitch's own base-out state, fixed before any number
+
+- **Defect.** Part 0 values each decision at the pitch's location, count, pitch type and base-out
+  state; part 2.3's cell mean of (V(after) - V(before)) pools base-out states, while part 2.2's
+  take value is state-specific. Comparing the two would credit a decision with the state mix of
+  the cell. No number of the measure existed when this note was written.
+- **Fix.** The cell of part 2.3 (location, count, pitch group, with the registered shrink toward
+  its parents) carries outcome shares instead of a run mean: P_w (swinging strike or foul tip),
+  P_f (foul) and P_ip (in play), and r_loc, the cell's mean of (x_x - m_bo) over its balls in
+  play (m_bo the ledger's season mean of in-play dRE from the state, its part 5.1). Then VS -
+  V(before) = P_w (V(strike) - V(before)) + P_f (V(foul) - V(before)) + P_ip (m_bo(state) +
+  r_loc), with V(foul) = V(strike) below two strikes and V(before) at two strikes, every V at the
+  pitch's own state. Part 2.2 is unchanged. Nothing else changes.
+
+### 8.2 2026-10-16: K_SD, the census and test X (tools/swing_decision_lab.py)
+
+- **K_SD (part 2.5), fitted once on 2018:** 307 batters with 1,000 or more decisions, half r
+  0.7236, Spearman-Brown 0.8396, median 1,869 decisions, K_SD 357.03 (frozen in
+  `swing_decision.py`; log `data/_labs/ewar_innovate/swing_decision_k_fit.json`). The league
+  mean decision value DVbar is 0.050 runs per decision in 2018.
+- **Census (part 3, same season, no verdict):** about 0.68 to 0.71 million decisions a season;
+  sd of SD100 among batters with 1,000 or more decisions 0.78 to 0.94 runs per 100 decisions (14.4
+  to 17.5 runs a season). Spearman of SD100 with, same season: walk rate 0.65 to 0.76, chase rate
+  -0.75 to -0.80, strikeout rate 0.08 to 0.17, P/PA 0.51 to 0.58. The measure is mostly plate
+  discipline, as the walk-rate and chase-rate correlations show.
+- **Test X (part 4), once, 2018 to 2019:** b = 3.1415 on 278 hitters (2018, same season); 262
+  pairs; MDE95 of V - N 0.0104. Spearman with 2019 wOBA: N 0.4885, V 0.4880, P 0.4825, M 0.4845.
+  V - N -0.0005 (95 percent -0.0131 to +0.0113); twin P - N -0.0061 (-0.0240 to +0.0112); M - N
+  -0.0040 (-0.0194 to +0.0106). v2 equals v1 here (one outcome season, one pair per player).
+  **NOT VALIDATED**, as registered expected (part 4.5): a complete result. Nothing is registered
+  for the skill look under part 4.6.
+- **Test E (part 5): not run.** AAA pitch-level location and count records exist on disk for 2026
+  only, and only one AAA season (S = 2023) could have a resolved reach3 label even after fetching
+  2023 to 2025. The second resolved season (S = 2024) exists after the 2027 season. The test waits
+  for that data.
