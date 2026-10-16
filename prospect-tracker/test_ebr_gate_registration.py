@@ -732,6 +732,39 @@ def test_amendment_11_5_the_triangulated_fielding_arm():
             "this commit).") in flat
 
 
+def test_amendment_11_6_statcast_catcher_runs_the_catcher_component():
+    flat = _flat(_section(_doc(), "### 11.6 2026-10-16", RESULTS_HEADING))
+    assert ("### 11.6 2026-10-16: Statcast's catcher runs, the catcher component S3c of candidate part 6 "
+            "(clause (i), owner decisions EW3-38 and EW3-23)") in flat
+    assert "| EW3-38 (catcher) | The catcher reading of eWAR v3's fielding part |" in flat
+    assert "it is recorded as an owner override of that sentence for these items alone" in flat
+    # The definition: Statcast's FRP at C replaces the base's catcher fielding, re-centred.
+    for formula in ("SC_i = FRP on i's catcher row of FanGraphs' fielding leaderboard for season s",
+                    "BC_i = Fld_i + Frm_i - O_i",
+                    "g_cat,i = SC_i - BC_i",
+                    "d_cat,i = g_cat,i - PA_i * (sum_k g_cat,k) / (sum_k PA_k)",
+                    "test value (part 9.4 form) fWAR_i + d_cat,i / RPW_s"):
+        assert formula in flat, formula
+    assert "The lab reads them as cached on look day, never fetched" in flat
+    # Scoring: the catcher frame, 11.2's fielding row with DRS as the independent target.
+    assert "restricted to hitters with 300 or more innings at C in season Y" in flat
+    assert "The target follows 11.2.2's rule for a part led by Statcast: DRS (Sports Info Solutions) in Y+1" in flat
+    assert "{H-rate, H-cum, C-rate, C-cum}, k = 4" in flat
+    assert "{H-rate, H-cum, S3t H-rate, S3t H-cum, C-rate, C-cum}, k = 6" in flat
+    assert "fitted from B0 and the target only (no SC, delta or test value read)" in flat
+    # Admission and the combination rules.
+    assert "It is a component, not an arm" in flat
+    assert ("g_fld,i = rel_i * (Fld_i + Frm_i - BC_i + SC_i) - (Fld_i + Frm_i), with S3's own rel_i; "
+            "g_cat is then not added a second time.") in flat
+    assert "S3t's catcher term (the sum of T_C,r over i's catcher rows) is replaced by SC_i" in flat
+    assert "eWAR realized (11.2.8) carries no S3c term under this registration." in flat
+    # Disclosure and timing.
+    assert "so S3c's cells are not blind" in flat
+    assert "The skill look (part 7.3) does not score S3c until `tools/swar_lab.py` implements 11.6.1 and 11.6.2" in flat
+    assert ("Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at "
+            "this commit).") in flat
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

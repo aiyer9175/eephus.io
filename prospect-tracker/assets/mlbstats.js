@@ -804,7 +804,9 @@
   // joined key with no value anywhere in the rendered season drops out here and
   // comes back by itself once a rebuilt payload carries it. Nothing else is
   // filtered this way: the static lists still say what a history board can hold.
-  var HISTORY_JOINED = { war: 1, woba_raw: 1 };
+  // Statcast's catcher runs join on the page (scStamp), so a season they do not
+  // cover (blocking before 2018) drops its column the same way.
+  var HISTORY_JOINED = { war: 1, woba_raw: 1, c_sc_runs: 1, c_sc_frm: 1, c_sc_blk: 1, c_sc_thr: 1 };
   function coveredCols(cols, rows) {
     return cols.filter(function (c) {
       if (!HISTORY_JOINED[c.key]) return true;
@@ -990,9 +992,16 @@
       // scroll sideways inside its own table frame, never the page. The
       // Blocking and Throwing views it replaces still resolve here
       // (VIEW_ALIAS below), so an old dcols= link or a stored pick lands on it.
-      { id: "catching", label: "Catching", phone: ["dem_plus", "frm_runs", "c_blk_runs", "c_cs_runs"],
-        keys: ["pos", "|", "dem_plus", "frm_runs", "|", "c_blk_runs", "c_blk_aa", "c_blk_pitches", "|",
-               "c_cs_runs", "c_cs_aa", "c_sb_att", "|", "c_pop", "c_exchange", "c_arm", "|", "inn"] },
+      // Statcast's catcher runs (owner decision EW3-38, 2026-10-16) lead it as
+      // the catcher defense measurement: framing, blocking, throwing and their
+      // published total, one series. Savant's own blocking and throwing run
+      // columns stay on All; their sample counts stay here. It now runs about
+      // 1,056px, so it fits from a 1280 window and scrolls inside its own
+      // frame below that (test_mlbstats_fit.py VIEW_FITS_FROM).
+      { id: "catching", label: "Catching", phone: ["c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr"],
+        keys: ["pos", "|", "dem_plus", "frm_runs", "|", "c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr", "|",
+               "c_blk_aa", "c_blk_pitches", "|", "c_cs_aa", "c_sb_att", "|", "c_pop", "c_exchange", "c_arm", "|",
+               "inn"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     // The Baserunning board (section 7): Standard, Steals, Advancement,
@@ -5468,6 +5477,50 @@
   var DEFENSE_HISTORY_LOADING = false;
   var DEFENSE_HISTORY_ERROR = false;
 
+  // Statcast catcher runs by season (statcast_catcher_export.py; owner decision
+  // EW3-38). Its own small file, fetched beside the board and joined onto the
+  // live and past-season rows by MLBAM and season, so neither board payload
+  // changes. A file that fails or has no rows leaves the four columns blank.
+  var STATCAST_C_URL = "/data/statcast_catcher_runs.json";
+  var SCC = null;                             // {season: {mlbam: {frm, blk, thr, tot}}}
+  function scIndex(j) {
+    var idx = {}, at = {};
+    ((j && j.fields) || []).forEach(function (k, i) { at[k] = i; });
+    var players = (j && j.players) || {};
+    if (at.season != null) Object.keys(players).forEach(function (mid) {
+      (players[mid] || []).forEach(function (row) {
+        if (!row) return;
+        var s = String(row[at.season]);
+        (idx[s] = idx[s] || {})[mid] = { frm: row[at.frm], blk: row[at.blk], thr: row[at.thr], tot: row[at.tot] };
+      });
+    });
+    SCC = idx;
+  }
+  function scStamp(rows, season) {
+    if (!SCC || !rows || rows.scStamped === SCC) return;
+    var by = SCC[String(season)] || {};
+    rows.forEach(function (r) {
+      var c = (r && r.mlbam != null) ? by[String(r.mlbam)] : null;
+      if (!c) return;
+      r.c_sc_runs = c.tot; r.c_sc_frm = c.frm; r.c_sc_blk = c.blk; r.c_sc_thr = c.thr;
+    });
+    rows.scStamped = SCC;
+  }
+  function scStampAll() {
+    if (!SCC) return;
+    if (defenseData && defenseData.fielders) scStamp(defenseData.fielders, defenseData.season);
+    var h = (DEFENSE_HISTORY && DEFENSE_HISTORY.history) || {};
+    Object.keys(h).forEach(function (y) {
+      if (h[y] && h[y].fielders) scStamp(h[y].fielders, h[y].season != null ? h[y].season : y);
+    });
+  }
+  function loadStatcastC() {
+    fetch(STATCAST_C_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { scIndex(j); renderDefense(); })
+      .catch(function () { SCC = {}; });
+  }
+
   // Primary position, with the innings split in the tooltip for a fielder who
   // played more than one. Not sortable (text, and not a name/team column).
   function posCell(r) {
@@ -5524,6 +5577,17 @@
       title: "Fld/1000 pulled toward the position mean by innings. DEM+ is scored on this rate." },
     { key: "inn", label: "Inn", fmt: f1, num: true, title: "Defensive innings, C through RF." },
     { key: "fld_pct", label: "Fld%", fmt: f3, num: true, title: "Fielding percentage (context)." },
+    // Statcast catcher runs (statcast_catcher_export.py, owner decision EW3-38),
+    // joined onto the rows by MLBAM and season once the file lands (scStampAll).
+    // Statcast's published whole runs at C, carried verbatim: no model claim.
+    { key: "c_sc_runs", label: "Statcast", term: "statcast_catcher_runs", fmt: fSignedInt, num: true,
+      title: "Statcast catcher runs at C: framing + blocking + throwing, Statcast's own run values as FanGraphs publishes them (FRP at C). Published, not computed here: a measurement, with no model claim. DEM+, eWAR and the team totals do not read it." },
+    { key: "c_sc_frm", label: "SC Frm", term: "statcast_catcher_runs", fmt: fSignedInt, num: true,
+      title: "Statcast framing runs at C (fFRP). Statcast's number, not FanGraphs' Frm column. Published, not computed here." },
+    { key: "c_sc_blk", label: "SC Blk", term: "statcast_catcher_runs", fmt: fSignedInt, num: true,
+      title: "Statcast blocking runs at C (bFRP). Statcast blocking begins in 2018; earlier seasons are blank. Published, not computed here." },
+    { key: "c_sc_thr", label: "SC Thr", term: "statcast_catcher_runs", fmt: fSignedInt, num: true,
+      title: "Statcast throwing runs at C (tFRP). Published, not computed here." },
     // Savant catcher blocking and throwing (savant_catcher.py), display only,
     // on rows whose primary position is C. No club total is built from them.
     { key: "c_blk_runs", label: "Blk runs", term: "catcher_blocking", fmt: fSignedInt, num: true,
@@ -5857,6 +5921,7 @@
   function renderDefense() {
     var root = document.getElementById("mlbstats-defense-root");
     if (!root) return;
+    scStampAll();
     if (!defenseData) {
       root.innerHTML = defenseErr
         ? pxState("failed", "Defense board did not load. The nightly build may be writing it. "
@@ -5954,6 +6019,7 @@
   function renderDefenseInPlace(focusId) {
     var root = document.getElementById("mlbstats-defense-root");
     if (!root) return;
+    scStampAll();
     var inner = defenseInner();
     root.innerHTML = bannerHTML(defenseData, { sec: "defense" }) + teamBasisNote(sectionBasis("defense", defenseData, DEFENSE_HISTORY))
       + defenseTabBar() + defenseControls() + inner;
@@ -5975,6 +6041,7 @@
     defenseInit = true;
     renderDefense();
     loadDefense();
+    loadStatcastC();
   }
 
   // ===========================================================================

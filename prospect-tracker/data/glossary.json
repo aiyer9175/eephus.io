@@ -10193,6 +10193,37 @@
    "origin": "Industry metric. MLB Statcast (Baseball Savant) catcher throwing."
   },
   {
+   "id": "statcast_catcher_runs",
+   "term": "Statcast catcher runs",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "Statcast runs",
+    "SC Frm",
+    "SC Blk",
+    "SC Thr",
+    "FRP at C",
+    "Catcher Fielding Run Prevention"
+   ],
+   "priority": 13,
+   "definition": "The runs a catcher saved or cost at C in a season by Statcast's own count: framing (called strikes on borderline pitches), blocking (pitches in the dirt kept in front) and throwing (runners thrown out), and their total.",
+   "methodology": "Statcast's run values as FanGraphs publishes them on the player's catcher row of its fielding leaderboard (fFRP, bFRP, tFRP and their total FRP), read by season from 2016 and carried verbatim in whole runs. The total equals the three parts within one run of rounding. Statcast blocking begins in 2018, so 2016 and 2017 show framing and throwing only. Statcast's framing number is not the FanGraphs framing column (Frm) the Fielding total carries. Shown on the /mlbstats/ Defense board (Catching view) and the player page's Defense tab as Statcast's public number: not computed, shrunk or validated here, and DEM+, eWAR and the team totals do not read it.",
+   "formula": "Statcast runs at C = framing + blocking + throwing, as published",
+   "seeAlso": [
+    "framing_runs",
+    "catcher_blocking",
+    "catcher_throwing",
+    "fielding_runs",
+    "dem_plus"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) catcher framing, blocking and throwing run values, as FanGraphs publishes them."
+  },
+  {
    "id": "pop_time",
    "term": "Pop time",
    "category": "statcast",
