@@ -203,4 +203,20 @@ consumer). Read once; never rerun on the same frame.
 
 ## 11. Results and dated notes
 
-EMPTY.
+### 11.1 2026-10-16: the tool, the dry run and part 6's worlds, before the read
+
+- **Tool committed before the read:** `tools/sdr_catcher_gate.py` and `test_sdr_catcher_gate.py`
+  (7 passed). Dry run on the fixture with nulls (`--dry-run`): every block reports; writes nothing.
+- **One fact the build met, recorded, nothing re-chosen:** I-S in Y and E2's Statcast target in
+  Y + 1 are the same series (FRP at C), so part 6's planted world draws both with noise sd 1.5; the
+  DRS target keeps sd 1.0 as registered.
+- **Part 6 on the real design** (`--simulate`, the real frame's catchers, seasons and innings, every
+  metric value replaced, seed 20261019, B 2,000), all five checks behave:
+  - PLANTED reads PASS. E1: SDR 0.8278, I-S 0.3178, I-R -0.0064, d +0.5100 (LB95 +0.3804), Z LB95
+    +0.7434, PT LB95 +0.7851. E2: gap +0.3178 (LB95 +0.2313), g_Z LB95 +0.4772, g_PT LB95 +0.4728.
+  - NULL reads FAIL; neither clause clears Z (E1 rho_SDR -0.0002, LB95 -0.1331; E2 g_Z -0.0047,
+    LB95 -0.0836).
+  - PLAYING TIME ONLY reads FAIL, and PT stops both clauses (E1 d_PT LB95 -0.1293; E2 g_PT LB95
+    -0.1411). Disclosed: among catchers at 300+ innings, innings in Y relate weakly to innings in
+    Y + 1 or Y + 2 on this design, so the playing-time world's rates carry little persistence
+    (E1 rho_SDR 0.0834 there).
