@@ -53,3 +53,12 @@ after the registry edit.
 ## Results
 
 PENDING. Data-blocked at registration (2026-08-18).
+
+### Note 2026-10-16: the fielding triangulation's route into eWAR
+
+The fielding improvement this gate was written for now runs into eWAR v3, not eWAR v2 (owner
+decisions EW3-17 and EW3-20; eWAR v2 is frozen by registration, `docs/ebr-2026-09-30/EBR_GATE.md`
+part 9.1). Task EWAR_LADDER registers the triangulated fielding arm S3t of candidate part 6 in
+EBR_GATE.md 11.5, with its own read under this gate's team-runs leg and G-A's forward leg
+(`docs/ewar/FIELDING_TRIANGULATION_GATE.md` part 5). The w-grid over eWAR v2's fielding is not run.
+Nothing above this note changes.

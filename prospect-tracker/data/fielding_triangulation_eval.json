@@ -1,0 +1,2254 @@
+{
+ "generated_at": "2026-10-16",
+ "status": "measured",
+ "read_kind": "OWNER-WAIVED EARLY READ (owner decision EW3-5)",
+ "registration": "docs/ewar/FIELDING_TRIANGULATION_GATE.md",
+ "question": "does a reliability-weighted triangulation of SDR, OAA, DRS, UZR and FanGraphs fielding rank next season's fielding runs from a system it did not read, and next season's club runs allowed beyond FIP, better than FanGraphs fielding",
+ "fit": {
+  "path": "data/_labs/fielding_triangulation_fit.json",
+  "sha256": "b52b2a7d6642fc27454f255d3cdd087944d0bd4d7ee80e68e05330e15ebb54eb"
+ },
+ "inputs": {
+  "inputs_sha256": {
+   "fg_field_full_2016.csv": "115491cd47651c3c77c534ca22b1ce7ee937249842934bc4bd20b7903dc06d5a",
+   "fg_field_split_2016.csv": "5feeb7085fcdb23cc7faf73eda0489b8c368beb4ca64b17ca47aef034f16fc24",
+   "fg_team_pit_2016.csv": "d15b18c736682235e6104e2247f355d00aa7355072ad0db47e13f6619d1efc91",
+   "fg_field_full_2017.csv": "4f8661ded724eed0e291604e918400f599a5f9d7885cd5d54f5dcd20679c299f",
+   "fg_field_split_2017.csv": "3ed25bbe73ab26fbc48e951c0a18cfcc9f535f2621730ab93de27ee4b76986b2",
+   "fg_team_pit_2017.csv": "7b1dbd3888f9725b0dc343d304fa8996655e4dea012456564c8e945dc47344bb",
+   "fg_field_full_2018.csv": "a900238e8c459ba3452c2b0bb04a55e5a35ddb07570f73cf92ee4ce80e237608",
+   "fg_field_split_2018.csv": "6ea3faaee66362d680cbab67a10d9642e40ad2bf7ac15689cfb61465090426c3",
+   "fg_team_pit_2018.csv": "6a79eca2a8423fb60e426eac81afa6947131d067b04391d2599fae55291a7f8a",
+   "fg_field_full_2019.csv": "7ad1552ec9719d78546566c64e0060b191fee38d1183b1bf67671839d1d70347",
+   "fg_field_split_2019.csv": "8ef31dbc936273c2937892f63e8095a0d9aa7484b1945381df05330be324db64",
+   "fg_team_pit_2019.csv": "9fdca971b3cad8499dfdded52bc8f228a25ed6ef415846d9716e979f309ad9df",
+   "fg_field_full_2020.csv": "8be0a647ead4c9c7b9c06769ef0018b3fbeed54b1bae21e8277b849301ec7a91",
+   "fg_field_split_2020.csv": "96b3e2be8d6728330412d38fcccbd06085ebb886c6aa46ca0d511029eac74539",
+   "fg_team_pit_2020.csv": "8b494fb84863e3bffe793d06666c88c42c836b538e95766c4fb32e2e029091d2",
+   "fg_field_full_2021.csv": "a28ad2e6780d0fc977e1fdd1ebd4abdbb8faf45df2146178a031a8ad3cb7b238",
+   "fg_field_split_2021.csv": "34d9fc69abc2ddf18c5043a478ee673ad5beb53231bef0f793713efdd90be6a5",
+   "fg_team_pit_2021.csv": "6a873f02d75e14ed924ee60846549f0f149caac5b4144027177331b1dcbdbc75",
+   "fg_field_full_2022.csv": "435a35d0fe701b8f34fd2b717edd7bfd1aabfe381a62f25efd7d56f44d32d2e7",
+   "fg_field_split_2022.csv": "e57e83f0c3a915448143f2b6a2354b9816d3788fc640c4fd27a40eca5d68cca1",
+   "fg_team_pit_2022.csv": "994bc94960744482b0c7a61155d82ba713a73bdf3d331ae161388356b6f70e49",
+   "fg_field_full_2023.csv": "ac0bf48666d991b32d56f67cf3d836eefe18ef379df79a2392e1926db729fe73",
+   "fg_field_split_2023.csv": "3928fd88c007283cf74c9c852c2469f70dbb06c8bf21c42bd947d1d0b18f5bb7",
+   "fg_team_pit_2023.csv": "6edb79575924d44de555750731d98603eca017a9e0ef2fb6a9e3225eb5966fd0",
+   "fg_field_full_2024.csv": "c8d1c9311692dc2e0ab67b990523d6d997b2ec6c687838a3c4cc79c596458a2a",
+   "fg_field_split_2024.csv": "823214d8f8048761a56e104e246aa85f2e56b822b7e3a9926c428a63379ff442",
+   "fg_team_pit_2024.csv": "032d0697d05cbe414408392b809acd6956b4e1bac80aef0186887899b8a9f0f4",
+   "fg_field_full_2025.csv": "9bbd2fc9c7b8fa38021c38d1a0dd05adad5945805ad514adc2c306712f22ffc9",
+   "fg_field_split_2025.csv": "56b6cadcd5c5fb7dddbb20bdc1355fd87d25812f3f582b8622e7ac6dc8e8ebf2",
+   "fg_team_pit_2025.csv": "5c6ae6a6ad7b6e5218245bbfe2d01322f69127f3105abc444ddeabddd5c18a5e",
+   "fg_field_full_2026.csv": "58e53c3a5ca76befeae87a5d5d32035da9fb7073f88275c69914b3263fe671cc",
+   "fg_field_split_2026.csv": "a6c4d620b5bf4f87d949d2226633f0d89d0491da452811e20d67fd7f62594713",
+   "fg_team_pit_2026.csv": "aa00708026f99132db490403d9be6750028bb02a32bd7d0ab7584e5b949dc023",
+   "sdr_drop": "8a41d1c20ce37a45fec3150fcf87ceae67f74a16d77cbdf53f44edc44691358e",
+   "06_defense_plus_2017__no_drs.csv": "4a6451d349a4e25cbe9691e0b0513b6425980798d48b8e05ac90dc424e46435b",
+   "06_defense_plus_2018__no_drs.csv": "8e466ebee51e2d937a930b6fa791ddf2f97a4a059abe7426a9c2160487511828",
+   "06_defense_plus_2019__no_drs.csv": "c12bade7d7172ee30f017209b780a4f723b123cde9f4401f14f51130503a76db",
+   "06_defense_plus_2020__no_drs.csv": "f6fdb96fa713639f505d0c88eed6a666c3297f640295160ce6d6ddb852073801",
+   "06_defense_plus_2021__no_drs.csv": "edd1963d89dc8d4997c0c8b402acadff65d30319189aed7bbdbc88a67e35a5af",
+   "06_defense_plus_2022__no_drs.csv": "0e12c23009fec8dc9a21dd2775ac6e25a7de49f87abd4fffb92e4ae765c6afd6",
+   "06_defense_plus_2023__no_drs.csv": "46d1583936f27cb4d3ab925e3bbb310f9affb90e17982cc40fdc3e9624747ada",
+   "06_defense_plus_2024__no_drs.csv": "40302f329cebcb51bed3a8c5b5a6cab0d6d5a34361eec8bb595c56287a696332",
+   "06_defense_plus_2025__no_drs.csv": "f5a064f9b3082399c47349d5f2607e55b52b01a8d6921a6de4c69895f69b7c3a",
+   "06_defense_plus_2026__no_drs.csv": "bba48de839389910f2832ef285b464631816bdd503478ead6e8424853ae7762e",
+   "06_defense_plus_2017__no_statcast.csv": "9b30a5117b67f359202aa79802520b7ecb966b1fd2b8c5586e93fd971c8b4bca",
+   "06_defense_plus_2018__no_statcast.csv": "e4c4e0a936b066b56b2c3b8fcdd2ba61caa49c593bf01fb57409015a6fac96ef",
+   "06_defense_plus_2019__no_statcast.csv": "5809e595a5c07233b0b63514dfaf1e1c904716af0595c4c2776113d51b3268bc",
+   "06_defense_plus_2020__no_statcast.csv": "f9b27efe6e7d50ac589a2e144ca4c26df68ab80a5c64a1d1eb78878ac1407fb0",
+   "06_defense_plus_2021__no_statcast.csv": "096abc675dee41da6dbc11d57633df03c24fc18ae5597bba194f82872f9008a6",
+   "06_defense_plus_2022__no_statcast.csv": "48e077c5843ac4d77883ab772953ed5461eb0fe45818efd858e06da7d5e70d16",
+   "06_defense_plus_2023__no_statcast.csv": "f046ab6c4fa478633bf1062cda4077a4ebfd4f7f683ada3669d56bc8e5bb68b6",
+   "06_defense_plus_2024__no_statcast.csv": "6248532d2d72e78f5a1876e25868c4961558c37c46d62c0faaebedb0d04cbea4",
+   "06_defense_plus_2025__no_statcast.csv": "586447f7397cffa1c6bb16af644f97822ec940c00cd362e0af6081fa16e0f24b",
+   "06_defense_plus_2026__no_statcast.csv": "39ff933faae677d6cf1318137e95012be2f9e273ce6c473504ce556ba67b77cd"
+  },
+  "fwar_vintage_id": "2026-10-02-57bf90f7143e",
+  "fwar_vintage_sha256": "5213a49548cd01b223531d12a4d6f1acdd677291618e25924bc709fe99bc196c",
+  "sdr_drop": "data/drops/wills/sdr_defense_card__2026-10-15.csv",
+  "war_daily_bat": {
+   "sha256": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+   "modified": "2026-10-16T03:48:21.890449+00:00"
+  },
+  "fetch_manifest": ".cache/sdr/fetch_manifest.json"
+ },
+ "frame": {
+  "predictor_seasons": [
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "frame_min_inn": 300.0,
+  "uzr_last_target": 2024,
+  "bootstrap_b": 2000,
+  "seed": 20261016,
+  "twin_seed": 20261017,
+  "alpha_holm": 0.05,
+  "ni_margin": -0.02
+ },
+ "legs": {
+  "L1": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2908,
+     "rho_b": 0.2841,
+     "gap": 0.0067,
+     "target": "drs per inning, Y+1"
+    },
+    "Statcast": {
+     "n_pairs": 1227,
+     "rho_a": 0.2835,
+     "rho_b": 0.2795,
+     "gap": 0.004,
+     "target": "frp per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.269,
+     "rho_b": 0.2475,
+     "gap": 0.0215,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": 0.0107,
+   "n_draws": 2000,
+   "sd": 0.0059,
+   "lb95": -0.0005,
+   "ub95": 0.0224,
+   "p_one_sided": 0.03,
+   "mde95": 0.0098,
+   "half_width95": 0.0115,
+   "holm": {
+    "p": 0.03,
+    "threshold": 0.025,
+    "rejects": false
+   },
+   "twin": {
+    "gap_point": -0.2788,
+    "lb95": -0.3553,
+    "ub95": -0.2082,
+    "p_one_sided": 1.0,
+    "passes_rule": false
+   },
+   "passes": false
+  },
+  "L2": {
+   "n_club_pairs": 210,
+   "rho": {
+    "rate_T": 0.2831,
+    "rate_B0": 0.2329
+   },
+   "gap_point": 0.0503,
+   "n_draws": 2000,
+   "sd": 0.0352,
+   "lb95": -0.0251,
+   "ub95": 0.1122,
+   "p_one_sided": 0.1035,
+   "mde95": 0.0579,
+   "half_width95": 0.0686,
+   "club_clustered_beside": {
+    "n_draws": 2000,
+    "sd": 0.0444,
+    "lb95": -0.0341,
+    "ub95": 0.1393,
+    "p_one_sided": 0.144,
+    "mde95": 0.0731,
+    "half_width95": 0.0867
+   },
+   "non_inferior": false,
+   "without_2020_pairs": {
+    "rate_T": 0.2645,
+    "rate_B0": 0.2272
+   },
+   "holm": {
+    "p": 0.1035,
+    "threshold": 0.05,
+    "rejects": false
+   },
+   "twin": {
+    "gap_point": -0.3017,
+    "lb95": -0.3489,
+    "ub95": -0.0728,
+    "p_one_sided": 0.999,
+    "passes_rule": false
+   },
+   "passes": false
+  }
+ },
+ "holm": {
+  "L1": {
+   "p": 0.03,
+   "threshold": 0.025,
+   "rejects": false
+  },
+  "L2": {
+   "p": 0.1035,
+   "threshold": 0.05,
+   "rejects": false
+  }
+ },
+ "verdict": "FAIL",
+ "s3t_eligible_for_skill_look": false,
+ "eligibility_rule": "L1 passes AND L2 NON-INFERIOR (gate part 5.5)",
+ "reported": {
+  "weights_by_position": {
+   "1B": {
+    "loadings": {
+     "sdr": 3.252,
+     "sdr_no_drs": 3.331,
+     "sdr_no_statcast": 3.096,
+     "oaa": 2.655,
+     "drs": 4.096,
+     "uzr": 1.918,
+     "frp": 2.287
+    },
+    "w_1000": {
+     "sdr": 0.2408,
+     "oaa": -0.1817,
+     "drs": 0.0731,
+     "uzr": 0.1156,
+     "frp": 0.2427
+    },
+    "share_abs_1000": {
+     "sdr": 0.282,
+     "oaa": 0.213,
+     "drs": 0.086,
+     "uzr": 0.135,
+     "frp": 0.284
+    },
+    "carries_weight": [
+     "frp",
+     "oaa",
+     "sdr",
+     "uzr"
+    ],
+    "w_500": {
+     "sdr": 0.2522,
+     "oaa": -0.1376,
+     "drs": 0.0756,
+     "uzr": 0.075,
+     "frp": 0.0984
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "2B": {
+    "loadings": {
+     "sdr": 3.131,
+     "sdr_no_drs": 3.374,
+     "sdr_no_statcast": 2.614,
+     "oaa": 5.397,
+     "drs": 4.838,
+     "uzr": 1.331,
+     "frp": 4.531
+    },
+    "w_1000": {
+     "sdr": 0.2319,
+     "oaa": 0.1556,
+     "drs": 0.1244,
+     "uzr": -0.1463,
+     "frp": 0.1073
+    },
+    "share_abs_1000": {
+     "sdr": 0.303,
+     "oaa": 0.203,
+     "drs": 0.162,
+     "uzr": 0.191,
+     "frp": 0.14
+    },
+    "carries_weight": [
+     "drs",
+     "frp",
+     "oaa",
+     "sdr",
+     "uzr"
+    ],
+    "w_500": {
+     "sdr": 0.1957,
+     "oaa": 0.137,
+     "drs": 0.1181,
+     "uzr": -0.1595,
+     "frp": 0.0421
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "3B": {
+    "loadings": {
+     "sdr": 4.447,
+     "sdr_no_drs": 4.587,
+     "sdr_no_statcast": 4.14,
+     "oaa": 5.106,
+     "drs": 6.229,
+     "uzr": 3.302,
+     "frp": 4.345
+    },
+    "w_1000": {
+     "sdr": 0.1821,
+     "oaa": -0.0913,
+     "drs": 0.1261,
+     "uzr": 0.0752,
+     "frp": 0.3599
+    },
+    "share_abs_1000": {
+     "sdr": 0.218,
+     "oaa": 0.109,
+     "drs": 0.151,
+     "uzr": 0.09,
+     "frp": 0.431
+    },
+    "carries_weight": [
+     "drs",
+     "frp",
+     "oaa",
+     "sdr"
+    ],
+    "w_500": {
+     "sdr": 0.066,
+     "oaa": -0.0945,
+     "drs": 0.1049,
+     "uzr": 0.0958,
+     "frp": 0.2164
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "SS": {
+    "loadings": {
+     "sdr": 5.703,
+     "sdr_no_drs": 5.978,
+     "sdr_no_statcast": 5.083,
+     "oaa": 6.801,
+     "drs": 7.732,
+     "uzr": 2.559,
+     "frp": 5.66
+    },
+    "w_1000": {
+     "sdr": 0.24,
+     "oaa": 0.0077,
+     "drs": 0.2464,
+     "uzr": -0.1805,
+     "frp": 0.166
+    },
+    "share_abs_1000": {
+     "sdr": 0.285,
+     "oaa": 0.009,
+     "drs": 0.293,
+     "uzr": 0.215,
+     "frp": 0.198
+    },
+    "carries_weight": [
+     "drs",
+     "frp",
+     "sdr",
+     "uzr"
+    ],
+    "w_500": {
+     "sdr": 0.0818,
+     "oaa": -0.0445,
+     "drs": 0.2193,
+     "uzr": -0.1854,
+     "frp": 0.1857
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "LF": {
+    "loadings": {
+     "sdr": 4.737,
+     "sdr_no_drs": 4.952,
+     "sdr_no_statcast": 4.288,
+     "oaa": 5.378,
+     "drs": 6.139,
+     "uzr": 3.914,
+     "frp": 5.217
+    },
+    "w_1000": {
+     "sdr": 0.0117,
+     "oaa": 0.5336,
+     "drs": 0.0318,
+     "uzr": 0.0436,
+     "frp": 0.0435
+    },
+    "share_abs_1000": {
+     "sdr": 0.018,
+     "oaa": 0.803,
+     "drs": 0.048,
+     "uzr": 0.066,
+     "frp": 0.065
+    },
+    "carries_weight": [
+     "oaa"
+    ],
+    "w_500": {
+     "sdr": 0.1744,
+     "oaa": 0.2693,
+     "drs": 0.0081,
+     "uzr": 0.0293,
+     "frp": 0.0582
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "CF": {
+    "loadings": {
+     "sdr": 5.778,
+     "sdr_no_drs": 6.111,
+     "sdr_no_statcast": 5.052,
+     "oaa": 5.902,
+     "drs": 7.283,
+     "uzr": 3.284,
+     "frp": 6.224
+    },
+    "w_1000": {
+     "sdr": 0.0778,
+     "oaa": -0.2705,
+     "drs": 0.1406,
+     "uzr": -0.1716,
+     "frp": 0.7009
+    },
+    "share_abs_1000": {
+     "sdr": 0.057,
+     "oaa": 0.199,
+     "drs": 0.103,
+     "uzr": 0.126,
+     "frp": 0.515
+    },
+    "carries_weight": [
+     "drs",
+     "frp",
+     "oaa",
+     "uzr"
+    ],
+    "w_500": {
+     "sdr": 0.1976,
+     "oaa": -0.1002,
+     "drs": 0.0871,
+     "uzr": -0.1063,
+     "frp": 0.3625
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   },
+   "RF": {
+    "loadings": {
+     "sdr": 5.311,
+     "sdr_no_drs": 5.343,
+     "sdr_no_statcast": 5.256,
+     "oaa": 4.703,
+     "drs": 6.447,
+     "uzr": 3.697,
+     "frp": 5.23
+    },
+    "w_1000": {
+     "sdr": 0.299,
+     "oaa": 0.0728,
+     "drs": 0.0134,
+     "uzr": 0.0097,
+     "frp": 0.248
+    },
+    "share_abs_1000": {
+     "sdr": 0.465,
+     "oaa": 0.113,
+     "drs": 0.021,
+     "uzr": 0.015,
+     "frp": 0.386
+    },
+    "carries_weight": [
+     "frp",
+     "oaa",
+     "sdr"
+    ],
+    "w_500": {
+     "sdr": 0.2591,
+     "oaa": 0.0234,
+     "drs": 0.0014,
+     "uzr": 0.0056,
+     "frp": 0.193
+    },
+    "dropped": {},
+    "dem_plus": "nested in FRP (gate part 2)"
+   }
+  },
+  "catcher_K": {
+   "framing": {
+    "r": 0.6116,
+    "r_clamped": 0.6116,
+    "hm": 677.2395,
+    "K": 430.0,
+    "n_pairs": 90
+   },
+   "blocking": {
+    "r": null,
+    "r_clamped": null,
+    "hm": null,
+    "K": null,
+    "n_pairs": 90
+   },
+   "throwing": {
+    "r": 0.3985,
+    "r_clamped": 0.3985,
+    "hm": 677.2395,
+    "K": 1022.0,
+    "n_pairs": 90
+   }
+  },
+  "sdr_alone_minus_triangulation": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2706,
+     "rho_b": 0.2908,
+     "gap": -0.0202,
+     "target": "drs per inning, Y+1"
+    },
+    "Statcast": {
+     "n_pairs": 1227,
+     "rho_a": 0.2837,
+     "rho_b": 0.2835,
+     "gap": 0.0002,
+     "target": "frp per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.252,
+     "rho_b": 0.269,
+     "gap": -0.0171,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": -0.0124,
+   "n_draws": 2000,
+   "sd": 0.0056,
+   "lb95": -0.0235,
+   "ub95": -0.0016,
+   "p_one_sided": 0.988,
+   "mde95": 0.0092,
+   "half_width95": 0.0109
+  },
+  "s3_vs_single_DRS_UZR": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2957,
+     "rho_b": 0.2841,
+     "gap": 0.0116,
+     "target": "drs per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.259,
+     "rho_b": 0.2475,
+     "gap": 0.0114,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": 0.0115,
+   "n_draws": 2000,
+   "sd": 0.0058,
+   "lb95": 0.0004,
+   "ub95": 0.023,
+   "p_one_sided": 0.0205,
+   "mde95": 0.0096,
+   "half_width95": 0.0113
+  },
+  "triangulation_minus_s3_DRS_UZR": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2908,
+     "rho_b": 0.2957,
+     "gap": -0.0049,
+     "target": "drs per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.269,
+     "rho_b": 0.259,
+     "gap": 0.0101,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": 0.0026,
+   "n_draws": 2000,
+   "sd": 0.0071,
+   "lb95": -0.0111,
+   "ub95": 0.017,
+   "p_one_sided": 0.3585,
+   "mde95": 0.0117,
+   "half_width95": 0.014
+  },
+  "equal_weight_blend_vs_single": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2433,
+     "rho_b": 0.2841,
+     "gap": -0.0408,
+     "target": "drs per inning, Y+1"
+    },
+    "Statcast": {
+     "n_pairs": 1227,
+     "rho_a": 0.2765,
+     "rho_b": 0.2795,
+     "gap": -0.003,
+     "target": "frp per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.2369,
+     "rho_b": 0.2475,
+     "gap": -0.0106,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": -0.0181,
+   "n_draws": 2000,
+   "sd": 0.0086,
+   "lb95": -0.0345,
+   "ub95": -0.0016,
+   "p_one_sided": 0.98,
+   "mde95": 0.0141,
+   "half_width95": 0.0164
+  },
+  "triangulation_minus_equal_weight": {
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1227,
+     "rho_a": 0.2908,
+     "rho_b": 0.2433,
+     "gap": 0.0475,
+     "target": "drs per inning, Y+1"
+    },
+    "Statcast": {
+     "n_pairs": 1227,
+     "rho_a": 0.2835,
+     "rho_b": 0.2765,
+     "gap": 0.007,
+     "target": "frp per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 830,
+     "rho_a": 0.269,
+     "rho_b": 0.2369,
+     "gap": 0.0321,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": 0.0289,
+   "n_draws": 2000,
+   "sd": 0.0088,
+   "lb95": 0.0114,
+   "ub95": 0.0459,
+   "p_one_sided": 0.001,
+   "mde95": 0.0145,
+   "half_width95": 0.0173
+  },
+  "l1_without_2020_pairs": {
+   "n_pairs": 1006,
+   "per_system": {
+    "DRS": {
+     "n_pairs": 1006,
+     "rho_a": 0.2767,
+     "rho_b": 0.2663,
+     "gap": 0.0104,
+     "target": "drs per inning, Y+1"
+    },
+    "Statcast": {
+     "n_pairs": 1006,
+     "rho_a": 0.272,
+     "rho_b": 0.2681,
+     "gap": 0.004,
+     "target": "frp per inning, Y+1"
+    },
+    "UZR": {
+     "n_pairs": 609,
+     "rho_a": 0.283,
+     "rho_b": 0.2569,
+     "gap": 0.0261,
+     "target": "uzr per inning, Y+1"
+    }
+   },
+   "gap_point": 0.0135
+  },
+  "l2_rho_beside": {
+   "SDR": {
+    "rate_SDR": 0.2507,
+    "rate_B0": 0.2329
+   },
+   "S3": {
+    "rate_S3": 0.2334,
+    "rate_B0": 0.2329
+   },
+   "RF": {
+    "rate_RF": 0.1992,
+    "rate_B0": 0.2329
+   }
+  },
+  "per_position": {
+   "1B": {
+    "n_row_pairs": 164,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 164,
+       "rho_a": 0.1716,
+       "rho_b": 0.1595,
+       "gap": 0.012,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 164,
+       "rho_a": 0.2477,
+       "rho_b": 0.2511,
+       "gap": -0.0035,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 108,
+       "rho_a": 0.1557,
+       "rho_b": 0.1285,
+       "gap": 0.0271,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0119,
+     "n_draws": 2000,
+     "sd": 0.0164,
+     "lb95": -0.0229,
+     "ub95": 0.0405,
+     "p_one_sided": 0.2305,
+     "mde95": 0.0269,
+     "half_width95": 0.0317
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 164,
+       "rho_a": 0.157,
+       "rho_b": 0.1716,
+       "gap": -0.0145,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 164,
+       "rho_a": 0.2355,
+       "rho_b": 0.2477,
+       "gap": -0.0122,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 108,
+       "rho_a": 0.1687,
+       "rho_b": 0.1557,
+       "gap": 0.0131,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0046,
+     "n_draws": 2000,
+     "sd": 0.0203,
+     "lb95": -0.0439,
+     "ub95": 0.0374,
+     "p_one_sided": 0.558,
+     "mde95": 0.0334,
+     "half_width95": 0.0407
+    }
+   },
+   "2B": {
+    "n_row_pairs": 140,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 140,
+       "rho_a": 0.2452,
+       "rho_b": 0.2453,
+       "gap": -0.0001,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 140,
+       "rho_a": 0.2499,
+       "rho_b": 0.2447,
+       "gap": 0.0052,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 96,
+       "rho_a": 0.3142,
+       "rho_b": 0.299,
+       "gap": 0.0152,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0067,
+     "n_draws": 2000,
+     "sd": 0.0178,
+     "lb95": -0.028,
+     "ub95": 0.043,
+     "p_one_sided": 0.3335,
+     "mde95": 0.0292,
+     "half_width95": 0.0355
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 140,
+       "rho_a": 0.2611,
+       "rho_b": 0.2452,
+       "gap": 0.0159,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 140,
+       "rho_a": 0.2532,
+       "rho_b": 0.2499,
+       "gap": 0.0034,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 96,
+       "rho_a": 0.3219,
+       "rho_b": 0.3142,
+       "gap": 0.0078,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.009,
+     "n_draws": 2000,
+     "sd": 0.0108,
+     "lb95": -0.0112,
+     "ub95": 0.0306,
+     "p_one_sided": 0.2215,
+     "mde95": 0.0177,
+     "half_width95": 0.0209
+    }
+   },
+   "3B": {
+    "n_row_pairs": 164,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 164,
+       "rho_a": 0.2847,
+       "rho_b": 0.2664,
+       "gap": 0.0184,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 164,
+       "rho_a": 0.462,
+       "rho_b": 0.4048,
+       "gap": 0.0572,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 113,
+       "rho_a": 0.3991,
+       "rho_b": 0.3972,
+       "gap": 0.0018,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0258,
+     "n_draws": 2000,
+     "sd": 0.0166,
+     "lb95": -0.0054,
+     "ub95": 0.0595,
+     "p_one_sided": 0.0515,
+     "mde95": 0.0273,
+     "half_width95": 0.0324
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 164,
+       "rho_a": 0.2735,
+       "rho_b": 0.2847,
+       "gap": -0.0112,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 164,
+       "rho_a": 0.4265,
+       "rho_b": 0.462,
+       "gap": -0.0355,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 113,
+       "rho_a": 0.3932,
+       "rho_b": 0.3991,
+       "gap": -0.0058,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0175,
+     "n_draws": 2000,
+     "sd": 0.0149,
+     "lb95": -0.0462,
+     "ub95": 0.0124,
+     "p_one_sided": 0.8805,
+     "mde95": 0.0245,
+     "half_width95": 0.0293
+    }
+   },
+   "SS": {
+    "n_row_pairs": 171,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 171,
+       "rho_a": 0.2498,
+       "rho_b": 0.2516,
+       "gap": -0.0018,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 171,
+       "rho_a": 0.16,
+       "rho_b": 0.1793,
+       "gap": -0.0193,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 114,
+       "rho_a": 0.0783,
+       "rho_b": 0.0776,
+       "gap": 0.0007,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0068,
+     "n_draws": 2000,
+     "sd": 0.0133,
+     "lb95": -0.0327,
+     "ub95": 0.0196,
+     "p_one_sided": 0.688,
+     "mde95": 0.0219,
+     "half_width95": 0.0262
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 171,
+       "rho_a": 0.221,
+       "rho_b": 0.2498,
+       "gap": -0.0288,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 171,
+       "rho_a": 0.1859,
+       "rho_b": 0.16,
+       "gap": 0.0259,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 114,
+       "rho_a": 0.068,
+       "rho_b": 0.0783,
+       "gap": -0.0103,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0044,
+     "n_draws": 2000,
+     "sd": 0.0161,
+     "lb95": -0.0364,
+     "ub95": 0.0263,
+     "p_one_sided": 0.636,
+     "mde95": 0.0264,
+     "half_width95": 0.0314
+    }
+   },
+   "LF": {
+    "n_row_pairs": 131,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 131,
+       "rho_a": 0.4031,
+       "rho_b": 0.423,
+       "gap": -0.0199,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 131,
+       "rho_a": 0.3661,
+       "rho_b": 0.3699,
+       "gap": -0.0038,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 94,
+       "rho_a": 0.3039,
+       "rho_b": 0.2568,
+       "gap": 0.0471,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0078,
+     "n_draws": 2000,
+     "sd": 0.0311,
+     "lb95": -0.055,
+     "ub95": 0.0681,
+     "p_one_sided": 0.395,
+     "mde95": 0.0512,
+     "half_width95": 0.0616
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 131,
+       "rho_a": 0.3837,
+       "rho_b": 0.4031,
+       "gap": -0.0194,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 131,
+       "rho_a": 0.3853,
+       "rho_b": 0.3661,
+       "gap": 0.0191,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 94,
+       "rho_a": 0.2745,
+       "rho_b": 0.3039,
+       "gap": -0.0294,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0099,
+     "n_draws": 2000,
+     "sd": 0.0198,
+     "lb95": -0.0489,
+     "ub95": 0.0314,
+     "p_one_sided": 0.6895,
+     "mde95": 0.0325,
+     "half_width95": 0.0401
+    }
+   },
+   "CF": {
+    "n_row_pairs": 154,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 154,
+       "rho_a": 0.4874,
+       "rho_b": 0.482,
+       "gap": 0.0055,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 154,
+       "rho_a": 0.4807,
+       "rho_b": 0.477,
+       "gap": 0.0036,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 104,
+       "rho_a": 0.4262,
+       "rho_b": 0.4168,
+       "gap": 0.0094,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0062,
+     "n_draws": 2000,
+     "sd": 0.0138,
+     "lb95": -0.0197,
+     "ub95": 0.0346,
+     "p_one_sided": 0.3315,
+     "mde95": 0.0228,
+     "half_width95": 0.0272
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 154,
+       "rho_a": 0.4602,
+       "rho_b": 0.4874,
+       "gap": -0.0273,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 154,
+       "rho_a": 0.476,
+       "rho_b": 0.4807,
+       "gap": -0.0047,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 104,
+       "rho_a": 0.3924,
+       "rho_b": 0.4262,
+       "gap": -0.0339,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": -0.0219,
+     "n_draws": 2000,
+     "sd": 0.0174,
+     "lb95": -0.0587,
+     "ub95": 0.011,
+     "p_one_sided": 0.893,
+     "mde95": 0.0286,
+     "half_width95": 0.0348
+    }
+   },
+   "RF": {
+    "n_row_pairs": 149,
+    "triangulation_vs_single": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 149,
+       "rho_a": 0.4222,
+       "rho_b": 0.4159,
+       "gap": 0.0063,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 149,
+       "rho_a": 0.3881,
+       "rho_b": 0.3763,
+       "gap": 0.0118,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 103,
+       "rho_a": 0.2359,
+       "rho_b": 0.1984,
+       "gap": 0.0375,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0185,
+     "n_draws": 2000,
+     "sd": 0.0157,
+     "lb95": -0.0132,
+     "ub95": 0.0477,
+     "p_one_sided": 0.118,
+     "mde95": 0.0258,
+     "half_width95": 0.0305
+    },
+    "sdr_minus_triangulation": {
+     "per_system": {
+      "DRS": {
+       "n_pairs": 149,
+       "rho_a": 0.4307,
+       "rho_b": 0.4222,
+       "gap": 0.0084,
+       "target": "drs per inning, Y+1"
+      },
+      "Statcast": {
+       "n_pairs": 149,
+       "rho_a": 0.3771,
+       "rho_b": 0.3881,
+       "gap": -0.0111,
+       "target": "frp per inning, Y+1"
+      },
+      "UZR": {
+       "n_pairs": 103,
+       "rho_a": 0.2472,
+       "rho_b": 0.2359,
+       "gap": 0.0114,
+       "target": "uzr per inning, Y+1"
+      }
+     },
+     "gap_point": 0.0029,
+     "n_draws": 2000,
+     "sd": 0.0133,
+     "lb95": -0.023,
+     "ub95": 0.0286,
+     "p_one_sided": 0.4335,
+     "mde95": 0.0219,
+     "half_width95": 0.0258
+    }
+   }
+  },
+  "catchers": {
+   "n_pairs": 234,
+   "target": "DRS per inning at C, Y+1",
+   "rho": {
+    "T_C": 0.4812,
+    "base_FRP_plus_CFraming": 0.5149
+   },
+   "gap_point": -0.0337,
+   "n_draws": 2000,
+   "sd": 0.0139,
+   "lb95": -0.0621,
+   "ub95": -0.0074,
+   "p_one_sided": 0.9945,
+   "mde95": 0.0228,
+   "half_width95": 0.0273
+  },
+  "same_season_agreement": {
+   "sdr": {
+    "n": 2311,
+    "spearman_same_season": 0.9524
+   },
+   "sdr_no_drs": {
+    "n": 2311,
+    "spearman_same_season": 0.8976
+   },
+   "sdr_no_statcast": {
+    "n": 2311,
+    "spearman_same_season": 0.8286
+   },
+   "oaa": {
+    "n": 2311,
+    "spearman_same_season": 0.8527
+   },
+   "drs": {
+    "n": 2311,
+    "spearman_same_season": 0.8204
+   },
+   "uzr": {
+    "n": 1700,
+    "spearman_same_season": 0.5684
+   },
+   "frp": {
+    "n": 2311,
+    "spearman_same_season": 0.8913
+   }
+  },
+  "face_validity": {
+   "season": 2026,
+   "by_position": {
+    "1B": {
+     "n": 179,
+     "top": [
+      {
+       "player": "Matt Olson",
+       "player_id": 621566,
+       "innings": 1424.0,
+       "t_runs": 4.9
+      },
+      {
+       "player": "Ty France",
+       "player_id": 664034,
+       "innings": 1030.3,
+       "t_runs": 4.4
+      },
+      {
+       "player": "Vladimir Guerrero Jr.",
+       "player_id": 665489,
+       "innings": 1095.3,
+       "t_runs": 2.7
+      },
+      {
+       "player": "Christian Walker",
+       "player_id": 572233,
+       "innings": 1299.7,
+       "t_runs": 2.3
+      },
+      {
+       "player": "TJ Rumfield",
+       "player_id": 681198,
+       "innings": 1156.3,
+       "t_runs": 1.9
+      },
+      {
+       "player": "Alec Burleson",
+       "player_id": 676475,
+       "innings": 1324.7,
+       "t_runs": 1.6
+      },
+      {
+       "player": "Vinnie Pasquantino",
+       "player_id": 686469,
+       "innings": 943.0,
+       "t_runs": 1.3
+      },
+      {
+       "player": "Jake Burger",
+       "player_id": 669394,
+       "innings": 1307.3,
+       "t_runs": 1.2
+      },
+      {
+       "player": "Ildemaro Vargas",
+       "player_id": 545121,
+       "innings": 486.3,
+       "t_runs": 1.2
+      },
+      {
+       "player": "Paul Goldschmidt",
+       "player_id": 502671,
+       "innings": 623.3,
+       "t_runs": 1.1
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Spencer Torkelson",
+       "player_id": 679529,
+       "innings": 1314.0,
+       "t_runs": -2.2
+      },
+      {
+       "player": "Bryce Harper",
+       "player_id": 547180,
+       "innings": 923.7,
+       "t_runs": -2.0
+      },
+      {
+       "player": "Ben Rice",
+       "player_id": 700250,
+       "innings": 474.7,
+       "t_runs": -1.4
+      },
+      {
+       "player": "Rhys Hoskins",
+       "player_id": 656555,
+       "innings": 423.3,
+       "t_runs": -1.4
+      },
+      {
+       "player": "Jake Bauers",
+       "player_id": 641343,
+       "innings": 836.3,
+       "t_runs": -1.3
+      },
+      {
+       "player": "Nathaniel Lowe",
+       "player_id": 663993,
+       "innings": 494.0,
+       "t_runs": -1.2
+      },
+      {
+       "player": "Josh Naylor",
+       "player_id": 647304,
+       "innings": 1333.3,
+       "t_runs": -1.2
+      },
+      {
+       "player": "Rafael Devers",
+       "player_id": 646240,
+       "innings": 874.7,
+       "t_runs": -1.1
+      },
+      {
+       "player": "Mark Vientos",
+       "player_id": 668901,
+       "innings": 519.3,
+       "t_runs": -1.1
+      },
+      {
+       "player": "Munetaka Murakami",
+       "player_id": 808959,
+       "innings": 1029.7,
+       "t_runs": -1.1
+      }
+     ]
+    },
+    "2B": {
+     "n": 174,
+     "top": [
+      {
+       "player": "JJ Wetherholt",
+       "player_id": 802139,
+       "innings": 1101.3,
+       "t_runs": 10.8
+      },
+      {
+       "player": "Brice Turang",
+       "player_id": 668930,
+       "innings": 1311.7,
+       "t_runs": 8.6
+      },
+      {
+       "player": "Brandon Lowe",
+       "player_id": 664040,
+       "innings": 1181.0,
+       "t_runs": 6.8
+      },
+      {
+       "player": "Nasim Nu\u00f1ez",
+       "player_id": 683083,
+       "innings": 842.0,
+       "t_runs": 4.7
+      },
+      {
+       "player": "Michael Massey",
+       "player_id": 686681,
+       "innings": 994.3,
+       "t_runs": 3.8
+      },
+      {
+       "player": "Nico Hoerner",
+       "player_id": 663538,
+       "innings": 1019.7,
+       "t_runs": 3.4
+      },
+      {
+       "player": "Luis Arraez",
+       "player_id": 650333,
+       "innings": 1275.3,
+       "t_runs": 3.4
+      },
+      {
+       "player": "Chase Meidroth",
+       "player_id": 805367,
+       "innings": 1275.7,
+       "t_runs": 3.2
+      },
+      {
+       "player": "Jazz Chisholm Jr.",
+       "player_id": 665862,
+       "innings": 1155.0,
+       "t_runs": 2.8
+      },
+      {
+       "player": "Ketel Marte",
+       "player_id": 606466,
+       "innings": 989.7,
+       "t_runs": 1.3
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Jose Altuve",
+       "player_id": 514888,
+       "innings": 1061.7,
+       "t_runs": -6.8
+      },
+      {
+       "player": "Marcus Semien",
+       "player_id": 543760,
+       "innings": 1203.7,
+       "t_runs": -4.6
+      },
+      {
+       "player": "Jeff McNeil",
+       "player_id": 643446,
+       "innings": 759.3,
+       "t_runs": -2.9
+      },
+      {
+       "player": "Luke Keaschall",
+       "player_id": 807712,
+       "innings": 636.3,
+       "t_runs": -2.5
+      },
+      {
+       "player": "Richie Palacios",
+       "player_id": 680700,
+       "innings": 863.7,
+       "t_runs": -2.3
+      },
+      {
+       "player": "Donovan Walton",
+       "player_id": 622268,
+       "innings": 338.0,
+       "t_runs": -2.0
+      },
+      {
+       "player": "Edouard Julien",
+       "player_id": 666397,
+       "innings": 467.3,
+       "t_runs": -1.9
+      },
+      {
+       "player": "Ernie Clement",
+       "player_id": 676391,
+       "innings": 981.7,
+       "t_runs": -1.7
+      },
+      {
+       "player": "Xavier Edwards",
+       "player_id": 669364,
+       "innings": 1176.0,
+       "t_runs": -1.7
+      },
+      {
+       "player": "Hao-Yu Lee",
+       "player_id": 701678,
+       "innings": 492.7,
+       "t_runs": -1.6
+      }
+     ]
+    },
+    "3B": {
+     "n": 178,
+     "top": [
+      {
+       "player": "Alex Bregman",
+       "player_id": 608324,
+       "innings": 1248.0,
+       "t_runs": 7.4
+      },
+      {
+       "player": "Caleb Durbin",
+       "player_id": 702332,
+       "innings": 1302.0,
+       "t_runs": 6.6
+      },
+      {
+       "player": "Matt Chapman",
+       "player_id": 656305,
+       "innings": 718.7,
+       "t_runs": 4.2
+      },
+      {
+       "player": "Manny Machado",
+       "player_id": 592518,
+       "innings": 1210.0,
+       "t_runs": 4.0
+      },
+      {
+       "player": "Brooks Lee",
+       "player_id": 686797,
+       "innings": 939.7,
+       "t_runs": 3.7
+      },
+      {
+       "player": "Ke'Bryan Hayes",
+       "player_id": 663647,
+       "innings": 655.3,
+       "t_runs": 2.7
+      },
+      {
+       "player": "Javier Sanoja",
+       "player_id": 691594,
+       "innings": 778.3,
+       "t_runs": 2.5
+      },
+      {
+       "player": "Maikel Garcia",
+       "player_id": 672580,
+       "innings": 636.0,
+       "t_runs": 2.5
+      },
+      {
+       "player": "Nick Loftin",
+       "player_id": 679845,
+       "innings": 582.3,
+       "t_runs": 2.1
+      },
+      {
+       "player": "Joey Ortiz",
+       "player_id": 687401,
+       "innings": 388.3,
+       "t_runs": 1.7
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Nick Gonzales",
+       "player_id": 693304,
+       "innings": 884.3,
+       "t_runs": -6.1
+      },
+      {
+       "player": "Alec Bohm",
+       "player_id": 664761,
+       "innings": 907.7,
+       "t_runs": -4.1
+      },
+      {
+       "player": "Josh Jung",
+       "player_id": 673962,
+       "innings": 847.0,
+       "t_runs": -3.6
+      },
+      {
+       "player": "Junior Caminero",
+       "player_id": 691406,
+       "innings": 1401.7,
+       "t_runs": -2.8
+      },
+      {
+       "player": "Miguel Vargas",
+       "player_id": 678246,
+       "innings": 1142.0,
+       "t_runs": -2.5
+      },
+      {
+       "player": "Max Muncy",
+       "player_id": 691777,
+       "innings": 444.7,
+       "t_runs": -2.2
+      },
+      {
+       "player": "Isaac Paredes",
+       "player_id": 670623,
+       "innings": 1167.0,
+       "t_runs": -1.8
+      },
+      {
+       "player": "Brady House",
+       "player_id": 691781,
+       "innings": 644.3,
+       "t_runs": -1.6
+      },
+      {
+       "player": "Coby Mayo",
+       "player_id": 691723,
+       "innings": 568.7,
+       "t_runs": -1.5
+      },
+      {
+       "player": "Bo Bichette",
+       "player_id": 666182,
+       "innings": 943.7,
+       "t_runs": -1.5
+      }
+     ]
+    },
+    "SS": {
+     "n": 134,
+     "top": [
+      {
+       "player": "Masyn Winn",
+       "player_id": 691026,
+       "innings": 1141.3,
+       "t_runs": 7.2
+      },
+      {
+       "player": "Bobby Witt Jr.",
+       "player_id": 677951,
+       "innings": 1209.0,
+       "t_runs": 7.1
+      },
+      {
+       "player": "Geraldo Perdomo",
+       "player_id": 672695,
+       "innings": 1372.0,
+       "t_runs": 6.5
+      },
+      {
+       "player": "Otto Lopez",
+       "player_id": 672640,
+       "innings": 1357.0,
+       "t_runs": 5.4
+      },
+      {
+       "player": "Taylor Walls",
+       "player_id": 670764,
+       "innings": 1036.7,
+       "t_runs": 5.0
+      },
+      {
+       "player": "Andr\u00e9s Gim\u00e9nez",
+       "player_id": 665926,
+       "innings": 1179.0,
+       "t_runs": 4.7
+      },
+      {
+       "player": "Dansby Swanson",
+       "player_id": 621020,
+       "innings": 1087.7,
+       "t_runs": 4.1
+      },
+      {
+       "player": "Mookie Betts",
+       "player_id": 605141,
+       "innings": 1050.7,
+       "t_runs": 3.0
+      },
+      {
+       "player": "Jos\u00e9 Caballero",
+       "player_id": 676609,
+       "innings": 579.0,
+       "t_runs": 2.8
+      },
+      {
+       "player": "Brayan Rocchio",
+       "player_id": 677587,
+       "innings": 1253.7,
+       "t_runs": 1.3
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Trea Turner",
+       "player_id": 607208,
+       "innings": 1343.3,
+       "t_runs": -9.2
+      },
+      {
+       "player": "Willy Adames",
+       "player_id": 642715,
+       "innings": 1046.3,
+       "t_runs": -5.4
+      },
+      {
+       "player": "CJ Abrams",
+       "player_id": 682928,
+       "innings": 1118.0,
+       "t_runs": -4.7
+      },
+      {
+       "player": "J.P. Crawford",
+       "player_id": 641487,
+       "innings": 720.0,
+       "t_runs": -4.6
+      },
+      {
+       "player": "Jeremy Pe\u00f1a",
+       "player_id": 665161,
+       "innings": 904.3,
+       "t_runs": -2.7
+      },
+      {
+       "player": "Brooks Lee",
+       "player_id": 686797,
+       "innings": 400.0,
+       "t_runs": -2.1
+      },
+      {
+       "player": "Tristan Gray",
+       "player_id": 656484,
+       "innings": 277.3,
+       "t_runs": -1.6
+      },
+      {
+       "player": "Elly De La Cruz",
+       "player_id": 682829,
+       "innings": 1140.7,
+       "t_runs": -1.5
+      },
+      {
+       "player": "Francisco Lindor",
+       "player_id": 596019,
+       "innings": 894.3,
+       "t_runs": -1.4
+      },
+      {
+       "player": "Gunnar Henderson",
+       "player_id": 683002,
+       "innings": 1311.3,
+       "t_runs": -1.3
+      }
+     ]
+    },
+    "LF": {
+     "n": 265,
+     "top": [
+      {
+       "player": "Chandler Simpson",
+       "player_id": 802415,
+       "innings": 1264.0,
+       "t_runs": 7.8
+      },
+      {
+       "player": "Cody Bellinger",
+       "player_id": 641355,
+       "innings": 1008.7,
+       "t_runs": 6.2
+      },
+      {
+       "player": "Jackson Chourio",
+       "player_id": 694192,
+       "innings": 1021.7,
+       "t_runs": 5.9
+      },
+      {
+       "player": "Jarren Duran",
+       "player_id": 680776,
+       "innings": 1052.0,
+       "t_runs": 4.7
+      },
+      {
+       "player": "Ian Happ",
+       "player_id": 664023,
+       "innings": 1243.7,
+       "t_runs": 3.9
+      },
+      {
+       "player": "Wyatt Langford",
+       "player_id": 694671,
+       "innings": 750.0,
+       "t_runs": 3.8
+      },
+      {
+       "player": "Daylen Lile",
+       "player_id": 695734,
+       "innings": 1106.7,
+       "t_runs": 3.4
+      },
+      {
+       "player": "Heriberto Hern\u00e1ndez",
+       "player_id": 681715,
+       "innings": 932.0,
+       "t_runs": 2.9
+      },
+      {
+       "player": "Steven Kwan",
+       "player_id": 680757,
+       "innings": 626.7,
+       "t_runs": 2.1
+      },
+      {
+       "player": "Taylor Trammell",
+       "player_id": 666211,
+       "innings": 349.7,
+       "t_runs": 1.4
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Sam Antonacci",
+       "player_id": 803011,
+       "innings": 918.7,
+       "t_runs": -3.3
+      },
+      {
+       "player": "Tyler Soderstrom",
+       "player_id": 691016,
+       "innings": 860.3,
+       "t_runs": -3.2
+      },
+      {
+       "player": "Teoscar Hern\u00e1ndez",
+       "player_id": 606192,
+       "innings": 966.3,
+       "t_runs": -2.5
+      },
+      {
+       "player": "Alejandro Osuna",
+       "player_id": 696030,
+       "innings": 376.0,
+       "t_runs": -2.4
+      },
+      {
+       "player": "Riley Greene",
+       "player_id": 682985,
+       "innings": 1048.7,
+       "t_runs": -2.1
+      },
+      {
+       "player": "Heliot Ramos",
+       "player_id": 671218,
+       "innings": 712.3,
+       "t_runs": -2.0
+      },
+      {
+       "player": "Trevor Larnach",
+       "player_id": 663616,
+       "innings": 809.3,
+       "t_runs": -1.9
+      },
+      {
+       "player": "Dylan Beavers",
+       "player_id": 687637,
+       "innings": 381.0,
+       "t_runs": -1.9
+      },
+      {
+       "player": "Juan Soto",
+       "player_id": 665742,
+       "innings": 572.0,
+       "t_runs": -1.5
+      },
+      {
+       "player": "Randy Arozarena",
+       "player_id": 668227,
+       "innings": 1289.3,
+       "t_runs": -1.1
+      }
+     ]
+    },
+    "CF": {
+     "n": 173,
+     "top": [
+      {
+       "player": "Pete Crow-Armstrong",
+       "player_id": 691718,
+       "innings": 1370.0,
+       "t_runs": 12.3
+      },
+      {
+       "player": "Ceddanne Rafaela",
+       "player_id": 678882,
+       "innings": 1174.3,
+       "t_runs": 7.6
+      },
+      {
+       "player": "Andy Pages",
+       "player_id": 681624,
+       "innings": 1151.7,
+       "t_runs": 7.0
+      },
+      {
+       "player": "Jackson Merrill",
+       "player_id": 701538,
+       "innings": 1362.3,
+       "t_runs": 5.1
+      },
+      {
+       "player": "Michael Harris II",
+       "player_id": 671739,
+       "innings": 1246.0,
+       "t_runs": 4.1
+      },
+      {
+       "player": "Cedric Mullins",
+       "player_id": 656775,
+       "innings": 1086.0,
+       "t_runs": 3.1
+      },
+      {
+       "player": "Evan Carter",
+       "player_id": 694497,
+       "innings": 1009.7,
+       "t_runs": 2.5
+      },
+      {
+       "player": "Tristan Peters",
+       "player_id": 671976,
+       "innings": 926.0,
+       "t_runs": 2.2
+      },
+      {
+       "player": "Colton Cowser",
+       "player_id": 681297,
+       "innings": 664.0,
+       "t_runs": 2.0
+      },
+      {
+       "player": "Henry Bolte",
+       "player_id": 703607,
+       "innings": 909.0,
+       "t_runs": 1.8
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Trent Grisham",
+       "player_id": 663757,
+       "innings": 961.3,
+       "t_runs": -4.5
+      },
+      {
+       "player": "Mike Trout",
+       "player_id": 545361,
+       "innings": 945.7,
+       "t_runs": -4.1
+      },
+      {
+       "player": "Justin Crawford",
+       "player_id": 702222,
+       "innings": 1113.3,
+       "t_runs": -3.8
+      },
+      {
+       "player": "Julio Rodr\u00edguez",
+       "player_id": 677594,
+       "innings": 1239.3,
+       "t_runs": -3.7
+      },
+      {
+       "player": "Lane Thomas",
+       "player_id": 657041,
+       "innings": 458.7,
+       "t_runs": -3.0
+      },
+      {
+       "player": "Dane Myers",
+       "player_id": 667472,
+       "innings": 663.7,
+       "t_runs": -2.4
+      },
+      {
+       "player": "Leody Taveras",
+       "player_id": 665750,
+       "innings": 607.3,
+       "t_runs": -2.3
+      },
+      {
+       "player": "Cole Carrigg",
+       "player_id": 694249,
+       "innings": 634.7,
+       "t_runs": -2.2
+      },
+      {
+       "player": "Lawrence Butler",
+       "player_id": 671732,
+       "innings": 204.0,
+       "t_runs": -2.0
+      },
+      {
+       "player": "Spencer Jones",
+       "player_id": 682987,
+       "innings": 315.3,
+       "t_runs": -2.0
+      }
+     ]
+    },
+    "RF": {
+     "n": 223,
+     "top": [
+      {
+       "player": "Wilyer Abreu",
+       "player_id": 677800,
+       "innings": 1357.0,
+       "t_runs": 6.3
+      },
+      {
+       "player": "Corbin Carroll",
+       "player_id": 682998,
+       "innings": 1314.3,
+       "t_runs": 6.1
+      },
+      {
+       "player": "Seiya Suzuki",
+       "player_id": 673548,
+       "innings": 972.7,
+       "t_runs": 5.8
+      },
+      {
+       "player": "Nathan Lukes",
+       "player_id": 664770,
+       "innings": 786.7,
+       "t_runs": 4.1
+      },
+      {
+       "player": "Victor Mesa Jr.",
+       "player_id": 683748,
+       "innings": 510.3,
+       "t_runs": 4.1
+      },
+      {
+       "player": "Cam Smith",
+       "player_id": 701358,
+       "innings": 1259.7,
+       "t_runs": 3.9
+      },
+      {
+       "player": "Carson Benge",
+       "player_id": 701807,
+       "innings": 1140.0,
+       "t_runs": 3.6
+      },
+      {
+       "player": "Jonny DeLuca",
+       "player_id": 676356,
+       "innings": 441.0,
+       "t_runs": 2.9
+      },
+      {
+       "player": "Zach McKinstry",
+       "player_id": 656716,
+       "innings": 417.3,
+       "t_runs": 2.8
+      },
+      {
+       "player": "Fernando Tatis Jr.",
+       "player_id": 665487,
+       "innings": 930.0,
+       "t_runs": 2.4
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Kyle Tucker",
+       "player_id": 663656,
+       "innings": 1295.7,
+       "t_runs": -4.3
+      },
+      {
+       "player": "Jordan Walker",
+       "player_id": 691023,
+       "innings": 1306.3,
+       "t_runs": -4.1
+      },
+      {
+       "player": "Owen Caissie",
+       "player_id": 683357,
+       "innings": 619.3,
+       "t_runs": -3.7
+      },
+      {
+       "player": "Brandon Nimmo",
+       "player_id": 607043,
+       "innings": 1229.3,
+       "t_runs": -3.6
+      },
+      {
+       "player": "Jac Caglianone",
+       "player_id": 695506,
+       "innings": 766.0,
+       "t_runs": -3.5
+      },
+      {
+       "player": "Jo Adell",
+       "player_id": 666176,
+       "innings": 1093.3,
+       "t_runs": -3.2
+      },
+      {
+       "player": "Ronald Acu\u00f1a Jr.",
+       "player_id": 660670,
+       "innings": 793.3,
+       "t_runs": -2.4
+      },
+      {
+       "player": "Jung Hoo Lee",
+       "player_id": 808982,
+       "innings": 1044.3,
+       "t_runs": -2.2
+      },
+      {
+       "player": "James Wood",
+       "player_id": 695578,
+       "innings": 751.0,
+       "t_runs": -2.2
+      },
+      {
+       "player": "Lawrence Butler",
+       "player_id": 671732,
+       "innings": 909.3,
+       "t_runs": -2.1
+      }
+     ]
+    },
+    "C": {
+     "n": 111,
+     "top": [
+      {
+       "player": "Dillon Dingler",
+       "player_id": 693307,
+       "innings": 995.7,
+       "t_runs": 8.9
+      },
+      {
+       "player": "Joe Mack",
+       "player_id": 691788,
+       "innings": 783.7,
+       "t_runs": 5.5
+      },
+      {
+       "player": "Patrick Bailey",
+       "player_id": 672275,
+       "innings": 828.0,
+       "t_runs": 4.5
+      },
+      {
+       "player": "Brandon Valenzuela",
+       "player_id": 678218,
+       "innings": 618.7,
+       "t_runs": 4.5
+      },
+      {
+       "player": "Adley Rutschman",
+       "player_id": 668939,
+       "innings": 675.7,
+       "t_runs": 4.3
+      },
+      {
+       "player": "Luis Torrens",
+       "player_id": 620443,
+       "innings": 673.7,
+       "t_runs": 3.4
+      },
+      {
+       "player": "Tyler Heineman",
+       "player_id": 623168,
+       "innings": 518.7,
+       "t_runs": 3.1
+      },
+      {
+       "player": "Alejandro Kirk",
+       "player_id": 672386,
+       "innings": 599.7,
+       "t_runs": 2.9
+      },
+      {
+       "player": "Austin Wells",
+       "player_id": 669224,
+       "innings": 959.3,
+       "t_runs": 2.4
+      },
+      {
+       "player": "Daniel Susac",
+       "player_id": 691740,
+       "innings": 351.0,
+       "t_runs": 2.4
+      }
+     ],
+     "bottom": [
+      {
+       "player": "Tyler Stephenson",
+       "player_id": 663886,
+       "innings": 921.3,
+       "t_runs": -6.4
+      },
+      {
+       "player": "Connor Wong",
+       "player_id": 657136,
+       "innings": 570.0,
+       "t_runs": -4.6
+      },
+      {
+       "player": "Danny Jansen",
+       "player_id": 643376,
+       "innings": 501.3,
+       "t_runs": -4.5
+      },
+      {
+       "player": "Logan O'Hoppe",
+       "player_id": 681351,
+       "innings": 595.0,
+       "t_runs": -3.5
+      },
+      {
+       "player": "Samuel Basallo",
+       "player_id": 694212,
+       "innings": 517.0,
+       "t_runs": -3.2
+      },
+      {
+       "player": "Yainer Diaz",
+       "player_id": 673237,
+       "innings": 694.0,
+       "t_runs": -3.1
+      },
+      {
+       "player": "Iv\u00e1n Herrera",
+       "player_id": 671056,
+       "innings": 447.0,
+       "t_runs": -2.8
+      },
+      {
+       "player": "Carson Kelly",
+       "player_id": 608348,
+       "innings": 848.3,
+       "t_runs": -2.4
+      },
+      {
+       "player": "James McCann",
+       "player_id": 543510,
+       "innings": 367.7,
+       "t_runs": -2.2
+      },
+      {
+       "player": "Drew Cavanaugh",
+       "player_id": 701852,
+       "innings": 373.7,
+       "t_runs": -2.0
+      }
+     ]
+    }
+   }
+  }
+ },
+ "counts": {
+  "rows": 15512,
+  "l1_pairs": 1227,
+  "l1_players": 408,
+  "l2_rates_rows": 4489
+ }
+}

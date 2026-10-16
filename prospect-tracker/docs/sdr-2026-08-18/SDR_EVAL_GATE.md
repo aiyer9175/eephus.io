@@ -256,3 +256,14 @@ read would need its own registration and a frame it has not seen (the 2026 to 20
 rfield or OAA. SDR is not served and does not enter eWAR on this gate; G-B (the merge gate)
 is untouched by this read. The descriptive per-position and catcher cells may be quoted as
 measurements with their frames, never as a validation.
+
+### Note 2026-10-16: the fielding triangulation reads this gate's legs under its own registration
+
+Task EWAR_LADDER (owner decisions EW3-18, EW3-20, EW3-23) registers a reliability-weighted
+triangulation of SDR, OAA, DRS, UZR and FanGraphs fielding in `docs/ewar/FIELDING_TRIANGULATION_GATE.md`,
+committed alone before any number. It is the OAA and DRS blend class the 2026-09-09 negative list
+allows only through these gates, so its read uses this gate's forward leg in the EW3-23 form of C5
+(next-season fielding runs from a system the candidate did not read) and the team leg of C2
+(next-season club runs allowed beyond FIP, roster-weighted as EBR_GATE.md 11.2.4 does), Holm across
+the two. Nothing above this note changes, and SDR's verdict here stands; the triangulation's
+result is recorded in its own document.
