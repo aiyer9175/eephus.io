@@ -42,7 +42,8 @@ DOC = ROOT / X.DOC
 
 def test_the_refit_is_dark_and_the_norms_flag_moves_with_it():
     import efv_w2_popmle as PM
-    assert X.EFV_V5_REFIT_ON is False
+    # EFV-REFIT-1 (owner 2026-10-15, 'Flip everything that passed'): RT flipped on
+    assert X.EFV_V5_REFIT_ON is True
     assert bool(PM.POP_REPAIR_ON) == bool(X.EFV_V5_REFIT_ON)
 
 

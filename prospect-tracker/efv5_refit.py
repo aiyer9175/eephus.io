@@ -56,7 +56,7 @@ import efv_vintage_frame as F
 #: THE SWITCH. False: nothing here serves. True: efv_v2_serve.production_models serves the
 #: re-fit's stored production fit; efv_w2_popmle.POP_REPAIR_ON must equal it (test-pinned).
 #: Only the owner flips it, and only after a PREPARED read (data/efv5_refit_weights.json).
-EFV_V5_REFIT_ON = False
+EFV_V5_REFIT_ON = True
 #: Which passing candidate the flag serves: None serves the one the ship rule PREPARED
 #: (section 6); the owner may name another candidate that passed (data/efv5_refit_weights.json
 #: stores the production fit of every candidate).

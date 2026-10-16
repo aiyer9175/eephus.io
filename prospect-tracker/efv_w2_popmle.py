@@ -151,7 +151,7 @@ TWIN_SEED = 20261009
 #: byte-identical to the code before the repair, because the production heads refit on
 #: every export and this column moves their slopes; EFV_FIX_B_REFIT turns it on with its
 #: registered re-fit, never alone.
-POP_REPAIR_ON = False
+POP_REPAIR_ON = True
 #: (sport id, league code) pairs of non-affiliated leagues in the MiLB cache files.
 NON_AFFILIATED_LEAGUES = frozenset({(11, "MEX")})
 
