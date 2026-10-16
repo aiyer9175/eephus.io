@@ -4,7 +4,7 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """Invariants of pitch_economy.py, the arithmetic of the eWAR v3 candidate parts PE-P and
-PE-H (docs/ebr-2026-09-30/EBR_GATE.md part 11.3). Pure: no file but the frozen constants'
+PE-H (docs/ebr-2026-09-30/EBR_GATE.md part 11.4). Pure: no file but the frozen constants'
 log is read."""
 
 from __future__ import annotations

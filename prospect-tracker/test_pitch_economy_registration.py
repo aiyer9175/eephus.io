@@ -7,7 +7,7 @@
 
 Two documents are committed ALONE, before any number of their estimands exists:
 
-  1. docs/ebr-2026-09-30/EBR_GATE.md part 11.3, the eWAR v3 candidate parts PE-P
+  1. docs/ebr-2026-09-30/EBR_GATE.md part 11.4, the eWAR v3 candidate parts PE-P
      (pitchers) and PE-H (hitters): their formulas, targets, bases, cells, guards,
      admission, assembly and copy, and the constants they freeze before the look.
   2. docs/ewar/PITCH_ECONOMY_LAB.md, the descriptive lab, the same-season
@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parent
 GATE = ROOT / "docs" / "ebr-2026-09-30" / "EBR_GATE.md"
 LAB = ROOT / "docs" / "ewar" / "PITCH_ECONOMY_LAB.md"
 
-AMEND_HEAD = ("### 11.3 2026-10-15: the pitch-economy candidate parts PE-P and PE-H (clause (i), "
+AMEND_HEAD = ("### 11.4 2026-10-15: the pitch-economy candidate parts PE-P and PE-H (clause (i), "
               "owner decisions EW3-19 and EW3-23)")
 
 
@@ -39,7 +39,7 @@ def _flat(text: str) -> str:
 
 def _amendment() -> str:
     doc = GATE.read_text(encoding="utf-8")
-    return doc[doc.index("### 11.3 2026-10-15"):doc.index("## 12. Results")]
+    return doc[doc.index("### 11.4 2026-10-15"):doc.index("## 12. Results")]
 
 
 def _lab() -> str:
@@ -141,7 +141,7 @@ def test_constants_and_disclosure():
     assert "never re-chosen. The skill look reads the frozen values and refits nothing." in flat
     assert "None relates a pitch rate or a pitch-economy delta to a next-season quantity on this frame's pairs." in flat
     assert "It computes no year-to-year, forward or split-half statistic of Delta_PE or d_PEH" in flat
-    assert "Nothing in 11.3.2 to 11.3.5 changes after the lab" in flat
+    assert "Nothing in 11.4.2 to 11.4.5 changes after the lab" in flat
 
 
 def test_before_the_skill_look_with_a_null_comparator_and_planted_recovery():

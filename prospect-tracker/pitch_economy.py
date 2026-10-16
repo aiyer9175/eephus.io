@@ -5,10 +5,10 @@
 
 """Pitch economy: the arithmetic of the eWAR v3 candidate parts PE-P and PE-H. Pure.
 
-Registered in docs/ebr-2026-09-30/EBR_GATE.md part 11.3 (owner decisions EW3-19 and
+Registered in docs/ebr-2026-09-30/EBR_GATE.md part 11.4 (owner decisions EW3-19 and
 EW3-23) and docs/ewar/PITCH_ECONOMY_LAB.md, both committed before any number.
 
-PE-P (pitchers, gate 11.3.2). Per role r in {SP, RP} the pitcher's pitches per out and
+PE-P (pitchers, gate 11.4.2). Per role r in {SP, RP} the pitcher's pitches per out and
 pitches per appearance are shrunk toward the season's pooled role values with the
 starter-workload model's frozen priors (K_O 120 outs, K_B 2 appearances, taken by
 reference from data/starter_workload_eval.json burn_in.priors), the efficiency-implied
@@ -17,7 +17,7 @@ arm), and the difference is priced per out against the league bullpen, with the
 times-through-order decay T9 = 27 * pi * DELTA_TTO for starters. Re-centred to zero per
 season and role, per out.
 
-PE-H (hitters, gate 11.3.3). Two residuals against the league mean of each plate
+PE-H (hitters, gate 11.4.3). Two residuals against the league mean of each plate
 appearance's terminal class: the count lift (the RE288 value a hitter gains on his
 non-terminal pitches) and the pitches he makes the opposing starter throw, the second
 priced as starter wear w = (F_RP - F_SP - T9) / (27 * L_ppo_SP) runs per pitch. Each is
@@ -38,7 +38,7 @@ GATE_DOC = "docs/ebr-2026-09-30/EBR_GATE.md"
 LAB_DOC = "docs/ewar/PITCH_ECONOMY_LAB.md"
 
 #: The starter-workload model's frozen priors (data/starter_workload_eval.json,
-#: stage1.burn_in.priors k_o and k_b), by reference; gate 11.3.2.
+#: stage1.burn_in.priors k_o and k_b), by reference; gate 11.4.2.
 K_O = 120.0
 K_B = 2.0
 OUTS_CAP = 27.0
@@ -63,12 +63,12 @@ FIT_SEASONS = (2018, 2019)
 #: (384 starter-seasons, 47,079 plate appearances at the third and later pass); K_CL
 #: in plate appearances (rho_half 0.484356 on 714 hitter-seasons, nbar 444.12); K_P in
 #: plate appearances against starters (rho_half 0.561812 on 607, nbar 284.51). The
-#: eWAR v3 skill look reads these and refits nothing (EBR_GATE.md 11.3.6).
+#: eWAR v3 skill look reads these and refits nothing (EBR_GATE.md 11.4.6).
 DELTA_TTO: Optional[float] = 0.01847965
 K_CL: Optional[float] = 236.41
 K_P: Optional[float] = 110.95
 
-#: Terminal classes of a plate appearance (gate 11.3.3).
+#: Terminal classes of a plate appearance (gate 11.4.3).
 CLASSES = ("walk", "hbp", "strikeout", "single", "double", "triple", "home_run",
            "out_in_play", "other")
 _CLASS_OF = {
@@ -120,7 +120,7 @@ def shrink(count: float, n: float, k: float, mean: float) -> float:
 def recentre(values: Mapping, exposure: Mapping, groups: Mapping | None = None) -> dict:
     """value_i - exposure_i * (sum of values) / (sum of exposure), within each group.
 
-    The zero-sum rule of gate part 9.4 rule 3 (and 11.3.2, 11.3.3): a group whose
+    The zero-sum rule of gate part 9.4 rule 3 (and 11.4.2, 11.4.3): a group whose
     exposure sums to 0 is returned unchanged (nothing to spread over)."""
     groups = groups or {k: 0 for k in values}
     tot_v: dict = {}

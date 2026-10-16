@@ -3,7 +3,7 @@
 Task EWAR_T1_PITCH_ECON (owner asks EW3-16 and EW3-18, 2026-10-15: the run value of seeing extra
 pitches and of pitch efficiency, as a WAR input and inside HEM+, SEM+ and REM+; owner answer EW3-19:
 register both a hitter and a pitcher part for the eWAR v3 skill look). This document is committed
-ALONE, with the eWAR v3 amendment `docs/ebr-2026-09-30/EBR_GATE.md` part 11.3, before any number of
+ALONE, with the eWAR v3 amendment `docs/ebr-2026-09-30/EBR_GATE.md` part 11.4, before any number of
 its estimands is computed. It fixes the data, the frames, the statistics, the decomposition, the fit
 of the frozen constants the pitch-economy parts PE-P and PE-H read, and the trigger for the owner's
 question about pitch counts inside HEM+, SEM+ and REM+. A change after the first number is a dated
@@ -15,7 +15,7 @@ STATUS: REGISTERED, RESULTS EMPTY.
 ## 0. What it is
 
 - **Measurement only.** The lab decides nothing about eWAR: PE-P and PE-H are admitted or not by
-  the eWAR v3 skill look under part 11.3 of the eWAR v3 gate, never by this lab. Nothing served
+  the eWAR v3 skill look under part 11.4 of the eWAR v3 gate, never by this lab. Nothing served
   moves: the outputs are `data/_labs/pitch_economy_partials.json` and
   `data/_labs/pitch_economy_constants.json` (`data/_labs/` ships in neither deploy consumer), and no
   page, registry row, glossary entry or exporter reads them.
@@ -107,7 +107,7 @@ STATUS: REGISTERED, RESULTS EMPTY.
 ## 6. Part D: the decomposition (step 2; same season only)
 
 - **D1, hitters** (corpus seasons 2018, 2019, 2021 to 2025). Per hitter-season, the quantities of
-  part 11.3.3 of the eWAR v3 gate: CL (count lift), the class means CLbar and pbar, CLres, Pres
+  part 11.4.3 of the eWAR v3 gate: CL (count lift), the class means CLbar and pbar, CLres, Pres
   against starters, starter wear W = w_s * Pres, and g_PEH and d_PEH on the frozen constants of part
   7. Printed: the class tables per season; the sd of each term in runs at 300 or more PA; the
   same-season Spearman and Pearson of CL per PA and of CLres per PA with wRAA per PA (count lift
@@ -116,7 +116,7 @@ STATUS: REGISTERED, RESULTS EMPTY.
 - **D2, pitchers** (seasons 2016 to 2019 and 2021 to 2025). The times-through-order table per corpus
   season (mean RE24 run value per plate appearance against starters by pass 1, 2, 3 and 4 or more,
   and the within starter-season decay of part 7); F_SP,s, F_RP,s, pi_s, T9_s and w_s per season; per
-  pitcher-season the efficiency chain of part 11.3.2 (X~, G, c, g) and Delta_PE, same season; the
+  pitcher-season the efficiency chain of part 11.4.2 (X~, G, c, g) and Delta_PE, same season; the
   sd and range of Delta_PE by role and season, the zero-sum receipts, and the ten largest movers of
   2024 and 2025 by |Delta_PE|.
 - Part D reads no Y+1 quantity of any kind.
@@ -293,4 +293,4 @@ on this lab's numbers. Item (h) is a near miss: its lower bound sits 0.0002 belo
 recorded as one, and the rule is applied as registered.
 
 Nothing here is a forward statistic of PE-P or PE-H; the skill look scores them under the eWAR v3
-gate's part 11.3.
+gate's part 11.4.

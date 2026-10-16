@@ -6,7 +6,7 @@
 """pitch_economy_lab: the descriptive lab, the decomposition and the constant fit.
 
 Registration: docs/ewar/PITCH_ECONOMY_LAB.md (pitch_economy_lab_v1) and
-docs/ebr-2026-09-30/EBR_GATE.md part 11.3, committed alone before any number.
+docs/ebr-2026-09-30/EBR_GATE.md part 11.4, committed alone before any number.
 
   Part A  hitters: P/PA(Y) against wOBA and wRAA in Y and Y+1, raw and partial on
           BB%, K% and xwOBA (pairs 2016 to 2025 without 2020, 300 PA both seasons).
@@ -960,7 +960,7 @@ def run(out: Path = OUT, const_out: Path = CONST_OUT, *, b: int = B, log=print) 
     log(f"loaded season lines {seasons_all[0]}-{seasons_all[-1]} in {time.time() - t0:.1f}s")
 
     res = {"artifact": "pitch_economy_partials", "lab_version": "pitch_economy_lab_v1",
-           "registration": ["docs/ewar/PITCH_ECONOMY_LAB.md", "docs/ebr-2026-09-30/EBR_GATE.md part 11.3"],
+           "registration": ["docs/ewar/PITCH_ECONOMY_LAB.md", "docs/ebr-2026-09-30/EBR_GATE.md part 11.4"],
            "measurement_only": True, "generated_at": _now(), "git_head": _git_head(),
            "bootstrap": {"B": b, "seed": SEED, "interval": "percentile 95", "cluster": "player (Part B: game)"},
            "statistic": "Spearman; partial = Pearson of rank residuals on the controls' ranks"}
@@ -1010,7 +1010,7 @@ def run(out: Path = OUT, const_out: Path = CONST_OUT, *, b: int = B, log=print) 
     k_cl = split_half({s: resid[s] for s in pe.FIT_SEASONS}, "cl")
     k_p = split_half({s: resid[s] for s in pe.FIT_SEASONS}, "p")
     constants = {"artifact": "pitch_economy_constants", "version": pe.PITCH_ECONOMY_VERSION,
-                 "registration": "docs/ewar/PITCH_ECONOMY_LAB.md part 7; EBR_GATE.md 11.3.6",
+                 "registration": "docs/ewar/PITCH_ECONOMY_LAB.md part 7; EBR_GATE.md 11.4.6",
                  "fit_seasons": list(pe.FIT_SEASONS), "generated_at": res["generated_at"],
                  "git_head": res["git_head"],
                  "delta_tto": {"value": _r(delta, 8), "starter_seasons": fit_tto["starter_seasons"],
