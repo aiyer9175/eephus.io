@@ -545,6 +545,12 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     ("joshua_flores", 832714): "jose_flores_832714",
     ("joshua_flores__noid", 832714): "jose_flores_832714",
     ("joshua_flores__sa3069242", 832714): "jose_flores_832714",
+    # 2026-10-16 - BA_KEEP_FORWARD_READ Part B, repaired by
+    # tools/repair_zack_britton_collision.py. The veteran LHP Zack Britton
+    # (502154, MLB debut 2011) keeps the plain slug; the Blue Jays OF Zach
+    # Britton (676309, 2020 draft round 5, pick 136), whom FanGraphs' 2020 draft
+    # board and BA's 2023 Blue Jays board spelled "Zack", lives on his own key.
+    ("zack_britton", 676309): "zach_britton",
 }
 
 
