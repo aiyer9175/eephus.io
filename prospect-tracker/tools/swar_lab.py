@@ -59,6 +59,18 @@ standings (ewar.standings, never fetched) and the play-by-play corpus. The lab
 WRITES only its record (--out, never under data/) or, under --dry-run, a
 temporary directory. A second run of the look or of the holdout is refused.
 
+THE PITCHING BASIS (part 11.3, owner decision EW3-20). Candidate part 5 has
+two arms, S2 (the cells P-rate, P-cum) and the blended basis S2b (S2b P-rate,
+S2b P-cum), in ONE Holm family of k = 4. S2b's series is its build on the
+home-run term the HR-arm clause chose for S2 (the clause reads S2 only). The
+era transport clause applies to each arm's own rate cell. Admission mirrors the
+batting arms: one qualifying arm enters; when both qualify S2 enters unless
+S2b's rate gap over S2's (same pairs, same bootstrap, outside the Holm family)
+has lo95 above 0 (PITCHING_ARM_RULE, the default of owner question PB-Q1).
+This lab still scores every cell on published fWAR(Y+1); part 11.2.10's
+amendment work (the primary targets, RA9*(Y+1) for pitching, which the preview
+now carries per pitcher-season as ra9_star) lands before the look.
+
 CRASH PROTOCOL. The operator tees stdout and stderr to the writer's output
 directory before the run. An exception after scoring began writes a VOID
 record (which admits nothing) to the record path and exits 3; no rerun.
@@ -164,17 +176,35 @@ PARTS = (PART_POSITION, PART_BATTING, PART_PITCHING, PART_FIELDING)
 #: Per part: its side, and its cells as {cell: (series, kind)}. The pitching
 #: part's series is the home-run variant the HR-arm clause picks (PITCH below).
 PITCH = "__pitching__"
+#: The blended pitching basis S2b (part 11.3): its series is the S2b build on the
+#: home-run variant the HR-arm clause picks for S2.
+PITCH_B = "__pitching_blend__"
+PB_PREFIX = "pb_"
+
+
+def pb_key(variant: str) -> str:
+    """The preview key of S2b on one home-run variant of S2."""
+    return PB_PREFIX + variant
+
+
+PB_VARIANTS = tuple(pb_key(v) for v in swar.HR_VARIANTS)
 PART_CELLS: Mapping[str, dict] = {
     PART_POSITION: {"side": HIT, "cells": {"H-rate": ("pos", RATE), "H-cum": ("pos", CUM)}},
     PART_BATTING: {"side": HIT, "cells": {
         "HEM+ H-rate": ("bat", RATE), "HEM+ H-cum": ("bat", CUM),
         "xHEM+ H-rate": ("batx", RATE), "xHEM+ H-cum": ("batx", CUM)}},
-    PART_PITCHING: {"side": PIT, "cells": {"P-rate": (PITCH, RATE), "P-cum": (PITCH, CUM)}},
+    PART_PITCHING: {"side": PIT, "cells": {"P-rate": (PITCH, RATE), "P-cum": (PITCH, CUM),
+                                           "S2b P-rate": (PITCH_B, RATE), "S2b P-cum": (PITCH_B, CUM)}},
     PART_FIELDING: {"side": HIT, "cells": {"H-rate": ("fld", RATE), "H-cum": ("fld", CUM)}},
 }
 #: The batting part's two arms: {arm: (rate cell, cumulative cell)}.
 BATTING_ARMS = {"HEM+": ("HEM+ H-rate", "HEM+ H-cum"), "xHEM+": ("xHEM+ H-rate", "xHEM+ H-cum")}
-#: The rate and cumulative cell of every other part.
+#: The pitching part's two arms (part 11.3): {arm: (rate cell, cumulative cell)}.
+PITCHING_ARMS = {"S2": ("P-rate", "P-cum"), "S2b": ("S2b P-rate", "S2b P-cum")}
+#: Part 11.3.5's arm choice when both pitching arms qualify (owner question
+#: PB-Q1, default "a"): S2 unless S2b's rate contrast over S2 has lo95 above 0.
+PITCHING_ARM_RULE = "a"
+#: The rate and cumulative cell of every other part (the pitching entry is S2's).
 RATE_CUM = {PART_POSITION: ("H-rate", "H-cum"), PART_PITCHING: ("P-rate", "P-cum"),
             PART_FIELDING: ("H-rate", "H-cum")}
 
@@ -368,6 +398,8 @@ def admit(part: str, cells: Mapping, answers: Mapping) -> dict:
                    reason=f"both qualify; EWV3-Q2 (a): contrast lo95 {lo!r} "
                           f"{'above' if arm == 'xHEM+' else 'not above'} 0")
         return out
+    if part == PART_PITCHING:
+        return _admit_pitching(cells, q1, out)
     if part not in RATE_CUM:
         raise ValueError(f"unknown candidate part {part!r}")
     r, c = RATE_CUM[part]
@@ -375,6 +407,36 @@ def admit(part: str, cells: Mapping, answers: Mapping) -> dict:
         out.update(admitted=True, reason=f"{r} {_disp_of(cells, r)}, {c} {_disp_of(cells, c)}")
     else:
         out["reason"] = f"{r} {_disp_of(cells, r)}, {c} {_disp_of(cells, c)}: not admitted"
+    return out
+
+
+def _admit_pitching(cells: Mapping, q1: str, out: dict) -> dict:
+    """Part 11.3.5: S2 and S2b each qualify by S2's rule; one qualifying arm
+    enters; both qualifying need the S2b-over-S2 rate contrast ("contrast" in
+    `cells`, {"lo95": ...}), and S2b enters only when its lo95 is above 0."""
+    quals = {arm: qualifies(_disp_of(cells, r), _disp_of(cells, c), q1)
+             for arm, (r, c) in PITCHING_ARMS.items()}
+    desc = ", ".join(f"{r} {_disp_of(cells, r)}, {c} {_disp_of(cells, c)}"
+                     for r, c in PITCHING_ARMS.values())
+    if not any(quals.values()):
+        out["reason"] = f"{desc}: not admitted"
+        return out
+    if quals["S2"] != quals["S2b"]:
+        arm = "S2" if quals["S2"] else "S2b"
+        out.update(admitted=True, arm=arm, reason=f"only the {arm} arm qualifies ({desc})")
+        return out
+    if PITCHING_ARM_RULE != "a":
+        raise ValueError(f"PB-Q1 rule {PITCHING_ARM_RULE!r} is not registered")
+    contrast = cells.get("contrast")
+    if not contrast:
+        out.update(needs_contrast=True,
+                   reason="both pitching arms qualify; part 11.3.5 needs the S2b-over-S2 contrast")
+        return out
+    lo = contrast.get("lo95")
+    arm = "S2b" if (lo is not None and lo > 0.0) else "S2"
+    out.update(admitted=True, arm=arm,
+               reason=f"both qualify; part 11.3.5: contrast lo95 {lo!r} "
+                      f"{'above' if arm == 'S2b' else 'not above'} 0")
     return out
 
 
@@ -637,7 +699,7 @@ def season_rows(payload: dict) -> dict:
             pit[int(r["mlbam"])] = {
                 "ip": _num(r.get("ip")), "fwar": _num(r.get("fwar")), "name": r.get("name", ""),
                 "sigma": _num(r.get("sigma")), "nopp": bool(r.get("nopp")),
-                "tests": {v: _num((parts.get(v) or {}).get("test")) for v in swar.HR_VARIANTS},
+                "tests": {v: _num((parts.get(v) or {}).get("test")) for v in swar.HR_VARIANTS + PB_VARIANTS},
                 "dwar0": {v: _num((parts.get(v) or {}).get("dwar0")) for v in swar.HR_VARIANTS},
                 "lb_dwar0": {v: _num((parts.get(v) or {}).get("lb_dwar0")) for v in swar.HR_VARIANTS}}
         out[int(s)] = {HIT: hit, PIT: pit}
@@ -872,14 +934,16 @@ def point_gap_v2(pairs: list[dict], key_a: str, key_b: Optional[str], kind: str,
     return None if ra is None or rb is None else ra - rb
 
 
-def contrast_cell(pairs: list[dict], boot: int, seed: int) -> dict:
-    """The batting tie-break: rho(xHEM+ test) - rho(HEM+ test) on the rate
-    cell, same pairs, same bootstrap; outside the Holm family."""
-    frame = _series_frame(pairs, ["bat", "batx"])
+def contrast_cell(pairs: list[dict], boot: int, seed: int, key_a: str = "batx", key_b: str = "bat",
+                  side: str = HIT) -> dict:
+    """An arm tie-break: rho(arm a test) - rho(arm b test) on the rate cell,
+    same pairs, same bootstrap; outside the Holm family. The batting default is
+    xHEM+ over HEM+; the pitching one (part 11.3.5) S2b over S2."""
+    frame = _series_frame(pairs, [key_b, key_a])
     if len(frame) < 4:
         return {"n_pairs": len(frame), "gap": None, "lo95": None, "hi95": None}
-    a = cell_series(frame, "batx", RATE, HIT, [0.0] * len(frame))
-    b = cell_series(frame, "bat", RATE, HIT, [0.0] * len(frame))
+    a = cell_series(frame, key_a, RATE, side, [0.0] * len(frame))
+    b = cell_series(frame, key_b, RATE, side, [0.0] * len(frame))
     t2 = a["target_v2"]
     players = [p["mlbam"] for p in frame]
     d = rho_draws({"x": a["series"]["test"], "h": b["series"]["test"]}, t2,
@@ -899,7 +963,8 @@ DESCRIPTIVE = "descriptive: no verdict weight; claims nothing (part 8)"
 
 def leg_delta_sizes(rows: dict, seasons: Iterable[int], variant: str) -> dict:
     out: dict = {}
-    for part, side, key in ([(p, HIT, p) for p in swar.HITTER_PARTS] + [("pit", PIT, variant)]):
+    for part, side, key in ([(p, HIT, p) for p in swar.HITTER_PARTS] + [("pit", PIT, variant),
+                                                                          ("pit_s2b", PIT, pb_key(variant))]):
         per = {}
         for y in seasons:
             rs = (rows.get(int(y)) or {}).get(side) or {}
@@ -923,7 +988,7 @@ def leg_delta_sizes(rows: dict, seasons: Iterable[int], variant: str) -> dict:
 def leg_agreement(rows: dict, seasons: Iterable[int], variant: str, bwar: Mapping) -> dict:
     out: dict = {}
     for part, side, key, bkey in ([(p, HIT, p, "bat") for p in swar.HITTER_PARTS]
-                                  + [("pit", PIT, variant, "pit")]):
+                                  + [("pit", PIT, variant, "pit"), ("pit_s2b", PIT, pb_key(variant), "pit")]):
         tv, fw, tb, bw = [], [], [], []
         for y in seasons:
             for mid, r in ((rows.get(int(y)) or {}).get(side) or {}).items():
@@ -1021,7 +1086,8 @@ BANDS = {HIT: ((0.0, 100.0), (100.0, 200.0), (200.0, 400.0), (400.0, math.inf)),
 
 def leg_exposure_bias(rows: dict, seasons: Iterable[int], variant: str) -> dict:
     out = {}
-    for part, side, key in ([(p, HIT, p) for p in swar.HITTER_PARTS] + [("pit", PIT, variant)]):
+    for part, side, key in ([(p, HIT, p) for p in swar.HITTER_PARTS] + [("pit", PIT, variant),
+                                                                          ("pit_s2b", PIT, pb_key(variant))]):
         per = {}
         for lo, hi in BANDS[side]:
             v = []
@@ -1043,7 +1109,8 @@ def leg_pitching_subsets(pairs_p: list[dict], variant: str) -> dict:
     for label, keep in (("starter_heavy_sigma_ge_0_5", lambda s: s is not None and s >= 0.5),
                         ("reliever_sigma_le_0_10", lambda s: s is not None and s <= 0.10)):
         sub = [p for p in pairs_p if keep(p.get("sigma"))]
-        out[label] = {"n_pairs": len(sub), "p_rate_gap_v2": _r(point_gap_v2(sub, variant, None, RATE, PIT))}
+        out[label] = {"n_pairs": len(sub), "p_rate_gap_v2": _r(point_gap_v2(sub, variant, None, RATE, PIT)),
+                      "s2b_p_rate_gap_v2": _r(point_gap_v2(sub, pb_key(variant), None, RATE, PIT))}
     return out
 
 
@@ -1204,7 +1271,8 @@ def score_block(rows: dict, seasons: tuple, boot: int,
     for i, part in enumerate(PARTS):
         spec = PART_CELLS[part]
         for j, (cell, (key, kind)) in enumerate(spec["cells"].items()):
-            keys = list(swar.HR_VARIANTS) if key == PITCH else [key]
+            keys = (list(swar.HR_VARIANTS) if key == PITCH
+                    else list(PB_VARIANTS) if key == PITCH_B else [key])
             for v in keys:
                 pairs = pairs_p if spec["side"] == PIT else pairs_h
                 recs[(part, cell, v)] = score_cell(part, cell, v, kind, spec["side"], pairs,
@@ -1232,20 +1300,24 @@ def score_block(rows: dict, seasons: tuple, boot: int,
         _p(log, f"[{label}] home-run term carried from the look: {hr_choice['variant']}")
     variant = hr_choice["variant"]
 
+    def _series(key: str) -> str:
+        return variant if key == PITCH else pb_key(variant) if key == PITCH_B else key
+
     # -- gaps and clauses
     cells: dict = {}
     for part in PARTS:
         spec = PART_CELLS[part]
         fam = {}
         for cell, (key, kind) in spec["cells"].items():
-            rec = finish_cell(recs[(part, cell, variant if key == PITCH else key)])
+            rec = finish_cell(recs[(part, cell, _series(key))])
             if part == PART_PITCHING and kind == RATE:
-                ge = point_gap_v2(early_p, variant, None, RATE, PIT)
+                ge = point_gap_v2(early_p, _series(key), None, RATE, PIT)
                 rec["transport_gap_2016_2018"] = ge
                 rec["transport"] = transport_holds(ge, rec.get("gap"))
             fam[cell] = rec
         if part == PART_PITCHING:
-            fam["P-cum"]["transport"] = fam["P-rate"].get("transport")
+            for r_cell, c_cell in PITCHING_ARMS.values():
+                fam[c_cell]["transport"] = fam[r_cell].get("transport")
         hr = holm({c: r.get("p_one_sided") for c, r in fam.items()})
         for c, r in fam.items():
             r["holm_family"] = list(fam)
@@ -1282,18 +1354,29 @@ def score_block(rows: dict, seasons: tuple, boot: int,
 def _sentence(part: str, fam: dict, adm: dict, mode: str) -> Optional[str]:
     """The licensed sentence of the part's rate cell (the admitted batting arm,
     else the HEM+ arm)."""
-    rate = RATE_CUM[part][0] if part in RATE_CUM else BATTING_ARMS[adm.get("arm") or "HEM+"][0]
+    if part == PART_PITCHING:
+        rate = PITCHING_ARMS[adm.get("arm") or "S2"][0]
+    else:
+        rate = RATE_CUM[part][0] if part in RATE_CUM else BATTING_ARMS[adm.get("arm") or "HEM+"][0]
     r = fam[rate]
     return licensed_sentence(part, r["disposition"], r.get("gap"), r.get("lo95"), r.get("hi95"),
                              r.get("n_pairs"), PREDICTOR_SEASONS if mode == "look" else HOLDOUT_SEASONS)
 
 
-def admissions(cells: dict, pairs_h: list, boot: int, answers: Mapping, log: Callable) -> tuple[dict, Optional[dict]]:
-    out, contrast = {}, None
+def admissions(cells: dict, pairs_h: list, boot: int, answers: Mapping, log: Callable,
+               pairs_p: Optional[list] = None, variant: str = swar.HR_SHRUNK) -> tuple[dict, Optional[dict]]:
+    out, contrast, pitching_contrast = {}, None, None
+    pairs_p = pairs_p or []
     for part in PARTS:
         fam = cells[part]
         a = admit(part, fam, answers)
-        if a["needs_contrast"]:
+        if a["needs_contrast"] and part == PART_PITCHING:
+            pc = contrast_cell(pairs_p, boot, SEED + 9002, pb_key(variant), variant, PIT)
+            _p(log, f"  pitching contrast (S2b over S2, rate, outside Holm): gap "
+                    f"{_fmt(pc['gap'])} lo95 {_fmt(pc['lo95'])}")
+            a = admit(part, dict(fam, contrast=pc), answers)
+            pitching_contrast = pc
+        elif a["needs_contrast"]:
             contrast = contrast_cell(pairs_h, boot, SEED + 9001)
             _p(log, f"  batting contrast (xHEM+ over HEM+, rate, outside Holm): gap "
                     f"{_fmt(contrast['gap'])} lo95 {_fmt(contrast['lo95'])}")
@@ -1301,6 +1384,8 @@ def admissions(cells: dict, pairs_h: list, boot: int, answers: Mapping, log: Cal
         out[part] = a
         _p(log, f"  ADMIT {part:9s}: {a['admitted']}" + (f" arm {a['arm']}" if a["arm"] else "")
                 + f" ({a['reason']})")
+    if pitching_contrast is not None:
+        out[PART_PITCHING]["contrast"] = _rd(pitching_contrast, 5)
     return out, contrast
 
 
@@ -1345,7 +1430,8 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
             raise RuntimeError("injected failure after scoring began (dry run)")
         _p(log, f"[{mode}] ADMISSION (part 9.6; EWV3-Q1 ({ANSWERS['EWV3-Q1']}), EWV3-Q2 ({ANSWERS['EWV3-Q2']}))"
                 + (" reported only: the holdout changes no admission" if mode == "holdout" else ""))
-        adm, contrast = admissions(blk["cells"], blk["pairs_h"], boot, dict(ANSWERS, void=False), log)
+        adm, contrast = admissions(blk["cells"], blk["pairs_h"], boot, dict(ANSWERS, void=False), log,
+                                   blk["pairs_p"], blk["variant"])
         block = {
             "seasons": list(PREDICTOR_SEASONS if mode == "look" else HOLDOUT_SEASONS),
             "n_pairs": {"hit": len(blk["pairs_h"]), "pit": len(blk["pairs_p"])},
@@ -1468,6 +1554,10 @@ class FixtureLabInputs(LabInputs):
                     parts[v] = {"dfip": None, "dwar0": dl, "delta": dl,
                                 "test": (None if (i == 2 and v == swar.HR_SHRUNK) else fw + dl),
                                 "lb_dwar0": dl * float(rng.uniform(0.6, 1.2))}
+                    # the blended arm S2b: a slightly stronger pull, and a null on purpose
+                    db = (pull + 0.1) * (float(tp[i]) * ip - fw) + float(rng.normal(0, 0.05))
+                    parts[pb_key(v)] = {"dwar0": db, "delta": db,
+                                        "test": (None if (i == 4 and y == 2022) else fw + db)}
                 pit.append({"mlbam": 5000 + i, "name": f"P{i}", "ip": ip, "fwar": fw,
                             "sigma": sigma, "nopp": i == 9, "gmli": None, "parts": parts})
             seasons[str(y)] = {"hitters": hit, "pitchers": pit,
@@ -1540,7 +1630,7 @@ def preflight_real_inputs(log: Callable = print) -> dict:
                 "hitter_keys_ok": all(k in h for k in ("mlbam", "pa", "fwar", "parts"))
                 and all(k in (h.get("parts") or {}) for k in swar.HITTER_PARTS),
                 "pitcher_keys_ok": all(k in q for k in ("mlbam", "ip", "fwar", "sigma", "nopp", "parts"))
-                and all(k in (q.get("parts") or {}) for k in swar.HR_VARIANTS)}
+                and all(k in (q.get("parts") or {}) for k in swar.HR_VARIANTS + PB_VARIANTS)}
             try:
                 import fwar_vintage
                 out["preview"]["vintage_matches"] = (

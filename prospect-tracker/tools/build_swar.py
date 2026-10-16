@@ -27,7 +27,12 @@ season and side: the object the skill look scores) and its test value, both
 batting arms; per pitcher-season the fWAR base, both home-run variants' dFIP,
 dwar0, re-pinned Delta and test value, the L-B (unlevered) dwar0 as a
 disclosure; and the coverage census (rows, ambiguous ids, nopp and
-pitcher-batter rows, swingmen, xHEM+-arm rows). It relates no delta to any
+pitcher-batter rows, swingmen, xHEM+-arm rows). Part 11.3 adds, per
+pitcher-season, the blended basis S2b on both home-run variants (pb_hr_shrunk,
+pb_hr_fwar: its three raw terms, dwar0, Delta and test value), the realized
+basis R2 (realized: dwar0, Delta, value), RA* and RA9* (part 11.2.1's pitching
+target construction, same season only) and the runner terms (pitch_basis.py,
+tools/pitch_basis_build.py). It relates no delta to any
 next-season quantity: no year-to-year, split-half or forward statistic is
 computed here, and tools/swar_lab.py (EWV3_SKILL_BUILD_LAB) is the only code
 path that may.
@@ -69,6 +74,8 @@ import rem_plus                          # noqa: E402
 import saber_feed                        # noqa: E402
 import sem_plus                          # noqa: E402
 import swar                              # noqa: E402
+import pitch_basis                       # noqa: E402  (part 11.3, the pure core)
+import pitch_basis_build as PBB          # noqa: E402  (part 11.3, its readers and assembly)
 import war_source                        # noqa: E402  (a constant, read only)
 import fwar_replica_eval as R            # noqa: E402  (its own fg_leaderboards import stays)
 
@@ -219,6 +226,20 @@ class Inputs:
                 "window": [int(fit["seasons"][0]), int(fit["seasons"][1])],
                 "n_player_seasons": int(fit["n_player_seasons"]), "r2": fit.get("r2")}
 
+    # -- part 11.3's inputs (caches only): the Savant pitcher cache, the
+    # per-club fielding feed and the play-by-play runner record
+    def savant_pitcher(self, season: int) -> dict:
+        try:
+            return PBB.read_savant_pitcher(season)
+        except PBB.PitchBasisStop as exc:
+            raise MissingSource(str(exc)) from exc
+
+    def fielding_by_team(self, season: int) -> dict:
+        return PBB.read_fielding_by_team(season)
+
+    def runner_record(self, season: int):
+        return PBB.read_runner_record(season)
+
     # -- the replica's feed-only pitcher chain
     def pitcher_chain(self, season: int, count_map: Optional[dict] = None) -> dict[int, dict]:
         """{mlbam: {ip, g, gs, start_ip, lg9, pf, fip, gm, war0}} off the
@@ -304,7 +325,7 @@ def pitcher_rows(season: int, inp: Inputs, chain: dict[int, dict]) -> tuple[list
     return rows, {"ambiguous_ids": ambiguous, "pitchers_without_chain": n_no_chain}
 
 
-def build_season(season: int, inp: Inputs) -> dict:
+def build_season(season: int, inp: Inputs, k_consts=None) -> dict:
     K = inp.constants(season)
     W, scale, lgw, rpw = K["woba_weights"], K["woba_scale"], K["lg_woba"], K["rpw"]
     ladder = inp.ladder(season)
@@ -384,6 +405,13 @@ def build_season(season: int, inp: Inputs) -> dict:
     if chain_gap > CHAIN_TOL:
         raise BuildStop(f"{season}: the pure chain departs from the replica's count_map arm by {chain_gap!r}")
 
+    # -- part 11.3: the blended basis S2b (both home-run variants) and the realized basis R2
+    try:
+        pbs = PBB.season_rows(season, inp, K, hitters, pitchers, chain, sp_pool, rp_pool, nopp, k_consts)
+    except PBB.PitchBasisStop as exc:
+        raise BuildStop(str(exc)) from exc
+    checks["pitch_basis"] = pbs["checks"]
+
     # -- rows
     h_out = []
     for r in hitters:
@@ -410,10 +438,24 @@ def build_season(season: int, inp: Inputs) -> dict:
                               "delta": _r(v["delta"][r.mlbam]),
                               "test": _r(swar.pitcher_test_value(r.fwar, v["delta"][r.mlbam])),
                               "lb_dwar0": _r(v["lb_dwar0"][r.mlbam])}
+        q = pbs["rows"][r.mlbam]
+        for variant in swar.HR_VARIANTS:
+            bl = q["blend"][variant]
+            tm = q["terms"][variant] or {}
+            parts[pitch_basis.BLEND_PREFIX + variant] = {
+                "dwar0": _r(bl["dwar0"]), "delta": _r(bl["delta"]),
+                "test": _r(swar.pitcher_test_value(r.fwar, bl["delta"])),
+                **{k: _r(tm.get(k)) for k in ("cq", "bab", "lob", "c", "n", "g", "dfip_b")}}
+        parts[pitch_basis.REALIZED_KEY] = {
+            "dwar0": _r(q["realized"]["dwar0"]), "delta": _r(q["realized"]["delta"]),
+            "value": _r(swar.pitcher_test_value(r.fwar, q["realized"]["delta"]))}
         p_out.append({"mlbam": r.mlbam, "name": r.name, "ip": _r(r.ip, 3), "g": r.g, "gs": r.gs,
                       "tbf": r.tbf, "sigma": _r(sigma, 4), "swingman": swar.is_swingman(r.gs, r.g),
                       "nopp": r.mlbam in nopp, "gmli": r.gmli, "fwar": r.fwar,
-                      "in_chain": r.mlbam in chain, "parts": parts})
+                      "in_chain": r.mlbam in chain, "parts": parts,
+                      "ra_star": _r(q["ra_star"]), "ra9_star": _r(q["ra9_star"]),
+                      "runner_terms": ({k: _r(v) for k, v in q["runner_terms"].items()}
+                                       if q["runner_terms"] is not None else None)})
 
     both = {r.mlbam for r in hitters} & {r.mlbam for r in pitchers}
     two_way = both - pitcher_batters - nopp
@@ -435,6 +477,7 @@ def build_season(season: int, inp: Inputs) -> dict:
         "hitters_pa_zero": sum(1 for r in hitters if r.pa <= 0),
         "hem_pool_n": hem_pool.n, "sem_pool_n": sp_pool.n, "rem_pool_n": rp_pool.n,
         "savant_pool_n": sav_n,
+        **pbs["census"],
     }
     return {
         "season": season, "rpw": rpw, "rpw_constants": K["rpw_constants"],
@@ -445,6 +488,7 @@ def build_season(season: int, inp: Inputs) -> dict:
                   "rem": {"n": rp_pool.n, "rates": swar.pool_rates(rp_pool), "cfip": rp_pool.cfip},
                   "savant": {"n": sav_n, "xbar": xbar}},
         "census": census, "checks": checks,
+        "pitch_basis": {"league": pbs["league"], "p_table": pbs["p_table"], "constants": pbs["constants"]},
         "hitters": h_out, "pitchers": p_out,
     }
 
@@ -488,14 +532,18 @@ def write_preview(payload: dict, out_path: Path = OUT_PATH) -> Path:
 
 
 def build(seasons=None, inp: Optional[Inputs] = None, out_path: Optional[Path] = OUT_PATH,
-          today: Optional[_dt.date] = None, log=print) -> dict:
+          today: Optional[_dt.date] = None, log=print, k_consts=None) -> dict:
+    """`k_consts` (K_CQ, K_BAB, K_LOB) overrides part 11.3.2's frozen constants
+    (the fit tool and the tests); with none passed and none frozen the build stops."""
     inp = inp or Inputs()
+    if k_consts is None and any(k is None for k in pitch_basis.constants()):
+        raise BuildStop("part 11.3.2's shrink constants are not frozen in pitch_basis.py")
     ewar_before = sha256_of(EWAR_PATH)
     want = frame_seasons(inp, seasons, today)
     out_seasons = {}
     for y in want:
         log(f"  swar preview: {y}...")
-        out_seasons[str(y)] = build_season(y, inp)
+        out_seasons[str(y)] = build_season(y, inp, k_consts)
     ewar_after = sha256_of(EWAR_PATH)
     if ewar_before != ewar_after:
         raise BuildStop("data/ewar.json moved during the build")
@@ -514,6 +562,13 @@ def build(seasons=None, inp: Optional[Inputs] = None, out_path: Optional[Path] =
         "leverage": {"served_arm": "L-A (the published gmLI levers both arms)",
                      "disclosure": "lb_dwar0: gmLI 1 in both arms, never served"},
         "hr_variants": list(swar.HR_VARIANTS),
+        "pitch_basis": {"registration": "docs/ebr-2026-09-30/EBR_GATE.md part 11.3",
+                        "version": pitch_basis.PB_VERSION,
+                        "blend_keys": [pitch_basis.BLEND_PREFIX + v for v in swar.HR_VARIANTS],
+                        "realized_key": pitch_basis.REALIZED_KEY,
+                        "constants": dict(zip(("k_cq", "k_bab", "k_lob"),
+                                              k_consts if k_consts is not None else pitch_basis.constants())),
+                        "fit_log": pitch_basis.K_FIT_LOG},
         "constants_by_reference": {
             "bat_k": dict(swar.BAT_K), "pit_k": dict(swar.PIT_K),
             "fielding_k_inn": dict(dem_plus.K_INN),
