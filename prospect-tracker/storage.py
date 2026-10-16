@@ -534,6 +534,30 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
         m = sum(vals) / len(vals)
         var = sum((x - m) ** 2 for x in vals) / len(vals)
         cohort_stats[k] = (m, var ** 0.5 if var > 0 else None)
+    # ETOOLS_ALL_CALCS: the indices above are on the served (eTool) composites.
+    # The consensus ones are kept under composite_cons, z-scored against the
+    # consensus cohort, so a reader that stays on consensus (the trade-value
+    # policy, until its re-read R-TV) reads exactly the number it read before.
+    # Absent when the flag is off (no payload carries composite_cons).
+    cons_stats: dict[str, tuple[float, float]] = {}
+    if any(isinstance((pl.get("tools") or {}).get("composite_cons"), dict) for pl in payloads):
+        cons_samples: dict[str, list[float]] = {k: [] for k in plus_keys}
+        for pl in payloads:
+            t = pl.get("tools")
+            if not t:
+                continue
+            src = t.get("composite_cons") if isinstance(t.get("composite_cons"), dict) else t
+            for k in plus_keys:
+                v = src.get(k)
+                if v is not None:
+                    cons_samples[k].append(float(v))
+        for k, vals in cons_samples.items():
+            if len(vals) < 2:
+                cons_stats[k] = (None, None)
+                continue
+            m = sum(vals) / len(vals)
+            var = sum((x - m) ** 2 for x in vals) / len(vals)
+            cons_stats[k] = (m, var ** 0.5 if var > 0 else None)
     for pl in payloads:
         t = pl.get("tools")
         if not t:
@@ -541,6 +565,12 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
         for k in plus_keys:
             mean, stdev = cohort_stats[k]
             t[f"{k}_plus"] = _index_plus(t.get(k), mean, stdev)
+        for _holder in (t, t.get("hitter_payload"), t.get("pitcher_payload")):
+            _cc = (_holder or {}).get("composite_cons")
+            if cons_stats and isinstance(_cc, dict):
+                for k in plus_keys:
+                    mean, stdev = cons_stats[k]
+                    _cc[f"{k}_plus"] = _index_plus(_cc.get(k), mean, stdev)
         # Top-level convenience field for row pills + sort. Sourced
         # from the raw 20-80 composite_overall power-mean, rounded to
         # an integer (the row pill renders with no decimal).
@@ -10787,6 +10817,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         era_norms_from_norms,
     )
     from stat_flags import compute_stat_flags, compute_tool_flags
+    # ETOOLS_ALL_CALCS (owner decision EW3-30; docs/tools-2026-10/ETOOLS_ALL_CALCS.md):
+    # the composites, the tool flags, the board tiebreak and the farm Tool Quality read
+    # the SHOWN grades, the eTool where one passed and consensus otherwise, matched by
+    # player key then by the id the row serves. Reloaded per export. Flag off
+    # (etool_composite.ETOOLS_COMPOSITE_ON False): every record is None and every
+    # number below is the consensus one, byte for byte.
+    import etool_composite as _ETC
+    _ETC.load_payload(refresh=True)
+
+    def _etc_rec(player_key):
+        return _ETC.etool_record(player_key, _ids_for_identity.get(player_key))
 
     _ZONE_PERCENTILE_MIN_PITCHES = 100
     _ZONE_HITTER_PERCENTILE_METRICS = {
@@ -12224,11 +12265,32 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # below (tools.history itself is no longer shipped) and baked on
         # the player payload for bayes_trade_value._has_top100_pedigree.
         _top100_pedigree = False
-        tools_payload = _compute_tool_composites(
-            tool_consensus_grades, is_pitcher,
-            player_extras=_player_extras,
-            position_bucket=_pos_bucket,
-        )
+        # ETOOLS_ALL_CALCS: the served composites are the eTool composites (the same
+        # formula on the shown grades); the consensus ones ride under composite_cons.
+        # A record whose side is not this payload's side substitutes nothing.
+        _etc_rec_all = _etc_rec(p.player_key)
+
+        def _side_rec(_is_p):
+            _side = "pit" if _is_p else "hit"
+            if _etc_rec_all and _etc_rec_all.get("side") in (None, _side):
+                return _etc_rec_all
+            return None
+
+        def _shown_tool_payload(_is_p):
+            _cons = _compute_tool_composites(
+                tool_consensus_grades, _is_p,
+                player_extras=_player_extras,
+                position_bucket=_pos_bucket,
+            )
+            if not _ETC.ETOOLS_COMPOSITE_ON:
+                return _cons
+            _shown, _used = _ETC.shown_grades(tool_consensus_grades, _side_rec(_is_p))
+            _et = (_compute_tool_composites(_shown, _is_p, player_extras=_player_extras,
+                                            position_bucket=_pos_bucket)
+                   if _used else None)
+            return _ETC.with_consensus_reference(_et, _cons, _used)
+
+        tools_payload = _shown_tool_payload(is_pitcher)
         if tools_payload is not None:
             publishing = []
             if latest_point:
@@ -12249,14 +12311,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 has_hitter = any(k in tool_consensus_grades for k in HITTER_TOOL_KEYS)
                 has_pitcher = any(k in tool_consensus_grades for k in PITCHER_TOOL_KEYS)
                 if has_hitter and has_pitcher:
-                    hitter_payload = _compute_tool_composites(
-                        tool_consensus_grades, is_pitcher=False,
-                        player_extras=_player_extras,
-                        position_bucket=_pos_bucket)
-                    pitcher_payload = _compute_tool_composites(
-                        tool_consensus_grades, is_pitcher=True,
-                        player_extras=_player_extras,
-                        position_bucket=_pos_bucket)
+                    hitter_payload = _shown_tool_payload(False)
+                    pitcher_payload = _shown_tool_payload(True)
                     if hitter_payload is not None:
                         tools_payload["hitter_payload"] = hitter_payload
                     if pitcher_payload is not None:
@@ -12374,7 +12430,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                      and stale_days > TOOL_FRESHNESS_DAYS),
                     }
                 tools_payload["source_recency"] = source_recency
-        tool_flags = compute_tool_flags(tools_payload, is_pitcher)
+        # The per-tool flags print the SHOWN grade (ETOOLS_ALL_CALCS): the eTool's whole
+        # grade where one passed, the consensus grade otherwise.
+        _flag_grades = None
+        if tools_payload is not None and _ETC.ETOOLS_COMPOSITE_ON:
+            _flag_grades, _ = _ETC.shown_grades(tools_payload.get("grades") or {},
+                                                _side_rec(is_pitcher), value="shown")
+        tool_flags = compute_tool_flags(tools_payload, is_pitcher, grades=_flag_grades)
 
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
@@ -13416,6 +13478,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         tools = getattr(latest, "tools_consensus", None) or {}
         is_pitcher = bool(p.position
                           and p.position.split("/")[0] in PITCHER_POS_SET)
+        # ETOOLS_ALL_CALCS: the shown grades (eTool where one passed).
+        tools, _ = _ETC.shown_grades(dict(tools), _etc_rec(p.player_key))
         comp = _compute_tool_composites(dict(tools), is_pitcher)
         if comp and comp.get("composite_overall") is not None:
             return float(comp["composite_overall"])
@@ -13913,8 +13977,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         is_pitcher_p = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         _farm_extras = _extract_player_extras(p.points[-1] if p.points else None)
         _farm_pos_bucket = _position_bucket(p.position)
-        _comp = _compute_tool_composites(
+        # ETOOLS_ALL_CALCS: the same eTool composite the prospect's card shows.
+        _farm_grades, _ = _ETC.shown_grades(
             dict(p.points[-1].tools_consensus) if p.points[-1].tools_consensus else None,
+            _etc_rec(p.player_key))
+        _comp = _compute_tool_composites(
+            _farm_grades,
             is_pitcher_p,
             player_extras=_farm_extras,
             position_bucket=_farm_pos_bucket,

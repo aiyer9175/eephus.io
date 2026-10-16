@@ -11037,7 +11037,7 @@ function loadSlice(name) {
   const url = base + DATA._slices[name] + versionParam;
   _sliceInFlight[name] = fetch(url, { cache: versionParam ? "force-cache" : "no-cache" })
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-    .then(payload => { DATA[name] = payload; })
+    .then(payload => { _revertEtoolComposites(payload); DATA[name] = payload; })
     .catch(err => {
       console.warn(`slice ${name} fetch failed:`, err);
       // Leave the empty default so render code doesn't loop.
@@ -11474,7 +11474,8 @@ function _tbsNorm(v, lo, hi) {
 function _perToolMax(p) {
   const t = p && p.tools;
   if (!t) return null;
-  const grades = (t.grades) || {};
+  // The shown grades (ETOOLS_ALL_CALCS): an eTool where one passed.
+  const grades = toolGradesShown(p, t.grades || {});
   let m = null;
   for (const k in grades) {
     const g = Number(grades[k]);
@@ -34422,8 +34423,10 @@ function defHomeChip(p) {
 // toolGradesShown are the one place a surface reads a displayed tool grade: an
 // eTool prints to the nearest whole grade (a model grade, like eFV), a consensus
 // grade rounds up (fvCeil), and a small mark names the basis ("e" or "c"). The
-// composites (Tool, O-Tool, D-Tool), the POW+ / HIT+ / DISC+ blends and the tool
-// history charts read the consensus grades as before. ETOOLS_CARD_ON mirrors
+// composites (Tool, O-Tool, D-Tool, FVStuff+, Command) are built from these shown
+// grades by the export since ETOOLS_ALL_CALCS; the POW+ / HIT+ / DISC+ blends and
+// the tool history charts read the consensus grades (a blend already carries the
+// minor-league rate an eTool is built from). ETOOLS_CARD_ON mirrors
 // etools.ETOOLS_ON (a test pins the two); with it false every surface prints the
 // consensus grades exactly as before. #etools=0 or #etools=1 (or ?etools=)
 // overrides it for a preview; latched at boot like #phys, because syncToURL()
@@ -34505,6 +34508,33 @@ function toolGradesShown(p, grades, side) {
   }
   if (e.tools && e.tools.game_pwr && e.tools.game_pwr.shown != null) out.pwr = e.tools.game_pwr.shown;
   return out;
+}
+// The eTool composites (ETOOLS_ALL_CALCS, owner decision EW3-30). The export builds
+// tools.composite_* from the SHOWN grades above (same formula, same physical inputs)
+// and keeps the consensus composites under tools.composite_cons, with
+// tools.composite_basis "etools" or "consensus". Every reader of composite_overall,
+// p.tool, the sorts and the TBS term therefore reads the eTool composite. With the
+// #etools=0 preview the boot puts the consensus composites back in place, so the page
+// reads as it did before the flip.
+function _revertEtoolComposites(list) {
+  if (_ETOOLS_UI || !Array.isArray(list)) return;
+  for (const p of list) {
+    const t = p && p.tools;
+    if (!t || t.composite_basis !== "etools" || !t.composite_cons) continue;
+    for (const k in t.composite_cons) t[k] = t.composite_cons[k];
+    t.composite_basis = "consensus";
+    p.tool = t.composite_overall != null ? Math.round(t.composite_overall) : null;
+  }
+}
+// The strip's TOOL chip tooltip: the composite and its basis.
+function _stripCompTitle(p, cv) {
+  const t = (p && p.tools) || {};
+  if (_ETOOLS_UI && t.composite_basis === "etools" && t.composite_cons) {
+    const c = t.composite_cons.composite_overall;
+    return `Tool composite ${cv}: eTool composite, the power mean of the shown grades (an eTool where one passed)`
+      + (c != null ? `; consensus composite ${fvCeil(c)}` : "");
+  }
+  return `Tool composite grade ${cv} (power mean of the 20-80 tool grades)`;
 }
 // The scouted tools (the FanGraphs Frame / Athleticism / Delivery grades are not
 // consensus tool grades and carry no basis mark).
@@ -41262,7 +41292,7 @@ function makeToolGradeChips(p, activeToolKey) {
     pills.push(
       `<span class="tool-grade-pill tg-total"
              style="background:var(--fv-${ct}-bg);color:var(--fv-${ct}-fg);border-color:var(--fv-${ct}-bd);"
-             title="Tool composite grade ${cv} (mean of published 20-80 tool grades)">`
+             title="${escapeHtml(_stripCompTitle(p, cv))}">`
       + `<span class="tg-code">TOOL</span>`
       + `<span class="tg-val">${cv}</span>`
       + `</span>`
@@ -51602,7 +51632,7 @@ function renderPlayerDetail(key) {
       "STF+":            "stf_plus",          // back-compat
     };
     // scale: 'grade' (raw 20-80) or 'plus' (cohort +/-). Default 'plus'.
-    const compositeChip = (label, raw, plus, tip, headline, scale) => {
+    const compositeChip = (label, raw, plus, tip, headline, scale, ref) => {
       const sc = scale || 'plus';
       if (raw == null && plus == null) return "";
       const titleAttr = tip ? ` title="${escapeHtml(tip)}"` : "";
@@ -51616,12 +51646,35 @@ function renderPlayerDetail(key) {
         : `${badgeFor(raw)} ${plusPill(plus)}`;
       return `<div class="${cls}"${titleAttr}>
         <div class="tools-composite-chip-label">${labelHtml}</div>
-        <div class="tools-composite-chip-value">${valueHtml}</div>
+        <div class="tools-composite-chip-value">${valueHtml}${ref || ""}</div>
       </div>`;
     };
-    // The composites are built from the consensus grades (ETOOLS_SITEWIDE_FLIP leaves them as
-    // they were); said in their tooltips while the eTools are the shown grades.
-    const _compNote = _ETOOLS_UI ? " Built from the consensus grades, not the eTools." : "";
+    // The eTool composites (ETOOLS_ALL_CALCS, owner decision EW3-30): the export builds
+    // every composite from the SHOWN grades (the eTool where one passed, else consensus)
+    // with the same formula, and keeps the consensus composites under composite_cons.
+    // The chip prints the eTool composite with the consensus one beside it ("cons N")
+    // and names the basis in its tooltip. #etools=0 prints the consensus composites.
+    const _compCons = t.composite_cons || null;
+    const _compIsE = t.composite_basis === "etools" && !!_compCons;
+    const _compV = (k) => (_compIsE && !_ETOOLS_UI) ? _compCons[k] : t[k];
+    // The eTools each composite reads: D-Tool reads field, arm and run, none of
+    // which has an eTool, so it is a consensus composite on every card.
+    const _COMP_INPUTS = { composite_overall: ["hit", "game_pwr", "pitch_sel", "bat_ctrl", "fb", "cmd"],
+      composite_off: ["hit", "game_pwr", "pitch_sel", "bat_ctrl"], composite_def: [],
+      composite_stuff: ["fb"], composite_cmd: ["cmd"] };
+    const _compUses = (k) => _compIsE ? (t.etool_keys || []).filter(x => (_COMP_INPUTS[k] || []).includes(x)) : [];
+    const _compRef = (k) => {
+      if (!_ETOOLS_UI || !_compUses(k).length || _compCons[k] == null || t[k] == null) return "";
+      return `<span class="tool-cons-ref" title="Consensus composite: the same formula on the consensus grades (rounded up)">cons ${fvCeil(_compCons[k])}</span>`;
+    };
+    const _compNote = (k) => {
+      if (!_ETOOLS_UI || !t.composite_basis) return "";
+      const uses = _compUses(k);
+      if (!uses.length) return _compIsE ? " Built from the consensus grades (none of its tools has an eTool)."
+                                        : " Built from the consensus grades (no eTool on file for this player).";
+      const c = _compCons[k];
+      return ` eTool composite: built from the shown grades, ${uses.map(x => _ETOOL_KEY[x] || x).join(", ")} in place of their consensus grades, every other tool consensus.${c != null ? ` The consensus composite is ${fvCeil(c)}.` : ""}`;
+    };
     const dualMarkerHTML = `<span class="tool-dual-marker" title="Run contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
     // Per-source tooltip builder. Reads from the latest snapshot's
     // per_source dict; lists each source that published this tool with
@@ -51756,12 +51809,13 @@ function renderPlayerDetail(key) {
     let groupBlocks = "";
     let hasSpeedMarker = false;
     if (isPitcher) {
-      const overallChip = compositeChip("Tool", t.composite_overall, null,
-        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)" + _compNote, true, 'grade');
-      const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
-        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
-      const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
-        "Control / command grade", false);
+      const overallChip = compositeChip("Tool", _compV("composite_overall"), null,
+        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)." + _compNote("composite_overall"), true, 'grade',
+        _compRef("composite_overall"));
+      const stuffGradeChip = compositeChip("FVStuff+", _compV("composite_stuff"), _compV("composite_stuff_plus"),
+        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort." + _compNote("composite_stuff"), false);
+      const cmdChip = compositeChip("Command", _compV("composite_cmd"), _compV("composite_cmd_plus"),
+        "Control / command grade." + _compNote("composite_cmd"), false);
       // Peripheral pStuff+ - K%, BB%, HR/9 vs level mean. Lives on the
       // statline, not the tools dict, so we pull it from `p.statline`.
       const stfPeriph = (p.statline || {}).stf_plus_periph;
@@ -51789,12 +51843,15 @@ function renderPlayerDetail(key) {
       // PSEL 6 / RUN 4). D-Tool is the weighted defensive composite
       // (DEF 60 / ARM 30 / RUN 10, catchers DEF 70 / ARM 30), p=3
       // power-mean. All three on the 20-80 scouting scale (50 = avg).
-      const overallChip = compositeChip("Tool", t.composite_overall, null,
-        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale." + _compNote, true, 'grade');
-      const offChip = compositeChip("O-Tool", t.composite_off, null,
-        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale." + _compNote, false, 'grade');
-      const defChip = compositeChip("D-Tool", t.composite_def, null,
-        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale." + _compNote, false, 'grade');
+      const overallChip = compositeChip("Tool", _compV("composite_overall"), null,
+        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale." + _compNote("composite_overall"), true, 'grade',
+        _compRef("composite_overall"));
+      const offChip = compositeChip("O-Tool", _compV("composite_off"), null,
+        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale." + _compNote("composite_off"), false, 'grade',
+        _compRef("composite_off"));
+      const defChip = compositeChip("D-Tool", _compV("composite_def"), null,
+        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale." + _compNote("composite_def"), false, 'grade',
+        _compRef("composite_def"));
       compositeBar = (overallChip || offChip || defChip)
         ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
         : "";
@@ -51970,10 +52027,18 @@ function renderPlayerDetail(key) {
                 ${badge}
               </div>`;
             }).join("");
+      // The second toolset's composite on its own basis (ETOOLS_ALL_CALCS): the eTool
+      // composite when this side carries an eTool, the consensus one beside it.
+      const _opE = op.composite_basis === "etools" && !!op.composite_cons;
+      const _opV = (_opE && !_ETOOLS_UI) ? op.composite_cons.composite_overall : op.composite_overall;
+      const _opRef = (_opE && _ETOOLS_UI && op.composite_cons.composite_overall != null)
+        ? `<span class="tool-cons-ref" title="Consensus composite: the same formula on the consensus grades (rounded up)">cons ${fvCeil(op.composite_cons.composite_overall)}</span>` : "";
       const otherOverall = compositeChip("Tool",
-        op.composite_overall, null,
-        otherIsPitcher ? "Tool: 65% stuff + 35% command, 20-80 scouting scale"
-                       : "Tool: equally-weighted p=4 power-mean of every tool, 20-80 scouting scale", true, 'grade');
+        _opV, null,
+        (otherIsPitcher ? "Tool: 65% stuff + 35% command, 20-80 scouting scale"
+                        : "Tool: equally-weighted p=4 power-mean of every tool, 20-80 scouting scale")
+          + (_ETOOLS_UI && op.composite_basis ? (_opE ? " eTool composite: built from the shown grades." : " Built from the consensus grades.") : ""),
+        true, 'grade', _opRef);
       const otherCompositeBar = otherOverall
         ? `<div class="tools-composite-bar">${otherOverall}</div>`
         : "";
@@ -57630,7 +57695,9 @@ function toolPlusPillHTML(p) {
   // Build the per-tool breakdown line. Hitter / pitcher key order
   // mirrors the canonical tool grid; missing grades omitted from the
   // tooltip so the line stays readable.
-  const grades = (t.grades) || {};
+  // The shown grades (ETOOLS_ALL_CALCS): the composite is built from them.
+  const grades = toolGradesShown(p, t.grades || {});
+  const _eComp = _ETOOLS_UI && t.composite_basis === "etools" && t.composite_cons;
   const pos = String((p || {}).position || '').toUpperCase();
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
                  || ((p && p.sabermetrics || {}).is_pitcher === true);
@@ -57643,8 +57710,10 @@ function toolPlusPillHTML(p) {
       return (g != null && !isNaN(Number(g))) ? `${label} ${fvCeil(g)}` : null;
     })
     .filter(Boolean);
-  const breakdown = bits.length ? `\n${_ETOOLS_UI ? "From the consensus grades: " : ""}${bits.join(' · ')}` : '';
-  const title = `Tool ${v} · 20-80 scouting scale composite (50 = avg, 60 = Plus, 70 = Elite)${breakdown}`;
+  const breakdown = bits.length ? `\n${_ETOOLS_UI ? "From the shown grades (eTool where one passed): " : ""}${bits.join(' · ')}` : '';
+  const consLine = _eComp && t.composite_cons.composite_overall != null
+    ? `\neTool composite; the consensus composite is ${fvCeil(t.composite_cons.composite_overall)}` : '';
+  const title = `Tool ${v} · 20-80 scouting scale composite (50 = avg, 60 = Plus, 70 = Elite)${breakdown}${consLine}`;
   return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
 }
 
@@ -60005,6 +60074,7 @@ async function _bootProspx() {
     await Promise.race([_etoolsReady, new Promise(r => setTimeout(r, 4000))]);
   }
   if (DATA && !DATA.__error) _applyDvmDifficultyLabels();
+  if (DATA && !DATA.__error) _revertEtoolComposites(DATA.players);   // #etools=0 only
   // The deferred shell scripts (the season state among them) run when parsing
   // ends; a cached boot payload can resolve before that, so the first render
   // waits for them rather than painting the pre-state defaults.

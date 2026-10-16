@@ -674,6 +674,10 @@ def _tools_flash_floor(p: dict) -> bool:
     if not pts:
         return False
     tc = pts[-1].get("tools_consensus") or {}
+    # ETOOLS_ALL_CALCS: the shown grades (eFB and eCMD where they passed).
+    import etool_composite as _ETC
+    tc, _ = _ETC.shown_grades(tc, _ETC.etool_record(p.get("player_key"), p.get("mlbam_id")),
+                              value="shown")
     # Non-bat tools to scan: field, throw, speed, fb, sl, cb, ch, cmd, ct.
     non_bat_tools = {"field", "throw", "speed", "fb", "sl", "cb", "ch", "cmd", "ct"}
     return any((tc.get(t) or 0) >= 70 for t in non_bat_tools)

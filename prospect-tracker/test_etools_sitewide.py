@@ -16,8 +16,9 @@ What these pin:
     marked e; the one Power grade reads game power's eTool;
   * with the flag off every resolver hands back the consensus map itself and no mark
     prints (the render check compares the cards to HEAD's page byte for byte);
-  * every PROSPX display surface reads the resolver, and the composites, the POW+ / HIT+
-    / DISC+ blends and the tiebreaker keep reading the consensus grades;
+  * every PROSPX display surface reads the resolver, and so does the tiebreaker's per-tool
+    max (ETOOLS_ALL_CALCS); the composites are built from the shown grades by the export;
+    the POW+ / HIT+ / DISC+ blends keep reading the consensus grades;
   * /scouting/ prints its eTools sentence only while data/etools.json says they are served.
 """
 from __future__ import annotations
@@ -262,8 +263,9 @@ def test_alchemy_lab_prospect_bars_print_the_same_grade(tmp_path):
 _DISPLAY = ["function makeToolGradeChips(", "function _toolGradeStripHTML(", "function _radarToolsFor(",
             "function _gfxInsight(", "function buildProspectCard(", "function buildCompareCard(",
             "function makeQuickReadSummaryParts(", "function makeCompareStatTable("]
-_CONSENSUS_ONLY = ["function computePowerPlus(", "function computeDisciplinePlus(", "function computeHittingPlus(",
-                   "function _perToolMax("]
+# ETOOLS_ALL_CALCS (EW3-30): the TBS per-tool max reads the shown grades; the blends stay
+# on consensus (each already blends in the minor-league rate an eTool is built from).
+_CONSENSUS_ONLY = ["function computePowerPlus(", "function computeDisciplinePlus(", "function computeHittingPlus("]
 
 
 def test_every_display_surface_reads_the_shown_grade():
@@ -285,6 +287,7 @@ def test_every_display_surface_reads_the_shown_grade():
     for head in _CONSENSUS_ONLY:
         body = _extract(js, head)
         assert "toolGradesShown(" not in body and "toolGradeShown(" not in body, head
+    assert "toolGradesShown(p, t.grades || {})" in _extract(js, "function _perToolMax(")
 
 
 def test_boot_waits_for_the_etools_payload_only_when_on():

@@ -2210,6 +2210,22 @@ def _has_active_arm_injury(player: dict) -> bool:
     return False
 
 
+#: ETOOLS_ALL_CALCS re-read R-TV (docs/tools-2026-10/ETOOLS_ALL_CALCS.md 3.3): the
+#: basis of the FVStuff+ index the archetype policy reads. "consensus" reads the
+#: consensus-composite index the export keeps under tools.composite_cons (the number
+#: this policy was built and validated on); "etools" reads the served eTool index.
+POLICY_STUFF_PLUS_BASIS = "consensus"
+
+
+def _policy_stuff_plus(tools: dict):
+    """FVStuff+ on the policy's basis; the served index when no consensus copy exists
+    (the flag off, or an older export)."""
+    cc = tools.get("composite_cons")
+    if POLICY_STUFF_PLUS_BASIS == "consensus" and isinstance(cc, dict) and "composite_stuff_plus" in cc:
+        return cc.get("composite_stuff_plus")
+    return tools.get("composite_stuff_plus")
+
+
 def archetype_policy_adjustment(
     player: dict,
     *,
@@ -2270,7 +2286,7 @@ def archetype_policy_adjustment(
         "weighted_stuff_plus": None,
     }
     tools = player.get("tools") or {}
-    composite_stuff_plus = _safe_float(tools.get("composite_stuff_plus"))
+    composite_stuff_plus = _safe_float(_policy_stuff_plus(tools))
 
     out["features"] = {
         "primary_position": pos,

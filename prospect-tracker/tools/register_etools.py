@@ -78,8 +78,9 @@ def registry_row(t: dict, doc: dict) -> dict:
         "surface": ("The shown tool grade (marked e, to the nearest whole grade) on PROSPX cards, list rows, the "
                     "compare table, GFX cards and the tool sort and filter, the MLB player page's Scouting pills "
                     "and the Alchemy Lab's Prospect Watch bars (data/etools.json, written by etools.py --preview); "
-                    "the Library's eTools view. eFV, the tool composites and the POW+, HIT+ and DISC+ blends do "
-                    "not read it"),
+                    "the Library's eTools view. Since 2026-10-15 the tool composites, the tool flags, the "
+                    "tiebreaks, the farm Tool Quality and the Alchemy Lab starter shape read it too. eFV and the "
+                    "POW+, HIT+ and DISC+ blends do not read it"),
         "predicts": f"The tool's outcome stat: {outcome}; and its translated Double-A and Triple-A equivalent",
         "champion": (f"{t['key']} (etools.py): the consensus {t['name'].lower()} grade plus the weighted residuals "
                      f"of its sub-drivers ({_subs(t)}), fit on the grade scale by leave one board year out, "
@@ -143,7 +144,10 @@ def glossary_entries(tools: dict, doc: dict) -> list[dict]:
             "wherever it prints a tool grade, marked e. It is a model grade, so it rounds to the nearest "
             "whole grade, like eFV; consensus tool grades round up and are marked c. The card keeps the "
             "consensus grade beside each eTool, with the 80% band and each sub-driver's push in grade "
-            "points. Not in eFV, the tool composites or the POW+, HIT+ and DISC+ blends."
+            "points. Since ETOOLS_ALL_CALCS the tool composites (Tool, O-Tool, D-Tool, FVStuff+, Command), "
+            "the tool flags, the tiebreaks and the Alchemy Lab starter shape read the eTools too. Not in eFV "
+            "or the POW+, HIT+ and DISC+ blends, which already blend in the minor-league rates an eTool is "
+            "built from."
         ),
         "formula": ("eTool = consensus + sum over sub-drivers j of c_j x (z_j - a_j - b_j x consensus - delta_j); "
                     "band = eTool +/- 1.2816 x the fit's residual sd"),

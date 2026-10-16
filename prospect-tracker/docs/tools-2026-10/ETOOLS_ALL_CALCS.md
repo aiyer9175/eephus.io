@@ -159,3 +159,40 @@ license is R-TIP's result. Owner question ETOOLS-ALL-Q3.
 ## Part 4. Results
 
 EMPTY AT REGISTRATION. Each re-read's result is pasted here, dated, by this task's results commit.
+
+### 4.1 R-TIP, read once 2026-10-15 (02:40 UTC 2026-10-16), gate sha f19387fb
+
+`python tools/etools_all_calcs_reread.py --tip --gate-sha f19387fb`; artifact
+`data/_labs/etools/etools_all_calcs_reread.json` (role development). Universe identical to the
+look's (8,898 rows); board years 2011 to 2019 and 2022 to 2024; frames built in 50 s. MAE on the
+label's scale (K% and BB% in percentage points, ISO in points of ISO); d = eTool minus consensus;
+interval: player-clustered paired bootstrap B 2000, seed 20261030.
+
+| tool, stat | n (players) | MAE eTool table | MAE consensus table | d | 95% CI | UB95 | margin (5%) | verdict |
+|---|---|---|---|---|---|---|---|---|
+| hit, MLB K% | 1,385 (602) | 3.5728 | 4.3803 | -0.8075 | -0.9970 to -0.6088 | -0.6453 | 0.2190 | NON-INFERIOR |
+| game power, ISO | 1,385 (602) | 0.03352 | 0.03409 | -0.00056 | -0.00105 to -0.00010 | -0.00017 | 0.00170 | NON-INFERIOR |
+| fastball, pitcher K% | 1,932 (896) | 3.5849 | 3.7440 | -0.1591 | -0.2206 to -0.0983 | -0.1072 | 0.1872 | NON-INFERIOR |
+| command, pitcher BB% | 1,931 (895) | 1.9304 | 1.9871 | -0.0566 | -0.0869 to -0.0283 | -0.0335 | 0.0994 | NON-INFERIOR |
+
+All four NON-INFERIOR, and on all four the whole interval sits below zero (the eTool table is the
+more accurate one). The prediction (non-inferior on all four, d below zero for hit and fastball)
+held; d was below zero on game power and command as well. What it decides (3.1): no served reader
+takes a TIP table at the shown grade, so nothing served moves; the result is the license a later
+stat-line registration may cite.
+
+### 4.2 R-SL, 2026-10-15
+
+Not run, as registered (3.2): the stat-line keeps its consensus tool inputs until TL_17's look is
+recorded. R-TIP above is the evidence its next registration may cite.
+
+### 4.3 R-TV, read once 2026-10-15 (02:58 UTC 2026-10-16), gate sha f19387fb
+
+`python tools/etools_all_calcs_reread.py --tv --gate-sha f19387fb`, on the export rebuilt in this
+lane with the flag on (`data/timeseries.json` plus `data/debuts.json`, the list
+`tools/export_trade_values.py` prices). 6,720 rows priced twice; the FVStuff+ input differs on 990
+rows; the output differs on 320, and a policy rule fires differently on at least one
+(andrew_painter: `young_elite_stuff_pitcher` is tagged on the consensus index and not on the eTool
+index). Verdict KEEP CONSENSUS: the archetype policy reads the consensus FVStuff+
+(`bayes_trade_value.POLICY_STUFF_PLUS_BASIS = "consensus"`, from `tools.composite_cons`), exactly
+the number it read before this task, so no trade value moves.

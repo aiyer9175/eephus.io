@@ -61,6 +61,7 @@ from pathlib import Path
 from typing import Optional
 
 import bullpen_export as be
+import etool_composite as _ETC
 import pal_conversion as pc
 import rem_plus
 from pal_conversion import PalArm
@@ -377,11 +378,15 @@ def load_prospect_pitchers(exclude_keys: Optional[set] = None) -> list:
             # fvE_is_floor rides with it: the card names a floor grade as the
             # scale floor instead of printing 20 as if it were a level.
             efv = _efv_by_key().get(p.player_key)
+            # ETOOLS_ALL_CALCS (owner decision EW3-30): the starter shape reads the
+            # SHOWN grades, eFB and eCMD where they passed (the bars pal.js prints);
+            # `tools` stays the consensus map the bars print beside each eTool.
+            _shown, _ = _ETC.shown_grades(tools, _ETC.etool_record(p.player_key), value="shown")
             out.append({"player_key": p.player_key, "name": p.player_name, "org": p.org,
                         "position": p.position, "fv": _r(getattr(p, "fv_close", None), 1),
                         "fvE": _r(efv, 1),
                         "fvE_is_floor": efv is not None and p.player_key in _efv_floor_keys(),
-                        "tools": tools})
+                        "tools": tools, "tools_shown": {k: _shown[k] for k in keys if k in _shown}})
         except Exception:
             continue
     return out
@@ -709,6 +714,12 @@ PROSPECT_WATCH_MARGIN_MIN = 10.0    # half the 20-point SWING band (pc.SHAPE_SWI
 PROSPECT_WATCH_CAP = 60             # bounded slice; spotlights.TOP_N precedent
 
 
+def _shape_tools(p: dict) -> dict | None:
+    """The grades the starter shape reads: the shown map (ETOOLS_ALL_CALCS) when the
+    pool row carries one, else its consensus map."""
+    return p.get("tools_shown") or p.get("tools")
+
+
 def build_prospect_watch_all(prospects: list) -> list:
     """EVERY role mismatch at or above the FV floor, ranked by severity. No cap.
 
@@ -717,7 +728,7 @@ def build_prospect_watch_all(prospects: list) -> list:
     silently strip a player's role-conversion read off their card."""
     watch = []
     for p in prospects:
-        rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
+        rf = pc.prospect_role_fit(_shape_tools(p), p.get("position"))
         if not rf["mismatch"] or (p.get("fv") or 0) < PROSPECT_WATCH_FV_MIN:
             continue
         # fvE RIDES ALONG. assets/pal.js reads `p.fvE != null ? Math.round(p.fvE)
@@ -810,7 +821,7 @@ def prospect_watch_rule(full: list, watch: list,
         c["n"] = sum(1 for w in watch
                      if _severity_of(w.get("mismatch_margin"), cuts) == c["key"])
     unstated = [p for p in (pool or [])
-                if pc.prospect_role_fit(p.get("tools"), p.get("position"))["role"]
+                if pc.prospect_role_fit(_shape_tools(p), p.get("position"))["role"]
                 not in ("SP", "RP")]
     return {
         "fv_min": PROSPECT_WATCH_FV_MIN,
