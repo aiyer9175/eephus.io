@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REG = ROOT / "data" / "model_registry.json"
 GLO = ROOT / "data" / "glossary.json"
 VERIFY = ROOT / "data" / "positional_ladder_v2_verify.json"
+V3_EVAL = ROOT / "data" / "positional_ladder_v3_eval.json"
 
 
 def _f(x, nd=3, sign=False):
@@ -166,14 +167,34 @@ V1_NOTE_RESTORED = (" RESTORED ON POSITION FIT 2026-10-15 (LADDER_V2_REVERT, own
                     "composed on one run scale (docs/ewar/LADDER_V2_GATE.md part 8); fit.ladder is still carried unrefit.")
 
 
+def _reread() -> str:
+    """The glossary's sentence on the v3 re-read (LADDER_V3_REREAD), from its
+    record; empty until the record exists."""
+    if not V3_EVAL.exists():
+        return ""
+    ev = json.loads(V3_EVAL.read_text(encoding="utf-8"))
+    z = ev["tests"]["zero_minus_v3_pooled"]
+    lo, hi = _f(z["ci95"][0]), _f(z["ci95"][1])
+    head = (f"A corrected re-read (v3, {str(ev['read_at'])[:10]}) measured only the gaps inside the infield "
+            "and inside the outfield on the same players, with Statcast centred, and took the other levels "
+            "from the offense gap among regulars. ")
+    if ev["verdict"]["passed"]:
+        return head + (f"It passed its checks (its error {_f(z['dmae'])} runs per 650 PA below the zero ladder's, "
+                       f"95% CI {lo} to {hi}) and is not used until the owner decides. ")
+    return head + (f"It did not pass: against the zero ladder its error was {_f(z['dmae'])} runs per 650 PA "
+                   f"lower (95% CI {lo} to {hi}), not a separation, so Position Fit keeps this ladder. ")
+
+
 def gl_ladder(x: dict) -> dict:
+    rr = _reread()
     return {
         "id": "positional_ladder",
         "term": "Positional ladder",
         "category": "custom-index",
         "section": "Players & Stats",
         "module": ["pal"],
-        "aliases": ["fitted positional ladder", "switcher ladder", "position-switcher ladder", "ladder v2"],
+        "aliases": ["fitted positional ladder", "switcher ladder", "position-switcher ladder", "ladder v2"]
+        + (["ladder v3"] if rr else []),
         "priority": 40,
         "definition": ("The runs a position is worth against the average defensive position, per 650 plate "
                        "appearances. The site's ladder is fitted on Baseball-Reference's positional runs; "
@@ -185,13 +206,15 @@ def gl_ladder(x: dict) -> dict:
             "what Baseball-Reference prices the position at, not an independent measure of how hard the position "
             "is to play.\n\n"
             "A second ladder, measured on players who changed position (the position-switcher ladder, v2), was "
-            "read once on 2026-10-15 and valued Position Fit for that day. It is withdrawn and under re-read. Its "
+            "read once on 2026-10-15 and valued Position Fit for that day. It is withdrawn"
+            + ("" if rr else " and under re-read") + ". Its "
             "test compared it only with this ladder. Run on the same players and seasons, a ladder with every "
             f"fielding position at zero scores about as well: its error was {x['zb']} runs per 650 PA higher "
             f"than v2's (95% CI {x['zb_lo_s']} to {x['zb_hi']}), so the test measured this ladder's spread, not "
             "v2's. Two more things the check found: Statcast's fielding runs do not net to zero within a "
             "position, and the gap between the infield and the outfield is set by a few dozen players who "
-            "moved between them. The Library's Positional Ladder view has the read and the check."
+            "moved between them. " + rr + "The Library's Positional Ladder view has the read"
+            + (", the check and the re-read." if rr else " and the check.")
         ),
         "formula": ("positional runs per 650 PA = sum over positions of innings share_p x ladder_p, fitted by "
                     "least squares with no intercept on Baseball-Reference's positional runs; zero = the "

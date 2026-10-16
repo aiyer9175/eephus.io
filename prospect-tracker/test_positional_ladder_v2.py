@@ -347,7 +347,9 @@ def test_the_view_renders_at_390_without_a_page_scroll(browser, theme):
             page.close()
     assert not errors, errors
     assert out["theme"] == theme
-    assert out["shown"] and out["tables"] == 4 and out["rows0"] == 9
+    # the v3 re-read (test_positional_ladder_v3.py) adds its two tables when its record exists
+    n_v3 = 2 if (ROOT / "data" / "positional_ladder_v3_eval.json").exists() else 0
+    assert out["shown"] and out["tables"] == 4 + n_v3 and out["rows0"] == 9
     assert out["linkText"] == "Standalone version" and out["linkHref"] is None
     want = "%+.2f" % ev["tests"]["v1_minus_b_pooled"]["dmae"]
     assert want in out["text"], want

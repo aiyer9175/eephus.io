@@ -388,6 +388,7 @@ MODEL_GLOSSARY = {
     # ladder Position Fit values with, documented by its own entry and by the
     # Position fit entry that composes it.
     "positional_ladder_v2": ["positional_ladder", "position_fit"],
+    "positional_ladder_v3": ["positional_ladder"],
     # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
     # grade and a pitcher grade of the same number on the same realized-outcome
     # scale. It changes the DISPLAYED eFV, so the eFV entry documents it.

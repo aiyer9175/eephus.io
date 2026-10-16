@@ -6444,9 +6444,11 @@ function renderWarComparison() {
 // The positional ladders side by side: v1, fitted on Baseball-Reference's
 // positional runs, which Position Fit values with, and the position-switcher
 // ladder (v2), read once on 2026-10-15 and withdrawn the same day
-// (LADDER_V2_REVERT, owner EW3-29). Two records feed it: the read's own
-// (docs/ewar/LADDER_V2_GATE.md) and its verification
-// (tools/ladder_v2_verify.py). Every number is a record's own; the view
+// (LADDER_V2_REVERT, owner EW3-29), then the corrected re-read (v3,
+// LADDER_V3_REREAD, docs/ewar/LADDER_V3_GATE.md). Three records feed it: the
+// v2 read's own (docs/ewar/LADDER_V2_GATE.md), its verification
+// (tools/ladder_v2_verify.py) and the v3 re-read's (tools/ladder_v3_lab.py),
+// which is optional. Every number is a record's own; the view
 // formats and does no arithmetic. UPKEEP: the "Standalone version" line has no
 // link until the standalone page is published; its URL then goes in _pladUrl().
 function _pladUrl() { return ""; }
@@ -6456,9 +6458,11 @@ function _pladLoad() {
   _PLAD_LOADING = true;
   const rerender = () => { if (_S.view === "positional-ladder") renderPositionalLadder(); };
   const get = u => fetch(u, { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
-  Promise.all([get("/data/positional_ladder_v2_eval.json"), get("/data/positional_ladder_v2_verify.json")])
-    .then(([j, v]) => {
-      _PLAD = (j && j.comparison && j.verdict && v && v.zero_ladder) ? Object.assign({}, j, { __verify: v }) : { __error: true };
+  Promise.all([get("/data/positional_ladder_v2_eval.json"), get("/data/positional_ladder_v2_verify.json"),
+    get("/data/positional_ladder_v3_eval.json")])
+    .then(([j, v, r3]) => {
+      _PLAD = (j && j.comparison && j.verdict && v && v.zero_ladder)
+        ? Object.assign({}, j, { __verify: v, __v3: (r3 && r3.verdict && r3.v3) ? r3 : null }) : { __error: true };
       _PLAD_LOADING = false;
       rerender();
     });
@@ -6472,6 +6476,47 @@ function _pladNum(v, dp) {
 
 function _pladCi(c, dp) {
   return (c && c.length === 2) ? `${_pladNum(c[0], dp)} to ${_pladNum(c[1], dp)}` : "-";
+}
+
+// The corrected re-read (v3): its ladder beside v1 and its five-part pass rule.
+function _pladV3(R, head) {
+  const mae3 = v => (v == null ? "-" : Number(v).toFixed(3));
+  const v = R.verdict || {}, t = R.tests || {}, x = R.v3 || {};
+  const cols = (R.comparison || {}).columns || {}, pos = (R.comparison || {}).positions || [];
+  const v1s = cols.v1_served || {}, off = cols.offense_anchor_2016_2026 || {};
+  const vals = x.values || {}, ci = x.ci95 || {}, g = x.gaps || {};
+  const pm = (R.scores || {}).pooled || {};
+  const ratios = ((R.simulation || {}).base || {}).mean_ratio || {};
+  const res = ok => (ok ? "Pass" : "<b>Fail</b>");
+  const test = k => { const z = t[k] || {}; return `${_pladNum(z.dmae, 3)} <span class="gl-plad-ci">(${_pladCi(z.ci95, 3)})</span>`; };
+  const scaled = ["v1_x0.25", "v1_x0.5", "v1_x0.75", "v1_x1.0", "v1_x1.25"].map(k => mae3((pm[k] || {}).mae)).join(" / ");
+  const crit = [
+    ["Lower error than every fielding position at zero", test("zero_minus_v3_pooled"), v["1_beats_zero"]],
+    ["Lower error than the Baseball-Reference ladder, refit", test("v1_minus_v3_pooled"), v["2_beats_v1"]],
+    ["Lower error than the Baseball-Reference ladder scaled by 0.25, 0.5, 0.75, 1 and 1.25, and the FanGraphs table",
+      `${mae3((pm.v3 || {}).mae)} against ${scaled}; ${mae3((pm.fg_table || {}).mae)}`, v["3_below_scaled_v1_and_fg_table"]],
+    ["Not worse than zero on next-season rows", test("zero_minus_v3_across"), v["4_not_worse_than_zero_next_season"]],
+    ["Recovers a planted ladder, each gap at 0.80 to 1.25 of its size",
+      Object.keys(ratios).map(p => `${escapeHtml(p)} ${ratios[p] == null ? "-" : Number(ratios[p]).toFixed(2)}`).join(", "), v["5_recovers_planted_ladder"]],
+  ].map(([lab, val, ok]) => `<tr><th scope="row">${escapeHtml(lab)}</th><td class="warc-e">${val}</td><td>${res(ok)}</td></tr>`).join("");
+  const rows = pos.map(p => `<tr><th scope="row">${escapeHtml(p)}</th>`
+    + `<td class="warc-e"><b>${_pladNum(v1s[p])}</b></td><td>${_pladNum(vals[p])}</td><td>${_pladCi(ci[p])}</td>`
+    + `<td>${_pladNum(off[p])}</td></tr>`).join("");
+  const ifg = g.IF_vs_SS || {}, ofg = g.OF_vs_CF || {};
+  const w = t.zero_minus_v3_within || {};
+  return `<h3 class="meth-h3">The re-read (v3, ${escapeHtml(String(R.read_at || "").slice(0, 10))})</h3>
+    <p class="meth-note">The re-read measured only what players who move show directly: the gaps inside the infield (second base, third base, shortstop) and inside the outfield, from each player's fielding runs at each spot against his own level over all his seasons, on the three fielding sources with Statcast centred within position and season. The level of the infield against the outfield, first base and DH come from the offense gap among regulars, and catcher keeps the Baseball-Reference rung. Inside the groups the three sources agree: second base sits ${_pladNum(ifg["2B"])} and third base ${_pladNum(ifg["3B"])} runs from shortstop, left field ${_pladNum(ofg.LF)} and right field ${_pladNum(ofg.RF)} from centre field.</p>
+    <div class="wpm-explain" role="note"><b>${v.passed ? "v3 passed its five checks; it is built but not used until the owner decides." : "v3 did not pass; Position Fit keeps the Baseball-Reference ladder."}</b> On the same-season Statcast pairs, which see a gap inside a group most directly, it beats the zero ladder by ${_pladNum(w.dmae, 3)} (95% CI ${_pladCi(w.ci95, 3)}); over every scored row it does not separate from it.</div>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The re-read's pass rule">
+      <table class="warc-table"><caption>The five checks, set before the read. Error is weighted mean absolute error in runs per 650 PA on the held-out seasons, ${Number((t.zero_minus_v3_pooled || {}).n_rows || 0).toLocaleString()} position changes by ${Number((t.zero_minus_v3_pooled || {}).n_players || 0).toLocaleString()} players; a gap is the comparison's error minus v3's.</caption>
+        ${head(["Check", "Measured", "Result"])}
+        <tbody>${crit}</tbody></table>
+    </div>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The re-read's ladder">
+      <table class="warc-table"><caption>The v3 ladder as fit on 2016 to 2026, not used. Runs per 650 PA on the same zero as above; 95% intervals from ${escapeHtml(String(x.ci_draws || ""))} player-level bootstrap refits.</caption>
+        ${head(["Position", "Baseball-Reference (used)", "v3 (not used)", "v3 95% CI", "Offense gap"])}
+        <tbody>${rows}</tbody></table>
+    </div>`;
 }
 
 function renderPositionalLadder() {
@@ -6539,7 +6584,8 @@ function renderPositionalLadder() {
   const fb = k => _pladNum((((inside[k] || {}).infield || {}).gaps_vs_SS || {})["1B"]);
   const cen = (sv.scoring_with_savant_centred_tests || {}).zero_minus_b_centred || {};
   const cRows = ((rc.BREF || {}).C || {}).rows_c_change_025;
-  const verdict = `<b>Position Fit values with the Baseball-Reference ladder (v1).</b> The switcher ladder (v2) served there on ${escapeHtml(read)} and was withdrawn the same day; it is under re-read. `
+  const R3 = d.__v3;
+  const verdict = `<b>Position Fit values with the Baseball-Reference ladder (v1).</b> The switcher ladder (v2) served there on ${escapeHtml(read)} and was withdrawn the same day; ${R3 ? `a corrected re-read (v3, ${escapeHtml(String(R3.read_at || "").slice(0, 10))}) ${R3.verdict.passed ? "passed and is built but not used, pending the owner" : "did not pass either (below)"}` : "it is under re-read"}. `
     + `Its read passed: predicting the fielding plus positional runs of players who changed position, in seasons held out of the fit, its error was ${_pladNum(p1.dmae)} runs per 650 PA lower than the Baseball-Reference ladder's (95% CI ${_pladCi(p1.ci95)}; ${Number(p1.n_rows || 0).toLocaleString()} position changes by ${Number(p1.n_players || 0).toLocaleString()} players). `
     + `The check (${escapeHtml(checked)}) ran the same test with every fielding position at zero: that ladder's error was <b>${mae3(zb.dmae)}</b> runs per 650 PA higher than v2's (95% CI ${_pladCi(zb.ci95, 3)}), a tie, and ${mae3(v1z.dmae)} lower than the Baseball-Reference ladder's. `
     + `So the read measured how much the Baseball-Reference ladder's spread costs on this test, not a ladder that v2 measured.`;
@@ -6555,6 +6601,7 @@ function renderPositionalLadder() {
         <tbody>${ladderRows}</tbody></table>
     </div>
     <p class="meth-note">Baseball-Reference: its positional runs fitted on innings shares, the ladder Position Fit values with. FanGraphs, inverted: the same fit on FanGraphs' positional runs. FanGraphs table: the published table per 162 games, rescaled to 650 PA. Offense gap: the batting runs the league accepts at each position among regulars, the classic basis, shown for reference.</p>
+    ${R3 ? _pladV3(R3, head) : ""}
     <h3 class="meth-h3">The held-out test, with the zero ladder</h3>
     <div class="warc-frame" role="region" tabindex="0" aria-label="The held-out test">
       <table class="warc-table"><caption>Weighted mean absolute error on players who changed position, each season 2016 to 2026 held out in turn. Lower error than the comparison is positive. The zero rows are the check; the rest are the read.</caption>
@@ -6594,7 +6641,7 @@ function renderPositionalLadder() {
       <ol>
         <li>It does not say the Baseball-Reference ladder is right: that ladder is what Baseball-Reference prices positions at, and on this test its spread costs accuracy.</li>
         <li>Neither ladder is in eWAR. The Defense board's Pos (ours) uses the Baseball-Reference ladder.</li>
-        <li>A re-read of v2 needs a zero comparator in its pass rule, Statcast runs centred within position, and rungs the test can see.</li>
+        <li>${R3 ? `The re-read (v3) had a zero comparator, Statcast runs centred within position and the infield, outfield, first base and DH levels anchored on the offense gap; it ${R3.verdict.passed ? "passed and is not used until the owner decides" : "did not pass, so no measured ladder on this page has beaten the zero ladder on this test"}.` : "A re-read of v2 needs a zero comparator in its pass rule, Statcast runs centred within position, and rungs the test can see."}</li>
       </ol>
     </section>
   </div>`;
