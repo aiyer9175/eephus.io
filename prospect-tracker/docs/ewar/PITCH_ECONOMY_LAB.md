@@ -174,4 +174,123 @@ STATUS: REGISTERED, RESULTS EMPTY.
 
 ## 10. Results
 
-EMPTY AT REGISTRATION.
+### 2026-10-15: the run (`python -u tools/pitch_economy_lab.py --run`, at e05e51ed)
+
+**Note on the first run (dated 2026-10-15, under part 9).** The first run read the runner record's
+empty bases, which the record stores as pandas' NA, as occupied in the corpus walk. Its RE288
+telescoping receipt held on 0.2546 to 0.2577 of plate appearances in every corpus season, which is
+how the defect was found; no other number of that run was read before the fix. Parts A, B, C and F
+never read the walk's base states and are identical in both runs. Part D, delta_TTO (0.0305 in the
+first run) and K_CL (171.71) were wrong; K_P (110.95) was not affected. The fix: `_missing()` in the
+walk, a pandas NA regression in `test_pitch_economy_lab.py`, and a run guard that refuses to write
+unless the RE288 identity holds on 0.999 of plate appearances in every season. The first run's
+outputs stay beside the corrected ones (`data/_labs/pitch_economy_partials_run1.json`,
+`data/_labs/pitch_economy_constants_run1.json`). The corrected run's identity receipt is 1.0 in all
+seven corpus seasons, and parts 7 and 8 read the corrected run. Bootstrap B = 2,000, seed 20261015,
+percentile intervals.
+
+**Part A, hitters** (1,415 pairs, 538 hitters, 187 to 219 pairs per predictor season; every pair
+has a Savant xwOBA).
+
+| Statistic | P/PA(Y) against | Point | 95 percent interval |
+|---|---|---|---|
+| A1 raw | wOBA(Y) | +0.2004 | +0.1360 to +0.2644 |
+| A1 raw | wRAA(Y) | +0.2020 | +0.1371 to +0.2684 |
+| A1 raw | wOBA(Y+1) | +0.1832 | +0.1198 to +0.2480 |
+| A1 raw | wRAA(Y+1) | +0.1908 | +0.1267 to +0.2570 |
+| A2 after BB%, K%, xwOBA | wOBA(Y) | +0.0224 | -0.0373 to +0.0808 |
+| A2 after BB%, K%, xwOBA | wRAA(Y) | +0.0308 | -0.0303 to +0.0908 |
+| A2 after BB%, K%, xwOBA | wOBA(Y+1) | +0.0563 | -0.0002 to +0.1161 |
+| A2 after BB%, K%, xwOBA | wRAA(Y+1) | +0.0563 | -0.0021 to +0.1178 |
+| A2b also after wOBA(Y) | wOBA(Y+1) | +0.0541 | -0.0018 to +0.1113 |
+| A2b also after wOBA(Y) | wRAA(Y+1) | +0.0540 | -0.0034 to +0.1129 |
+| A3 | BB% | +0.7044 | +0.6663 to +0.7396 |
+| A3 | K% | +0.4025 | +0.3324 to +0.4646 |
+| A3 | xwOBA | +0.2469 | +0.1767 to +0.3167 |
+
+Raw P/PA tracks wOBA at about 0.2 because it is mostly the walk rate (0.70 with BB%). Once BB%, K%
+and xwOBA are held, the same-season partial is near 0 and the next-season partial is +0.056 with an
+interval whose lower end sits just below 0. By predictor season, the wOBA(Y+1) partial reads +0.030,
++0.073, +0.152, +0.083, +0.080, -0.057 and +0.014 (2016, 2017, 2018, 2021, 2022, 2023, 2024).
+
+**Part B, team-game** (34,016 batting sides in 17,008 games, game-clustered).
+
+| Statistic | Against | Point | 95 percent interval |
+|---|---|---|---|
+| B1 same-game lineup P/PA | starter outs | -0.2013 | -0.2116 to -0.1907 |
+| B1 same-game lineup P/PA | bullpen outs | +0.1970 | +0.1866 to +0.2071 |
+| B2 prior lineup P/PA | starter outs | -0.0650 | -0.0747 to -0.0543 |
+| B2 prior lineup P/PA, after the starter's prior pitches per out | starter outs | -0.0565 | -0.0663 to -0.0457 |
+| B2 prior lineup P/PA | bullpen outs | +0.0484 | +0.0373 to +0.0593 |
+| B2 prior lineup P/PA, after the starter's prior pitches per out | bullpen outs | +0.0410 | +0.0298 to +0.0518 |
+
+The same-game rows are mostly mechanical (pitches seen in the game are pitches the starter threw). A
+lineup that saw more pitches the season before shortens the opposing starter by a small amount
+(about -0.06). The starter-workload lab's T1 asked a different question (whether the lineup term
+lowered the outs forecast's error) and gave it no credit; both readings stand.
+
+**Part C, pitchers** (1,536 pairs, 654 pitchers; 900 starter pairs, 535 reliever pairs, swingmen in
+the pooled block only). The rows that answer the ask:
+
+| Block | Statistic | Point | 95 percent interval |
+|---|---|---|---|
+| starters | C1 P/BF, RA9(Y+1) | -0.1584 | -0.2261 to -0.0863 |
+| starters | C1 P/IP, IP/GS(Y+1) | -0.2008 | -0.2686 to -0.1283 |
+| starters | C2 P/BF, RA9(Y+1) | +0.0150 | -0.0516 to +0.0806 |
+| starters | C2 P/IP, RA9(Y+1) | -0.0027 | -0.0695 to +0.0647 |
+| starters | C2 P/IP, IP(Y+1) | -0.0821 | -0.1539 to -0.0150 |
+| starters | C2 P/IP, IP/GS(Y+1) | -0.0729 | -0.1431 to -0.0008 |
+| starters | C2 P/BF, IP/GS(Y+1) | -0.1078 | -0.1782 to -0.0349 |
+| starters | C2b P/IP, IP/GS(Y+1) also after IP/GS(Y) | +0.0052 | -0.0658 to +0.0763 |
+| starters | C2b P/IP, fWAR(Y+1) after the SEM+ FIP and IP(Y) | +0.0762 | +0.0126 to +0.1416 |
+| relievers | C2 P/BF, RA9(Y+1) | +0.0772 | -0.0086 to +0.1657 |
+| relievers | C2 P/IP, fWAR(Y+1) | +0.0943 | +0.0108 to +0.1775 |
+| pooled | C2 P/BF, RA9(Y+1) | +0.0487 | -0.0047 to +0.0977 |
+| pooled | C3 P/BF, K% | +0.5374 | +0.4871 to +0.5825 |
+| pooled | C3 P/BF, BB% | +0.4376 | +0.3821 to +0.4902 |
+
+Once K%, BB% and the EM+ shrunk FIP are held, pitch rates say nothing measurable about next-season
+runs allowed. Efficiency speaks to length: a starter who needs fewer pitches per inning goes deeper
+the next season (partial -0.073 on IP/GS), and that is his own length repeating (after IP/GS(Y) the
+partial is +0.005). The positive partials on fWAR(Y+1) are reported, not interpreted. Every row of
+the three blocks is in the artifact.
+
+**Part D, the decomposition** (same season only).
+
+- Count lift. The league mean count lift by terminal class (2024): walk +0.0979, strikeout -0.0471,
+  hit by pitch -0.0224, out in play -0.0113, single -0.0122, double -0.0070, triple -0.0084, home
+  run +0.0023 runs. Pitches per plate appearance against starters (2024): walk 5.87, strikeout 4.89,
+  balls in play 3.27 to 3.47.
+- Same season, at 300 or more PA: count lift per PA against wRAA per PA, Spearman 0.32 to 0.45 by
+  season; the class residual per PA against wRAA per PA, 0.19 to 0.34. Conditioning on the terminal
+  class removes part, not all, of count lift's overlap with wOBA (the registration expected the
+  residual not to track wRAA; it does, more weakly).
+- Sizes at 300 or more PA: the count-lift residual sd 2.6 to 3.1 runs, starter wear W sd 0.26 to
+  0.34 runs, d_PEH sd 1.75 to 2.06 runs; d_PEH sums to 0 every season.
+- Starter wear. w is -0.0046 to -0.0065 runs per pitch in every season 2018 to 2025: the league
+  bullpen's FIP is below a starter's at his third time through the order, so a pitch a hitter makes
+  the opposing starter throw costs his own side about 0.006 runs.
+- Times through the order, mean RE24 run value per plate appearance against starters (2024): pass
+  1 -0.0078, pass 2 +0.0024, pass 3 +0.0173 (pass 4 and later under 1,100 plate appearances a
+  season and noisy). The within-starter-season decay reads 0.0112 to 0.0223 by season.
+- PE-P, same season, 2016 to 2025: Delta_PE sd 0.29 to 0.39 runs for starters and 0.12 to 0.15
+  runs for relievers; the largest single value is 3.5 runs (0.37 WAR); 0 to 1.6 percent of
+  starters, under 0.3 percent of relievers and up to 4.0 percent of swingmen move 0.1 WAR or more,
+  and none moves 0.5 WAR. Every
+  season and role sums to 0 within 1e-9 runs. The shrink of pitches per out at K_O 120 moves few
+  outs, as the registration expected.
+
+**Part E, the frozen constants** (`data/_labs/pitch_economy_constants.json`; frozen in
+`pitch_economy.py`): delta_TTO 0.01847965 runs per plate appearance (384 starter-seasons, 47,079
+plate appearances at the third and later pass; T9 0.70 to 0.71 runs per nine); K_CL 236.41 plate
+appearances (rho_half 0.484356 on 714 hitter-seasons, nbar 444.12); K_P 110.95 plate appearances
+against starters (rho_half 0.561812 on 607 hitter-seasons, nbar 284.51).
+
+**Part F, the trigger.** No item excludes 0: (h) +0.0563, interval -0.0002 to +0.1161; (s) +0.0150,
+-0.0516 to +0.0806; (r) +0.0772, -0.0086 to +0.1657. No X-R1-style test is registered or run, and
+the answer to the owner's question (P/PA into HEM+ or xHEM+, P/BF or P/IP into SEM+ or REM+) is no
+on this lab's numbers. Item (h) is a near miss: its lower bound sits 0.0002 below 0, so it is
+recorded as one, and the rule is applied as registered.
+
+Nothing here is a forward statistic of PE-P or PE-H; the skill look scores them under the eWAR v3
+gate's part 11.3.
