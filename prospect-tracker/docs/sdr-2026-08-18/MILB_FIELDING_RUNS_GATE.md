@@ -208,3 +208,35 @@ registry row committed. 4. Serving and the driver read only under part 6.
 ## 10. Results
 
 At registration (2026-10-16): nothing computed.
+
+### Note N1 (2026-10-16): construction details fixed while writing the tool, before the census and before any estimand
+
+Written after the registration commit (0ab2ed5f) and before the coverage census or any statistic of
+parts 4 and 5. Each item fills a detail part 3 left open; none changes an estimand, a frame, a
+comparator or a pass rule.
+
+1. Sparse cells. A located cell with fewer than 30 balls in play falls back, in order, to (level,
+   trajectory, angle bin, distance bin), (level, trajectory, angle bin), (level, trajectory), the
+   first with 30 or more. The framing grid falls back from (level, count group, 2-inch x, 0.1 z) to
+   (level, count group, 4-inch x, 0.2 z), then (level, 4-inch x, 0.2 z), then the level, the first
+   with 20 or more taken pitches.
+2. "1[k made the out]" counts outs only: on a hit or an error the fielder named by the first credit
+   (`f_fielded_ball`, an error credit) is not credited with an out. A tool-building test on AAA 2026
+   alone (the identity that a ball in play's runs over all positions sum to (out - p_c) x delta_c)
+   caught the first draft crediting it; that test printed the part 3 shrinkage constants k for
+   that one cell, a construction quantity, and no statistic of parts 4 and 5.
+3. Split-half reliability is the Pearson correlation of the two halves' runs per inning.
+4. Holders: a taken pitch's catcher is the holder of C at the start of the plate appearance; a
+   steal's catcher is the holder at the steal's event; a play with no known holder at a position
+   credits no player there (the runs stay out of every player's total).
+5. Outfield arm: the kill rule's "any outfield assist on it" is any `f_assist_of` credit or any
+   `f_assist` credit by an outfielder on the ball in play; a runner's end base is the end of his
+   last movement on the play.
+6. Pooled statistics are centred once on the full frame (within position, and within season for
+   (a)); bootstrap draws are not re-centred.
+7. Planted P-a uses the real run's k and level factors; the pitcher holds no planted skill; a
+   planted out's initial fielder is drawn among positions with probability proportional to
+   w_ck (p_c + s), floored at zero. N-b and N-c permute the predictor within the MLB primary
+   position; P-c's noise is scaled so the synthetic target has unit variance.
+8. The (b) predictor pools every MiLB level of seasons 2021 to D - 1; the read writes the (b) rows
+   to `.cache/milb_fielding/tables/b_rows.parquet` (cache only) for the record.
