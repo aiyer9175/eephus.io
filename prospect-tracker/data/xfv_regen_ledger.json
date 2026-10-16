@@ -12556,7 +12556,8 @@
      "message": "46 percent of live hitter cards are showing a DIFFERENT set of reasons than last vintage (2176 compared, board basis xfv_grade|scale=off|grademap=outcome_pooled@baa9676f90a6|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=fwar@2026-10-02-57bf90f7143e|injsides=pit|served=efv_v2@22ec625f|section=label_graded)."
     }
    ],
-   "n_alerts": 1
+   "n_alerts": 1,
+   "last_seen_at": "2026-10-16T03:45:33+00:00"
   }
  ],
  "thresholds": {
@@ -12573,14 +12574,6 @@
    "chosen": "geometric midpoint of the gap [0.112, 0.253] in 12 measured side-vintage label-set churn shares; flags the same 2 of 6 vintage pairs the weight tripwire does"
   }
  },
- "generated_at": "2026-10-16T01:58:12+00:00",
- "latest_alerts": [
-  {
-   "kind": "explainer_churn",
-   "side": "hit",
-   "share_label_set_changed": 0.4591,
-   "threshold": 0.1683,
-   "message": "46 percent of live hitter cards are showing a DIFFERENT set of reasons than last vintage (2176 compared, board basis xfv_grade|scale=off|grademap=outcome_pooled@baa9676f90a6|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=fwar@2026-10-02-57bf90f7143e|injsides=pit|served=efv_v2@22ec625f|section=label_graded)."
-  }
- ]
+ "generated_at": "2026-10-16T03:45:33+00:00",
+ "latest_alerts": []
 }
