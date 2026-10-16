@@ -180,3 +180,68 @@ def test_no_grade_level_grouping_in_source():
     for bad in ("groupby(\"fv", "groupby('fv", "fv_bucket", "fv_level", "by_fv"):
         assert bad not in src
     assert pd.__version__
+
+
+# --- the served sidecar (gate part 6) -------------------------------------------------
+
+def _fixture_build():
+    import tempfile
+    from collections import defaultdict
+    tmp = Path(tempfile.mkdtemp(prefix="mfr_t_"))
+    recs = M.fixture_records(games_per_cell=30)
+    sched = defaultdict(list)
+    for r in recs:
+        M._atomic_write_gz(M.game_path(r["sportId"], r["season"], r["gamePk"], tmp), r)
+        sched[(r["sportId"], r["season"])].append({"gamePk": r["gamePk"]})
+    return M.build(tmp, write=False, sports=(11, 12), seasons=(2021, 2022, 2023),
+                   schedule_fn=lambda s, y: sched.get((s, y), []), log=lambda *a: None)
+
+
+def _eval_fixture(verdict="PASS"):
+    cell = {"point": 0.2559, "n": 203, "lb95": 0.1073}
+    return {"dry_run": False, "verdicts": {"a": "PASS", "b": verdict, "c": "UNDERPOWERED"},
+            "b_mlb": {"primary": {"T1": cell, "T2": {"point": 0.198, "n": 164, "lb95": 0.033}}}}
+
+
+def test_sidecar_payload_shape_and_pre_debut_window():
+    import milb_fielding_runs_export as X
+    res = _fixture_build()
+    st = res["st"]
+    meta = {"k": res["k"], "levels": {k: v for k, v in res["levels"].items() if k != "_F"}}
+    pids = sorted(st.pid.unique().tolist())
+    keys = {f"p{i}": p for i, p in enumerate(pids)}
+    debut = {pids[0]: 2022}
+    pay = X.build_payload(st, meta, _eval_fixture(), keys, debut, generated_at="2026-10-16T00:00:00Z")
+    assert pay["eval_artifact"] == "data/milb_fielding_runs_eval.json"
+    assert "0.26" in pay["claim"] and "203" in pay["claim"] and "0.20" in pay["claim"]
+    assert pay["n_players"] == len(pay["by_mlbam"]) > 0
+    for mid, rec in pay["by_mlbam"].items():
+        assert str(mid) in pay["key_to_mlbam"].values()
+        for x in rec["positions"]:
+            assert x["inn"] >= M.INN_FLOOR - 0.5
+            assert x["band"] == X.band_of(x["rel"])
+            assert x["pos"] in M.POS_NAME.values()
+            assert x["mfr"] == round(x["mfr"], 1)
+    first = pay["by_mlbam"].get(str(pids[0]))
+    if first:                                     # only the 2021 season counts before 2022
+        assert first.get("pre_debut_only") is True
+        assert all(x["seasons"] == [2021, 2021] for x in first["positions"])
+
+
+def test_sidecar_writes_nothing_without_a_pass(tmp_path, monkeypatch):
+    import milb_fielding_runs_export as X
+    ev = tmp_path / "eval.json"
+    ev.write_text(json.dumps(_eval_fixture("FAIL")), encoding="utf-8")
+    out = tmp_path / "out.json"
+    assert X.run(eval_path=ev, out_path=out, tables=tmp_path) is None and not out.exists()
+    monkeypatch.setattr(X, "MILB_FIELDING_RUNS_SERVE", False)
+    assert X.run(eval_path=ev, out_path=out, tables=tmp_path) is None and not out.exists()
+
+
+def test_prospx_card_reads_the_sidecar_and_sits_in_signals():
+    src = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert "function milbFieldingCard(p)" in src
+    assert 'fetch("/data/milb_fielding_runs.json"' in src
+    assert "defHomeHtml, milbFieldingHtml].filter(Boolean)" in src
+    blk = src[src.index("function milbFieldingCard(p)"):src.index("// ===== eTools: the shown grade")]
+    assert "\u2014" not in blk and "\u2013" not in blk

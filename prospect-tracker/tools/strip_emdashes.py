@@ -115,6 +115,9 @@ TARGETS: list[str] = [
     # eABS (EWAR_T4_EABS, 2026-10-15): the exporter whose labels land in the
     # /mlbstats/ Challenges payload.
     "eabs_export.py",
+    # MiLB fielding runs (MILB_FIELDING_RUNS, 2026-10-16): the exporter whose what and
+    # claim lines land in the PROSPX MiLB fielding runs card.
+    "milb_fielding_runs_export.py",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.
     "models/index.html",
