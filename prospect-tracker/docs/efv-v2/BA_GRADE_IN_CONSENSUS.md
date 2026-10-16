@@ -213,3 +213,94 @@ The owner decides (EW3-36). The default recommendation, fixed here:
 committed before the read), the artifact `data/_labs/ba_grade/ba_grade_consensus_read.json`
 (`data/_labs/` ships to no webroot), sections 10 and 11 of this document, and the owner question.
 No served artifact, flag, constant, registry row or page changes.
+
+## 10. The read (run once, 2026-10-16)
+
+Artifact: `data/_labs/ba_grade/ba_grade_consensus_read.json` (`python tools/ba_grade_consensus_lab.py
+--run`, 2,211 s). Label: provider fwar, id `fwar@2026-10-02-57bf90f7143e` (the frozen vintage of
+`0341299c20ec` with plate appearances added at c7dacaaa; every WAR value unchanged). E_cond B 2000,
+seed 20260906; nulls K 100 each, seed 20261016.
+
+Parity: P1 holds; P2 arm S equals the frames' stored consensus on 830 of 830 vm_dev rows (largest
+difference 0.0) and reproduces the committed consensus reads exactly (within 0.1792 lv_dev, 0.3814
+vm_dev); P3 (as amended in 7a) holds, with the 2 zack_britton points of arm X listed; P4 holds.
+BA reaches 137 rows (69 hitters, 68 pitchers), all vm_dev 2023, as registered.
+
+Within (side, year) Spearman on the primary scope (vm_dev 2023, 166 rows, 166 player clusters):
+
+| arm | within | pooled | AUC |
+|---|---|---|---|
+| S (served) | 0.4102 | 0.4228 | 0.7564 |
+| R (raw) | 0.4102 | 0.4228 | 0.7564 |
+| A (adjusted, crosswalk by position) | 0.4123 | 0.4269 | 0.7666 |
+| A2 (adjusted, crosswalk by label) | 0.4138 | 0.4260 | 0.7647 |
+| X (BA excluded) | 0.4339 | 0.4472 | 0.7648 |
+
+| comparison | delta | CI95 | MDE95 | null | p | planted check | reading |
+|---|---|---|---|---|---|---|---|
+| C1 R minus X | -0.0238 | -0.0642 to +0.0147 | 0.0322 | N1 minus X: mean -0.0256, sd 0.0267 | 0.555 | PL1 passed | UNRESOLVED |
+| C2 A minus X | -0.0216 | -0.0677 to +0.0221 | 0.0379 | N1 minus X | 0.574 | PL1 passed | UNRESOLVED |
+| C3 A minus R | +0.0022 | -0.0333 to +0.0356 | 0.0289 | N2 minus R: mean -0.0174, abs p97.5 0.0606 | 0.960 | PL2 failed | UNRESOLVED |
+| C4 A2 minus R (sensitivity) | +0.0036 | -0.0248 to +0.0289 | 0.0227 | N2 minus R | 0.931 | PL2 failed | not adjudicated |
+
+Per side (reported, not adjudicated): C1 hitters -0.0203 (-0.0700 to +0.0333), pitchers -0.0267
+(-0.0853 to +0.0270); C3 hitters +0.0089 (-0.0356 to +0.0524), pitchers -0.0034 (-0.0539 to
++0.0460). Context, all 3,692 development rows (diluted by the rows no arm can move): C1 -0.0011
+(-0.0029 to +0.0006), C2 -0.0010, C3 +0.0001.
+
+Planted checks: PL1 (BA's grade re-assigned in outcome order) reads +0.2467 (CI95 +0.1872 to
++0.3150) against an N1 95th percentile of +0.0156: PASSED, so the instrument sees an informative
+BA vote. PL2 (the risk penalty re-assigned so the worst outcome carries the largest) reads +0.0546
+(CI95 -0.0105 to +0.1226) against an |N2| 97.5th percentile of 0.0606: FAILED, so on these 166 rows
+the instrument cannot see even a perfectly outcome-ordered risk penalty.
+
+Board effect (outcome-free; the served eFV board, `data/xfv.json`, 1,055 hitters and 941 pitchers;
+change in the latest `consensus_fv_raw` against arm S over the rows whose latest point carries BA,
+771 hitters and 568 pitchers):
+
+| arm | side | mean | SD | mean abs | largest up | largest down | moved 1 FV or more |
+|---|---|---|---|---|---|---|---|
+| R | hitters | +0.237 | 1.198 | 0.808 | +7.11 | -3.94 | 157 |
+| R | pitchers | +0.303 | 1.247 | 0.872 | +5.04 | -6.22 | 135 |
+| X | hitters | -0.261 | 1.362 | 1.049 | +4.50 | -5.23 | 337 |
+| X | pitchers | -0.281 | 1.377 | 1.048 | +3.17 | -6.83 | 264 |
+| A | hitters | -0.267 | 1.238 | 0.608 | +3.96 | -7.08 | 146 |
+| A | pitchers | -0.233 | 1.196 | 0.546 | +3.61 | -5.33 | 97 |
+
+Arm A differs from S on the board only through BA grades of 2023 to 2025 that are carried forward
+into a 2026 point (240 of the 771 hitters and 170 of the 568 pitchers carry a pre-2026 BA grade),
+which A would discount by the crosswalk. dylan_jordan: consensus 44.15 in S, 43.54 in R, 44.15 in
+A and A2, 43.78 in X (served consensus 44.1, served eFV 51.5).
+
+BA against the other outlets in the 2026 cycle (latest grade per player and source, Pearson):
+
+| role | against | n | BA stored (adjusted) | BA raw |
+|---|---|---|---|---|
+| hitters | FanGraphs | 520 | 0.788 | 0.636 |
+| hitters | MLB Pipeline | 554 | 0.848 | 0.680 |
+| pitchers | FanGraphs | 424 | 0.730 | 0.590 |
+| pitchers | MLB Pipeline | 440 | 0.776 | 0.654 |
+
+## 11. The reading
+
+Nothing resolves. The recommendation under section 8 is KEEP the served basis; the owner decides
+(EW3-36).
+
+- C1 and C2: with BA's vote, raw or risk-adjusted, the consensus reads about 0.02 of within
+  Spearman below the consensus without it on the one development cohort BA reaches, with
+  intervals across zero. That point estimate equals what a no-information vote of the same
+  coverage reads (N1 minus X mean -0.0256), so on these 137 rows BA's 2023 board adds nothing
+  measurable to FanGraphs and MLB Pipeline; it is not shown to hurt either.
+- C3: risk-adjusted against raw reads +0.002 (CI95 -0.033 to +0.036). PL2 failed, so this frame
+  cannot answer the raw-against-adjusted question at any effect size it could plausibly hold.
+  BA's published 2026 adjusted grade carries no outcome label yet and cannot be read on any
+  development frame.
+- PEER-5's premise is corrected. Its 0.135 (pitchers) pooled two eras: on the live board 170
+  pitchers carry a pre-2026 BA grade (raw, carried forward) beside 398 with a 2026 adjusted
+  grade. Inside the 2026 cycle BA's adjusted grade correlates MORE with FanGraphs and MLB
+  Pipeline than its raw grade does (pitchers 0.730 against 0.590 with FanGraphs), and inside
+  consensus the per-cycle normalization handles the level. The adjusted grade is not scale
+  noise inside consensus; a raw BA grade beside an eFV is still the wrong comparison off it.
+- Found on the way, not repaired here: the 2023 Blue Jays BA row filed under `zack_britton` (the
+  veteran's key) reads as a same-name prospect; the collision prune hides the veteran's 2011
+  history in the served build.
