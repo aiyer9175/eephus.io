@@ -294,9 +294,73 @@ and PLD passed. Defaults, fixed here:
   BA-only application waits for F4.
 - Either resolves negative (stale votes help): nothing changes and the finding is recorded.
 
-### C11 and C12
+### C11. The read (run once, 2026-10-16)
 
-Appended by the run.
+Artifact: `data/_labs/ba_grade/ba_stale_vote_read.json` (`python tools/ba_stale_vote_lab.py --run`
+at b065e64c, registration ec458200, 250 s). Label: provider fwar, id `fwar@2026-10-02-57bf90f7143e`.
+E_cond B 2000, seed 20260906; nulls K 200, seed 20261016.
+
+Parity: Q1 holds (the unchanged recomputation equals the frames' stored consensus on all 3,692
+rows); Q2 holds (all 3,483 distinct as-of points captured, same-name folds matched by signature).
+Touched rows: D and W 71 (lv_dev 18 hitters and 18 pitchers, vm_dev 12 and 23; the count of C3,
+68, read raw rows, the lab reads each outlet's effective vote after the alias fold), D1 287.
+
+Within (frame|side|year) Spearman, all 3,692 development rows, 1,987 player clusters:
+
+| arm | within | pooled | AUC |
+|---|---|---|---|
+| S (served) | 0.2240 | 0.2474 | 0.7594 |
+| D (drop two or more cycles old) | 0.2231 | 0.2477 | 0.7587 |
+| W (decay) | 0.2235 | 0.2481 | 0.7594 |
+| D1 (drop one or more cycles old) | 0.2253 | 0.2481 | 0.7591 |
+
+| comparison | delta | CI95 | MDE95 | null (mean, p95) | p | Holm p | planted | reading |
+|---|---|---|---|---|---|---|---|---|
+| G1 D minus S | -0.00085 | -0.0038 to +0.0018 | 0.0023 | ND: -0.00106, +0.00073 | 0.572 | 1.0 | PLD passed | UNRESOLVED |
+| G2 W minus S | -0.00051 | -0.0028 to +0.0013 | 0.0018 | NW: -0.00102, +0.00035 | 0.746 | 1.0 | PLD passed | UNRESOLVED |
+| G3 D1 minus S (reported) | +0.00126 | -0.0046 to +0.0072 | 0.0051 | | | | | not adjudicated |
+
+Per frame (reported): G1 lv_dev +0.00034 (-0.0021 to +0.0025), vm_dev -0.00503 (-0.0140 to
++0.0025); G2 lv_dev -0.00008, vm_dev -0.0020. Secondary: G1 pooled +0.00031, AUC -0.00068; G2
+pooled +0.00074, AUC +0.00006; every interval crosses zero.
+
+Planted check PLD (the 71 rows' stale grades re-assigned so the highest goes to the lowest
+outcome): D minus S on the planted corpus reads +0.00545 (CI95 +0.0024 to +0.0090) against an
+ND 95th percentile of +0.00073: PASSED. The instrument sees a harmful stale vote of that size.
+
+Board effect (outcome-free; the latest point of the 1,996 active eFV board rows, one not
+captured; change against S over the rows a rule touches):
+
+| rule | outlets | side | touched | mean | mean abs | largest up | largest down | moved 1 FV or more |
+|---|---|---|---|---|---|---|---|---|
+| D | every outlet | hitters | 75 | -1.488 | 1.783 | +2.06 | -5.44 | 53 |
+| D | every outlet | pitchers | 59 | -1.062 | 1.588 | +3.13 | -5.68 | 32 |
+| W | every outlet | hitters | 75 | -0.661 | 0.781 | +1.37 | -4.23 | 25 |
+| W | every outlet | pitchers | 59 | -0.504 | 0.725 | +1.56 | -2.92 | 15 |
+| D | BA only | hitters | 41 | -1.380 | 1.612 | +1.72 | -4.10 | 27 |
+| D | BA only | pitchers | 27 | -0.584 | 1.230 | +1.74 | -4.04 | 10 |
+| W | BA only | hitters | 41 | -0.642 | 0.748 | +0.68 | -2.33 | 10 |
+| W | BA only | pitchers | 27 | -0.343 | 0.612 | +0.70 | -2.69 | 6 |
+| D1 | BA only | hitters | 116 | -1.239 | 1.549 | +1.79 | -4.10 | 74 |
+| D1 | BA only | pitchers | 96 | -0.751 | 1.273 | +2.32 | -4.36 | 50 |
+
+### C12. The reading
+
+Nothing resolves; under C10 nothing served changes.
+
+- Dropping a vote two or more cycles old reads -0.0009 of within Spearman (CI95 -0.0038 to
+  +0.0018) and decaying it -0.0005, both inside their nulls: dropping the same number of votes
+  at random on the same rows reads -0.0011 on average. On the development frames a stale
+  FanGraphs or MLB Pipeline vote carries about as much information as any other vote on its
+  point; it is not shown to hurt, and it is not shown to help.
+- The planted check passed, so the frame would have seen a stale vote that ordered its rows
+  wrongly by an effect of about +0.005; the observed effect is well below the MDE95 of 0.0023 in
+  either direction. The reach is small (71 of 3,692 rows), so this reads the source-general rule
+  only. BA's own stale votes cannot be read on any development row (C3); that question stays F4
+  of the forward read.
+- On the board, rule D would lower the touched rows' consensus by about 1 to 1.5 FV on average:
+  the stale votes are, on average, higher than the fresher votes on the same points. That is a
+  board effect, not evidence; without a resolved read it does not move the board.
 
 ## D. What this task writes
 
