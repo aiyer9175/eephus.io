@@ -1099,6 +1099,24 @@
         : orgEmpty());
   }
 
+  // eTools (ETOOLS_SITEWIDE_FLIP, owner decision EW3-27): the payload PROSPX reads,
+  // fetched once when the Prospect Watch tab first paints. PAL_ETOOLS_ON mirrors
+  // etools.ETOOLS_ON (a test pins the two); off, the bars print as before.
+  var PAL_ETOOLS_ON = true;
+  var ETOOLS = null, ETOOLS_LOADING = false;
+  function ensureETools() {
+    if (!PAL_ETOOLS_ON || ETOOLS || ETOOLS_LOADING) return;
+    ETOOLS_LOADING = true;
+    fetch("/data/etools.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { ETOOLS = (d && d.players) || {}; ETOOLS_LOADING = false; render(); })
+      .catch(function () { ETOOLS = {}; ETOOLS_LOADING = false; });
+  }
+  function palETools(key) {
+    var e = (PAL_ETOOLS_ON && ETOOLS && key) ? ETOOLS[key] : null;
+    return (e && e.side === "pit") ? (e.tools || {}) : {};
+  }
+
   function renderProspects() {
     var all = (DATA && DATA.prospect_watch) || [];
     if (!all.length) return empty("No prospect role-mismatches yet.");
@@ -1152,7 +1170,10 @@
     }
     var note = '<div class="mlbstats-note">Scouted role vs ' + gloss("starter shape", "starter_shape")
       + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 tool grades; no minors pitch "
-      + "tracking). Descriptive shape screen, not a backtested model.</div>";
+      + "tracking). Descriptive shape screen, not a backtested model."
+      + (PAL_ETOOLS_ON ? " The shape reads the consensus grades; the bars show the " + gloss("eTool", "etools")
+         + " where one passed (e) and the consensus grade elsewhere (c)." : "") + "</div>";
+    ensureETools();
     var how = howBlock(esc(DATA.n_prospects || "") + " prospect pitchers scanned"
       // COVERAGE, STATED. A mismatch needs a stated role for the shape to
       // disagree with, and a position of RHP, LHP or P states handedness and no
@@ -1165,11 +1186,23 @@
                ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the consensus FV floor)" : "")
             + ".")
          : ".") + bound);
-    function toolBars(tools) {
+    // The shown grades (ETOOLS_SITEWIDE_FLIP): the eTool for the fastball and
+    // command where one passed (marked e, to the nearest grade), else the consensus
+    // grade (marked c, rounded up). The shape screen above reads the consensus grades.
+    function toolBars(tools, key) {
       tools = tools || {};
+      var et = palETools(key);
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
-        return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + k.toUpperCase() + "</span>"
-          + bar((tools[k] - 20) / 60 * 100) + '<span class="pal-ars-meta">' + fInt(tools[k]) + "</span></div>";
+        var r = et[k];
+        var v = r ? r.shown : tools[k];
+        var shown = !PAL_ETOOLS_ON ? fInt(v) : r ? String(r.shown) : fCeil(v);
+        var mark = !PAL_ETOOLS_ON ? "" : '<sup style="font-size:8px;margin-left:1px;opacity:0.8;" aria-label="'
+          + (r ? "eTool" : "consensus") + '">' + (r ? "e" : "c") + "</sup>";
+        var tip = !PAL_ETOOLS_ON ? "" : ' title="' + esc(r
+          ? k.toUpperCase() + " " + r.shown + ": eTool, the consensus grade moved by his own minor-league stats, to the nearest grade. Consensus " + fCeil(tools[k]) + ", rounded up."
+          : k.toUpperCase() + " " + fCeil(tools[k]) + ": consensus grade, rounded up") + '"';
+        return '<div class="pal-ars-row"' + tip + '><span class="pal-ars-pitch">' + k.toUpperCase() + mark + "</span>"
+          + bar((v - 20) / 60 * 100) + '<span class="pal-ars-meta">' + shown + "</span></div>";
       }).join("");
     }
     // Two grades, two labels, eFV first (owner ask 5, answer Q-E4, which also
@@ -1212,7 +1245,7 @@
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches"
         + sevChip(p) + "</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
-        + toolBars(p.tools) + "</div>";
+        + toolBars(p.tools, p.player_key) + "</div>";
     }).join("");
     return note + how + orgBar(all, "org", "prospects", true)
       + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());

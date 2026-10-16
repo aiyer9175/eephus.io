@@ -18,8 +18,9 @@ import etools as E
 SRC = Path(E.__file__).read_text(encoding="utf-8")
 
 
-def test_flag_is_dark_and_preview_off_the_webroot():
-    assert E.ETOOLS_ON is False
+def test_flag_is_on_and_the_lab_and_preview_stay_off_the_webroot():
+    # owner decision EW3-27 (2026-10-15): eTools are the shown tool grades (ETOOLS_SITEWIDE_FLIP)
+    assert E.ETOOLS_ON is True
     assert "_labs" in E.EVAL_PATH.parts and "_labs" in E.ATLAS_PATH.parts
     assert ".cache" in E.PREVIEW_PATH.parts
     assert E.SERVED_PATH.name == "etools.json"
@@ -102,11 +103,18 @@ def test_etool_equals_consensus_without_a_candidate():
     assert out2[0] == 80.0                  # clamped to the 20-80 scale
 
 
-def test_display_rounds_up_to_five():
-    assert E.display_grade(50.1) == 55
+def test_consensus_display_rounds_up_and_the_etool_rounds_to_nearest():
+    # consensus tool grades: the owner's ceiling rule, to the whole grade
+    assert E.display_grade(50.1) == 51
     assert E.display_grade(50.0) == 50
     assert E.display_grade(19.0) == 20
     assert E.display_grade(None) is None
+    # the eTool is a model grade: nearest whole grade like eFV, halves up as Math.round does
+    assert E.etool_shown(50.49) == 50
+    assert E.etool_shown(50.5) == 51
+    assert E.etool_shown(52.5) == 53            # not Python's banker's round (52)
+    assert E.etool_shown(81.2) == 80 and E.etool_shown(17.0) == 20
+    assert E.etool_shown(None) is None
 
 
 def test_parse_mph():
@@ -293,23 +301,50 @@ def test_build_preview_routes_by_the_flag(monkeypatch, tmp_path, flag):
     prev, served = _stub_preview_inputs(monkeypatch, tmp_path, flag)
     path = E.build_preview(_preview_eval(), log=lambda *_a: None)
     assert path == (served if flag else prev)
-    assert path.exists() and not (prev if flag else served).exists()
-    doc = json.loads(path.read_text(encoding="utf-8"))
+    # the full detail always lands in the .cache preview; the served payload only when on
+    assert prev.exists() and served.exists() is flag
+    doc = json.loads(prev.read_text(encoding="utf-8"))
     t = doc["players"]["pk1"]["tools"]
     assert t["eHIT"]["basis"] == "etool" and t["eHIT"]["consensus"] == 52.5
     assert t["eHIT"]["etool"] == pytest.approx(56.5)          # 52.5 + 4 x (1 - 0)
-    assert t["eHIT"]["etool_display"] == 60
+    assert t["eHIT"]["etool_display"] == 57                    # nearest whole grade (56.5 halves up)
     assert t["eHIT"]["band80"] == pytest.approx([56.5 - E.BAND_Z * 2.0, 56.5 + E.BAND_Z * 2.0], abs=0.01)
     # a tool that did not pass keeps the consensus even with a fit on file
     assert t["ePOW"]["basis"] == "consensus" and "etool" not in t["ePOW"]
     assert doc["flag_etools_on"] is flag
+    if flag:
+        sv = json.loads(served.read_text(encoding="utf-8"))
+        assert sv["flag_etools_on"] is True
+        # only the passing eTools ride; consensus-only tools are the site's own grades
+        assert sv["players"] == {"pk1": {"mlbam": 1, "side": "hit", "tools": {"hit": {
+            "etool": 56.5, "shown": 57, "consensus": 52.5,
+            "band80": [round(56.5 - E.BAND_Z * 2.0, 1), round(56.5 + E.BAND_Z * 2.0, 1)],
+            "drivers": [["k_rw", 4.0]]}}}}
+        assert sv["tools"]["hit"]["key"] == "eHIT" and sv["tools"]["hit"]["name"] == "Hit"
+        assert "speed" in sv["consensus_tools"] and "hit" not in sv["consensus_tools"]
+        assert sv["driver_labels"]["k_rw"] == "translated strikeout rate"
 
 
-def test_preview_is_dark_by_default(monkeypatch, tmp_path):
-    prev, served = _stub_preview_inputs(monkeypatch, tmp_path, None)
-    assert E.ETOOLS_ON is False
+def test_flag_off_writes_only_the_cache_preview(monkeypatch, tmp_path):
+    prev, served = _stub_preview_inputs(monkeypatch, tmp_path, False)
     E.build_preview(_preview_eval(), log=lambda *_a: None)
     assert prev.exists() and not served.exists()
+
+
+def test_served_payload_matches_the_flag_and_rounds_to_nearest():
+    import json
+    doc = json.loads(E.SERVED_PATH.read_text(encoding="utf-8"))
+    assert doc["flag_etools_on"] is E.ETOOLS_ON
+    assert set(doc["tools"]) == set(E.PASS_TOOLS)
+    n = 0
+    for p in doc["players"].values():
+        assert p["side"] in ("hit", "pit") and p["tools"]
+        for tool, r in p["tools"].items():
+            assert tool in E.PASS_TOOLS and E.TOOLS[tool]["side"] == p["side"]
+            assert r["shown"] == E.etool_shown(r["etool"])
+            assert 20 <= r["shown"] <= 80
+            n += 1
+    assert n > 1000
 
 
 class _StubPR:
@@ -638,20 +673,28 @@ def test_library_summary_copies_the_lab_artifacts(monkeypatch, tmp_path):
     assert hit["labels"]["mlb"]["d"] == 0.3 and hit["verdict"] == "PASS"
     assert [a["no_added_effect"] for a in hit["admitted"]] == [False, True]
     assert doc["pitch_rate"] == {"efv_tests": 232, "efv_flagged": 0, "efv_min_q": 0.106}
-    assert doc["flag_etools_on"] is False
+    assert doc["flag_etools_on"] is E.ETOOLS_ON
 
 
 def test_card_flag_mirrors_etools_on_and_fetches_only_when_on():
     import re
-    html = (Path(E.__file__).resolve().parent / "prospx" / "index.html").read_text(encoding="utf-8")
+    root = Path(E.__file__).resolve().parent
+    html = (root / "prospx" / "index.html").read_text(encoding="utf-8")
     m = re.search(r"const ETOOLS_CARD_ON = (true|false);", html)
     assert m, "the card's eTools flag is missing"
     assert (m.group(1) == "true") is E.ETOOLS_ON
     body = html[html.index("function ensureETools()"):]
     body = body[:body.index("\n}\n") + 3]
     assert body.index("if (!_ETOOLS_UI") < body.index('fetch("/data/etools.json"'), "the fetch is gated"
-    # the six passing tools map onto the card's grade keys
-    assert 'const _ETOOL_KEY = { hit: "eHIT", pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };' in html
+    # the six passing tools map onto the card's grade keys (the one Power grade reads game power's)
+    assert ('const _ETOOL_TOOL_OF = { hit: "hit", pwr: "game_pwr", game_pwr: "game_pwr", pitch_sel: "pitch_sel",'
+            in html)
+    assert 'const _ETOOL_KEY = { hit: "eHIT", game_pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };' in html
+    # the MLB player page and the Alchemy Lab carry the same flag
+    for rel, pat in (("assets/projections.js", r"const MLBP_ETOOLS_ON = (true|false);"),
+                     ("assets/pal.js", r"var PAL_ETOOLS_ON = (true|false);")):
+        m = re.search(pat, (root / rel).read_text(encoding="utf-8"))
+        assert m and (m.group(1) == "true") is E.ETOOLS_ON, rel
 
 
 def test_library_summary_is_dated_and_lists_every_tool():

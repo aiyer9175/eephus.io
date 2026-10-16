@@ -10003,6 +10003,12 @@ SCOUTING_COPY = {
     "D-HEAD": "How eephus uses grades",
     "D-1": "Consensus FV and tool grades print rounded up to the whole grade: 62.1 prints as 63.",
     "D-2": "eFV, our model grade, rounds to the nearest whole grade, as do plus stats.",
+    # D-5 (ETOOLS_SITEWIDE_FLIP, amendment in the registered document): printed only while
+    # data/etools.json says the eTools are the shown tool grades.
+    "D-5": ("For hit, game power, pitch selection, bat control, fastball and command, PROSPX shows "
+            "the eTool: the consensus grade moved by the prospect's own minor-league stats. It is a "
+            "model grade, so it rounds to the nearest whole grade and carries an e; every other tool "
+            "shows the consensus grade, which carries a c."),
     # D-3 holds at this HEAD: consensus.ADOPT_NORMALIZED_CONSENSUS is True and
     # grade_normalization quantile-maps every source's FV onto the FanGraphs FV
     # distribution before consensus.build_timeseries aggregates (checked by TL_22).
@@ -10353,14 +10359,24 @@ def _scouting_tools_html(p: dict) -> str:
     return "".join(out)
 
 
+def _etools_served() -> bool:
+    """True while data/etools.json (etools.py --preview with ETOOLS_ON) says the eTools are the
+    shown tool grades (ETOOLS_SITEWIDE_FLIP). A missing or unreadable file reads False."""
+    try:
+        return bool(json.loads((ROOT / "data" / "etools.json").read_text(encoding="utf-8")).get("flag_etools_on"))
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def _scouting_d_html() -> str:
     C = SCOUTING_COPY
     d4 = (_sc_e(C["D-4"])
           .replace("the Library", f'the <a href="/glossary/">{_sc_e(GLOSSARY_DISPLAY_NAME)}</a>', 1)
           .replace("on PROSPX", 'on <a href="/prospx/">PROSPX</a>', 1)
           .replace("Source Accuracy", '<a href="/glossary/#view=source-accuracy">Source Accuracy</a>', 1))
+    keys = ("D-1", "D-2", "D-5", "D-3") if _etools_served() else ("D-1", "D-2", "D-3")
     return (f'<section id="eephus" aria-labelledby="sc-d"><h2 id="sc-d">{_sc_e(C["D-HEAD"])}</h2>'
-            + "".join(f'<p>{_sc_e(C[k])}</p>' for k in ("D-1", "D-2", "D-3"))
+            + "".join(f'<p>{_sc_e(C[k])}</p>' for k in keys)
             + f'<p>{d4}</p></section>')
 
 

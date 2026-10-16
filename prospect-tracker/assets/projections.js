@@ -3482,27 +3482,73 @@
     hit: [["Hit", "hit"], ["Game Pwr", "game_pwr"], ["Raw Pwr", "raw_pwr"], ["Speed", "speed"], ["Field", "field"], ["Arm", "throw"], ["Bat Ctrl", "bat_ctrl"], ["Pitch Sel", "pitch_sel"]],
     pit: [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CT", "ct"], ["CMD", "cmd"], ["FRM", "frame"], ["ATHL", "athl"]],
   };
+  // eTools (ETOOLS_SITEWIDE_FLIP, owner decision EW3-27): the shown grade for each
+  // tool with a passing eTool (hit, game power, pitch selection, bat control,
+  // fastball, command), read from the payload PROSPX reads and printed to the
+  // nearest whole grade; every other tool keeps its consensus grade, rounded up.
+  // MLBP_ETOOLS_ON mirrors etools.ETOOLS_ON (a test pins the two); off, the pills
+  // print exactly as before.
+  const MLBP_ETOOLS_ON = true;
+  let ETOOLS = null, ETOOLS_LOADING = false;
+  function ensureETools() {
+    if (!MLBP_ETOOLS_ON || ETOOLS || ETOOLS_LOADING) return;
+    ETOOLS_LOADING = true;
+    fetch("/data/etools.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const players = (d && d.players) || {};
+        const byMlbam = {};
+        for (const k in players) if (players[k] && players[k].mlbam != null) byMlbam[String(players[k].mlbam)] = players[k];
+        ETOOLS = { players, byMlbam };
+        ETOOLS_LOADING = false;
+        const cur = currentCard();
+        if (cur) patchSlot("scouttools", state.player, scoutToolPills(cur));
+      })
+      .catch(() => { ETOOLS = { players: {}, byMlbam: {} }; ETOOLS_LOADING = false; });
+  }
+  function eToolsOf(p) {
+    if (!MLBP_ETOOLS_ON || !ETOOLS) return {};
+    const pk = p.origin && p.origin.prospx;
+    const e = (pk && ETOOLS.players[pk]) || (p.mlbam != null ? ETOOLS.byMlbam[String(p.mlbam)] : null);
+    return (e && e.side === (p.isPit ? "pit" : "hit")) ? (e.tools || {}) : {};
+  }
+  // The pill row: an eTool (marked e) where one passed, else the consensus grade
+  // (marked c, rounded up); the consensus stays in the eTool's tooltip.
+  function scoutToolPills(p) {
+    const s = p.scout;
+    if (!s || !s.tools) return "";
+    const order = TOOL_PILLS[p.isPit ? "pit" : "hit"];
+    const known = new Set(order.map(o => o[1]));
+    const extra = Object.keys(s.tools).filter(k => !known.has(k) && s.tools[k] != null).map(k => [k.toUpperCase().replace(/_/g, " "), k]);
+    const et = eToolsOf(p);
+    const pills = order.concat(extra).filter(([, k]) => s.tools[k] != null).map(([lbl, k]) => {
+      const r = et[k];
+      const raw = r ? Number(r.shown) : Number(s.tools[k]);
+      const g = r ? r.shown : Math.ceil(raw);   // owner rule: consensus tool grades display ceiling
+      const isTool = k !== "frame" && k !== "athl" && k !== "delivery";
+      const mark = (MLBP_ETOOLS_ON && isTool)
+        ? `<sup style="font-size:8px;margin-left:1px;opacity:0.8;" aria-label="${r ? "eTool" : "consensus"}">${r ? "e" : "c"}</sup>` : "";
+      const tip = !MLBP_ETOOLS_ON || !isTool ? ""
+        : r ? `${lbl} ${g}: eTool, the consensus grade moved by his own minor-league stats, to the nearest grade (${Number(r.etool).toFixed(1)}). Consensus ${Math.ceil(Number(s.tools[k]))}, rounded up.`
+          : `${lbl} ${g}: consensus grade, rounded up`;
+      // Only the grade COLOUR stays inline (gradeColor is a value read off the
+      // 20-80 grade); the pill shape lives on .mlbp-toolpill.
+      return `<span class="mlbp-toolpill"${tip ? ` title="${esc(tip)}"` : ""}>
+          <span class="mlbp-toolpill-label">${esc(lbl)}${mark}</span>
+          <span class="mlbp-toolpill-val" style="color:${gradeColor(raw)};">${g}</span></span>`;
+    }).join("");
+    return pills ? `<div class="mlbp-toolpills">${pills}</div>` : "";
+  }
   // Scouting slice (ex-PROSPX players): the latest published report blurb + the
-  // consensus 20-80 tool grades as pills. Both are conditional - a player with
-  // neither renders nothing (no empty shell).
+  // 20-80 tool grades as pills. Both are conditional - a player with neither
+  // renders nothing (no empty shell).
   function scoutingBlock(p) {
     const s = p.scout;
     if (!s) return "";
-    let pillsHtml = "";
-    if (s.tools) {
-      const order = TOOL_PILLS[p.isPit ? "pit" : "hit"];
-      const known = new Set(order.map(o => o[1]));
-      const extra = Object.keys(s.tools).filter(k => !known.has(k) && s.tools[k] != null).map(k => [k.toUpperCase().replace(/_/g, " "), k]);
-      const pills = order.concat(extra).filter(([, k]) => s.tools[k] != null).map(([lbl, k]) => {
-        const raw = Number(s.tools[k]);
-        const g = Math.ceil(raw);   // owner rule: tool grades display ceiling
-        // Only the grade COLOUR stays inline (gradeColor is a value read off the
-        // 20-80 grade); the pill shape lives on .mlbp-toolpill.
-        return `<span class="mlbp-toolpill">
-          <span class="mlbp-toolpill-label">${esc(lbl)}</span>
-          <span class="mlbp-toolpill-val" style="color:${gradeColor(raw)};">${g}</span></span>`;
-      }).join("");
-      if (pills) pillsHtml = `<div class="mlbp-toolpills">${pills}</div>`;
+    let pillsHtml = scoutToolPills(p);
+    if (MLBP_ETOOLS_ON && pillsHtml) {
+      ensureETools();
+      pillsHtml = slotHTML("scouttools", pillsHtml);
     }
     let reportHtml = "";
     const r = s.report;
@@ -3523,7 +3569,7 @@
         <p class="mlbp-scout-text">${esc(r.text)}${srcLink}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">prospect card &rarr;</a>` : ""}</p></div>`;
     }
     if (!pillsHtml && !reportHtml) return "";
-    return section("scouting", "Scouting", "consensus 20-80 tools · latest report · via PROSPX", pillsHtml + reportHtml);
+    return section("scouting", "Scouting", MLBP_ETOOLS_ON ? "20-80 tools (e: eTool, c: consensus) · latest report · via PROSPX" : "consensus 20-80 tools · latest report · via PROSPX", pillsHtml + reportHtml);
   }
   // Games by position from the nightly fielding feed, joined on the card's
   // MLBAM id (a name-slug join showed one Max Muncy's line on the other's

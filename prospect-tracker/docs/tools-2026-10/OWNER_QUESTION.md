@@ -61,3 +61,15 @@ eBAT 5.4, 205 of 659; ePOW 2.7, 50 of 829; eCMD 3.0, 63 of 801. The bands are wi
   null), or a declared neutral 1.0 (what the look did implicitly). The arm serves nothing.
 - **ETOOLS-FLIP-3, the drifted eTool.** Applied: the registered rule, re-centred on the scoring
   board. Alternative: show eFB uncentred with a drift note beside it (its shift would stay +2.9).
+
+## Answered 2026-10-15 (decision EW3-27), built by ETOOLS_SITEWIDE_FLIP
+
+The owner, verbatim: "eTools should be our shown version of each tool across the site." That is
+option 2 above, wider than the card: all six eTools, re-centred, are the shown grade on every
+surface that prints a prospect tool grade, and every other tool keeps its consensus grade. Rounding:
+the eTool is a model grade and prints to the nearest whole grade, like eFV; consensus tool grades
+still round up. Each shown grade carries a small mark, e for an eTool and c for consensus, and the
+card keeps the consensus grade beside each eTool as a smaller reference value. `ETOOLS_ON` (etools.py),
+`ETOOLS_CARD_ON` (prospx/index.html), `MLBP_ETOOLS_ON` (assets/projections.js) and `PAL_ETOOLS_ON`
+(assets/pal.js) are True and pinned together by test_etools.py. ETOOLS-FLIP-2 and -3 keep the
+defaults applied above. eFV does not read the eTools (EFV_ETOOLS_REWEIGHT owns that).
