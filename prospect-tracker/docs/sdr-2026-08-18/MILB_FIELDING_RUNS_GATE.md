@@ -290,3 +290,36 @@ by position, reliability band, levels), with a glossary entry and the registry r
 registration (part 11). No claim that MFR adds to the scouting field grade ((c) UNDERPOWERED),
 none at catcher or at any single position except as the reported cells read, and none on
 accuracy beyond the cells above. EWAR_SDR_PROSPECT_DISPLAY is superseded (EW3-33).
+
+## 11. The eFV driver read (registered 2026-10-16, after (b) PASS, before any of its numbers)
+
+Part 6 licenses an atlas-style eFV driver read once (b) passes. This part fixes it before
+anything of it is computed; it is committed alone (docs only). Development read: nothing served
+moves; passing candidates are handed to EFV_X3 as candidates, nothing more.
+
+- **Rows and machinery.** efv5_atlas.py imported unchanged: its hitter table (one row per
+  (player, MiLB season S, level) with 100+ PA, no MLB line at or before S), its as-of consensus
+  FV (V = S + 1 window; R-LV vintages never built), its labels, folds, ridge and logistic heads,
+  cluster bootstrap and BH q. Never a cell by FV level; consensus FV is a covariate only.
+- **Metric `mfr_row`.** The row's own level and season: 1,000 x (sum over positions of the
+  level-centred runs) / (innings + k_w), k_w the innings-weighted mean of the positions' k (part
+  3), level-native (no translation inside one level); missing below 50 innings. The atlas's DSL
+  and CPX rows read the ROK (sport 16) tables. Built only from fielding in season S.
+- **Frames: development only.** The clean frames whose label window closes before the R-VM
+  debut cohort: reach3 on rows S <= 2021 and w3 on rows S <= 2021 (reach5 clean and l6 hold no
+  MFR season). The R-VM-overlapping `all` frames and the horizon-censored labels are not read.
+- **Cells.** level (DSL, CPX, A, A+, AA, AAA) x age band (all, young, average, old) x hitter
+  position group (all, C, SS, CF, IF, COF, 1B/DH), the atlas's own groups and minimums
+  (MIN_PLAYERS 150 distinct players, MIN_POS 30). The incremental score (consensus FV plus
+  `mfr_row` against consensus FV alone, out of fold, five player folds, seed 20261014) on the
+  listed rows decides; B = 2,000 player-clustered draws, seed 20261021; BH q within (family
+  `fielding`, label).
+- **Candidate rule (the atlas's).** incremental > 0, its CI95 lower bound > 0, q <= 0.10.
+- **Null comparator N-d.** `mfr_row` permuted within (level, season), seed 20261022, scored on
+  the same cells; any null candidate VOIDS the read.
+- **Planted recovery P-d.** A synthetic metric 0.3 z(within-season rank of the label) + sqrt(0.91)
+  z(noise), seed 20261023, scored on the same cells; a cell where the planted metric is not a
+  candidate is UNDERPOWERED for this read, and a real candidate is reported only in cells where
+  P-d is a candidate.
+- **Output.** `data/_labs/milb_fielding_runs/driver_read.json` (lab only, ships in neither
+  publish list); results appended below as a dated note.
