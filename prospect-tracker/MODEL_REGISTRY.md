@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**382 models.** Verdicts: validated: 55, provisional: 184, unvalidated: 51, deprecated: 92.
+**383 models.** Verdicts: validated: 55, provisional: 185, unvalidated: 51, deprecated: 92.
 
 ## Instrument boundary
 
