@@ -7,7 +7,7 @@ document is committed ALONE, with its pin test `test_ewar_innovate_registration.
 measure's code exists and before any number of its estimands is computed. A change after the
 first number is a dated note in part 8, never an edit above it.
 
-STATUS: REGISTERED, RESULTS EMPTY.
+STATUS: REGISTERED; READ 2026-10-16, NOT VALIDATED (part 8).
 
 ## 0. What it is
 
@@ -134,3 +134,32 @@ catcher_value_eval.json` (tracked, never shipped); per-catcher values only in
 ## 8. Results and dated notes
 
 EMPTY.
+
+### 8.1 2026-10-16: the census and the two validations (tools/catcher_value_lab.py), once
+
+- **Dry run** on the fixture with nulls passed before any read (planted: V-P and V-S pass; null:
+  neither). The ledger it reads carries the I5 null-clause miss of `PITCH_LEDGER_GATE.md` part 9.2.
+- **Census (part 2):** 64 to 69 catchers a season at 2,000 called pitches caught. sd of CV2 6.2
+  to 7.8 runs a season 2018 to 2025 and 4.4 in 2026; framing carries 60 to 82 percent of CV2's
+  variance. Pearson r of CV2 with FanGraphs' catcher runs (fielding plus framing) 0.83 to 0.96; THR
+  with Savant's catcher stealing runs 0.33 to 0.72; 2026 BLK with Savant's blocking runs 0.79. The
+  2026 eABS column beside CV2 (69 catchers, `data/eabs_leaderboards.json` raw runs net of the
+  failed-challenge cost): median 6.0 runs, 7 percent under 2 runs in absolute value, r with CV2
+  0.16. The registered expectation that eABS is under 2 runs for most catchers did not hold.
+- **V-P (3.1):** 49 catchers in both 2018 and 2019; bootstrap sd 0.1086, MDE95 0.1786; Spearman
+  0.5435 (95 percent 0.3102 to 0.7318); permuted twin 0.0862 (-0.2307 to 0.3847). **Passes.**
+  Beside, no weight: FanGraphs' catcher runs per 1,000 innings at catcher 0.4960 (0.2555 to
+  0.6817) on the same 49.
+- **V-S (3.2), the simulated copy of 2018 first:** null (outcomes shuffled within team, half and
+  pitcher) r -0.0033 (-0.1774 to 0.1545), fails as it must; planted (the null plus 5 times each
+  catcher's season CV2 per PA) r 0.5062 (0.3663 to 0.6167), passes as it must.
+- **V-S on 2018 and 2019:** 294 observations, 89 catchers, 60 team-seasons; bootstrap sd 0.0583,
+  MDE95 0.0959; Pearson r of held-out CV2 per PA with held-out pitcher-matched runs saved -0.0208
+  (-0.1322 to 0.0970); twin 0.0630 (-0.0537 to 0.1766). **Fails.** Beside, no weight: framing alone
+  0.1185 (0.0040 to 0.2440), blocking alone -0.1850 (-0.2939 to -0.0601), throwing alone -0.0542
+  (-0.1690 to 0.0678), FanGraphs' season catcher runs per inning, not held out, 0.0734 (-0.0416 to
+  0.1895).
+- **Verdict (3.3): NOT VALIDATED** (V-P passes, V-S fails), a complete result. Nothing is
+  registered for the eWAR v3 skill look under part 5. The blocking part's negative held-out
+  relation is a lead for its definition (its expected cost scales with how often runners are on
+  while the catcher catches), not a finding; any change is a new registration.
