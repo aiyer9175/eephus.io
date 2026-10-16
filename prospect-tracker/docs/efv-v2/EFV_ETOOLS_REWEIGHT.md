@@ -280,3 +280,140 @@ say what fell short.
   is never called.
 - The served grade does not move in this task: every new path is behind
   `EFV_ETOOLS_REWEIGHT_ON = False`.
+
+## 12. The read (appended by the run, 2026-10-16; development frames)
+
+Run: `python -u efv_etools_reweight.py --prep --cache <scratch>` (builds and fits, no
+statistic; code 5350c182) then `python -u efv_etools_reweight.py --run --cache <scratch>`
+once (artifact `data/_labs/efv5/efv_etools_reweight_fit.json`, generated 2026-10-16T20:09:12Z;
+E_cond B 2000, seed 20260906; weight bootstrap B 2000, seed 20261016). No reserved row was
+built; nothing was cut by consensus-FV level.
+
+**Disclosures.**
+- The label: the frozen fWAR vintage's id reads `fwar@2026-10-02-57bf90f7143e`, not the
+  `0341299c20ec` this document names: c7dacaaa added plate appearances to every hitting row of
+  the vintage with every published value unchanged, which moves the id. The RT parity below
+  (exact to four places on both frames) confirms the scored labels are the re-fit's.
+- Section 3's eSEL and eBAT rows: the first write counted the matched vm_dev rows but did not
+  read them (a harness omission). The registered read of those rows was run once afterwards
+  (`--part1-frame`, the same artifact, key `part1_frame_tools_read`); it decides nothing.
+
+### 12.1 Receipts
+
+- RT parity: recomputed within 0.1683 (lv_dev) and 0.3937 (vm_dev), the committed read's own;
+  RT's production fit, re-fitted here, reproduces the served board exactly (0 of 1,055 hitters
+  and 0 of 941 pitchers move).
+- The eTools frame: rebuilt with the look's universe (8,898 rows) and every look d of the
+  eight tools reproduced within 5e-5 before any eFV row was touched.
+- Row contexts: 14,877 rows (frame folds, production rows, twins); 22,257 observed-grade checks
+  against the rows' own features, 0 mismatches; the sub-driver values of an eFV row equal the
+  eTools frame's on every shared (player, board year): 38,035 values compared, 0 differ.
+- 56 eTool fits (tool, board years, players out), each recorded with its rows and slopes.
+- Coverage on the scored test rows (rows with an observed grade; rows whose eTool differs from
+  it): lv_dev hit 1,400 / 1,299, game power 1,397 / 1,284, fastball 1,349 / 1,271, command
+  1,342 / 1,274; vm_dev hit 479 / 475, game power 435 / 428, fastball 538 / 529, command
+  509 / 504. Mean eTool minus grade within 0.12 of 0 everywhere (the re-centring).
+
+### 12.2 Part 1: the correlation recheck
+
+Within (side, year) Spearman with later WAR, eTool against the consensus grade it replaces
+(A), and the incremental gain over consensus FV of each (B), on the scored rows that carry the
+grade (E_cond CI95):
+
+| frame | tool | n | eTool | consensus grade | A: difference (CI95) | B: eTool gain | B: grade gain | B: difference (CI95) |
+|---|---|---|---|---|---|---|---|---|
+| lv_dev | eHIT | 1,400 | 0.089 | 0.131 | -0.042 (-0.087 to +0.003) | +0.0013 | -0.0004 | +0.0017 (-0.004 to +0.008) |
+| lv_dev | ePOW | 1,397 | 0.075 | 0.075 | +0.000 (-0.018 to +0.018) | -0.0117 | -0.0122 | +0.0005 (-0.002 to +0.003) |
+| lv_dev | eFB | 1,349 | -0.013 | -0.038 | +0.025 (-0.025 to +0.071) | +0.0058 | +0.0072 | -0.0014 (-0.007 to +0.004) |
+| lv_dev | eCMD | 1,342 | 0.118 | 0.147 | -0.029 (-0.053 to -0.005) | +0.0082 | +0.0111 | -0.0029 (-0.006 to +0.000) |
+| lv_dev | eRAW (sens.) | 1,127 | 0.045 | 0.041 | +0.003 (-0.003 to +0.009) | -0.0065 | -0.0065 | -0.0001 (-0.001 to +0.001) |
+| lv_dev | eSPD (sens.) | 1,400 | 0.018 | 0.010 | +0.008 (-0.007 to +0.022) | +0.0023 | -0.0048 | +0.0071 (-0.003 to +0.016) |
+| vm_dev | eHIT | 406 | 0.194 | 0.299 | -0.106 (-0.165 to -0.048) | +0.0067 | +0.0065 | +0.0002 (-0.010 to +0.010) |
+| vm_dev | ePOW | 403 | 0.122 | 0.123 | -0.000 (-0.031 to +0.030) | +0.0109 | +0.0165 | -0.0055 (-0.012 to -0.000) |
+| vm_dev | eFB | 423 | 0.127 | 0.095 | +0.032 (-0.032 to +0.097) | -0.0102 | -0.0163 | +0.0061 (-0.014 to +0.026) |
+| vm_dev | eCMD | 422 | 0.165 | 0.191 | -0.026 (-0.054 to -0.002) | +0.0046 | +0.0063 | -0.0018 (-0.008 to +0.004) |
+| vm_dev | eRAW (sens.) | 405 | 0.055 | 0.049 | +0.006 (-0.015 to +0.028) | +0.0143 | +0.0144 | -0.0001 (-0.005 to +0.005) |
+| vm_dev | eSPD (sens.) | 406 | 0.114 | 0.097 | +0.018 (-0.011 to +0.046) | +0.0052 | +0.0040 | +0.0012 (-0.006 to +0.009) |
+| vm_dev 2023 | eSEL | 73 | 0.149 | 0.120 | +0.029 (-0.027 to +0.083) | not derived (one group, under the floor gate) | | |
+| vm_dev 2023 | eBAT | 73 | -0.011 | -0.043 | +0.033 (-0.040 to +0.111) | not derived | | |
+
+eSEL and eBAT: the 2022 decision-year group (89 rows) has no earlier board year to fit on, so
+only the 2023 group (73 rows, fit on board year 2022) is read. By position group and age band
+(the artifact's `part1.*.by_position_group` and `by_age_band`): no cell's B difference has an
+interval above zero (the overall vm_dev ePOW one lies below it); eHIT's A difference is negative in every hitter cell of 100 or more rows
+but catchers on lv_dev (old hitters on lv_dev -0.066, CI95 -0.133 to -0.003; infielders on
+vm_dev -0.113, CI95 -0.207 to -0.024).
+
+### 12.3 The weights (section 5; per side, forward-chained heads, both frames pooled)
+
+| config | hitters w_skill (OLS ratio; CI95) | pitchers w_skill (ratio; CI95) | w_time |
+|---|---|---|---|
+| RT | 0.297 (0.297; 0.065 to 0.594) | 1.0 (1.053; 0.534 to 1.918) | 0, 0 |
+| E | 0.218 (0.218; 0.010 to 0.480) | 0.884 (0.884; 0.413 to 1.629) | 0, 0 |
+| ED | 0.226 (0.226; 0.015 to 0.492) | 0.886 (0.886; 0.413 to 1.636) | 0, 0 |
+| EC | 0.296 | 0.956 | 0, 0 |
+| EP | 0.267 | 0.939 | 0, 0 |
+| ES | 0.229 | 0.884 | 0, 0 |
+
+Each tool's weight in the production fit (percentile-point equivalents, w_skill included; RT
+old, E new):
+
+| tool slot | RT (consensus input) | E (eTool) | ED |
+|---|---|---|---|
+| hit (V2 key) | 0.0507 (admitted) | 0 (eHIT refused by DS-06's one-sign rule) | 0 (refused) |
+| game power | 0 (the hitter head at lambda infinity) | 0.0091 | 0.0094 |
+| fastball | 0.0172 (Triple-A cell) | 0.0658 (every graded pitcher) | 0.0673 |
+| command | 0.0551 | 0.0561 | 0.0535 |
+
+eHIT in the hit key passes DS-06's admission in 1 of 7 vm_dev folds and 2 of 3 lv_dev folds;
+the consensus hit grade in 7 of 7 and 0 of 3. With the hit key refused, E's hitter head takes
+lambda 1000 (RT's took infinity) and spreads small weights over the stat columns.
+
+### 12.4 The development read (within (side, list year) Spearman, pooled over sides)
+
+| frame | n | RT | E | ED | EC | EP | ES | consensus | Pipeline | FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1683 | 0.1632 | 0.1635 | 0.1638 | 0.1639 | 0.1635 | 0.1792 | 0.2034 | 0.1714 |
+| vm_dev | 830 | 0.3937 | 0.3916 | 0.3926 | 0.3915 | 0.3946 | 0.3925 | 0.3814 | 0.3816 | 0.3363 |
+
+| comparison | lv_dev (CI95) | vm_dev (CI95) | pooled |
+|---|---|---|---|
+| E minus RT | -0.0052 (-0.0100 to -0.0003) | -0.0021 (-0.0157 to +0.0113) | -0.0045 |
+| ED minus RT | -0.0049 (-0.0098 to -0.0001) | -0.0011 (-0.0155 to +0.0122) | -0.0040 |
+| E minus EC (the eTool shift) | -0.0006 (-0.0038 to +0.0027) | +0.0001 (-0.0133 to +0.0135) | -0.0005 |
+| E minus EP | -0.0008 (-0.0030 to +0.0015) | -0.0030 (-0.0144 to +0.0085) | -0.0013 |
+| EC minus RT (the restructuring) | -0.0046 (-0.0080 to -0.0011) | -0.0022 (-0.0066 to +0.0019) | |
+| E minus consensus | -0.0161 (-0.0348 to +0.0031; LB -0.032) | +0.0102 (-0.0105 to +0.0288; LB -0.006) | -0.0101 |
+| ED minus consensus | -0.0158 (-0.0348 to +0.0035; LB -0.032) | +0.0113 (-0.0090 to +0.0299; LB -0.005) | -0.0097 |
+| RT minus consensus | -0.0109 (-0.0311 to +0.0098) | +0.0123 (-0.0123 to +0.0343) | |
+| ES minus E | +0.0003 (-0.0004 to +0.0010) | +0.0009 (-0.0002 to +0.0024) | |
+
+Per side, E minus RT: lv_dev hitters +0.0009 (-0.0048 to +0.0072), pitchers -0.0116 (-0.0191 to
+-0.0039; EC minus RT -0.0093 of it, the eTool shift -0.0023); vm_dev hitters -0.0035, pitchers
+-0.0007. Secondary (pooled after the map; AUC), E minus RT: lv_dev -0.0018 and -0.0014, vm_dev
++0.0024 and -0.0028.
+
+### 12.5 The board (descriptive; no candidate passed)
+
+E's production fit against `data/xfv.json`: hitters 175 of 1,055 move by a grade or more
+(34 by three or more, largest 8.9), mean |eFV minus consensus| 0.559 to 0.380; pitchers 48 of
+941 (1 by three or more), 1.259 to 1.180. Nothing is prepared, so nothing here is proposed.
+
+## 13. The verdict (section 7)
+
+| candidate | lv_dev minus RT | vm_dev minus RT | pooled (3,692 rows) | rule 1 | rule 2 | passes |
+|---|---|---|---|---|---|---|
+| E | -0.0052 | -0.0021 | -0.0045 | no | no | no |
+| ED | -0.0049 | -0.0011 | -0.0040 | no | yes | no |
+
+Neither candidate passes; nothing is prepared and no dark serve path is built
+(`EFV_ETOOLS_REWEIGHT_ON` stays False, `data/efv_etools_reweight_weights.json` records NOT
+PREPARED). The attribution check reads no eTool gain either: against EC and EP the eTool shift
+is -0.0005 and -0.0013 pooled. The loss against RT is the restructuring (mostly the pitcher
+fastball slot widened from the Triple-A cell, lv_dev pitchers), not the eTools; the eTools
+themselves add nothing to the WAR order over consensus FV, and eHIT orders later WAR worse than
+the consensus hit grade it was built to sharpen (it predicts strikeout rate, the hit tool's own
+label, and strikeout rate is not what separates later WAR once consensus FV is known). The
+served eFV keeps the consensus tool inputs. The arm (`efv_etools_reweight.etool_inputs`, the
+slots of 4.1, the fold design of 2.3) is handed to EFV_X3_POOLED_MODEL as registered, with this
+read as its prior.

@@ -517,6 +517,21 @@ def slot_map(side: str, cfg: dict) -> dict:
     return {s["tool"]: s for s in slots_of(side, cfg)}
 
 
+def etool_inputs(rows: list[dict], side: str, metas: list[dict], rm: "RowMeta", bank: "Bank", *,
+                 years, test_pids: set, training: bool, config: str = "E") -> list[dict]:
+    """The re-weighted tool arm (section 8, handed to EFV_X3_POOLED_MODEL as its tool inputs):
+    copies of `rows` with the configuration's slots (section 4.1) holding eTools built by the
+    registered fold design (section 2.3): `training` rows each out of fold by board year,
+    else one fit on `years` with `test_pids` left out. `metas` are RowMeta.of(row, side, ctx)."""
+    cfg = CONFIGS[config]
+    if cfg["mode"] is None:
+        return list(rows)
+    vals, _p = Run(B=0, log=lambda *_a, **_k: None).fold_values(
+        bank, rm, side, cfg, rows, metas, years_allowed=list(years), test_pids=set(test_pids),
+        rng=np.random.default_rng(PERM_SEED), tag="etool_inputs", by_b_exclusive=bool(training))
+    return write_slots(rows, side, cfg, metas, vals)
+
+
 # ---------------------------------------------------------------------------
 # the fit of a configuration (RT's machinery with the slots swapped)
 # ---------------------------------------------------------------------------
@@ -971,6 +986,46 @@ def part1_frame_tools(inp, bank: Bank, rm: RowMeta) -> dict:
                      "matched_by_group": by, "computable": any(v >= S.MIN_GROUP_ROWS for v in by.values()),
                      "note": ("consensus grades for this tool first appear on the 2021 boards; lv_dev "
                               "(list years 2017 to 2019) carries none")}
+    return out
+
+
+def part1_frame_read(inp, bank: Bank, rm: RowMeta, *, B: int) -> dict:
+    """Section 3 for eSEL and eBAT: on the vm_dev scored hitter rows whose (player, board
+    year) sits in the tool's eTools frame, the eTool from the fold's forward-chained fit
+    (board years before the decision year, the fold's test players out) at the frame row's
+    consensus grade, beside that grade; a fold with no earlier board year has no eTool."""
+    import etools as E
+    out = {}
+    vm = [c for c in inp.scored("vm_dev") if c["side"] == "hit"]
+    for tool in PART1_FRAME_TOOLS:
+        fr = bank.frames[tool]
+        idx = {(int(y), int(p)): i for i, (y, p) in enumerate(zip(fr.year.tolist(), fr.pid.tolist()))}
+        by_fold: dict = {}
+        for c in vm:
+            m = rm.meta.get(("vm_test", "hit", int(c["year"]), c["key"]))
+            if not m or m["pid"] is None or m["b"] is None:
+                continue
+            i = idx.get((int(m["b"]), int(m["pid"])))
+            if i is not None:
+                by_fold.setdefault(int(c["year"]), []).append((c, i, m))
+        rows, folds = [], {}
+        for Y, items in sorted(by_fold.items()):
+            test_pids = {rm.meta.get(("vm_test", "hit", int(c["year"]), c["key"]), {}).get("pid")
+                         for c in inp.scored("vm_dev") if c["side"] == "hit" and int(c["year"]) == Y}
+            years = [y for y in E.DEV_YEARS if y < Y]
+            fit = bank.fit(tool, years, test_pids, tag=f"part1|{tool}|{Y}") if years else None
+            folds[str(Y)] = {"rows": len(items), "fit_years": years,
+                             "fit_rows": None if fit is None else fit["n_rows"]}
+            if fit is None:
+                continue
+            ix = np.asarray([i for _c, i, _m in items])
+            Zs = bank.Z[tool][ix]
+            g = fr.gc[ix]
+            e = etool_cohort(g, Zs, fit)
+            for (c, _i, _m), gv, ev in zip(items, g, e):
+                rows.append(dict(c, grades=dict(c["grades"], et=float(ev), cg=float(gv))))
+        out[tool] = {"key": TOOL_KEY[tool], "folds": folds, "rows_read": len(rows),
+                     "overall": part1_block(rows, B=B) if rows else {"n": 0, "status": "no fold has an eTool"}}
     return out
 
 
@@ -1461,6 +1516,8 @@ def append_ledger(doc: dict, cand: str, *, artifact: Path, ledger_path: Path) ->
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--run", action="store_true", help="the registered read, once")
+    ap.add_argument("--part1-frame", action="store_true",
+                    help="section 3's eSEL and eBAT rows, once, into the fit artifact")
     ap.add_argument("--prep", action="store_true",
                     help="build and fit everything into --cache without computing a statistic")
     ap.add_argument("--B", type=int, default=None)
@@ -1483,6 +1540,24 @@ def main(argv=None) -> int:
                                                          / "progress_ledger.jsonl")
         r = append_ledger(doc, cand, artifact=FIT_PATH, ledger_path=led)
         log(f"progress ledger: appended {len(r['appended'])} rows, {r['n_rows']} rows")
+        return 0
+    if a.part1_frame:
+        if not (FIT_PATH.exists() and a.cache):
+            log("refused: the fit artifact and --cache are needed")
+            return 2
+        doc = json.loads(FIT_PATH.read_text(encoding="utf-8"))
+        R = Run(B=0, log=log, cache_dir=Path(a.cache))
+        with RF.pop_repair(True):
+            b1 = R.build()
+            bank, _rec = R._load("bank")
+            rm, _ctx = R.contexts(b1)
+            got = part1_frame_read(b1["inp"], bank, rm, B=BT.B_DEFAULT if a.B is None else int(a.B))
+        doc["part1_frame_tools_read"] = dict(got, note=(
+            "computed after the main read (2026-10-16): the first write counted the matched rows "
+            "of section 3 but did not read them, a harness omission; this is the registered read "
+            "of those rows, run once"))
+        BT.write_doc(doc, FIT_PATH)
+        log(json.dumps({t: {k: v for k, v in r.items() if k != "overall"} for t, r in got.items()}))
         return 0
     if a.prep:
         if not a.cache:

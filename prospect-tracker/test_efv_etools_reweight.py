@@ -326,3 +326,24 @@ def test_no_reserved_board_year_enters_the_etools_frame():
     assert not set(E.DEV_YEARS) & set(X.F.RESERVED_LV)
     assert max(E.DEV_YEARS) < X.F.R_VM_FIRST_DEBUT_YEAR
     assert X.MAX_TRAIL == 0.005 and X.PARITY_TOL == 1e-4
+
+
+def test_the_handed_over_arm_writes_the_slots_by_the_fold_design(bank):
+    rm = X.RowMeta.__new__(X.RowMeta)
+    rm.Z = {}
+    rng = np.random.default_rng(2)
+    rows, metas = [], []
+    for i in range(40):
+        pid = 900000 + i
+        rm.Z[("hit", pid, 2018)] = {j: float(rng.normal()) for j in X.SUBDRIVERS["hit"] + X.SUBDRIVERS["game_pwr"]}
+        rows.append({"player_key": f"h{i}", "v2": {"tool_hit": 50.0, "scr_w2s_game_pwr_hit": 45.0 + i % 7}})
+        metas.append({"pid": pid, "b": 2018, "raw": {"hit": 40.0 + i % 11}})
+    years = [y for y in E.DEV_YEARS if y < 2018]
+    out = X.etool_inputs(rows, "hit", metas, rm, bank, years=years, test_pids=set(), training=False)
+    fit = bank.fit("hit", years, set())
+    g = np.asarray([m["raw"]["hit"] for m in metas])
+    Z = np.asarray([[rm.Z[("hit", m["pid"], 2018)][j] for j in X.SUBDRIVERS["hit"]] for m in metas])
+    assert np.allclose([r["v2"]["tool_hit"] for r in out], X.etool_cohort(g, Z, fit))
+    assert all(r["v2"]["scr_e5_pow_hit"] is not None for r in out)
+    assert X.etool_inputs(rows, "hit", metas, rm, bank, years=years, test_pids=set(), training=False,
+                          config="RT") == rows
