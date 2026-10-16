@@ -1845,7 +1845,7 @@ def _fam_tool(side, items, ns, today, **_):
     return out, note
 
 
-def _fam_il(side, items, ns, today, **_):
+def _fam_il(side, items, ns, today, episodes=False, **_):
     import efv_w2_il_backfill as IL
     cands = candidates()
     idx, end, rc = _stint_index(today)
@@ -1854,11 +1854,14 @@ def _fam_il(side, items, ns, today, **_):
         cut = IL.vm_cutoff({"cutoff": it["cutoff"]}, it["read_year"])
         if end is not None:
             cut = min(cut, end)
-        p = IL.asof(it["mlbam"], cut, idx)
+        p = IL.asof(it["mlbam"], cut, idx, episodes=bool(episodes))
         for n in ns:
             st = cands[n]["arg"]
             out[n][it["slot"]] = IL.transformed(st, p.get(st))
-    return out, dict(rc, status="lit", read_cut_capped_at=end)
+    note = dict(rc, status="lit", read_cut_capped_at=end)
+    if episodes:
+        note["sixty_episodes"] = True
+    return out, note
 
 
 def _fam_nri(side, items, ns, today, **_):
@@ -2022,9 +2025,11 @@ def _family_of(name: str) -> str:
 
 
 def asof_columns(side: str, items: list[dict], *, today: str, names=None, exclude_ids=None,
-                 log=print) -> tuple[dict, dict]:
+                 episodes: bool = False, log=print) -> tuple[dict, dict]:
     """({name: {slot: value | None}}, receipt) for every candidate column of the side on
-    as-of read items (see _item). Raises when any read reaches past `today`."""
+    as-of read items (see _item). Raises when any read reaches past `today`. `episodes`
+    (the served read under DRIFT_REBASE_ON only) counts the 60-day IL column by injury
+    episode (efv_w2_il_backfill.new_episode)."""
     t = _day(today)
     names = side_candidates(side) if names is None else list(names)
     for it in items:
@@ -2038,7 +2043,8 @@ def asof_columns(side: str, items: list[dict], *, today: str, names=None, exclud
     cols, fams = {}, {}
     for fam, ns in by_fam.items():
         t0 = time.time()
-        got, note = _FAMILIES[fam](side, items, ns, t, exclude_ids=exclude_ids)
+        got, note = _FAMILIES[fam](side, items, ns, t, exclude_ids=exclude_ids,
+                                   episodes=episodes)
         cols.update(got)
         fams[fam] = dict(note, columns=len(ns), seconds=round(time.time() - t0, 1))
         log(f"  live {side} {fam}: {len(ns)} columns, {note.get('status')} "
@@ -2067,7 +2073,8 @@ def live_columns(side: str, rows: list[dict], *, today: str | None = None,
     rows, clip); `receipt`, when a dict, receives the coverage receipt."""
     rd = live_read(today)
     t = rd["today"]
-    key = (side, t, tuple(sorted(r["player_key"] for r in rows)), bool(clip))
+    served = bool(clip) and bool(DRIFT_REBASE_ON)
+    key = (side, t, tuple(sorted(r["player_key"] for r in rows)), bool(clip), served)
     hit = _LIVE_MEMO.get(key)
     if hit is None:
         items = []
@@ -2080,7 +2087,8 @@ def live_columns(side: str, rows: list[dict], *, today: str | None = None,
             items.append(_item((rd["group_year"], r["player_key"], LIVE_KIND), r["player_key"],
                                r.get("mlbam_id") or raw.get("mlbam_id"), rd["group_year"],
                                rd["read_year"], t, min(a, t), r.get("fv")))
-        cols, rec = asof_columns(side, items, today=t, exclude_ids=exclude_ids, log=log)
+        cols, rec = asof_columns(side, items, today=t, exclude_ids=exclude_ids,
+                                 episodes=served, log=log)
         if clip:
             cols = support_clip(side, cols, rec, log=log)
         rec["read"] = rd
@@ -2181,7 +2189,8 @@ def history_columns(side: str, points: list[tuple], *, today: str | None = None,
             continue
         yr = int(d[:4])
         items.append(_item((pk, d), pk, mid, yr, min(yr, Y) + int(LIVE_READ_YEAR_OFFSET), d, d, fv))
-    cols, rec = asof_columns(side, items, today=rd["today"], exclude_ids=exclude_ids, log=log)
+    cols, rec = asof_columns(side, items, today=rd["today"], exclude_ids=exclude_ids,
+                             episodes=bool(clip) and bool(DRIFT_REBASE_ON), log=log)
     if clip:
         cols = support_clip(side, cols, rec, log=log)
     return cols, rec
@@ -2219,6 +2228,10 @@ def history_columns(side: str, points: list[tuple], *, today: str | None = None,
 #      values, written as spread_ratio when both sides have SPREAD_MIN_NONZERO nonzero
 #      values, and the key named under "spread" when the ratio passes SPREAD_RATIO. It
 #      changes no value, clip, withhold or family status.
+#   5. REBASE (docs/efv-v2/EFV_PIT_DRIFT_REBASE.md, only with DRIFT_REBASE_ON): a key in
+#      REBASE_KEYS or flagged "spread" has its nonzero served values multiplied by the
+#      training nonzero SD over the served nonzero SD (rebase_factor) before the clip. A
+#      share-only drift is not rescaled (a spread factor cannot correct a share).
 # Nothing here touches a training number: the support is read off production_train.
 
 #: A column whose nonzero production training values come from fewer read seasons than
@@ -2230,6 +2243,18 @@ DRIFT_MIN_GAP = 0.05
 #: Spread report (served nonzero SD against the training nonzero SD), the same 2x rule.
 SPREAD_RATIO = DRIFT_RATIO
 SPREAD_MIN_NONZERO = 20
+#: EFV_PIT_DRIFT_REBASE (owner EW3-36, docs/efv-v2/EFV_PIT_DRIFT_REBASE.md): with the flag
+#: True the served read rebases REBASE_KEYS and every spread-flagged key to the training
+#: nonzero spread (rebase_factor, before the clip) and counts the 60-day IL column by
+#: injury episode. False: every served artifact is the code before the task, byte for byte.
+DRIFT_REBASE_ON = False
+#: The served pitcher skill head's Single-A group z columns (the audit's DRV-3: live
+#: nonzero spread 1.22x to 1.40x the training spread, under the 2x report).
+REBASE_KEYS = frozenset({
+    "scr_g5_pit_A_all_all_k_pct", "scr_g5_pit_A_all_all_k_minus_bb",
+    "scr_g5_pit_A_young_all_k_pct", "scr_g5_pit_A_young_all_k_minus_bb",
+    "scr_g5_pit_A_all_SP_k_pct", "scr_g5_pit_A_all_SP_k_minus_bb",
+    "scr_g5_pit_A_all_SP_bf_per_g"})
 _SUPPORT: dict = {}
 
 
@@ -2281,6 +2306,21 @@ def spread_ratio(served_vals, train: dict) -> float | None:
     return round(_nonzero_sd(nz) / float(t_sd), 4)
 
 
+def rebase_factor(served_vals, train: dict) -> float | None:
+    """The training nonzero SD over the served nonzero SD (ddof 1), when both sides have at
+    least SPREAD_MIN_NONZERO nonzero values and both SDs are positive; else None. Served
+    nonzero values times this factor carry the training spread; 0.0 and None stay."""
+    nz = [v for v in served_vals if v is not None and v != 0.0]
+    t_sd = train.get("nonzero_sd")
+    if (len(nz) < SPREAD_MIN_NONZERO or int(train.get("nonzero") or 0) < SPREAD_MIN_NONZERO
+            or not t_sd or t_sd <= 0):
+        return None
+    s_sd = _nonzero_sd(nz)
+    if not s_sd or s_sd <= 0:
+        return None
+    return float(t_sd) / float(s_sd)
+
+
 def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=print) -> dict:
     """cols ({name: {slot: value | None}}) held to the production training support (the
     block above): clipped into the training [min, max], withheld (None) where the training
@@ -2311,6 +2351,20 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
                            "on a board")
         else:
             lo, hi = s["min"], s["max"]
+            # the spread report reads the served values as built (before any rebase)
+            r["spread_ratio"] = spread_ratio(vals, s)
+            if r["spread_ratio"] is not None and r["spread_ratio"] > SPREAD_RATIO:
+                r["spread"] = True
+                spread_fams.setdefault(_family_of(n), []).append(k)
+            # 5. REBASE (DRIFT_REBASE_ON): a registered or spread-flagged key's nonzero
+            #    values carry the training nonzero spread; the clip below then runs on them
+            if DRIFT_REBASE_ON and (k in REBASE_KEYS or r.get("spread")):
+                f = rebase_factor(vals, s)
+                if f is not None:
+                    mp = {slot: (v * f if v is not None and v != 0.0 else v)
+                          for slot, v in mp.items()}
+                    r["rebase_factor"] = round(f, 6)
+                    r["rebased"] = True
             got = {}
             for slot, v in mp.items():
                 if v is not None and lo is not None:
@@ -2326,11 +2380,6 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
                     and share - s["nonzero_share"] > DRIFT_MIN_GAP):
                 r["drift"] = True
                 drift_fams.setdefault(_family_of(n), []).append(k)
-            # report only: the spread among nonzero values, before the clip
-            r["spread_ratio"] = spread_ratio(vals, s)
-            if r["spread_ratio"] is not None and r["spread_ratio"] > SPREAD_RATIO:
-                r["spread"] = True
-                spread_fams.setdefault(_family_of(n), []).append(k)
         rep[k] = r
     if receipt is not None:
         receipt["support"] = rep
@@ -2350,6 +2399,8 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
             if note is not None:
                 note["spread"] = sorted(ks)
         receipt["spread"] = sorted(k for k, r in rep.items() if r.get("spread"))
+        if DRIFT_REBASE_ON:
+            receipt["rebased"] = sorted(k for k, r in rep.items() if r.get("rebased"))
         receipt["withheld"] = sorted(k for k, r in rep.items() if r["withheld"])
         receipt["clipped"] = sum(r["clipped_low"] + r["clipped_high"] for r in rep.values())
     return out

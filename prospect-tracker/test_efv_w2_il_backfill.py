@@ -153,6 +153,50 @@ def test_the_window_is_the_declared_seasons_cut_at_the_feed_start():
     assert M.window("2009-01-01") is None
 
 
+EPISODE_ROWS = [
+    # a same-day duplicate: the feed reported one 60-day placement twice
+    ["2022-03-20", "2022-03-20", "60", 1, "2022-03-20", "2022-03-20", "2022-03-20",
+     "next_placement", 1, 0],
+    ["2022-03-20", "2022-03-20", "60", 1, "2022-03-20", "2022-10-29", "2022-10-29",
+     "activated", 1, 0],
+    # the same injury re-placed in spring after an autumn activation: a carry-over
+    ["2023-03-19", "2023-03-19", "60", 1, "2023-03-19", "2023-06-01", "2023-06-01",
+     "activated", 1, 0],
+    # a new injury in mid-season after the carry-over closed: a second episode
+    ["2023-08-04", "2023-08-04", "full", 1, "2023-08-04", "2023-11-06", "2023-11-06",
+     "activated", 1, 0],
+]
+
+
+def test_the_episode_count_drops_duplicates_and_winter_carry_overs_only():
+    """EFV_PIT_DRIFT_REBASE R1 (docs/efv-v2/EFV_PIT_DRIFT_REBASE.md section 3): with
+    `episodes` the 60-day count drops a same-day duplicate and a spring carry-over of an
+    autumn activation; a genuine second injury still counts; every other column and the
+    default read are unchanged."""
+    idx = _index(EPISODE_ROWS)
+    plain = M.asof(PID, "2024-01-01", idx)
+    ep = M.asof(PID, "2024-01-01", idx, episodes=True)
+    assert plain["il_60day_pre"] == 4.0
+    assert ep["il_60day_pre"] == 2.0
+    assert {k: v for k, v in ep.items() if k != "il_60day_pre"} == \
+        {k: v for k, v in plain.items() if k != "il_60day_pre"}
+    # read the day after the duplicate: the stored definition counts it twice
+    assert M.asof(PID, "2022-03-21", idx)["il_60day_pre"] == 2.0
+    assert M.asof(PID, "2022-03-21", idx, episodes=True)["il_60day_pre"] == 1.0
+    # a carry-over is read only from facts known at the read: before the autumn
+    # activation was announced the spring placement cannot be matched to it
+    prev = dict(zip(M.TABLE_COLUMNS[1:], EPISODE_ROWS[1][:-1]), start_inferred=0)
+    nxt = dict(zip(M.TABLE_COLUMNS[1:], EPISODE_ROWS[2][:-1]), start_inferred=0)
+    from datetime import date
+    assert M.new_episode(nxt, prev, date(2024, 1, 1)) is False
+    assert M.new_episode(nxt, dict(prev, end_announced="2024-02-01"), date(2024, 1, 1)) is True
+    assert M.new_episode(nxt, dict(prev, end="2022-09-01"), date(2024, 1, 1)) is True
+    assert M.new_episode(dict(nxt, start="2023-05-02"), prev, date(2024, 1, 1)) is True
+    # on the training rows of ROWS (one 60-day stint) the two definitions agree
+    assert M.asof(PID, "2017-01-01", _index(ROWS), episodes=True) == \
+        M.asof(PID, "2017-01-01", _index(ROWS))
+
+
 def test_season_days_counts_april_to_september_only():
     from datetime import date
     assert M.season_days(date(2015, 3, 1), date(2015, 4, 11)) == 10

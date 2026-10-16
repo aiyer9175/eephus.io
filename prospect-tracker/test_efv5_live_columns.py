@@ -244,6 +244,11 @@ def test_the_support_receipt_names_every_clip_withhold_and_drift(side):
         s, r = sup[k], rep[k]
         vals = [v for v in raw[n].values() if v is not None]
         nz = sum(1 for v in vals if v != 0.0)
+        # a key the drift rebase rescaled (DRIFT_REBASE_ON) is clipped after its factor
+        f = r.get("rebase_factor")
+
+        def adj(v, f=f):
+            return v * f if (f and v is not None and v != 0.0) else v
         # withheld exactly when the training column was lit in a single pool (read
         # season), so it never saw this column lit on a board
         want = (bool(vals) and s["nonzero_seasons"] < X.SUPPORT_MIN_SEASONS
@@ -253,11 +258,13 @@ def test_the_support_receipt_names_every_clip_withhold_and_drift(side):
             assert all(v is None for v in mp.values()), k
             continue
         for slot, v in mp.items():
-            rv = raw[n][slot]
+            rv = adj(raw[n][slot])
             if rv is None:
                 assert v is None
             elif s["min"] is not None:
-                assert v == min(max(rv, s["min"]), s["max"]), (k, rv, v)
+                assert v == pytest.approx(min(max(rv, s["min"]), s["max"]), rel=1e-5,
+                                          abs=1e-12), (k, rv, v)
+        vals = [adj(v) for v in vals]
         lo = sum(1 for v in vals if s["min"] is not None and v < s["min"])
         hi = sum(1 for v in vals if s["max"] is not None and v > s["max"])
         assert (r["clipped_low"], r["clipped_high"]) == (lo, hi), k
@@ -355,6 +362,96 @@ def test_the_spread_report_is_report_only(monkeypatch):
     assert rec2["support"][ka]["spread_ratio"] is None and rec2["spread"] == []
     assert X.spread_ratio(list(wide.values()), dict(sup, nonzero=5)) is None
     assert X.spread_ratio(list(wide.values()), dict(sup, nonzero_sd=None)) is None
+
+
+def test_the_drift_rebase_on_a_synthetic_support(monkeypatch):
+    """EFV_PIT_DRIFT_REBASE (docs/efv-v2/EFV_PIT_DRIFT_REBASE.md sections 2 and 4): with the
+    flag on, a registered key and any key the 2x spread report flags carry the training
+    nonzero SD (0.0 and None kept, the clip after the factor); a calm unregistered key, a
+    share-only drift and a key under SPREAD_MIN_NONZERO nonzero values do not move. Off
+    (the default) the rule is the identity."""
+    monkeypatch.setattr(X, "DRIFT_REBASE_ON", False)
+    cands = X.candidates()
+    names = X.side_candidates("pit")
+    reg = next(n for n in names if cands[n]["key"] in X.REBASE_KEYS)
+    other = [n for n in names if cands[n]["key"] not in X.REBASE_KEYS][:4]
+    a, b, c, d = other
+    sup = {"n": 1000, "nonzero": 500, "nonzero_share": 0.5, "nonzero_seasons": 12,
+           "nonzero_sd": 1.0, "min": -100.0, "max": 100.0}
+    monkeypatch.setitem(X._SUPPORT, "pit", {
+        cands[reg]["key"]: dict(sup, min=-2.0, max=2.0), cands[a]["key"]: dict(sup),
+        cands[b]["key"]: dict(sup), cands[c]["key"]: dict(sup, nonzero_share=0.05),
+        cands[d]["key"]: dict(sup)})
+    rng = np.random.default_rng(11)
+
+    def col(sd, n_nz, n_zero=100):
+        v = [float(x) for x in rng.normal(0, sd, n_nz)] + [0.0] * n_zero + [None]
+        return {i: x for i, x in enumerate(v)}
+    cols = {reg: col(1.4, 200), a: col(3.0, 200), b: col(1.4, 200), c: col(1.0, 200, 10),
+            d: col(3.0, 10)}
+    off = X.support_clip("pit", cols, {"families": {}})
+    assert off[a] == cols[a] and off[b] == cols[b] and off[c] == cols[c]
+    monkeypatch.setattr(X, "DRIFT_REBASE_ON", True)
+    rec = {"families": {}}
+    out = X.support_clip("pit", cols, rec)
+    rep = {cands[n]["key"]: rec["support"][cands[n]["key"]] for n in cols}
+    f_reg = X.rebase_factor(list(cols[reg].values()), sup)
+    assert rep[cands[reg]["key"]]["rebase_factor"] == pytest.approx(f_reg, abs=1e-6)
+    for slot, v in cols[reg].items():
+        want = v if v in (None, 0.0) else min(max(v * f_reg, -2.0), 2.0)
+        assert out[reg][slot] == pytest.approx(want) if v is not None else out[reg][slot] is None
+    flagged = [v for v in out[a].values() if v not in (None, 0.0)]
+    assert X._nonzero_sd(flagged) == pytest.approx(1.0)
+    assert rep[cands[a]["key"]]["spread"] is True and rep[cands[a]["key"]]["rebased"] is True
+    assert out[b] == cols[b] and "rebased" not in rep[cands[b]["key"]]
+    assert rep[cands[c]["key"]].get("drift") is True and out[c] == cols[c]
+    assert out[d] == cols[d] and "rebased" not in rep[cands[d]["key"]]
+    assert rec["rebased"] == sorted([cands[reg]["key"], cands[a]["key"]])
+    # under SPREAD_MIN_NONZERO on the served side, or no training SD: no factor
+    assert X.rebase_factor(list(cols[d].values()), sup) is None
+    assert X.rebase_factor(list(cols[a].values()), dict(sup, nonzero_sd=None)) is None
+
+
+def test_the_drift_rebase_on_the_live_board(monkeypatch):
+    """The dark rule on the real pitcher board: every registered key that has a factor is
+    rescaled by exactly the training over served nonzero SD before the clip, the 60-day
+    count is read by injury episode (never above the stored count) and the training
+    support is untouched."""
+    live, rows, _cols_off, _rec = _cols("pit")
+    sup_before = json.dumps(X.training_support("pit", log=lambda *_a, **_k: None), sort_keys=True)
+    raw = X.live_columns("pit", rows, today=TODAY, clip=False,
+                         raw_by_key={r["player_key"]: r for r in live},
+                         log=lambda *_a, **_k: None)
+    monkeypatch.setattr(X, "DRIFT_REBASE_ON", True)
+    rec: dict = {}
+    on = X.live_columns("pit", rows, today=TODAY, receipt=rec,
+                        raw_by_key={r["player_key"]: r for r in live},
+                        log=lambda *_a, **_k: None)
+    cands = X.candidates()
+    sup = X.training_support("pit", log=lambda *_a, **_k: None)
+    assert json.dumps(sup, sort_keys=True) == sup_before
+    assert rec["families"]["il"].get("sixty_episodes") is True
+    got = set(rec["rebased"])
+    assert got >= {k for k in X.REBASE_KEYS
+                   if X.rebase_factor(list(raw[next(n for n in raw if cands[n]["key"] == k)].values()),
+                                      sup[k]) is not None}
+    for n, mp in on.items():
+        k = cands[n]["key"]
+        r = rec["support"][k]
+        if k in got:
+            f = X.rebase_factor(list(raw[n].values()), sup[k])
+            assert r["rebase_factor"] == pytest.approx(f, abs=1e-6)
+            for slot, v in mp.items():
+                rv = raw[n][slot]
+                if rv is None:
+                    continue
+                want = rv * f if rv != 0.0 else 0.0
+                assert v == pytest.approx(min(max(want, sup[k]["min"]), sup[k]["max"]))
+        if k == "scr_w2i_sixty_skill_pit":
+            for slot, v in mp.items():
+                rv = raw[n][slot]
+                if rv is not None:
+                    assert v <= min(max(rv, sup[k]["min"]), sup[k]["max"])
 
 
 def test_the_popup_chip_says_which_way_it_grades():
