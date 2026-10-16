@@ -6,7 +6,7 @@ plan's innovator item 4). This document is committed ALONE, with its pin test
 its estimands is computed. A change after the first number is a dated note in part 8, never an
 edit above it.
 
-STATUS: REGISTERED, RESULTS EMPTY.
+STATUS: REGISTERED; READ 2026-10-16, NOT VALIDATED on both sides (part 8).
 
 ## 0. What it is
 
@@ -147,3 +147,37 @@ talent_ewar_eval.json` (tracked, never shipped); per-player values only in
 ## 8. Results and dated notes
 
 EMPTY.
+
+### 8.1 2026-10-16: the constants and the reads (tools/talent_ewar_lab.py), once
+
+- **Constants (part 2.2), fitted once on 2010 to 2015 pairs and frozen in `talent_ewar.py`**
+  (log `data/_labs/ewar_innovate/talent_ewar_fit.json`): hitters, 1,616 pairs: BAT r 0.445, K 585
+  PA; BR r 0.555, K 375 PA; FLD r 0.369, K 802 PA. Pitchers, 1,423 pairs: K r 0.731, K 179
+  batters faced; BH r 0.575, K 361; HR r 0.269, K 1,330. B1's k: hitters 748.8 PA, pitchers 230.7
+  IP.
+- **Dry run** on the fixture with nulls passed before the read (planted: WIN (components) on both
+  cells; all-zero: EQUIVALENT).
+- **T1 (part 3.1), predictor seasons 2016 to 2018** (war_daily sha256 e9571c42..., modified
+  2026-10-16T03:48Z). Floors printed first: hitters rate MDE95 0.0082, total 0.0102; pitchers rate
+  0.0376, total 0.0265.
+
+| Side, cell | Pairs | rho R (base) | rho T (talent) | rho B1 | Gap T - R (95 percent) | T - B1 lo95 | Twin lo95 | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| Hitters, rate | 800 | 0.3995 | 0.4099 | 0.4047 | +0.0105 (+0.0009 to +0.0205) | -0.0022 | -0.1378 | SMALL WIN |
+| Hitters, total | 800 | 0.4176 | 0.4167 | 0.4155 | -0.0009 (-0.0130 to +0.0110) | -0.0126 | -0.1303 | EQUIVALENT |
+| Pitchers, rate | 670 | 0.2519 | 0.2494 | 0.2639 | -0.0025 (-0.0485 to +0.0401) | -0.0594 | -0.0953 | UNRESOLVED |
+| Pitchers, total | 670 | 0.3674 | 0.4005 | 0.3790 | +0.0331 (+0.0009 to +0.0639) | +0.0013 | -0.0557 | WIN (components) |
+
+  v1 agrees in sign on every cell. Reference, no weight: bWAR(Y) per PA against the hitters'
+  target, rho 0.3541.
+- **T2 (part 3.2), the band's 80 percent coverage:** hitters BAT 0.805, BR 0.944, FLD 0.855;
+  pitchers K 0.767, BH 0.803, HR 0.748. **Fails on both sides** (BR over-covers: its band is too
+  wide; HR under-covers).
+- **Secondary (part 3.3), deciding nothing:** against published fWAR(Y+1), hitters rate EQUIVALENT
+  (+0.0038), total UNRESOLVED (-0.0112); pitchers rate UNRESOLVED (+0.0355), total WIN
+  (components) (+0.0554, 95 percent +0.0260 to +0.0842).
+- **Verdict (part 3.4): NOT VALIDATED on both sides.** Hitters: the rate cell is a SMALL WIN (it
+  ranks next season's realized runs a little better than realized WAR, not better than a uniform
+  shrink) and the band fails. Pitchers: the rate cell is UNRESOLVED; the total cell's WIN does
+  not decide (part 3.4 reads the rate cell), and the band fails. Nothing is registered for the
+  eWAR v3 skill look under part 5, and no band is shown.
