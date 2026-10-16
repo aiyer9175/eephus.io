@@ -35682,6 +35682,34 @@ function factorBarPct(mag) {
   const v = Math.max(0, Number(mag) || 0);
   return Math.max(3, Math.min(100, (Math.log1p(v / _FACT_BAR_KNEE) / _FACT_BAR_TOP) * 100));
 }
+// Pitcher usage label (EFV_RELIEVER_ADJ, owner decision EW3-31): the eFV card prints the
+// pitcher's minor-league usage class (Starter, Short starts or Reliever) with its numbers,
+// read from games started against games and innings: Reliever when under half the
+// appearances are starts, Short starts when most are starts but under 3.5 innings per
+// start, Starter otherwise; nothing under 5 appearances. A statement of usage that moves no
+// grade (docs/efv-v2/EFV_RELIEVER_ADJ.md section 9). Fetched once, by the first card that asks.
+let _PROLES = null, _PROLES_PROMISE = null;
+function ensurePitcherRoles() {
+  if (_PROLES !== null) return Promise.resolve(_PROLES);
+  if (_PROLES_PROMISE) return _PROLES_PROMISE;
+  _PROLES_PROMISE = fetch("/data/efv_pitcher_roles.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _PROLES = (j && j.players) || {}; })
+    .catch(() => { _PROLES = {}; })
+    .then(() => {
+      if (DATA && !DATA.__error && typeof scheduleRender === "function") scheduleRender();
+      return _PROLES;
+    });
+  return _PROLES_PROMISE;
+}
+function pitcherUsageHTML(p) {
+  if (!p || !p.player_key) return "";
+  if (_PROLES === null) { ensurePitcherRoles(); return ""; }
+  const r = _PROLES[p.player_key];
+  if (!r || !r.label) return "";
+  const tip = "Minor-league usage from games started against games and innings: Reliever when under half the appearances are starts, Short starts when most are starts but under 3.5 innings per start, Starter otherwise. It says how he was used; it does not move the grade.";
+  return `<div class="efv-usage-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="${escapeHtml(tip)}">${escapeHtml(r.label)}</div>`;
+}
 // Detail-page card: eFV's outcome read -- 5-bucket mix, expected surplus vs consensus,
 // and the simulated P10-P90 surplus fan. The honest (outcome-implied) view.
 function efvDetailCard(p) {
@@ -35808,6 +35836,7 @@ function efvDetailCard(p) {
       ${claimHTML}
       ${seasonHTML}
       ${placeHTML}
+      ${x.side === "P" ? pitcherUsageHTML(p) : ""}
       ${headHTML}
       ${_inSec ? "" : provReceiptHTML(p)}
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">

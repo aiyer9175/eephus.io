@@ -920,6 +920,16 @@ def regen_all(persist: bool = True, include_eval: bool = False, step=None) -> di
                 statcast_alevel_export.run()
             except Exception:
                 log.exception("statcast_alevel_export failed -- continuing with the prior signal bake")
+        # EFV_RELIEVER_ADJ (owner decision EW3-31): the PROSPX card's pitcher usage label
+        # (Starter, Short starts or Reliever from GS against G and IP), read from the live
+        # pitcher matrix this regen wrote and the MiLB line cache. A statement of usage; no
+        # grade reads it. Best-effort like the blocks above.
+        with _regen_stage("pitcher_roles", step):
+            try:
+                import efv_reliever_adj
+                efv_reliever_adj.export_roles(log=log.info)
+            except Exception:
+                log.exception("efv_reliever_adj.export_roles failed -- keeping the prior usage labels")
     return out
 
 

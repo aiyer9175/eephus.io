@@ -638,6 +638,8 @@ _SIDECAR_GLOBS = (
     # PV-06: provisional v2, the served heads and their BACKCAST eval.
     "data/provisional_v2.json",
     "data/provisional_v2_eval.json",
+    # EFV_RELIEVER_ADJ: the PROSPX card's pitcher usage labels.
+    "data/efv_pitcher_roles.json",
     # BRACKET_SIM_BUILD: the postseason bracket simulator's payload, its
     # first-write-wins forward record (source of truth and derived copy) and
     # the StatsAPI receipts it caches.
@@ -1042,6 +1044,9 @@ _SIDECAR_WRITE_TARGETS = (
     # calls it when persisting).
     ("provisional_v2", "OUT_PATH", "data/provisional_v2.json"),
     ("provisional_v2", "EVAL_PATH", "data/provisional_v2_eval.json"),
+    # EFV_RELIEVER_ADJ: efv_reliever_adj.export_roles resolves ROLES_PATH at call time
+    # (efv_export.regen_all calls it when persisting).
+    ("efv_reliever_adj", "ROLES_PATH", "data/efv_pitcher_roles.json"),
     # BRACKET_SIM_BUILD: bracket_sim.run resolves all four at call time. The
     # board is only READ there (gate 3.1); it is listed so the rule has no
     # exception, the same reasoning as the results-cache readers above.
