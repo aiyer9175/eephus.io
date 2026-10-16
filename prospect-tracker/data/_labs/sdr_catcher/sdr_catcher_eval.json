@@ -1,0 +1,496 @@
+{
+ "generated_at": "2026-10-16",
+ "status": "measured",
+ "read_kind": "OWNER-WAIVED EARLY READ (owner decision EW3-5); owner decision EW3-33",
+ "registration": "docs/sdr-2026-08-18/SDR_CATCHER_GATE.md",
+ "question": "does Will's SDR at catcher measure catchers better than B-Ref rfield and Savant's catcher runs, on two-season-apart self-persistence and on next-season realized catcher runs (EW3-23 form)",
+ "inputs": {
+  "drop": {
+   "path": "data/drops/wills/sdr_defense_card__2026-10-15.csv",
+   "sha256": "8a41d1c20ce37a45fec3150fcf87ceae67f74a16d77cbdf53f44edc44691358e",
+   "rows": 3466,
+   "catcher_rows": 544
+  },
+  "war_daily_bat": {
+   "path": ".cache/war_daily/bat.parquet",
+   "sha256": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+   "modified": "2026-10-16T03:48:21.890449+00:00"
+  },
+  "fg_fielding": {
+   "2017": "4f8661ded724eed0",
+   "2018": "a900238e8c459ba3",
+   "2019": "7ad1552ec9719d78",
+   "2020": "8be0a647ead4c9c7",
+   "2021": "a28ad2e6780d0fc9",
+   "2022": "435a35d0fe701b8f",
+   "2023": "ac0bf48666d991b3",
+   "2024": "c8d1c9311692dc2e",
+   "2025": "9bbd2fc9c7b8fa38",
+   "2026": "58e53c3a5ca76bef"
+  },
+  "fetch_manifest": ".cache/sdr/fetch_manifest.json",
+  "run_manifest": ".cache/sdr/run_manifest.json"
+ },
+ "frame": {
+  "positions": [
+   "C"
+  ],
+  "innings_floor": 300.0,
+  "e1_predictor_seasons": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "e2_predictor_seasons": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "bootstrap_b": 2000,
+  "seed": 20261017,
+  "twin_seed": 20261018,
+  "alpha_holm": 0.05
+ },
+ "clauses": {
+  "E1": {
+   "n_pairs": 244,
+   "n_catchers": 93,
+   "left_out_missing": 0,
+   "predictor_seasons": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "bootstrap_sd_d": 0.0397,
+   "mde95_d": 0.0778,
+   "rho": {
+    "sdr": 0.4315,
+    "rfield": -0.0019,
+    "savant": 0.4208,
+    "pt_on_sdr_next": 0.0182
+   },
+   "better_incumbent": "savant",
+   "d_point": 0.0108,
+   "d_ci": {
+    "lb95": -0.0624,
+    "ub95": 0.0885,
+    "sd": 0.0397
+   },
+   "zero_comparator": {
+    "rho_sdr": 0.4315,
+    "lb95": 0.2995,
+    "ub95": 0.5467,
+    "sd": 0.0625
+   },
+   "playing_time": {
+    "d_pt": 0.4133,
+    "lb95": 0.2308,
+    "ub95": 0.5751,
+    "sd": 0.0864
+   },
+   "p_one_sided": 0.375,
+   "beats_both_at_point": true,
+   "lb_d_above_0": false,
+   "clears_zero": true,
+   "clears_pt": true,
+   "holm": {
+    "p": 0.375,
+    "threshold": 0.05,
+    "rejects": false
+   },
+   "twin": {
+    "rho": {
+     "sdr": -0.0513,
+     "rfield": -0.0019,
+     "savant": 0.4208,
+     "pt_on_sdr_next": 0.0353
+    },
+    "d_point": -0.4721,
+    "d_ci": {
+     "lb95": -0.6239,
+     "ub95": -0.3183,
+     "sd": 0.079
+    },
+    "zero_comparator": {
+     "rho_sdr": -0.0513,
+     "lb95": -0.1787,
+     "ub95": 0.0708,
+     "sd": 0.0635
+    },
+    "playing_time": {
+     "d_pt": -0.0866,
+     "lb95": -0.2641,
+     "ub95": 0.0868,
+     "sd": 0.0898
+    },
+    "passes_rule": false
+   },
+   "passes": false
+  },
+  "E2": {
+   "n_pairs": 321,
+   "n_catchers": 110,
+   "left_out_missing": 0,
+   "predictor_seasons": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "bootstrap_sd_gap": 0.0334,
+   "mde95_gap": 0.0655,
+   "per_system": {
+    "drs_left_out": {
+     "target": "DRS per inning at C, Y+1",
+     "sdr_without_drs": 0.516,
+     "savant_incumbent": 0.5177,
+     "pt": 0.0817,
+     "gap": -0.0016
+    },
+    "statcast_left_out": {
+     "target": "FRP per inning at C, Y+1",
+     "sdr_without_statcast": 0.5407,
+     "rfield_incumbent": 0.0919,
+     "pt": 0.0777,
+     "gap": 0.4487
+    }
+   },
+   "gap_point": 0.2235,
+   "gap_ci": {
+    "lb95": 0.1598,
+    "ub95": 0.2866,
+    "sd": 0.0334
+   },
+   "zero_comparator": {
+    "g_z": 0.5284,
+    "lb95": 0.4463,
+    "ub95": 0.5937,
+    "sd": 0.0378
+   },
+   "playing_time": {
+    "g_pt": 0.4486,
+    "lb95": 0.3198,
+    "ub95": 0.5612,
+    "sd": 0.0614
+   },
+   "p_one_sided": 0.0,
+   "gap_positive_lb": true,
+   "clears_zero": true,
+   "clears_pt": true,
+   "holm": {
+    "p": 0.0,
+    "threshold": 0.025,
+    "rejects": true
+   },
+   "twin": {
+    "per_system": {
+     "drs_left_out": {
+      "target": "DRS per inning at C, Y+1",
+      "sdr_without_drs": 0.0828,
+      "savant_incumbent": 0.5177,
+      "pt": 0.0817,
+      "gap": -0.4349
+     },
+     "statcast_left_out": {
+      "target": "FRP per inning at C, Y+1",
+      "sdr_without_statcast": 0.0801,
+      "rfield_incumbent": 0.0919,
+      "pt": 0.0777,
+      "gap": -0.0118
+     }
+    },
+    "gap_point": -0.2234,
+    "gap_ci": {
+     "lb95": -0.3439,
+     "ub95": -0.1056,
+     "sd": 0.0611
+    },
+    "zero_comparator": {
+     "g_z": 0.0814,
+     "lb95": -0.0128,
+     "ub95": 0.1785,
+     "sd": 0.0477
+    },
+    "playing_time": {
+     "g_pt": 0.0017,
+     "lb95": -0.1362,
+     "ub95": 0.1388,
+     "sd": 0.07
+    },
+    "passes_rule": false
+   },
+   "passes": true
+  }
+ },
+ "verdict": "PARTIAL",
+ "reported": {
+  "R1_consecutive_pairs": {
+   "sdr": {
+    "n_pairs": 321,
+    "rho": 0.6145
+   },
+   "rfield": {
+    "n_pairs": 321,
+    "rho": 0.0248
+   },
+   "savant": {
+    "n_pairs": 321,
+    "rho": 0.6176
+   },
+   "drs": {
+    "n_pairs": 321,
+    "rho": 0.4878
+   },
+   "framing_statcast": {
+    "n_pairs": 321,
+    "rho": 0.5693
+   },
+   "blocking_statcast": {
+    "n_pairs": 277,
+    "rho": 0.5248
+   },
+   "throwing_statcast": {
+    "n_pairs": 321,
+    "rho": 0.3688
+   },
+   "framing_cframing": {
+    "n_pairs": 321,
+    "rho": 0.6139
+   },
+   "pt_on_sdr_next": {
+    "n_pairs": 321,
+    "rho": 0.0832
+   }
+  },
+  "R2_full_sdr_on_targets": {
+   "drs_next": {
+    "sdr_full": 0.5379,
+    "rfield": 0.0949,
+    "savant": 0.5177,
+    "pt": 0.0817
+   },
+   "frp_next": {
+    "sdr_full": 0.6194,
+    "rfield": 0.0919,
+    "savant": 0.6176,
+    "pt": 0.0777
+   },
+   "n_pairs": 321
+  },
+  "R3_total_cell": {
+   "drs_left_out": {
+    "sdr_without_drs": 0.499,
+    "savant_incumbent": 0.4981
+   },
+   "statcast_left_out": {
+    "sdr_without_statcast": 0.5099,
+    "rfield_incumbent": 0.0692
+   },
+   "note": "runs in Y (rate x innings at C) against target runs in Y+1"
+  },
+  "R4_without_2020": {
+   "e1": {
+    "n_pairs": 227,
+    "sdr": 0.468,
+    "rfield": 0.0069,
+    "savant": 0.4495,
+    "pt": 0.0128
+   },
+   "e2": {
+    "n_pairs": 303,
+    "drs_leg_sdr": 0.5175,
+    "drs_leg_inc": 0.5163,
+    "drs_leg_pt": 0.1086,
+    "sc_leg_sdr": 0.5437,
+    "sc_leg_inc": 0.0868,
+    "sc_leg_pt": 0.1012,
+    "gap": 0.229,
+    "g_z": 0.5306,
+    "g_pt": 0.4257
+   }
+  },
+  "R5_components_on_e1_pairs": {
+   "drs": {
+    "n_pairs": 244,
+    "rho": 0.3132
+   },
+   "framing_statcast": {
+    "n_pairs": 244,
+    "rho": 0.3912
+   },
+   "blocking_statcast": {
+    "n_pairs": 204,
+    "rho": 0.3989
+   },
+   "throwing_statcast": {
+    "n_pairs": 244,
+    "rho": 0.2924
+   },
+   "framing_cframing": {
+    "n_pairs": 244,
+    "rho": 0.4891
+   }
+  },
+  "R6_board": {
+   "season": 2026,
+   "n": 57,
+   "top": [
+    {
+     "player": "Dillon Dingler",
+     "player_id": 693307,
+     "innings": 995.2,
+     "sdr_runs": 13.6
+    },
+    {
+     "player": "Gabriel Moreno",
+     "player_id": 672515,
+     "innings": 886.0,
+     "sdr_runs": 9.4
+    },
+    {
+     "player": "Brandon Valenzuela",
+     "player_id": 678218,
+     "innings": 618.2,
+     "sdr_runs": 8.7
+    },
+    {
+     "player": "Luis Torrens",
+     "player_id": 620443,
+     "innings": 673.2,
+     "sdr_runs": 8.0
+    },
+    {
+     "player": "Adley Rutschman",
+     "player_id": 668939,
+     "innings": 675.2,
+     "sdr_runs": 7.4
+    },
+    {
+     "player": "Joe Mack",
+     "player_id": 691788,
+     "innings": 783.2,
+     "sdr_runs": 7.3
+    },
+    {
+     "player": "Austin Wells",
+     "player_id": 669224,
+     "innings": 959.1,
+     "sdr_runs": 6.2
+    },
+    {
+     "player": "Alejandro Kirk",
+     "player_id": 672386,
+     "innings": 599.2,
+     "sdr_runs": 6.2
+    },
+    {
+     "player": "Freddy Fermin",
+     "player_id": 666023,
+     "innings": 660.2,
+     "sdr_runs": 6.2
+    },
+    {
+     "player": "Tyler Heineman",
+     "player_id": 623168,
+     "innings": 518.2,
+     "sdr_runs": 5.7
+    }
+   ],
+   "bottom": [
+    {
+     "player": "Logan O'Hoppe",
+     "player_id": 681351,
+     "innings": 595.0,
+     "sdr_runs": -12.3
+    },
+    {
+     "player": "Jonah Heim",
+     "player_id": 641680,
+     "innings": 613.1,
+     "sdr_runs": -7.0
+    },
+    {
+     "player": "Connor Wong",
+     "player_id": 657136,
+     "innings": 570.0,
+     "sdr_runs": -6.6
+    },
+    {
+     "player": "Tyler Stephenson",
+     "player_id": 663886,
+     "innings": 921.1,
+     "sdr_runs": -5.4
+    },
+    {
+     "player": "James McCann",
+     "player_id": 543510,
+     "innings": 367.2,
+     "sdr_runs": -5.3
+    },
+    {
+     "player": "Yainer Diaz",
+     "player_id": 673237,
+     "innings": 694.0,
+     "sdr_runs": -5.1
+    },
+    {
+     "player": "Edgar Quero",
+     "player_id": 700337,
+     "innings": 438.0,
+     "sdr_runs": -4.8
+    },
+    {
+     "player": "Cal Raleigh",
+     "player_id": 663728,
+     "innings": 894.0,
+     "sdr_runs": -4.6
+    },
+    {
+     "player": "William Contreras",
+     "player_id": 661388,
+     "innings": 1085.2,
+     "sdr_runs": -3.9
+    },
+    {
+     "player": "Dalton Rushing",
+     "player_id": 687221,
+     "innings": 472.1,
+     "sdr_runs": -3.8
+    }
+   ]
+  }
+ },
+ "frame_rows_by_season": {
+  "2017": 61,
+  "2018": 59,
+  "2019": 61,
+  "2020": 11,
+  "2021": 60,
+  "2022": 59,
+  "2023": 63,
+  "2024": 56,
+  "2025": 57,
+  "2026": 57
+ }
+}

@@ -267,3 +267,11 @@ allows only through these gates, so its read uses this gate's forward leg in the
 (next-season club runs allowed beyond FIP, roster-weighted as EBR_GATE.md 11.2.4 does), Holm across
 the two. Nothing above this note changes, and SDR's verdict here stands; the triangulation's
 result is recorded in its own document.
+
+### Note 2026-10-16: the catcher cell gets its own gate (owner decision EW3-33)
+
+SDR-GA-Q1 was answered "re-register + catcher now". The catcher-only measurement is registered and
+read in `docs/sdr-2026-08-18/SDR_CATCHER_GATE.md` (registration committed alone before any of its
+numbers): PARTIAL, nothing served. On G-A's own catcher pairs Savant's catcher runs (FRP at C)
+persist 0.6176 against SDR's 0.6145, so A5's catcher lead is a lead over B-Ref rfield only. Nothing
+above this note changes, and G-A's verdict stands.

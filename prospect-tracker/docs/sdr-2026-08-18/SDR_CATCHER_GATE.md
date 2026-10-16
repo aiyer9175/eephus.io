@@ -1,6 +1,6 @@
 # SDR_CATCHER_GATE: the catcher-only SDR measurement (registered 2026-10-16)
 
-STATUS: REGISTERED 2026-10-16. This document is committed ALONE, before the gate's tool exists and
+STATUS: REGISTERED 2026-10-16; READ ONCE 2026-10-16, PARTIAL (part 11.2): nothing served. This document is committed ALONE, before the gate's tool exists and
 before any number of its estimands is computed. A change after the first number is a dated note in
 part 11, never an edit above it.
 
@@ -220,3 +220,57 @@ consumer). Read once; never rerun on the same frame.
     -0.1411). Disclosed: among catchers at 300+ innings, innings in Y relate weakly to innings in
     Y + 1 or Y + 2 on this design, so the playing-time world's rates carry little persistence
     (E1 rho_SDR 0.0834 there).
+
+### 11.2 2026-10-16: the read, once, OWNER-WAIVED EARLY READ (EW3-5). Verdict: PARTIAL
+
+Artifact `data/_labs/sdr_catcher/sdr_catcher_eval.json` (tools/sdr_catcher_gate.py, one run, 22 s;
+stdout and stderr kept with the task's report). Inputs printed before any statistic: the drop
+sha256 8a41d1c2...358e (3,466 rows, 544 catcher rows: 61, 59, 61, 11, 60, 59, 63, 56, 57, 57 for
+2017 to 2026); `.cache/war_daily/bat.parquet` sha256 e9571c42...fd55, modified
+2026-10-16T03:48Z; the FanGraphs fielding files' sha256 prefixes in the artifact. No pair left out
+for a missing value in either clause. Reproduction receipt: R1 gives SDR 0.6145 and rfield 0.0248
+on 321 consecutive pairs, G-A's catcher cell exactly.
+
+| Clause | Pairs | SDR_C | I-R rfield | I-S Savant | PT | Statistic | LB95, UB95 | MDE95 | Z (LB95) | PT (LB95) | Holm p | Twin | Result |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| E1 self-persistence (Y, Y + 2), Y 2017 to 2024 | 244 (93 catchers) | 0.4315 | -0.0019 | 0.4208 | 0.0182 | d +0.0108 (Savant) | -0.0624, +0.0885 | 0.0778 | clears (+0.2995) | clears (d_PT +0.4133, +0.2308) | 0.375 | fails (SDR -0.0513) | FAIL: SDR beats both at the point, LB95 does not clear |
+| E2 next-season catcher runs, leave one system out, Y 2017 to 2025 | 321 (110 catchers) | see rows | | | | gap +0.2235 | +0.1598, +0.2866 | 0.0655 | clears (g_Z 0.5284, +0.4463) | clears (g_PT 0.4486, +0.3198) | below 0.0005 (no draw at or below 0) | fails (gap -0.2234) | PASS |
+
+E2 by system left out:
+
+| System left out | Target, Y + 1 | SDR_C without it | Incumbent | PT | Gap |
+|---|---|---|---|---|---|
+| DRS | DRS per inning at C | 0.5160 (the FRP reading) | I-S 0.5177 | 0.0817 | -0.0016 |
+| Statcast | FRP per inning at C | 0.5407 (the DRS reading) | I-R 0.0919 | 0.0777 | +0.4487 |
+
+- **What carries E2.** The whole gap is the Statcast row, where Will's DRS reading forecasts next
+  season's Statcast catcher runs and B-Ref's catcher fielding runs barely do (0.0919). On the DRS
+  row SDR's construction and Savant's raw rate tie (-0.0016). E2 passes as registered; it says that
+  either system read alone beats B-Ref rfield at catcher, not that the blend adds to Statcast.
+- **Without pairs touching 2020 (R4):** E1 SDR 0.4680, Savant 0.4495, rfield 0.0069 (227 pairs);
+  E2 gap +0.2290 (DRS row 0.5175 against 0.5163; Statcast row 0.5437 against 0.0868; 303 pairs).
+- **R1, consecutive pairs (G-A's units, 321):** SDR 0.6145, Savant 0.6176, DRS 0.4878, rfield
+  0.0248, PT 0.0832; components: Statcast framing 0.5693, blocking 0.5248 (277, 2018 on), throwing
+  0.3688; FanGraphs CFraming 0.6139. On G-A's own pairs Savant's catcher runs persist as well as SDR
+  (a hair above it); G-A's catcher cell read large only against rfield.
+- **R2, full SDR (reads both targets, favoured):** on DRS(Y + 1) SDR 0.5379, Savant 0.5177, rfield
+  0.0949, PT 0.0817; on FRP(Y + 1) SDR 0.6194, Savant 0.6176, rfield 0.0919, PT 0.0777.
+- **R3, totals (runs):** DRS row 0.4990 against Savant 0.4981; Statcast row 0.5099 against rfield
+  0.0692.
+- **R5, components on E1's pairs (244):** DRS 0.3132, Statcast framing 0.3912, blocking 0.3989
+  (204), throwing 0.2924, CFraming 0.4891.
+- **R6, the 2026 board:** top Dingler +13.6, Moreno +9.4, Valenzuela +8.7, Torrens +8.0, Rutschman
+  +7.4; bottom O'Hoppe -12.3, Heim -7.0, Wong -6.6, Stephenson -5.4, McCann -5.3; Raleigh -4.6 as G-A
+  noted. No absurdity found beyond the Raleigh row G-A already flagged.
+- **Against the registered expectations (part 9):** as predicted, SDR beats rfield widely and lands
+  within 0.05 of Savant without clearing (E1 FAIL); the E2 rows went as predicted (DRS row near 0,
+  Statcast row positive) but the gap cleared far above 0 because rfield's catcher forecast is near
+  zero. Verdict PARTIAL, within the predicted FAIL or PARTIAL.
+
+**What this licenses (part 8): PARTIAL, so nothing is served and nothing is handed on.** SDR at
+catcher is not a better catcher measurement than Savant's catcher runs on either estimand: it ties
+them on two-season persistence (E1), on next-season runs in the system it left out (E2's DRS row)
+and on both next-season targets with everything read (R2). Its lead is over B-Ref rfield, which
+measures catchers poorly forward. The catcher numbers above may be quoted only as measurements
+with their frames. G-A's verdict and SDR_POSCENTRED_REGISTER are unaffected. The owner's question
+(serve something at catcher or not) is put in the task report.
