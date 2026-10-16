@@ -27,8 +27,13 @@ sub-driver j given the consensus grade, c fit on the grade scale (each label thr
 own TIP table) by player-disjoint leave one board year out. It passes only when it
 beats the consensus tool grade on BOTH labels (one-sided 95% lower bound above 0).
 
-DARK. ETOOLS_ON is False: the preview builder writes .cache/etools/preview.json only.
-Nothing served imports this module; no served number moves.
+SERVED (owner decision EW3-27, 2026-10-15: "eTools should be our shown version of each
+tool across the site"). ETOOLS_ON is True: `--preview` writes the full detail to
+.cache/etools/preview.json and the display payload to data/etools.json, which every
+surface that prints a tool grade reads (the passing eTools, shown to the nearest whole
+grade; every other tool keeps its consensus grade, rounded up). With the flag False only
+the .cache preview is written and the site shows the consensus grades. Nothing served
+imports this module; eFV does not read eTools (EFV_ETOOLS_REWEIGHT owns that).
 
 BANS. Development board years only (2011 to 2019, 2022 to 2024); no R-LV list read, no
 R-VM outcome read; no grouping, key, filter or weight by consensus FV or any source's
@@ -72,7 +77,7 @@ if str(ROOT / "tools") not in sys.path:
 # ---------------------------------------------------------------------------
 # flag, paths, constants (the gate's numbers, by section)
 # ---------------------------------------------------------------------------
-ETOOLS_ON = False
+ETOOLS_ON = True
 
 DATA = ROOT / "data"
 CACHE = ROOT / ".cache"
@@ -272,10 +277,19 @@ def round_half(v):
 
 
 def display_grade(v) -> int | None:
-    """Grades round UP (the owner's rule) to the next 5."""
+    """A consensus tool grade as the site prints it: rounded UP to the whole grade (the
+    owner's rule for FV and tool grades), on the 20-80 scale."""
     if v is None:
         return None
-    return int(min(80, max(20, 5 * math.ceil(float(v) / 5.0 - 1e-9))))
+    return int(min(80, max(20, math.ceil(float(v) - 1e-9))))
+
+
+def etool_shown(v) -> int | None:
+    """An eTool as the site prints it: a model grade, so rounded to the NEAREST whole
+    grade like eFV (halves up, as the page's Math.round does), on the 20-80 scale."""
+    if v is None:
+        return None
+    return int(min(80, max(20, math.floor(float(v) + 0.5))))
 
 
 def position_token(pos) -> str:
@@ -2170,8 +2184,8 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
     grade; a PASS tool also carries its eTool, the 80% band and each sub-driver's
     contribution in grade points. With the flip-prep reads (flip_doc), the F1.7
     construction is served as `etool` (re-centred on this cohort, or uncentred) with
-    both values kept, plus the drift and promotion labels. ETOOLS_ON False writes the
-    preview under .cache; True writes data/etools.json."""
+    both values kept, plus the drift and promotion labels. The full detail always goes to
+    the .cache preview; ETOOLS_ON True also writes data/etools.json (served_doc)."""
     rows = live_rows(log=log)
     verdicts = eval_doc.get("etools") or {}
     f1 = (flip_doc or {}).get("F1_drift_recentring") or {}
@@ -2210,7 +2224,7 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
             drivers = [{"key": j, "label": SUBDRIVER_LABELS.get(j, j),
                         "value": _r(Z[i, k], 3), "points": _r(float(contrib[k]), 2)}
                        for k, j in enumerate(adm) if np.isfinite(Z[i, k])]
-            rec = {"etool": _r(e, 2), "etool_display": display_grade(e),
+            rec = {"etool": _r(e, 2), "etool_display": etool_shown(_r(e, 2)),
                    "band80": [_r(max(20.0, e - BAND_Z * sig), 2), _r(min(80.0, e + BAND_Z * sig), 2)],
                    "etool_uncentred": _r(float(unc[i]), 2), "construction": construction,
                    "drivers": drivers, "basis": "etool"}
@@ -2238,18 +2252,64 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
             out_players[r["player_key"]] = {"name": r.get("name"), "mlbam": r["pid"], "side": r["side"],
                                             "tools": tools_out}
     doc = {"generated_at": _now(), "item": ITEM, "flag_etools_on": ETOOLS_ON,
-           "note": "dark preview: nothing served reads this file unless the owner flips ETOOLS_ON",
+           "note": "the full detail; the site reads data/etools.json (written only while ETOOLS_ON)",
            "verdicts": {t: (verdicts.get(t) or {}).get("verdict") for t in TOOLS},
            "keys": {t: TOOLS[t]["key"] for t in TOOLS},
            "labels": {t: {"mlb": TOOLS[t]["mlb"], "um": TOOLS[t]["um"]} for t in TOOLS},
            "tools": tool_meta, "flip_prep_sha": (flip_doc or {}).get("amendment_sha"),
            "band": "80% band: eTool +/- 1.2816 x the fit's residual sd",
            "players": out_players}
-    path = SERVED_PATH if ETOOLS_ON else PREVIEW_PATH
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
-    log(f"  preview: {len(out_players)} players -> {path}")
-    return path
+    PREVIEW_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PREVIEW_PATH.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
+    log(f"  preview: {len(out_players)} players -> {PREVIEW_PATH}")
+    if not ETOOLS_ON:
+        return PREVIEW_PATH
+    served = served_doc(doc)
+    SERVED_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SERVED_PATH.write_text(json.dumps(served, separators=(",", ":")), encoding="utf-8", newline="\n")
+    log(f"  served: {len(served['players'])} players -> {SERVED_PATH}")
+    return SERVED_PATH
+
+
+#: the plain tool names the site prints (the heading is the tool, the 'e' marks the basis)
+TOOL_NAMES = {"hit": "Hit", "game_pwr": "Game Power", "raw_pwr": "Raw Power", "speed": "Speed",
+              "field": "Field", "throw": "Arm", "pitch_sel": "Pitch Selection", "bat_ctrl": "Bat Control",
+              "fb": "Fastball", "cmd": "Command", "sl": "Slider", "cb": "Curveball", "ch": "Changeup"}
+
+
+def served_doc(doc: dict) -> dict:
+    """data/etools.json, what the site reads: per player, only the tools whose eTool
+    passed, each with the eTool (2 dp), the grade the site shows (`shown`, nearest whole
+    grade), the three-outlet consensus it starts from, the 80% band and each sub-driver's
+    push in grade points. A tool with no passing eTool is absent: the site prints its own
+    consensus grade for it. The full detail stays in the .cache preview."""
+    keys = doc.get("keys") or {}
+    by_key = {keys[t]: t for t in keys}
+    players = {}
+    for pk, p in sorted((doc.get("players") or {}).items()):
+        tools = {}
+        for k, rec in (p.get("tools") or {}).items():
+            tool = by_key.get(k)
+            if tool not in PASS_TOOLS or rec.get("basis") != "etool" or rec.get("etool") is None:
+                continue
+            tools[tool] = {"etool": rec["etool"], "shown": rec["etool_display"],
+                           "consensus": rec.get("consensus"),
+                           "band80": [_r(b, 1) for b in (rec.get("band80") or [])],
+                           "drivers": [[d["key"], d["points"]] for d in rec.get("drivers") or []]}
+        if tools:
+            players[pk] = {"mlbam": p.get("mlbam"), "side": p.get("side"), "tools": tools}
+    meta = doc.get("tools") or {}
+    return {"generated_at": doc.get("generated_at"), "item": ITEM, "flag_etools_on": ETOOLS_ON,
+            # short keys only: the producer-coverage gate reads any 8+ word string as reader prose
+            "decision": "EW3-27", "rounding": {"etool": "nearest", "consensus": "ceil"},
+            "consensus_sources": list(SOURCES), "band_z": BAND_Z, "flip_prep_sha": doc.get("flip_prep_sha"),
+            "tools": {t: {"key": keys.get(t), "name": TOOL_NAMES.get(t, t),
+                          "construction": (meta.get(t) or {}).get("construction"),
+                          "admitted": (meta.get(t) or {}).get("admitted") or []}
+                      for t in PASS_TOOLS if t in meta},
+            "consensus_tools": [t for t in TOOLS if t not in PASS_TOOLS],
+            "driver_labels": dict(SUBDRIVER_LABELS),
+            "players": players}
 
 
 # ---------------------------------------------------------------------------

@@ -6600,7 +6600,7 @@ function renderPositionalLadder() {
   </div>`;
 }
 
-// ---- Evidence > eTools (ETOOLS_FLIP_PREP, owner asks EW3-15 and eTools) ----
+// ---- Evidence > eTools (ETOOLS_FLIP_PREP; served by ETOOLS_SITEWIDE_FLIP, EW3-27) ----
 // Each tool grade moved by the prospect's own minor-league stats, tested against
 // the tool's outcome stat, with the flip checks (drift, a promotion-independent
 // label, the bootstrap and weighting fixes). Read from the summary the eTools
@@ -6685,11 +6685,14 @@ function renderETools() {
   const verdict = `<b>${pass.length} of ${tools.length} eTools beat the consensus tool grade on both labels: ${pass.map(t => escapeHtml(t.key)).join(", ")}.</b> `
     + `An eTool starts at the consensus grade and moves it by what the prospect's own minor-league stats say beyond it. `
     + (fp ? `The flip checks: ${clear} of ${pass.length} hold on players who never reached Double-A or the majors; ${drifted.length ? `${drifted.map(escapeHtml).join(", ")} ${drifted.length === 1 ? "sits" : "sit"} off the development years on the 2026 boards and ${drifted.length === 1 ? "is" : "are"} centred` : "none sits off the development years on the 2026 boards"}. ` : "")
-    + `Not on player cards yet: the owner decides.`;
+    + (d.flag_etools_on
+      ? `Shown since 2026-10-15 (owner decision) wherever the site prints a tool grade: the eTool to the nearest grade, marked e, and the consensus grade, rounded up and marked c, for every other tool.`
+      : `Not on player cards yet: the owner decides.`);
   el.innerHTML = `<div class="source-comp-wrap warc-wrap gl-etl">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Measured · read once ${escapeHtml(look)}${fpAt ? ` · flip checks ${escapeHtml(fpAt)}` : ""}</div>
     <h2 class="meth-h">eTools: tool grades sharpened by stats</h2>
     <p class="meth-note">Each scouting tool grade has an outcome stat it is meant to predict: the hit tool, MLB strikeout rate; game power, ISO; the fastball, a pitcher's strikeout rate; command, his walk rate. For each tool we tested which minor-league stats, dated before the list, add to the consensus grade at predicting that stat, and built one eTool from the ones that did.</p>
+    <p class="meth-note warc-link"><a href="https://claude.ai/artifact/8kKwxxi7rMhhSHC91CvyUo" target="_blank" rel="noopener noreferrer">Standalone version</a></p>
     <div class="wpm-explain" role="note">${verdict}</div>
     <div class="warc-frame" role="region" tabindex="0" aria-label="Each tool, its sub-drivers and its test">
       <table class="warc-table"><caption>Within-list rank correlation with the outcome, consensus grade to eTool. MLB: the first three MLB seasons after the list, among players who debuted. Minors: the translated Double-A and Triple-A line over the next three seasons. LB is the one-sided 95% lower bound of the gain.</caption>
@@ -6721,7 +6724,9 @@ function renderETools() {
       <ol>
         <li>eHIT measures strikeout avoidance, the framework's hit outcome, not batting average.</li>
         <li>The MLB outcome exists only for players who debuted, and pitch selection and bat control read one MLB season (2026).</li>
-        <li>No eTool is on a player card or in eFV yet. eFV's own registration decides whether they replace the raw tool grades there.</li>
+        ${d.flag_etools_on
+          ? `<li>eFV does not read the eTools; its own registration decides whether they replace the consensus tool grades there. The Tool, O-Tool and D-Tool composites and the POW+, HIT+ and DISC+ blends still read the consensus grades.</li>`
+          : `<li>No eTool is on a player card or in eFV yet. eFV's own registration decides whether they replace the raw tool grades there.</li>`}
       </ol>
     </section>
   </div>`;

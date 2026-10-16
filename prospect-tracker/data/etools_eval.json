@@ -1,7 +1,7 @@
 {
  "item": "ETOOLS",
- "generated_at": "2026-10-15T23:48:33Z",
- "flag_etools_on": false,
+ "generated_at": "2026-10-16T00:18:37Z",
+ "flag_etools_on": true,
  "gate": {
   "doc": "docs/tools-2026-10/ETOOLS_GATE.md",
   "sha": "3f240da6",

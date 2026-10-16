@@ -3479,10 +3479,18 @@
       color: var(--text-tertiary);
       white-space: nowrap;
     }
-    /* eTools beside the consensus grades (dark until ETOOLS_ON; ETOOLS_FLIP_PREP) */
-    .tool-etool { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 3px;
-      border: 1px dashed var(--border-light); font-family: var(--font-mono); font-size: 10px;
-      font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+    /* eTools: the shown tool grade and its basis mark (ETOOLS_SITEWIDE_FLIP) */
+    .tool-basis { font-size: 8px; font-weight: 700; margin-left: 1px; letter-spacing: 0; line-height: 0;
+      vertical-align: super; font-family: var(--font-mono); }
+    .tool-basis.is-e { color: var(--neon-cyan); }
+    .tool-basis.is-c { color: var(--text-tertiary); opacity: 0.8; }
+    .tool-cons-ref { margin-left: 4px; font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-tertiary); white-space: nowrap; }
+    /* a card cell with an eTool carries the consensus beside it: let it wrap on a phone */
+    @media (max-width: 480px) {
+      .tools-card .tools-grade-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tools-card .tools-grade-cell { flex-wrap: wrap; row-gap: 2px; }
+    }
     .etools-block { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-light); }
     .etools-head { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
       color: var(--text-tertiary); margin-bottom: 4px; }
@@ -12504,7 +12512,7 @@ function _inlineBadgeStrip(p, max = 3) {
 // Reads p.tools.grades when populated, falls back to the latest
 // snapshot's tools_consensus. Returns "" when no grades available.
 function _toolGradeStripHTML(p) {
-  const grades = (p.tools && p.tools.grades) || {};
+  const grades = toolGradesShown(p);   // eTools where one passed (ETOOLS_SITEWIDE_FLIP)
   const latest = (p.points && p.points.length)
     ? (p.points[p.points.length - 1].tools_consensus || {}) : {};
   const get = k => {
@@ -12539,7 +12547,9 @@ function _toolGradeStripHTML(p) {
             : v >= 50 ? 'var(--text-primary)'
             : v >= 40 ? 'var(--neon-amber)'
             :           'var(--down)';
-    return `<span class="expand-tool-pill" title="${label} ${fvCeil(v)} / 80"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${fvCeil(v)}</span></span>`;
+    const basis = toolBasis(p, k);
+    const tip = _ETOOLS_UI ? toolGradeTip(p, k, toolGradeShown(p, k)) : `${label} ${fvCeil(v)} / 80`;
+    return `<span class="expand-tool-pill" title="${escapeHtml(tip)}"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${fvCeil(v)}${toolBasisMarkHTML(basis)}</span></span>`;
   });
   // At least one populated pill required - pure-placeholder rows show
   // nothing rather than a row of invisible slots.
@@ -16230,7 +16240,7 @@ function getFilteredActives() {
   // (hit / fb / cmd / etc.) isolates that one tool.
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
     pool = pool.filter(p => {
-      const grades = (p.tools && p.tools.grades) || {};
+      const grades = toolGradesShown(p);   // the shown grades (ETOOLS_SITEWIDE_FLIP)
       if (state.toolFilterKey === "any") {
         return Object.entries(grades).some(([k, v]) =>
           k !== "_extras" && typeof v === "number" && v >= state.toolFilterMin);
@@ -16349,7 +16359,7 @@ function getFilteredActives() {
         const v = (p.tools || {}).composite_overall;
         return typeof v === "number" && isFinite(v) ? v : null;
       }
-      const tg = (p.tools && p.tools.grades) || {};
+      const tg = toolGradesShown(p);   // sorts on the shown grade (ETOOLS_SITEWIDE_FLIP)
       let v = tg[tk];
       if (v == null && p.points && p.points.length) {
         const latest = p.points[p.points.length - 1];
@@ -18004,7 +18014,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const toolPool = players.map(p => {
     // Resolve tool grade - first the explicit tools.grades dict, fall
     // back to the most-recent snapshot's tools_consensus.
-    const tg = (p.tools && p.tools.grades) || {};
+    const tg = toolGradesShown(p);   // the shown grade (ETOOLS_SITEWIDE_FLIP)
     let v = tg[_toolKey];
     if (v == null && p.points && p.points.length) {
       const latest = p.points[p.points.length - 1];
@@ -18016,7 +18026,10 @@ function renderActiveContextRail(railId = "active-context-rail") {
     .sort((a, b) => b.v - a.v)
     .slice(0, 5);
   const toolRows = toolPool.map(({ p, v }) => {
-    const rounded = Math.round(v);
+    // An eTool is already a whole grade; a consensus grade rounds up (the owner's
+    // rule; this rail rounded it to nearest before ETOOLS_SITEWIDE_FLIP).
+    const _basis = toolBasis(p, _toolKey);
+    const rounded = _ETOOLS_UI ? fvCeil(v) : Math.round(v);
     const tier = Math.max(20, Math.min(80, Math.floor(rounded / 5) * 5));
     const _level = (p.statline && p.statline.level) || null;
     return _ctxRow({
@@ -18025,7 +18038,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       pos: p.position ? String(p.position).split("/")[0] : null,
       level: _level,
       teamLogoHTML: p.org ? orgLinkHTML(p.org, pxClubLogoHTML(p.org, "sm", true), { cls: "px-club" }) : "",
-      rightHTML: `<span class="ctx-tool-grade" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${rounded}</span>`,
+      rightHTML: `<span class="ctx-tool-grade" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"${_ETOOLS_UI ? ` title="${escapeHtml(toolGradeTip(p, _toolKey, toolGradeShown(p, _toolKey)))}"` : ""}>${rounded}${toolBasisMarkHTML(_basis)}</span>`,
     });
   }).join("");
   const toolSelectOptions = TOOL_OPTS.map(o =>
@@ -20815,7 +20828,7 @@ function _radarToolsFor(p){
   const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true) || !!(p.statline || {}).is_pitcher;
   const keys = isPit ? [["FB","fb"],["SL","sl"],["CB","cb"],["CH","ch"],["CMD","cmd"]]
                      : [["HIT","hit"],["PWR","pwr"],["SPD","speed"],["FLD","field"],["ARM","throw"]];
-  const grades = (p.tools && p.tools.grades) || {};
+  const grades = toolGradesShown(p);   // the shown grades (ETOOLS_SITEWIDE_FLIP)
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const ltc = (latest && latest.tools_consensus) || {};
   const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
@@ -34399,16 +34412,23 @@ function defHomeChip(p) {
       </div>
     </div>`;
 }
-// ===== eTools beside the consensus tool grades (ETOOLS_FLIP_PREP, DARK) =====
-// docs/tools-2026-10/ETOOLS_AMENDMENT_2.md F4. An eTool is the consensus tool
-// grade moved by the prospect's own minor-league stats (its sub-drivers), for the
-// six tools whose eTool beat the consensus grade on both labels (eHIT, ePOW,
-// eSEL, eBAT, eFB, eCMD). DARK: ETOOLS_CARD_ON mirrors etools.ETOOLS_ON (a test
-// pins the two together) and the builder writes the served payload only when the
-// owner flips it, so nothing is fetched or shown by default. #etools=1 (or
-// ?etools=1) previews the display against a local payload; latched at boot like
-// #phys, because syncToURL() drops hash keys it does not own.
-const ETOOLS_CARD_ON = false;
+// ===== eTools: the shown grade for each tool (ETOOLS_SITEWIDE_FLIP) =====
+// Owner decision EW3-27 (2026-10-15): "eTools should be our shown version of each
+// tool across the site." An eTool is the consensus tool grade moved by the
+// prospect's own minor-league stats (its sub-drivers). Six tools have an eTool that
+// beat the consensus grade on both labels (eHIT, ePOW, eSEL, eBAT, eFB, eCMD;
+// docs/tools-2026-10/ETOOLS_RESULTS.md); every other tool, and any player the
+// builder could not score, keeps the consensus grade. toolGradeShown and
+// toolGradesShown are the one place a surface reads a displayed tool grade: an
+// eTool prints to the nearest whole grade (a model grade, like eFV), a consensus
+// grade rounds up (fvCeil), and a small mark names the basis ("e" or "c"). The
+// composites (Tool, O-Tool, D-Tool), the POW+ / HIT+ / DISC+ blends and the tool
+// history charts read the consensus grades as before. ETOOLS_CARD_ON mirrors
+// etools.ETOOLS_ON (a test pins the two); with it false every surface prints the
+// consensus grades exactly as before. #etools=0 or #etools=1 (or ?etools=)
+// overrides it for a preview; latched at boot like #phys, because syncToURL()
+// drops hash keys it does not own.
+const ETOOLS_CARD_ON = true;
 const _ETOOLS_UI = (() => {
   const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("etools");
   if (h != null) return h !== "0";
@@ -34416,76 +34436,154 @@ const _ETOOLS_UI = (() => {
   if (q != null) return q !== "0";
   return ETOOLS_CARD_ON;
 })();
-let _ETOOLS = null, _ETOOLS_LOADING = false;
+let _ETOOLS = null, _ETOOLS_PROMISE = null;
 function ensureETools() {
-  if (!_ETOOLS_UI || _ETOOLS !== null || _ETOOLS_LOADING) return;
-  _ETOOLS_LOADING = true;
-  fetch("/data/etools.json", { cache: "no-cache" })
+  if (!_ETOOLS_UI || _ETOOLS !== null) return Promise.resolve(_ETOOLS);
+  if (_ETOOLS_PROMISE) return _ETOOLS_PROMISE;
+  _ETOOLS_PROMISE = fetch("/data/etools.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       const byMlbam = {};
       const players = (j && j.players) || {};
       for (const k in players) if (players[k] && players[k].mlbam != null) byMlbam[String(players[k].mlbam)] = players[k];
-      _ETOOLS = { players, byMlbam, tools: (j && j.tools) || {} };
-      scheduleRender();
+      _ETOOLS = { players, byMlbam, tools: (j && j.tools) || {}, labels: (j && j.driver_labels) || {} };
     })
-    .catch(() => { _ETOOLS = { players: {}, byMlbam: {}, tools: {} }; });
+    .catch(() => { _ETOOLS = { players: {}, byMlbam: {}, tools: {}, labels: {} }; })
+    .then(() => {
+      if (DATA && !DATA.__error && typeof scheduleRender === "function") scheduleRender();
+      return _ETOOLS;
+    });
+  return _ETOOLS_PROMISE;
 }
-// Card tool key (the consolidated PWR row reads game power's eTool) to eTool key.
-const _ETOOL_KEY = { hit: "eHIT", pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };
-const _ETOOL_TOOL = { eHIT: "hit", ePOW: "game_pwr", eSEL: "pitch_sel", eBAT: "bat_ctrl", eFB: "fb", eCMD: "cmd" };
-const _ETOOL_WHAT = { eHIT: "hit (strikeout avoidance)", ePOW: "game power", eSEL: "pitch selection",
-  eBAT: "bat control", eFB: "fastball", eCMD: "command" };
+// Card and strip tool key to the eTool's tool key. The one Power grade the site
+// shows (the v17 consolidation) reads game power's eTool where one exists.
+const _ETOOL_TOOL_OF = { hit: "hit", pwr: "game_pwr", game_pwr: "game_pwr", pitch_sel: "pitch_sel",
+  bat_ctrl: "bat_ctrl", fb: "fb", cmd: "cmd" };
+const _ETOOL_KEY = { hit: "eHIT", game_pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };
+const _ETOOL_WHAT = { hit: "hit (strikeout avoidance)", game_pwr: "game power", pitch_sel: "pitch selection",
+  bat_ctrl: "bat control", fb: "fastball", cmd: "command" };
 function _eToolsFor(p) {
   if (!_ETOOLS_UI || !p) return null;
-  ensureETools();
-  if (!_ETOOLS) return null;
+  if (!_ETOOLS) { ensureETools(); return null; }
   const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
   return _ETOOLS.players[p.player_key] || (mid != null ? _ETOOLS.byMlbam[String(mid)] : null) || null;
 }
-function _eToolRec(p, cardKey) {
+// side ("hit" or "pit") when the grades are one side of a two-way card.
+function _eToolRec(p, cardKey, side) {
   const e = _eToolsFor(p);
-  const k = _ETOOL_KEY[cardKey];
-  const r = e && k ? (e.tools || {})[k] : null;
-  return (r && r.basis === "etool" && r.etool != null) ? Object.assign({ key: k }, r) : null;
+  if (!e || (side && e.side && side !== e.side)) return null;
+  const t = _ETOOL_TOOL_OF[cardKey];
+  const r = t ? (e.tools || {})[t] : null;
+  return (r && r.shown != null) ? Object.assign({ tool: t, key: _ETOOL_KEY[t] }, r) : null;
+}
+function _consToolVal(g, cardKey) {
+  if (!g) return null;
+  if (cardKey === "pwr") return _resolvePwr(g);
+  const v = g[cardKey];
+  return (v != null && v !== "" && isFinite(Number(v))) ? Number(v) : null;
+}
+// One tool as a surface shows it: { v, shown, basis, cons, rec }. v sorts, filters
+// and colours; shown is the printed whole grade; cons is the consensus grade.
+function toolGradeShown(p, cardKey, grades, side) {
+  const g = grades || ((p && p.tools && p.tools.grades) || {});
+  const cons = _consToolVal(g, cardKey);
+  const r = _eToolRec(p, cardKey, side);
+  if (r) return { v: r.shown, shown: r.shown, basis: "etool", cons, rec: r };
+  return { v: cons, shown: cons == null ? null : fvCeil(cons), basis: _BASIS_TOOLS.has(cardKey) ? "consensus" : null,
+           cons, rec: null };
+}
+// The grade map with each passing eTool in place of its consensus grade (pwr
+// reads game power's). Flag off, or no eTool on file: the map itself.
+function toolGradesShown(p, grades, side) {
+  const g = grades || ((p && p.tools && p.tools.grades) || {});
+  const e = _eToolsFor(p);
+  if (!e || (side && e.side && side !== e.side)) return g;
+  const out = Object.assign({}, g);
+  for (const t in (e.tools || {})) {
+    const r = e.tools[t];
+    if (r && r.shown != null) out[t] = r.shown;
+  }
+  if (e.tools && e.tools.game_pwr && e.tools.game_pwr.shown != null) out.pwr = e.tools.game_pwr.shown;
+  return out;
+}
+// The scouted tools (the FanGraphs Frame / Athleticism / Delivery grades are not
+// consensus tool grades and carry no basis mark).
+const _BASIS_TOOLS = new Set(["hit", "pwr", "game_pwr", "raw_pwr", "speed", "field", "throw", "pitch_sel",
+  "bat_ctrl", "fb", "sl", "cb", "ch", "ct", "sp", "cmd"]);
+function toolBasis(p, cardKey, side) {
+  if (!_BASIS_TOOLS.has(cardKey)) return null;
+  return _eToolRec(p, cardKey, side) ? "etool" : "consensus";
+}
+// The small mark after a tool grade: "e" for an eTool, "c" for consensus. Flag off: "".
+function toolBasisMarkHTML(basis) {
+  if (!_ETOOLS_UI || !basis) return "";
+  return basis === "etool"
+    ? '<sup class="tool-basis is-e" aria-label="eTool">e</sup>'
+    : '<sup class="tool-basis is-c" aria-label="consensus">c</sup>';
+}
+// The same mark in plain text (tooltips, the GFX image): "e" or "c". Flag off: "".
+function toolBasisMarkText(basis) {
+  if (!_ETOOLS_UI || !basis) return "";
+  return basis === "etool" ? "e" : "c";
 }
 function _eToolPts(v) {
   const n = Number(v);
   return (n > 0 ? "+" : n < 0 ? "-" : "") + Math.abs(n).toFixed(1);
 }
 function _eToolBand(r) {
-  return (r.band80 && r.band80.length === 2) ? `${fvCeil(r.band80[0])} to ${fvCeil(r.band80[1])}` : "";
+  return (r.band80 && r.band80.length === 2) ? `${Math.round(r.band80[0])} to ${Math.round(r.band80[1])}` : "";
 }
-// The small chip beside a consensus grade cell: "eHIT 60".
-function eToolChipHTML(p, cardKey) {
-  const r = _eToolRec(p, cardKey);
-  if (!r) return "";
-  const moved = (r.drivers || []).map(d => `${d.label} ${_eToolPts(d.points)}`).join(", ");
-  const tip = `${r.key}: consensus ${fvCeil(r.consensus)} moved to ${Number(r.etool).toFixed(1)} by the prospect's own stats`
-    + `${moved ? ` (${moved})` : ""}; 80% band ${_eToolBand(r)}. Shown rounded up to the next 5.`;
-  return `<span class="tool-etool" title="${escapeHtml(tip)}">${escapeHtml(r.key)} ${r.etool_display}</span>`;
+function _eToolDrivers(r) {
+  const labels = (_ETOOLS && _ETOOLS.labels) || {};
+  return (r.drivers || []).map(d => ({ label: labels[d[0]] || d[0], points: d[1] }));
 }
-// The block under the grade grid: each eTool with its band and the sub-drivers
-// that moved it, in grade points.
-function eToolsBlockHTML(p, keys) {
-  const recs = keys.map(k => _eToolRec(p, k)).filter(Boolean);
+// Plain-text tooltip for one shown tool grade: the basis, the consensus grade as a
+// reference, and for an eTool its start, the sub-drivers' push and the 80% band.
+function toolGradeTip(p, cardKey, info, grades) {
+  const ePow = cardKey === "pwr" && info && info.basis === "etool";
+  const name = ePow ? "Game Power" : toolFullName(cardKey);
+  if (!info || info.shown == null) return name;
+  if (!_ETOOLS_UI || !info.basis) return `${name} grade ${info.shown}`;
+  if (info.basis !== "etool") {
+    const why = _ETOOL_TOOL_OF[cardKey] ? "no eTool on file for this player" : "no eTool for this tool";
+    return `${name} ${info.shown}: consensus grade, rounded up (${why})`;
+  }
+  const r = info.rec;
+  const g = grades || ((p && p.tools && p.tools.grades) || {});
+  let cons;
+  if (ePow) {
+    const gp = _consToolVal(g, "game_pwr"), rp = _consToolVal(g, "raw_pwr");
+    cons = [gp != null ? `game power ${fvCeil(gp)}` : "", rp != null ? `raw power ${fvCeil(rp)}` : ""].filter(Boolean).join(", ");
+    cons = cons ? `Consensus ${cons} (rounded up; raw power has no eTool).` : "";
+  } else {
+    cons = info.cons != null ? `Consensus ${fvCeil(info.cons)} (all sources, rounded up).` : "";
+  }
+  const moved = _eToolDrivers(r).map(d => `${d.label} ${_eToolPts(d.points)}`).join(", ");
+  const start = r.consensus != null ? ` It starts from ${Number(r.consensus).toFixed(1)}, the FanGraphs, MLB Pipeline and Baseball America mean${moved ? `: ${moved}` : ", with no sub-driver on file"}.` : "";
+  const band = _eToolBand(r);
+  return `${name} ${r.shown} (${r.key}): the consensus grade moved by the prospect's own minor-league stats,`
+    + ` ${Number(r.etool).toFixed(1)} shown to the nearest grade. ${cons}${start}${band ? ` 80% band ${band}.` : ""}`;
+}
+// The block under the card's grade grid: each eTool with its band, its start
+// and the sub-drivers that moved it, in grade points.
+function eToolsBlockHTML(p, keys, side) {
+  const recs = keys.map(k => _eToolRec(p, k, side)).filter(Boolean);
   if (!recs.length) return "";
   const rows = recs.map(r => {
-    const drivers = (r.drivers || []).map(d =>
+    const drivers = _eToolDrivers(r).map(d =>
       `<span class="etool-driver">${escapeHtml(d.label)} <b>${escapeHtml(_eToolPts(d.points))}</b></span>`).join("");
-    const meta = (_ETOOLS && _ETOOLS.tools && _ETOOLS.tools[_ETOOL_TOOL[r.key]]) || {};
-    const centred = r.construction === "recentred" ? " · centred on the 2026 board" : "";
+    const meta = (_ETOOLS && _ETOOLS.tools && _ETOOLS.tools[r.tool]) || {};
+    const centred = meta.construction === "recentred" ? " · centred on the 2026 board" : "";
     return `<div class="etool-row">
-      <span class="etool-name"><span class="g-term" data-term="${escapeHtml(r.key.toLowerCase())}">${escapeHtml(r.key)}</span> <span class="etool-what">${escapeHtml(_ETOOL_WHAT[r.key] || "")}</span></span>
-      <span class="etool-vals"><span class="fv-badge ${fvClass(String(r.etool_display))} size-sm">${r.etool_display}</span>
+      <span class="etool-name"><span class="g-term" data-term="${escapeHtml(r.key.toLowerCase())}">${escapeHtml(r.key)}</span> <span class="etool-what">${escapeHtml(_ETOOL_WHAT[r.tool] || "")}</span></span>
+      <span class="etool-vals"><span class="fv-badge ${fvClass(String(r.shown))} size-sm">${r.shown}</span>
         <span class="etool-band" title="80% band">${escapeHtml(_eToolBand(r))}</span>
-        <span class="etool-cons">consensus ${fvCeil(r.consensus)}${escapeHtml(centred)}</span></span>
-      <span class="etool-drivers">${drivers || '<span class="etool-driver">no sub-driver on file: consensus</span>'}</span>
-      ${meta.promotion === "PROMOTION-UNRESOLVED" ? '<span class="etool-flag">Promotion check unresolved</span>' : ""}
+        <span class="etool-cons">from ${r.consensus != null ? Number(r.consensus).toFixed(1) : " - "}${escapeHtml(centred)}</span></span>
+      <span class="etool-drivers">${drivers || '<span class="etool-driver">no sub-driver on file: the consensus grade</span>'}</span>
     </div>`;
   }).join("");
   return `<div class="etools-block">
-    <div class="etools-head">eTools <span class="etools-sub">the consensus grade moved by the prospect's own minor-league stats, with an 80% band · <a href="/glossary/#view=etools">how they were tested</a></span></div>
+    <div class="etools-head">eTools <span class="etools-sub">the shown grade for these tools: the three-outlet consensus (from) moved by the prospect's own minor-league stats, to the nearest grade, with an 80% band · <a href="/glossary/#view=etools">how they were tested</a></span></div>
     ${rows}
   </div>`;
 }
@@ -37169,12 +37267,12 @@ function _gfxInsight(p) {
     return `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(0)} FV ${s.delta > 0 ? "riser" : "faller"}${when}`;
   }
   if (p.breakout_flag) return "Flagged breakout - FV velocity + performance gate cleared";
-  const grades = (p.tools && p.tools.grades) || {};
+  const grades = toolGradesShown(p);   // the shown grades (ETOOLS_SITEWIDE_FLIP)
   const ltc = (p.points && p.points.length ? p.points[p.points.length - 1].tools_consensus : {}) || {};
   const get = k => { const v = grades[k]; if (v != null) return v; return ltc[k]; };
   const lbl = { hit: "hit tool", pwr: "power", game_pwr: "power", raw_pwr: "raw power", speed: "speed", field: "glove", throw: "arm", fb: "fastball", sl: "slider", cb: "curveball", ch: "changeup", cmd: "command" };
   let best = null; for (const k in lbl) { const v = get(k); if (v != null && (!best || v > best.v)) best = { k, v }; }
-  if (best && best.v >= 60) return `Standout ${lbl[best.k]} - ${fvCeil(best.v)} grade`;
+  if (best && best.v >= 60) return `Standout ${lbl[best.k]} - ${fvCeil(best.v)}${toolBasis(p, best.k) === "etool" && _ETOOLS_UI ? " eTool" : ""} grade`;
   const sc = (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null;
   // notableHi rather than a bare 110: 110 is now exactly +1 sigma, which is a
   // third of the pool, and this line is a headline claim about one player.
@@ -37342,9 +37440,11 @@ function buildProspectCard(snap) {
     ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:60px;line-height:1;padding:12px 22px;border-radius:10px;font-weight:800;display:inline-block;">${escapeHtml(fvLabel)}</span>`
     : `<span style="font-size:52px;font-weight:800;color:${P.text3};"> - </span>`;
 
-  // Tools - radar (primary) + pill row (secondary).
-  const grades = (p.tools && p.tools.grades) || {};
+  // Tools - radar (primary) + pill row (secondary). The shown grades
+  // (ETOOLS_SITEWIDE_FLIP): an eTool where one passed, marked e; consensus marked c.
+  const grades = toolGradesShown(p);
   const ltc = (latest && latest.tools_consensus) || {};
+  const _gfxMark = k => { const b = toolBasisMarkText(toolBasis(p, k)); return b ? `<sup style="font-size:0.75em;opacity:0.85;margin-left:1px;">${b}</sup>` : ""; };
   const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
   const radarKeys = isPitcher
     ? [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CMD", "cmd"]]
@@ -37359,7 +37459,7 @@ function buildProspectCard(snap) {
     const c = v >= 60 ? "var(--up)" : v >= 50 ? P.text : v >= 40 ? "var(--neon-amber)" : "var(--down)";
     return `<div style="flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
       <span style="font-family:var(--font-mono);font-size:25px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
-      <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
+      <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}${_gfxMark(k)}</span>
     </div>`;
   }).filter(Boolean);
   const toolPills = _toolPillsFor(toolKeys);
@@ -37643,7 +37743,7 @@ function buildProspectCard(snap) {
     const bioSect = bioBits ? `<div style="font-family:var(--font-mono);font-size:15px;color:${P.text2};">${escapeHtml(bioBits)}</div>` : "";
     sectionsHTML = [
       sect(isPitcher ? "Career Pitching · by season" : "Career Hitting · by season", careerTbl),
-      sect("Tool Grades · 20-80", toolsRow),
+      sect(_ETOOLS_UI ? "Tool Grades · 20-80 · e eTool · c consensus" : "Tool Grades · 20-80", toolsRow),
       sect("Arkmetrics & Surplus", valuationBlock),
       blurb ? sect("Scouting Report", blurbHTML) : "",
       bioSect ? sect("Bio", bioSect) : "",
@@ -37666,10 +37766,10 @@ function buildProspectCard(snap) {
       const c = v >= 60 ? "var(--up)" : v >= 50 ? P.text : v >= 40 ? "var(--neon-amber)" : "var(--down)";
       return `<div style="flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:6px;">
         <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
-        <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
+        <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}${_gfxMark(k)}</span>
       </div>`;
     }).filter(Boolean);
-    return pills.length >= 3 ? microLabel("Tools · 20-80") + `<div style="display:flex;gap:6px;">${pills.join("")}</div>` : "";
+    return pills.length >= 3 ? microLabel(_ETOOLS_UI ? "Tools · 20-80 · e eTool · c consensus" : "Tools · 20-80") + `<div style="display:flex;gap:6px;">${pills.join("")}</div>` : "";
   })();
   const dossierSeason = (() => {
     const yr = sl.season || "";
@@ -37961,7 +38061,7 @@ function buildCompareCard(snap) {
     const _gb = gradeBlock(p);
     const fvLabel = _gb.label != null ? _gb.label : " - ";
     const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
-    const grades = (p.tools && p.tools.grades) || {}; const ltc = (latest && latest.tools_consensus) || {};
+    const grades = toolGradesShown(p); const ltc = (latest && latest.tools_consensus) || {};   // shown grades (ETOOLS_SITEWIDE_FLIP)
     const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
     const rpsObj = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null;
     return { p, i, color: COL[i], latest, fvLabel, fvNum: efvRankValue(p), isPit, getT, sl: p.statline || {},
@@ -40487,7 +40587,7 @@ function makeQuickReadSummaryParts(p, opts = {}) {
   const { listMode = false } = opts;
   if (!p) return [];
   const sl = p.statline || {};
-  const tools = (p.tools && p.tools.grades) || {};
+  const tools = toolGradesShown(p);   // the shown grades (ETOOLS_SITEWIDE_FLIP)
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const ageNum = p.age != null ? Number(p.age) : null;
   if (!latest && ageNum == null) return [];
@@ -41169,9 +41269,12 @@ function makeToolGradeChips(p, activeToolKey) {
     );
   }
   let sortedPill = null;   // the active-sort tool's chip, hoisted to the front
+  // The shown grades (ETOOLS_SITEWIDE_FLIP): each passing eTool in place of its
+  // consensus grade; flag off, the consensus map itself.
+  const shownG = toolGradesShown(p, grades);
   for (const k of order) {
     // PWR uses the consolidated helper; everything else reads directly.
-    const v = k === "pwr" ? _resolvePwr(grades) : grades[k];
+    const v = k === "pwr" ? _resolvePwr(shownG) : shownG[k];
     if (v == null) continue;
     const n = Number(v);
     if (!isFinite(n)) continue;
@@ -41186,6 +41289,8 @@ function makeToolGradeChips(p, activeToolKey) {
         && grades.pwr == null) {
       tip = `${full} ${rounded} · Game ${grades.game_pwr} · Raw ${grades.raw_pwr} (mean)`;
     }
+    const basis = toolBasis(p, k);
+    if (_ETOOLS_UI) tip = toolGradeTip(p, k, toolGradeShown(p, k, grades), grades);
     const isSorted = sortTool != null && k === sortTool;
     if (isSorted) tip += " · sorted by this tool";
     const html =
@@ -41193,7 +41298,7 @@ function makeToolGradeChips(p, activeToolKey) {
              style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
              title="${escapeHtml(tip)}">`
       + `<span class="tg-code">${escapeHtml(code)}</span>`
-      + `<span class="tg-val">${rounded}</span>`
+      + `<span class="tg-val">${rounded}${toolBasisMarkHTML(basis)}</span>`
       + `</span>`;
     if (isSorted) sortedPill = html;   // hoisted below so it leads the strip
     else pills.push(html);
@@ -50704,8 +50809,9 @@ function renderPlayerDetail(key) {
   // within 5 points so the tile carries "what they're known for"
   // rather than a single number in isolation.
   const topToolTile = (() => {
-    const tg = p.tools && p.tools.grades;
-    if (!tg || !Object.keys(tg).length) return null;
+    const tg0 = p.tools && p.tools.grades;
+    if (!tg0 || !Object.keys(tg0).length) return null;
+    const tg = toolGradesShown(p, tg0);   // the shown grades (ETOOLS_SITEWIDE_FLIP)
     const _label = k => (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
     const isPitcherT = !!(sl.is_pitcher)
       || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
@@ -50730,11 +50836,11 @@ function renderPlayerDetail(key) {
     const tier = _toolTier(fvCeil(top.v));
     const color = `var(--fv-${tier}-fg)`;
     const bg    = `var(--fv-${tier}-bg)`;
-    const headlineV = `<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:${bg};color:${color};font-weight:800;letter-spacing:0.02em;">${escapeHtml(_label(top.k))} ${fvCeil(top.v)}</span>`;
+    const headlineV = `<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:${bg};color:${color};font-weight:800;letter-spacing:0.02em;">${escapeHtml(_label(top.k))} ${fvCeil(top.v)}${toolBasisMarkHTML(toolBasis(p, top.k))}</span>`;
     // Secondary mention - second-best tool if within 5 points + a
     // source count from p.tools.composite_overall context.
     const second = entries[1] && Math.abs(entries[1].v - top.v) <= 5
-      ? `2nd: ${escapeHtml(_label(entries[1].k))} ${fvCeil(entries[1].v)}`
+      ? `2nd: ${escapeHtml(_label(entries[1].k))} ${fvCeil(entries[1].v)}${toolBasisMarkHTML(toolBasis(p, entries[1].k))}`
       : "";
     const compositeNum = p.tools && p.tools.composite_overall != null
       ? `composite ${fvCeil(p.tools.composite_overall)}`
@@ -51513,6 +51619,9 @@ function renderPlayerDetail(key) {
         <div class="tools-composite-chip-value">${valueHtml}</div>
       </div>`;
     };
+    // The composites are built from the consensus grades (ETOOLS_SITEWIDE_FLIP leaves them as
+    // they were); said in their tooltips while the eTools are the shown grades.
+    const _compNote = _ETOOLS_UI ? " Built from the consensus grades, not the eTools." : "";
     const dualMarkerHTML = `<span class="tool-dual-marker" title="Run contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
     // Per-source tooltip builder. Reads from the latest snapshot's
     // per_source dict; lists each source that published this tool with
@@ -51624,14 +51733,23 @@ function renderPlayerDetail(key) {
         spreadTag = `<span style="font-size:9px;color:${color};margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`;
       }
       const dualMark = key === "speed" ? dualMarkerHTML : "";
-      const tip = _perSourceTooltip(key, v);
+      // The shown grade (ETOOLS_SITEWIDE_FLIP): the eTool where one passed, else the
+      // consensus grade; the consensus stays beside an eTool as a smaller reference.
+      const sh = toolGradeShown(p, key, t.grades);
+      const isE = sh.basis === "etool";
+      const tip = (_ETOOLS_UI ? toolGradeTip(p, key, sh, t.grades) + "\n" : "") + _perSourceTooltip(key, v);
       const slug = TOOL_TO_GLOSSARY[key];
+      const shownLabel = (isE && key === "pwr") ? "Game Power" : label;
       const labelHtml = slug
-        ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(label)}</span>`
-        : escapeHtml(label);
+        ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(shownLabel)}</span>`
+        : escapeHtml(shownLabel);
+      const refV = (isE && key === "pwr") ? _consToolVal(t.grades, "game_pwr") : v;
+      const consRef = (isE && refV != null)
+        ? `<span class="tool-cons-ref" title="Consensus grade (all sources, rounded up)">cons ${fvCeil(refV)}</span>` : "";
+      const badge = isE ? `<span class="fv-badge ${fvClass(String(sh.shown))} size-sm">${sh.shown}</span>` : badgeFor(v);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
-        <span class="tools-grade-name">${labelHtml}${dualMark}${spreadTag}</span>
-        ${badgeFor(v)}${deltaChip(key)}${eToolChipHTML(p, key)}
+        <span class="tools-grade-name">${labelHtml}${toolBasisMarkHTML(sh.basis)}${dualMark}${spreadTag}</span>
+        ${badge}${consRef}${deltaChip(key)}
       </div>`;
     };
     let compositeBar = "";
@@ -51639,7 +51757,7 @@ function renderPlayerDetail(key) {
     let hasSpeedMarker = false;
     if (isPitcher) {
       const overallChip = compositeChip("Tool", t.composite_overall, null,
-        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)", true, 'grade');
+        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)" + _compNote, true, 'grade');
       const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
         "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
@@ -51672,11 +51790,11 @@ function renderPlayerDetail(key) {
       // (DEF 60 / ARM 30 / RUN 10, catchers DEF 70 / ARM 30), p=3
       // power-mean. All three on the 20-80 scouting scale (50 = avg).
       const overallChip = compositeChip("Tool", t.composite_overall, null,
-        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale.", true, 'grade');
+        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale." + _compNote, true, 'grade');
       const offChip = compositeChip("O-Tool", t.composite_off, null,
-        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale.", false, 'grade');
+        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale." + _compNote, false, 'grade');
       const defChip = compositeChip("D-Tool", t.composite_def, null,
-        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale.", false, 'grade');
+        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale." + _compNote, false, 'grade');
       compositeBar = (overallChip || offChip || defChip)
         ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
         : "";
@@ -51828,9 +51946,12 @@ function renderPlayerDetail(key) {
               const lab = ({fb:"Fastball", sl:"Slider", cb:"Curveball",
                             ch:"Changeup", cmd:"Command"})[k];
               const v = op.grades[k];
-              return `<div class="tools-grade-cell">
-                <span class="tools-grade-name">${escapeHtml(lab)}</span>
-                ${badgeFor(v)}
+              const sh = toolGradeShown(p, k, op.grades, otherIsPitcher ? "pit" : "hit");
+              const badge = sh.basis === "etool" ? `<span class="fv-badge ${fvClass(String(sh.shown))} size-sm">${sh.shown}</span>` : badgeFor(v);
+              const tipAttr = _ETOOLS_UI ? ` title="${escapeHtml(toolGradeTip(p, k, sh, op.grades))}"` : "";
+              return `<div class="tools-grade-cell"${tipAttr}>
+                <span class="tools-grade-name">${escapeHtml(lab)}${toolBasisMarkHTML(sh.basis)}</span>
+                ${badge}
               </div>`;
             }).join("")
         : ["hit","pwr","speed","field","throw","pitch_sel","bat_ctrl","frame","athl"]
@@ -51841,9 +51962,12 @@ function renderPlayerDetail(key) {
                             pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl",
                             frame:"Frame", athl:"Athleticism"})[k];
               const v = op.grades[k];
-              return `<div class="tools-grade-cell">
-                <span class="tools-grade-name">${escapeHtml(lab)}</span>
-                ${badgeFor(v)}
+              const sh = toolGradeShown(p, k, op.grades, otherIsPitcher ? "pit" : "hit");
+              const badge = sh.basis === "etool" ? `<span class="fv-badge ${fvClass(String(sh.shown))} size-sm">${sh.shown}</span>` : badgeFor(v);
+              const tipAttr = _ETOOLS_UI ? ` title="${escapeHtml(toolGradeTip(p, k, sh, op.grades))}"` : "";
+              return `<div class="tools-grade-cell"${tipAttr}>
+                <span class="tools-grade-name">${escapeHtml(lab)}${toolBasisMarkHTML(sh.basis)}</span>
+                ${badge}
               </div>`;
             }).join("");
       const otherOverall = compositeChip("Tool",
@@ -51859,9 +51983,12 @@ function renderPlayerDetail(key) {
           ${otherCells ? `<div class="tools-grade-grid">${otherCells}</div>` : ""}
         </div>`;
     }
+    const _toolsSub = _ETOOLS_UI
+      ? "20-80 grades · e: eTool, the consensus moved by his minor-league stats (nearest grade) · c: consensus across sources (rounded up)"
+      : "20-80 scouting grades · consensus across sources";
     const primaryTitle = otherPayload
-      ? `Tools (${isPitcher ? "pitching" : "hitting"}) <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`
-      : `Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`;
+      ? `Tools (${isPitcher ? "pitching" : "hitting"}) <span class="detail-title-sub">${_toolsSub}</span>`
+      : `Tools <span class="detail-title-sub">${_toolsSub}</span>`;
     const eToolsBlock = eToolsBlockHTML(p, isPitcher ? ["fb", "cmd"] : ["hit", "pwr", "pitch_sel", "bat_ctrl"]);
     return `<div class="detail-title">${primaryTitle}</div>
       <div class="tools-card">
@@ -57516,7 +57643,7 @@ function toolPlusPillHTML(p) {
       return (g != null && !isNaN(Number(g))) ? `${label} ${fvCeil(g)}` : null;
     })
     .filter(Boolean);
-  const breakdown = bits.length ? `\n${bits.join(' · ')}` : '';
+  const breakdown = bits.length ? `\n${_ETOOLS_UI ? "From the consensus grades: " : ""}${bits.join(' · ')}` : '';
   const title = `Tool ${v} · 20-80 scouting scale composite (50 = avg, 60 = Plus, 70 = Elite)${breakdown}`;
   return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
 }
@@ -58236,7 +58363,8 @@ function makeCompareStatTable(players) {
   // v30.8 - Tool grade rows. Pulls the consensus tool grade from
   // p.tools.grades (mean across sources) with a power fallback for
   // game_pwr / raw_pwr. Higher = better for every tool.
-  const _tg = p => (p && p.tools && p.tools.grades) || {};
+  // The shown grades (ETOOLS_SITEWIDE_FLIP): an eTool where one passed, with its mark.
+  const _tg = p => toolGradesShown(p);
   const _toolVal = (tg, k) => {
     if (tg[k] != null && isFinite(tg[k])) return Number(tg[k]);
     if (k === "pwr") {
@@ -58247,8 +58375,11 @@ function makeCompareStatTable(players) {
     }
     return null;
   };
+  // Flag on: a consensus grade rounds up (the owner's rule; this table rounded it to
+  // nearest before) and an eTool is already a whole grade.
   const _toolRow = (label, k) => [label, p => _toolVal(_tg(p), k),
-    { hi: true, fmt: v => String(Math.round(v)) }];
+    { hi: true, fmt: v => String(_ETOOLS_UI ? fvCeil(v) : Math.round(v)),
+      markp: p => toolBasisMarkHTML(toolBasis(p, k)) }];
   const _toolCompositeRow = [
     "Tool composite",
     p => (p.tools || {}).composite_overall,
@@ -58357,7 +58488,7 @@ function makeCompareStatTable(players) {
         catch { display = String(v); }
       }
       const cls = i === bestIdx ? "is-best" : i === worstIdx ? "is-worst" : "";
-      return `<td class="${cls}">${escapeHtml(String(display))}</td>`;
+      return `<td class="${cls}">${escapeHtml(String(display))}${opts.markp ? opts.markp(players[i]) : ""}</td>`;
     }).join("");
     return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
   };
@@ -59866,7 +59997,13 @@ function _renderBootFailure(content, detail) {
 // BOOT
 // =============================================================================
 async function _bootProspx() {
+  // The eTools payload (ETOOLS_SITEWIDE_FLIP) is small; fetched beside the boot file
+  // and awaited (at most 4 s) so the first paint prints the shown tool grades.
+  const _etoolsReady = ensureETools();
   DATA = await loadData();
+  if (_ETOOLS_UI && DATA && !DATA.__error) {
+    await Promise.race([_etoolsReady, new Promise(r => setTimeout(r, 4000))]);
+  }
   if (DATA && !DATA.__error) _applyDvmDifficultyLabels();
   // The deferred shell scripts (the season state among them) run when parsing
   // ends; a cached boot payload can resolve before that, so the first render

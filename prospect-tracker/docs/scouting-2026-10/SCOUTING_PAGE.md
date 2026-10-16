@@ -556,3 +556,14 @@ carries only the sources 'industry' and 'served_config'.
 
 B-REC is unchanged: under UNDECIDED the gate does not repoint the glossary's emitter, so the
 glossary keeps printing the configuration's starting values and the sentence still holds.
+
+## Amendment 2026-10-15 (ETOOLS_SITEWIDE_FLIP): D-5, the eTools
+
+Filed by ETOOLS_SITEWIDE_FLIP (owner decision EW3-27, 2026-10-15: "eTools should be our shown version
+of each tool across the site"). It adds one copy item to Section D and nothing else: no table, source,
+frame, cell or test criterion moves, and the page still prints no player's grade. D-1 stays true (the
+consensus grades still round up); D-5 says which tools now show a model grade instead. The page prints
+D-5 only while data/etools.json says the eTools are served (`flag_etools_on`), so with the flag off the
+page is as it was.
+
+- D-5 (verbatim, printed after D-2): For hit, game power, pitch selection, bat control, fastball and command, PROSPX shows the eTool: the consensus grade moved by the prospect's own minor-league stats. It is a model grade, so it rounds to the nearest whole grade and carries an e; every other tool shows the consensus grade, which carries a c.

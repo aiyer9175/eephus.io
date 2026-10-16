@@ -30,7 +30,7 @@ ARTIFACT = "data/etools_eval.json"
 #: eTool key -> (glossary id, plain name, the outcome in words, card tool name)
 ETOOLS = {
     "eHIT": ("ehit", "eHIT", "MLB strikeout rate (lower is better), the framework's hit outcome", "Hit"),
-    "ePOW": ("epow", "ePOW", "MLB ISO, the framework's game-power outcome", "Power"),
+    "ePOW": ("epow", "ePOW", "MLB ISO, the framework's game-power outcome", "Game Power"),
     "eSEL": ("esel", "eSEL", "MLB chase rate (lower is better), 2026 season", "Pitch Sel"),
     "eBAT": ("ebat", "eBAT", "MLB zone-contact rate, 2026 season", "Bat Ctrl"),
     "eFB": ("efb", "eFB", "MLB pitcher strikeout rate", "Fastball"),
@@ -58,7 +58,7 @@ def _subs(t: dict) -> str:
 
 
 def registry_row(t: dict, doc: dict) -> dict:
-    gid, _name, outcome, _card = ETOOLS[t["key"]]
+    gid, _name, outcome, card = ETOOLS[t["key"]]
     m, u = t["labels"]["mlb"], t["labels"]["um"]
     pr = t.get("promotion_reads") or {}
     dr = t.get("drift") or {}
@@ -74,9 +74,12 @@ def registry_row(t: dict, doc: dict) -> dict:
         "model_id": f"etool_{gid}",
         "summary": (f"Provisional: beats the consensus {t['name'].lower()} grade on both labels, MLB "
                     f"{_r(m['rho_consensus'])} to {_r(m['rho_etool'])} (LB {_n(m['lb95'])}), minors "
-                    f"{_r(u['rho_consensus'])} to {_r(u['rho_etool'])} (LB {_n(u['lb95'])}); dark, not on any card."),
-        "surface": ("Dark: the PROSPX card's eTools block (off until the owner flips ETOOLS_ON) and the Library's "
-                    "eTools view; eFV does not read it"),
+                    f"{_r(u['rho_consensus'])} to {_r(u['rho_etool'])} (LB {_n(u['lb95'])}); shown site-wide since 2026-10-15."),
+        "surface": ("The shown tool grade (marked e, to the nearest whole grade) on PROSPX cards, list rows, the "
+                    "compare table, GFX cards and the tool sort and filter, the MLB player page's Scouting pills "
+                    "and the Alchemy Lab's Prospect Watch bars (data/etools.json, written by etools.py --preview); "
+                    "the Library's eTools view. eFV, the tool composites and the POW+, HIT+ and DISC+ blends do "
+                    "not read it"),
         "predicts": f"The tool's outcome stat: {outcome}; and its translated Double-A and Triple-A equivalent",
         "champion": (f"{t['key']} (etools.py): the consensus {t['name'].lower()} grade plus the weighted residuals "
                      f"of its sub-drivers ({_subs(t)}), fit on the grade scale by leave one board year out, "
@@ -89,8 +92,9 @@ def registry_row(t: dict, doc: dict) -> dict:
         "verdict": "provisional",
         "notes": (
             f"Registered in docs/tools-2026-10/ETOOLS_GATE.md (3f240da6), read once {look}; amendment 1 (8f369ae2) "
-            f"and amendment 2 (9121d710, read {fp}). Provisional because it serves nothing: ETOOLS_ON is False and "
-            f"the owner decides the card flip; EFV_X3 decides whether eFV reads it. MLB d {_n(m['d'])} "
+            f"and amendment 2 (9121d710, read {fp}). Served since 2026-10-15 by owner decision EW3-27 "
+            f"(ETOOLS_ON True); provisional because its passes are development reads with no forward read yet. "
+            f"EFV_ETOOLS_REWEIGHT decides whether eFV reads it. MLB d {_n(m['d'])} "
             f"(n {m['n']}), minors d {_n(u['d'])} (n {u['n']}). Flip checks: "
             + ("; ".join(prom) + "; " if prom else "")
             + f"label {t.get('promotion_label') or 'n/a'}; 2026 boards shift {_n(dr.get('live_shift'), 2)} "
@@ -99,6 +103,8 @@ def registry_row(t: dict, doc: dict) -> dict:
               f"bootstrap draw re-ranked ({_n((t.get('reranked_lb95') or {}).get('mlb'))} MLB, "
               f"{_n((t.get('reranked_lb95') or {}).get('um'))} minors)."
         ),
+        "registration_status": ("read once at the gate look and amendments 1 and 2; served since 2026-10-15 "
+                                "(owner decision EW3-27)"),
         "last_checked": fp or look,
         "stale": False,
         "artifact_age_days": 0,
@@ -132,8 +138,12 @@ def glossary_entries(tools: dict, doc: dict) -> list[dict]:
             "Before any card shows one, four checks ran once: the 2026 boards against the development "
             "years (eFB sat outside them, so every eTool is centred on the board it scores), the gain on "
             "players who never reached Double-A or the majors, and two arithmetic fixes. Raw power, speed, "
-            "field, arm and the secondary pitches keep the consensus grade. Shown rounded up to the next 5, "
-            "with an 80% band. Not on player cards until the owner flips them; not in eFV."
+            "field, arm and the secondary pitches keep the consensus grade.\n\n"
+            "Since 2026-10-15 (owner decision) the eTool is the grade the site shows for these six tools "
+            "wherever it prints a tool grade, marked e. It is a model grade, so it rounds to the nearest "
+            "whole grade, like eFV; consensus tool grades round up and are marked c. The card keeps the "
+            "consensus grade beside each eTool, with the 80% band and each sub-driver's push in grade "
+            "points. Not in eFV, the tool composites or the POW+, HIT+ and DISC+ blends."
         ),
         "formula": ("eTool = consensus + sum over sub-drivers j of c_j x (z_j - a_j - b_j x consensus - delta_j); "
                     "band = eTool +/- 1.2816 x the fit's residual sd"),
@@ -162,7 +172,8 @@ def glossary_entries(tools: dict, doc: dict) -> list[dict]:
             "aliases": [f"{t['name']} eTool"],
             "priority": 38,
             "definition": (f"The {t['name'].lower()} tool grade sharpened by the prospect's own minor-league "
-                           f"stats ({_subs(t)}). Shown beside the consensus {card} grade with an 80% band."),
+                           f"stats ({_subs(t)}). The {card} grade the site shows, marked e and rounded to the "
+                           f"nearest whole grade, with the consensus grade beside it and an 80% band."),
             "methodology": text + " The Library's eTools view has the test and the checks.",
             "seeAlso": ["etools", see[k]],
             "shelf": "ark",
