@@ -306,3 +306,167 @@ and after. The eFV grade is printed to one decimal (eFV rounds to nearest).
   `backtest.run_backtest` is never called.
 - The served grade does not move in this task: every new path is behind
   `EFV_V5_REFIT_ON = False`.
+
+## 12. The read (appended by the run, 2026-10-15 local, 2026-10-16 UTC; development frames)
+
+Run: `python -u efv5_refit.py --run --cache <scratch>` after the registration commit ed078e80
+(artifact `data/_labs/efv5/efv5_refit_fit.json`, generated 2026-10-16T00:24:08Z; label
+`fwar@2026-10-02-0341299c20ec`; E_cond B 2000, seed 20260906; weight bootstrap B 2000, seed
+20261016). No reserved row was built; nothing was cut by consensus-FV level.
+
+**Disclosed harness defect, corrected before any reading was used.** The first write of the
+artifact keyed every configuration's scored-row orders by (side, fold, player) across BOTH
+frames, so a player who sits in a list-vintage fold and a debut-year fold of the same year took
+his vm_dev order on lv_dev. The registered parity check of section 3 caught it (V5 recomputed on
+lv_dev 0.1615 against the committed 0.1685). The orders are now keyed inside their frame, the run
+asserts parity before it reads anything (it refuses otherwise), and the statistics were
+recomputed from the same cached builds, fits and weights: no column, fit, penalty or weight
+changed, and the vm_dev numbers were unaffected. The first write is kept outside the repository.
+
+### 12.1 Receipts
+
+- V5 parity: recomputed V5 within 0.1685 (lv_dev) and 0.3611 (vm_dev), the committed read's own.
+- A2: the live receipt of the run lists exactly the registered dark columns on both sides
+  (hitters: the rater panel and the six report fields; pitchers: the rater panel, the three
+  report fields and the three withheld High-A slider cells).
+- A3: the list-vintage timing pool holds 3,053 hitter and 2,909 pitcher rows (list vintages
+  2011 to 2019); every candidate timing column was built on it.
+- A4: twins exist for 640 of 1,889 hitter and 676 of 1,981 pitcher matrix rows (no consensus
+  point by the read day: 1,123 and 1,173; the point was the row's own: 126 and 130; read day not
+  before the cutoff: 0 and 2). The twin's consensus lag (point date minus 1 October of the read
+  season) has median -63 days (hitters) and -62 (pitchers), 10th percentile -253; no twin's
+  consensus is dated 0 to 30 days after the season (share 0.0): the October re-rank regime of
+  the live board stays untrained, as the registration expected.
+
+### 12.2 The weights (section 4; per side, forward-chained heads, both frames pooled)
+
+| config | side | w_skill (OLS ratio; CI95) | w_time (OLS ratio; CI95) | ratio on lv_dev / vm_dev (skill; time) |
+|---|---|---|---|---|
+| W (V5's heads) | hit | 0.465 (0.465; 0.266 to 0.707) | 0 (-0.027; -0.129 to +0.065) | 0.521 / 0.161; -0.009 / -0.027 |
+| W | pit | 1.0 (1.098; 0.569 to 1.811) | 0 (-0.129; -0.265 to -0.012) | 1.066 / 1.791; -0.241 / +0.083 |
+| R | hit | 0.312 (0.312; 0.089 to 0.595) | 0 (-0.257; -0.561 to +0.028) | 0.330 / 0.232; -0.372 / -0.056 |
+| R | pit | 1.0 (1.105; 0.593 to 2.026) | 0 (-0.542; -0.908 to -0.230) | 0.943 / 0.978; -0.623 / +1.237 |
+| RT | hit | 0.297 (0.297; 0.065 to 0.594) | 0 (-0.242; -0.542 to +0.036) | 0.289 / 0.312; -0.349 / -0.053 |
+| RT | pit | 1.0 (1.053; 0.534 to 1.918) | 0 (-0.496; -0.834 to -0.199) | 0.922 / 1.004; -0.588 / +1.141 |
+| R0 | hit | 0.324 | 0 | |
+| R0 | pit | 0.927 | 0 | |
+
+Leave-one-year-out sensitivity (R; decides nothing): hitters w_skill 0.431 (lv_dev 0.465, vm_dev
+0.275), w_time 0 (ratio -0.310); pitchers w_skill 0.836, w_time 0 (ratio -2.550). W's hitter
+estimate (0.465) reproduces the audit's forward-chained 0.467 on V5's heads. Served before this
+read: hit 0.908861 / 0.202573, pit 1.0 / 0.020473.
+
+Cross-fitted read weights (each fold's from the pool without it): hitters 0.28 to 0.33 skill and
+0 timing in every fold of every candidate; pitchers 0.91 to 1.0 skill and 0 timing in every
+fold but lv_dev pit|2017, where the pooled timing ratio without that fold turned positive and
+the clip set w_time to 1.0 (R and RT).
+
+### 12.3 The development read (within (side, list year) Spearman, pooled over sides)
+
+| frame | n | V5 | R | RT | R0 | W | consensus | Pipeline | FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1685 | 0.1696 | 0.1683 | 0.1684 | 0.1801 | 0.1792 | 0.2034 | 0.1714 |
+| vm_dev | 830 | 0.3611 | 0.3869 | 0.3937 | 0.3844 | 0.3764 | 0.3814 | 0.3816 | 0.3363 |
+
+Paired differences (E_cond CI95):
+
+| comparison | lv_dev | vm_dev |
+|---|---|---|
+| R minus V5 | +0.0011 (-0.0187 to +0.0209) | +0.0258 (-0.0008 to +0.0514) |
+| RT minus V5 | -0.0002 (-0.0208 to +0.0205) | +0.0326 (+0.0056 to +0.0585) |
+| R minus consensus | -0.0096 (-0.0307 to +0.0116) | +0.0056 (-0.0190 to +0.0289) |
+| RT minus consensus | -0.0109 (-0.0311 to +0.0098) | +0.0123 (-0.0123 to +0.0343) |
+| V5 minus consensus | -0.0107 (-0.0411 to +0.0183) | -0.0203 (-0.0528 to +0.0127) |
+| RT minus R | -0.0013 (-0.0034 to +0.0009) | +0.0068 (-0.0007 to +0.0143) |
+| W minus V5 (weights alone) | +0.0116 (-0.0043 to +0.0270) | +0.0153 (-0.0021 to +0.0343) |
+| R0 minus V5 (R without twins) | -0.0001 (-0.0194 to +0.0191) | +0.0233 (+0.0029 to +0.0451) |
+| R minus R0 (the twins) | +0.0012 (-0.0002 to +0.0025) | +0.0025 (-0.0117 to +0.0159) |
+| R minus Pipeline | -0.0326 (-0.0641 to -0.0014) | +0.0053 (-0.0335 to +0.0406) |
+| R minus FanGraphs | +0.0132 (-0.0206 to +0.0471) | +0.0506 (+0.0063 to +0.0892) |
+
+Per side (within; candidate minus V5 and minus consensus, E_cond CI95):
+
+- lv_dev hitters (n 1,465): V5 0.1625, R 0.1917, RT 0.1913, consensus 0.1948; R minus V5 +0.0292
+  (-0.0040 to +0.0642), R minus consensus -0.0032 (-0.0272 to +0.0194); RT minus consensus -0.0035.
+- lv_dev pitchers (n 1,397): V5 0.1749, R 0.1464, RT 0.1442, consensus 0.1629; R minus V5 -0.0285
+  (-0.0498 to -0.0053), RT minus V5 -0.0307 (-0.0527 to -0.0076). By fold, R minus V5: pit|2017
+  -0.0865, pit|2018 -0.0026, pit|2019 +0.0040: the loss sits in the fold whose cross-fitted
+  pitcher w_time hit the clip at 1.0 (12.2).
+- vm_dev hitters (n 406): V5 0.3448, R 0.3952, RT 0.4021, consensus 0.3954; R minus V5 +0.0503
+  (+0.0020 to +0.0931), RT minus V5 +0.0573 (+0.0084 to +0.1023); RT minus consensus +0.0067
+  (-0.0188 to +0.0308).
+- vm_dev pitchers (n 424): V5 0.3773, R 0.3788, RT 0.3853, consensus 0.3674; RT minus V5 +0.0080
+  (-0.0157 to +0.0325); RT minus consensus +0.0179 (-0.0211 to +0.0560).
+
+Secondary statistics (pooled after the map; contributor AUC), RT minus V5: lv_dev -0.0055 and
+-0.0049; vm_dev +0.0101 and +0.0089. RT minus R on lv_dev AUC -0.0044 (CI95 -0.0080 to -0.0009).
+Position-group cells, R minus V5 within: lv_dev hit:C +0.049, hit:IF -0.003, hit:OF +0.062
+(+0.011 to +0.113), pit -0.028; vm_dev hit:IF +0.021, hit:OF +0.059, pit +0.001 (hit:C under 20
+rows).
+
+### 12.4 The objective alongside (descriptive, in sample on the pooled frames)
+
+Pooled within Spearman by w_skill at w_time 0: hitters (RT's heads) 0.2383 at 0 (consensus
+alone), 0.2422 at 0.1 (the peak), 0.2396 at 0.2, 0.2376 at 0.3, 0.2298 at 0.5, 0.2132 at 1.0;
+on V5's heads 0.2385 at 0.1, 0.2263 at 0.5, 0.2030 at 1.0. Pitchers (RT) 0.2105 at 0, 0.2209 at
+0.5, 0.2218 at 0.7 (the peak), 0.2212 at 1.0; V5's own pooled pitcher within is 0.2220. The rank
+statistic still falls as the hitter weight grows past about 0.1; the OLS ratio (0.30) sits where
+the rank statistic equals consensus alone.
+
+### 12.5 The live-timing read (secondary, decides nothing)
+
+vm_dev scored rows read as their twins (787 rows: 392 hitters, 395 pitchers; consensus the
+twin's own point, median 62 days before the season's end): within RT 0.3170, R 0.3171, V5
+0.2895, consensus at the twin 0.2808. RT minus twin consensus +0.0362 (CI95 +0.0083 to +0.0615);
+R +0.0363 (+0.0088 to +0.0617); V5 +0.0087 (-0.0270 to +0.0435); RT minus V5 +0.0275 (-0.0031 to
++0.0578). Hitters: RT minus consensus +0.0165 (-0.0094 to +0.0400); pitchers +0.0565 (+0.0098 to
++0.1011). A development read on frames the weights were estimated on, read at a consensus that
+had not seen the season: it is the timing advantage the live board has over a stale list, not a
+lead over consensus as re-ranked, and the site may not say it.
+
+### 12.6 The production fits
+
+- RT hitters: the nested CV chose lambda infinity on the skill head, so every candidate column's
+  slope is zero and the hitter skill head is V2's own (the hit tool, weight 0.051 percentile
+  equivalents at w_skill 0.297); the timing head carries weight 0. RT pitchers: skill lambda
+  1000, the largest weights the population translation (rank) 0.128, called-plus-swinging
+  strikes 0.067, popup rate -0.067, K residual 0.055, command grade 0.055; timing unusable.
+- R hitters: skill lambda 1000 (hit tool 0.050, population translation 0.034, game power 0.012,
+  swing rate -0.011, positional value 0.011); timing weight 0. R pitchers as RT, the population
+  translation 0.156.
+- Both timing heads, fitted on the list-vintage frame, drop V2's level reached (its alpha went to
+  infinity); the arrival term carries no weight on either side.
+
+### 12.7 The board effect (live board of 2026-10-15 against data/xfv.json)
+
+| | hitters RT | hitters R | pitchers RT | pitchers R |
+|---|---|---|---|---|
+| mean abs(eFV minus consensus), served then re-fit | 1.656 to 0.558 | 1.656 to 0.654 | 0.887 to 1.257 | 0.887 to 1.176 |
+| eFV moved by 1 or more / 3 or more | 586 / 131 of 1,055 | 565 / 94 | 175 / 4 of 941 | 82 / 2 |
+| largest move | 10.9 | 7.6 | 4.0 | 4.2 |
+| served top 50 still top 50 | 30 | 35 | 43 | 43 |
+
+Nelson Rada (consensus 43.6): served 55.6, rank 7 of 1,055; RT 46.9, rank 81 (one chip, the hit
+tool +5.7 percentile points); R 49.6, rank 30 (translation +11.4, hit tool +5.6). The fifty largest
+movers of each side are listed in the artifact (`board.RT.hit.top_movers` and the like).
+
+## 13. The verdict (section 6)
+
+| candidate | lv_dev minus V5 | vm_dev minus V5 | pooled (3,692 rows) | rule 1 | rule 2 | passes |
+|---|---|---|---|---|---|---|
+| R | +0.0011 | +0.0258 | +0.0066 | yes | yes | yes |
+| RT | -0.0002 | +0.0326 | +0.0072 | yes | yes | yes |
+
+Both pass; RT has the larger pooled difference and is PREPARED (D-7, a choice between two
+registered candidates on the frames they were read on). The flip is built dark:
+`efv5_refit.EFV_V5_REFIT_ON = False` (with `efv_w2_popmle.POP_REPAIR_ON`, test-pinned equal);
+`data/efv5_refit_weights.json` stores the production fit of both passing candidates and serves RT
+unless `efv5_refit.SERVE_CANDIDATE` names R. Nothing served moved.
+
+The claim, re-derived from the prepared candidate's own development read (section 7), for the
+owner to approve with the flip: "Ties PROSPX consensus on the development frames: within
+Spearman difference +0.0123 (CI95 -0.012 to +0.034) on the vintage-matched frame (n 830) and
+-0.0109 (CI95 -0.031 to +0.010) on list vintages 2017 to 2019 (n 2862); development reads
+(2026-10-15)." Under R it reads +0.0056 (-0.019 to +0.029) and -0.0096 (-0.031 to +0.012); V5's
+own (if nothing flips) -0.0203 (-0.053 to +0.013) and -0.0107 (-0.041 to +0.018). Every reading
+is a tie; none may say "beats consensus".
