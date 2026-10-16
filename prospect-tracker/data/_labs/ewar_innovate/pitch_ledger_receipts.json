@@ -1,0 +1,925 @@
+{
+ "I5_simulated_2018": {
+  "bound_null_sd": 0.040322394555467427,
+  "clauses": {
+   "null_sd_below_one_third": false,
+   "planted_r_at_least_0.5": true,
+   "planted_star_in_0.20_0.40": true
+  },
+  "null": {
+   "r_true": null,
+   "sd_fitted": 0.052848897419805176,
+   "star_fitted": 0.028176194995878923,
+   "star_n": 3110
+  },
+  "pass": false,
+  "planted": {
+   "r_true": 0.8679395824676883,
+   "sd_fitted": 0.12096718366640227,
+   "star_fitted": 0.2769613284376633,
+   "star_n": 3110
+  }
+ },
+ "count_value_sha256": "758d99141b5de4b54608afbddc355920c785b281061fda3e175f0db423152f71",
+ "descriptive_agreement": {
+  "2018": {
+   "catchers_at_floor": 66,
+   "fg_frm_joined": 66,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9666856162905346,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 8.03264210744505,
+    "blocking": 2.3401876061769746,
+    "fielder": 14.683065949999905,
+    "framing": 6.326744982995945,
+    "pitcher_duel_and_contact": 8.780615977660927,
+    "throwing": 1.778419021825001,
+    "umpire": 6.219065503466134
+   }
+  },
+  "2019": {
+   "catchers_at_floor": 66,
+   "fg_frm_joined": 66,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9723185245971251,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 8.19056575383573,
+    "blocking": 2.295691351347561,
+    "fielder": 15.08232587758954,
+    "framing": 6.413681397522722,
+    "pitcher_duel_and_contact": 8.988688187534462,
+    "throwing": 1.9386206527546526,
+    "umpire": 6.889270395344522
+   }
+  },
+  "2021": {
+   "catchers_at_floor": 67,
+   "fg_frm_joined": 67,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9549145269177621,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 7.495945055124693,
+    "blocking": 2.37954385928492,
+    "fielder": 13.580276785607936,
+    "framing": 5.131862029126445,
+    "pitcher_duel_and_contact": 8.197147418240903,
+    "throwing": 1.739590314177977,
+    "umpire": 6.23158745450399
+   }
+  },
+  "2022": {
+   "catchers_at_floor": 64,
+   "fg_frm_joined": 64,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9798983992945345,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 8.211697692250736,
+    "blocking": 1.8358955358631235,
+    "fielder": 13.678276310500145,
+    "framing": 5.91450645137375,
+    "pitcher_duel_and_contact": 7.860545235624751,
+    "throwing": 1.4144840226000426,
+    "umpire": 5.633475383234138
+   }
+  },
+  "2023": {
+   "catchers_at_floor": 68,
+   "fg_frm_joined": 68,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9779902564435059,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 9.67013494012252,
+    "blocking": 1.7890970547100102,
+    "fielder": 13.966300962130573,
+    "framing": 6.467916260608914,
+    "pitcher_duel_and_contact": 7.407881995046154,
+    "throwing": 2.441805660973246,
+    "umpire": 6.29387084397435
+   }
+  },
+  "2024": {
+   "catchers_at_floor": 64,
+   "fg_frm_joined": 64,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9558898204460735,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 9.272387711288339,
+    "blocking": 1.7511672889247045,
+    "fielder": 13.606333833685243,
+    "framing": 5.758669715868325,
+    "pitcher_duel_and_contact": 7.406784301078559,
+    "throwing": 1.9984227593777566,
+    "umpire": 6.54599312986177
+   }
+  },
+  "2025": {
+   "catchers_at_floor": 64,
+   "fg_frm_joined": 64,
+   "r_blocking_vs_savant": null,
+   "r_framing_vs_fangraphs_frm": 0.9575785997510238,
+   "savant_blocking_joined": 0,
+   "sd_runs": {
+    "batter_duel": 9.85190292216075,
+    "blocking": 1.6176933022360358,
+    "fielder": 13.708736773803318,
+    "framing": 5.278264445783516,
+    "pitcher_duel_and_contact": 7.932879569229461,
+    "throwing": 2.366103875126762,
+    "umpire": 5.713507396183773
+   }
+  },
+  "2026": {
+   "catchers_at_floor": 69,
+   "fg_frm_joined": 69,
+   "r_blocking_vs_savant": 0.7903897854187787,
+   "r_framing_vs_fangraphs_frm": 0.9740324357770211,
+   "savant_blocking_joined": 69,
+   "sd_runs": {
+    "batter_duel": 9.090426195877388,
+    "blocking": 1.7462677824631727,
+    "fielder": 13.738114695192976,
+    "framing": 3.430564253805852,
+    "pitcher_duel_and_contact": 7.92128274834699,
+    "throwing": 1.9942593685769803,
+    "umpire": 5.452140199844034
+   }
+  }
+ },
+ "gate_doc": "docs/ewar/PITCH_LEDGER_GATE.md",
+ "generated_at": "2026-10-16T19:58:15+00:00",
+ "seasons": {
+  "2018": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 176164,
+    "max_abs": 4.440892098500626e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 0.0,
+   "I3_fielders_sum": -2.2737367544323206e-13,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 6.350475700855895e-14,
+   "I4_called_location_share": 0.9958113974081053,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 379438,
+   "called_pitches": 381034,
+   "component_abs_sums": {
+    "x_babs": 476.1045,
+    "x_bcs": 286.9351,
+    "x_bexp": 476.1045,
+    "x_blk": 476.9549,
+    "x_ch": 0.0,
+    "x_duel": 37309.8395,
+    "x_fld": 35921.9754,
+    "x_frm": 373.1813,
+    "x_oth": 304.7648,
+    "x_pcs": 251.9732,
+    "x_pk": 209.4116,
+    "x_sexp": 196.4043,
+    "x_sres": 525.5099,
+    "x_ump": 4691.9622,
+    "x_x": 28969.6088
+   },
+   "component_sums": {
+    "x_babs": -476.1045,
+    "x_bcs": 9.8033,
+    "x_bexp": 476.1045,
+    "x_blk": 476.1045,
+    "x_ch": 0.0,
+    "x_duel": -6314.4289,
+    "x_fld": -0.0,
+    "x_frm": 4.5144,
+    "x_oth": 75.6358,
+    "x_pcs": 3.6356,
+    "x_pk": -55.5022,
+    "x_sexp": 83.5381,
+    "x_sres": 0.0,
+    "x_ump": -500.393,
+    "x_x": 6069.6053
+   },
+   "corpus_pitches": 721190,
+   "dre_sum": -147.4871,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 24,
+     "nll": 67711.11234285255
+    },
+    "intercept": 0.0005485046513055899,
+    "n_persons": {
+     "batter": 970,
+     "catcher": 117,
+     "pitcher": 798,
+     "umpire": 90
+    },
+    "sd": {
+     "batter": 0.07172613402385054,
+     "catcher": 0.11380444500975367,
+     "pitcher": 0.07758851812836853,
+     "umpire": 0.10393572358763108
+    }
+   },
+   "league_p0_mean": 0.318839968585118,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 721190,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 381034,
+    "inplay": 126294,
+    "other_p": 213862,
+    "pickoff": 17583,
+    "rest": 57216,
+    "steal": 2944,
+    "wp": 2006
+   },
+   "steps": 800939,
+   "steps_per_play_max": 25,
+   "wp_lambda": 1.0215100054139417,
+   "x_oth_nonzero_on_called": 394,
+   "x_shift": 0.0023505737727109515
+  },
+  "2019": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 177457,
+    "max_abs": 8.881784197001252e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 5.684341886080802e-14,
+   "I3_fielders_sum": -8.668621376273222e-13,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": -1.5343282200319663e-13,
+   "I4_called_location_share": 0.9935831996499928,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 381528,
+   "called_pitches": 383992,
+   "component_abs_sums": {
+    "x_babs": 461.6881,
+    "x_bcs": 321.783,
+    "x_bexp": 461.6881,
+    "x_blk": 461.6881,
+    "x_ch": 0.0,
+    "x_duel": 40761.5857,
+    "x_fld": 37284.7192,
+    "x_frm": 354.5902,
+    "x_oth": 277.384,
+    "x_pcs": 266.1877,
+    "x_pk": 200.1053,
+    "x_sexp": 181.8285,
+    "x_sres": 480.6623,
+    "x_ump": 4918.3357,
+    "x_x": 30926.5069
+   },
+   "component_sums": {
+    "x_babs": -461.6881,
+    "x_bcs": 10.5295,
+    "x_bexp": 461.6881,
+    "x_blk": 461.6881,
+    "x_ch": 0.0,
+    "x_duel": -6823.4389,
+    "x_fld": -0.0,
+    "x_frm": 5.3689,
+    "x_oth": 36.8544,
+    "x_pcs": 3.7523,
+    "x_pk": -42.2881,
+    "x_sexp": 72.8977,
+    "x_sres": -0.0,
+    "x_ump": -843.0848,
+    "x_x": 7027.1163
+   },
+   "corpus_pitches": 732473,
+   "dre_sum": -90.6046,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 22,
+     "nll": 67623.75447596394
+    },
+    "intercept": 0.002157666279920008,
+    "n_persons": {
+     "batter": 982,
+     "catcher": 113,
+     "pitcher": 829,
+     "umpire": 93
+    },
+    "sd": {
+     "batter": 0.07584291015238052,
+     "catcher": 0.10980256947464373,
+     "pitcher": 0.07380811519365124,
+     "umpire": 0.10044659716372811
+    }
+   },
+   "league_p0_mean": 0.31338460086808834,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 732473,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 383992,
+    "inplay": 125767,
+    "other_p": 222714,
+    "pickoff": 16070,
+    "rest": 56984,
+    "steal": 2639,
+    "wp": 1969
+   },
+   "steps": 810135,
+   "steps_per_play_max": 19,
+   "wp_lambda": 1.0196572426141468,
+   "x_oth_nonzero_on_called": 355,
+   "x_shift": 0.002396613339898908
+  },
+  "2021": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 174089,
+    "max_abs": 4.440892098500626e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": -5.684341886080802e-14,
+   "I3_fielders_sum": 9.237055564881302e-13,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 7.993605777301127e-15,
+   "I4_called_location_share": 0.9994768830860662,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 370660,
+   "called_pitches": 370854,
+   "component_abs_sums": {
+    "x_babs": 476.8411,
+    "x_bcs": 306.1077,
+    "x_bexp": 476.8411,
+    "x_blk": 478.2309,
+    "x_ch": 0.0,
+    "x_duel": 38589.1151,
+    "x_fld": 35265.2663,
+    "x_frm": 279.3829,
+    "x_oth": 260.2758,
+    "x_pcs": 232.4237,
+    "x_pk": 172.5201,
+    "x_sexp": 161.8796,
+    "x_sres": 443.8706,
+    "x_ump": 4308.8724,
+    "x_x": 29040.6252
+   },
+   "component_sums": {
+    "x_babs": -476.8411,
+    "x_bcs": 11.3528,
+    "x_bexp": 476.8411,
+    "x_blk": 476.8411,
+    "x_ch": 0.0,
+    "x_duel": -6287.6489,
+    "x_fld": 0.0,
+    "x_frm": 5.2552,
+    "x_oth": 70.6034,
+    "x_pcs": 3.0062,
+    "x_pk": -20.7365,
+    "x_sexp": 115.1788,
+    "x_sres": 0.0,
+    "x_ump": -707.9575,
+    "x_x": 6239.5491
+   },
+   "corpus_pitches": 709852,
+   "dre_sum": -94.5563,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 22,
+     "nll": 64080.10880779003
+    },
+    "intercept": 0.0012029111522294464,
+    "n_persons": {
+     "batter": 1033,
+     "catcher": 116,
+     "pitcher": 909,
+     "umpire": 99
+    },
+    "sd": {
+     "batter": 0.07601850690174553,
+     "catcher": 0.09907457527700819,
+     "pitcher": 0.06720319939437094,
+     "umpire": 0.1004515123252512
+    }
+   },
+   "league_p0_mean": 0.3144876706415583,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 709852,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 370854,
+    "inplay": 121707,
+    "other_p": 217291,
+    "pickoff": 15897,
+    "rest": 57384,
+    "steal": 2554,
+    "wp": 2022
+   },
+   "steps": 787709,
+   "steps_per_play_max": 19,
+   "wp_lambda": 1.0198600976719618,
+   "x_oth_nonzero_on_called": 319,
+   "x_shift": 0.0024972034262280827
+  },
+  "2022": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 174616,
+    "max_abs": 8.881784197001252e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 0.0,
+   "I3_fielders_sum": -1.4210854715202004e-13,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 4.263256414560601e-14,
+   "I4_called_location_share": 0.9994443581928567,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 366939,
+   "called_pitches": 367143,
+   "component_abs_sums": {
+    "x_babs": 393.2511,
+    "x_bcs": 282.8776,
+    "x_bexp": 393.2511,
+    "x_blk": 393.9255,
+    "x_ch": 0.0,
+    "x_duel": 35894.6021,
+    "x_fld": 34728.7572,
+    "x_frm": 318.0674,
+    "x_oth": 212.4883,
+    "x_pcs": 221.0938,
+    "x_pk": 165.1172,
+    "x_sexp": 161.8537,
+    "x_sres": 442.3073,
+    "x_ump": 3924.2021,
+    "x_x": 27644.3198
+   },
+   "component_sums": {
+    "x_babs": -393.2511,
+    "x_bcs": 11.1853,
+    "x_bexp": 393.2511,
+    "x_blk": 393.2511,
+    "x_ch": 0.0,
+    "x_duel": -6150.0975,
+    "x_fld": -0.0,
+    "x_frm": 5.977,
+    "x_oth": 23.4637,
+    "x_pcs": 1.7727,
+    "x_pk": -32.5732,
+    "x_sexp": 140.4961,
+    "x_sres": 0.0,
+    "x_ump": -478.7667,
+    "x_x": 5997.9079
+   },
+   "corpus_pitches": 708540,
+   "dre_sum": -87.3836,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 22,
+     "nll": 62624.934153883776
+    },
+    "intercept": 0.002868554189419462,
+    "n_persons": {
+     "batter": 693,
+     "catcher": 120,
+     "pitcher": 870,
+     "umpire": 96
+    },
+    "sd": {
+     "batter": 0.08883097385066746,
+     "catcher": 0.10833275228185127,
+     "pitcher": 0.06851102853022739,
+     "umpire": 0.10332146239543628
+    }
+   },
+   "league_p0_mean": 0.3156083163686607,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 708540,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 367143,
+    "inplay": 124274,
+    "other_p": 217123,
+    "pickoff": 15562,
+    "rest": 52727,
+    "steal": 2802,
+    "wp": 1688
+   },
+   "steps": 781319,
+   "steps_per_play_max": 18,
+   "wp_lambda": 1.0279137713217437,
+   "x_oth_nonzero_on_called": 359,
+   "x_shift": 0.00200676941563754
+  },
+  "2023": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 176780,
+    "max_abs": 8.881784197001252e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 5.684341886080802e-14,
+   "I3_fielders_sum": 5.684341886080802e-14,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 2.5135449277513544e-13,
+   "I4_called_location_share": 0.9996315283562961,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 374382,
+   "called_pitches": 374520,
+   "component_abs_sums": {
+    "x_babs": 387.7891,
+    "x_bcs": 321.7536,
+    "x_bexp": 387.7891,
+    "x_blk": 388.1149,
+    "x_ch": 0.0,
+    "x_duel": 39052.0797,
+    "x_fld": 35955.8846,
+    "x_frm": 365.2815,
+    "x_oth": 301.1961,
+    "x_pcs": 253.8845,
+    "x_pk": 198.2152,
+    "x_sexp": 239.3242,
+    "x_sres": 592.9998,
+    "x_ump": 4094.6603,
+    "x_x": 30209.8528
+   },
+   "component_sums": {
+    "x_babs": -387.7891,
+    "x_bcs": 9.958,
+    "x_bexp": 387.7891,
+    "x_blk": 387.7891,
+    "x_ch": 0.0,
+    "x_duel": -7076.1201,
+    "x_fld": 0.0,
+    "x_frm": 0.4758,
+    "x_oth": 48.8365,
+    "x_pcs": 2.7106,
+    "x_pk": -40.5754,
+    "x_sexp": 226.4258,
+    "x_sres": 0.0,
+    "x_ump": -249.4328,
+    "x_x": 6423.0025
+   },
+   "corpus_pitches": 717945,
+   "dre_sum": -266.9301,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 25,
+     "nll": 63017.025476866314
+    },
+    "intercept": 0.001363208782243143,
+    "n_persons": {
+     "batter": 655,
+     "catcher": 102,
+     "pitcher": 863,
+     "umpire": 94
+    },
+    "sd": {
+     "batter": 0.09333848753206823,
+     "catcher": 0.10806515902778685,
+     "pitcher": 0.069654420541066,
+     "umpire": 0.1132030596550434
+    }
+   },
+   "league_p0_mean": 0.3148949468724458,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 717945,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 374520,
+    "inplay": 124246,
+    "other_p": 219179,
+    "pickoff": 9989,
+    "rest": 85430,
+    "steal": 3708,
+    "wp": 1696
+   },
+   "steps": 818768,
+   "steps_per_play_max": 19,
+   "wp_lambda": 0.9917515051641935,
+   "x_oth_nonzero_on_called": 379,
+   "x_shift": 0.002466368176328822
+  },
+  "2024": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 174995,
+    "max_abs": 8.881784197001252e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 1.1368683772161603e-13,
+   "I3_fielders_sum": 1.7053025658242404e-13,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 2.708944180085382e-13,
+   "I4_called_location_share": 0.9996076465331212,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 366872,
+   "called_pitches": 367016,
+   "component_abs_sums": {
+    "x_babs": 364.387,
+    "x_bcs": 294.0975,
+    "x_bexp": 364.387,
+    "x_blk": 366.03,
+    "x_ch": 0.0,
+    "x_duel": 36827.33,
+    "x_fld": 34824.2698,
+    "x_frm": 292.957,
+    "x_oth": 290.996,
+    "x_pcs": 236.4648,
+    "x_pk": 202.6205,
+    "x_sexp": 252.6415,
+    "x_sres": 598.8613,
+    "x_ump": 4032.8234,
+    "x_x": 28541.4875
+   },
+   "component_sums": {
+    "x_babs": -364.387,
+    "x_bcs": 11.2775,
+    "x_bexp": 364.387,
+    "x_blk": 364.387,
+    "x_ch": 0.0,
+    "x_duel": -6768.7008,
+    "x_fld": 0.0,
+    "x_frm": 3.3494,
+    "x_oth": 27.6394,
+    "x_pcs": 2.3657,
+    "x_pk": -31.9171,
+    "x_sexp": 223.2481,
+    "x_sres": 0.0,
+    "x_ump": -212.9361,
+    "x_x": 6301.3181
+   },
+   "corpus_pitches": 709511,
+   "dre_sum": -79.9687,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 21,
+     "nll": 62176.69129211747
+    },
+    "intercept": 0.0010906579998190627,
+    "n_persons": {
+     "batter": 650,
+     "catcher": 100,
+     "pitcher": 854,
+     "umpire": 90
+    },
+    "sd": {
+     "batter": 0.08913905894768454,
+     "catcher": 0.10424729000343932,
+     "pitcher": 0.06962574265005095,
+     "umpire": 0.11089779769714242
+    }
+   },
+   "league_p0_mean": 0.3166363200244227,
+   "p_full_calibration_gap": -1.4551915228366852e-11,
+   "pitch_steps": 709511,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 367016,
+    "inplay": 124207,
+    "other_p": 218288,
+    "pickoff": 10279,
+    "rest": 90744,
+    "steal": 3931,
+    "wp": 1558
+   },
+   "steps": 816023,
+   "steps_per_play_max": 20,
+   "wp_lambda": 1.0057410289381359,
+   "x_oth_nonzero_on_called": 437,
+   "x_shift": 0.001816120234735635
+  },
+  "2025": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 175669,
+    "max_abs": 8.881784197001252e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 0.0,
+   "I3_fielders_sum": -5.684341886080802e-14,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": -2.1316282072803006e-13,
+   "I4_called_location_share": 0.999406381802214,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 0,
+   "I6_abs_rows": 0,
+   "called_modelled": 368705,
+   "called_pitches": 368924,
+   "component_abs_sums": {
+    "x_babs": 352.7183,
+    "x_bcs": 297.2744,
+    "x_bexp": 352.7183,
+    "x_blk": 354.6293,
+    "x_ch": 0.0,
+    "x_duel": 37469.6238,
+    "x_fld": 35371.6294,
+    "x_frm": 254.2244,
+    "x_oth": 292.1295,
+    "x_pcs": 225.3829,
+    "x_pk": 213.9362,
+    "x_sexp": 241.8376,
+    "x_sres": 599.9154,
+    "x_ump": 3928.242,
+    "x_x": 28963.0619
+   },
+   "component_sums": {
+    "x_babs": -352.7183,
+    "x_bcs": 15.0473,
+    "x_bexp": 352.7183,
+    "x_blk": 352.7183,
+    "x_ch": 0.0,
+    "x_duel": -7440.3114,
+    "x_fld": -0.0,
+    "x_frm": 2.2239,
+    "x_oth": 42.8589,
+    "x_pcs": 0.5816,
+    "x_pk": -59.4814,
+    "x_sexp": 208.3244,
+    "x_sres": -0.0,
+    "x_ump": 597.3584,
+    "x_x": 6043.0445
+   },
+   "corpus_pitches": 710084,
+   "dre_sum": -237.6355,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 22,
+     "nll": 60692.58263904323
+    },
+    "intercept": 0.001999785521829538,
+    "n_persons": {
+     "batter": 673,
+     "catcher": 111,
+     "pitcher": 872,
+     "umpire": 92
+    },
+    "sd": {
+     "batter": 0.09053042794135978,
+     "catcher": 0.08783823404107033,
+     "pitcher": 0.0662378365767221,
+     "umpire": 0.09304892027596169
+    }
+   },
+   "league_p0_mean": 0.31327755251488315,
+   "p_full_calibration_gap": 1.4551915228366852e-11,
+   "pitch_steps": 710084,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 368924,
+    "inplay": 124899,
+    "other_p": 216261,
+    "pickoff": 10443,
+    "rest": 100106,
+    "steal": 3855,
+    "wp": 1542
+   },
+   "steps": 826030,
+   "steps_per_play_max": 20,
+   "wp_lambda": 1.0149507877296102,
+   "x_oth_nonzero_on_called": 430,
+   "x_shift": 0.0027850172536719123
+  },
+  "2026": {
+   "I1_identity_share": 1.0,
+   "I1_max_abs": 4.440892098500626e-16,
+   "I2_telescope": {
+    "fit_plays": 176521,
+    "max_abs": 4.440892098500626e-16,
+    "share": 1.0
+   },
+   "I3_blocking_net_sum": 1.1368683772161603e-13,
+   "I3_fielders_sum": 0.0,
+   "I3_p0_calibration_gap": 0.0,
+   "I3_throwing_sum": 2.3092638912203256e-14,
+   "I4_called_location_share": 0.9994536872076688,
+   "I4_catcher_join_share": 1.0,
+   "I6_abs_call_mismatch": 0,
+   "I6_abs_found": 10558,
+   "I6_abs_rows": 10558,
+   "called_modelled": 371379,
+   "called_pitches": 371582,
+   "component_abs_sums": {
+    "x_babs": 355.4018,
+    "x_bcs": 211.1403,
+    "x_bexp": 355.4018,
+    "x_blk": 356.4932,
+    "x_ch": 1042.1007,
+    "x_duel": 37964.4136,
+    "x_fld": 35198.5808,
+    "x_frm": 201.3314,
+    "x_oth": 265.4579,
+    "x_pcs": 172.5324,
+    "x_pk": 196.6379,
+    "x_sexp": 205.3763,
+    "x_sres": 612.9698,
+    "x_ump": 3921.2821,
+    "x_x": 29111.0529
+   },
+   "component_sums": {
+    "x_babs": -355.4018,
+    "x_bcs": 4.7431,
+    "x_bexp": 355.4018,
+    "x_blk": 355.4018,
+    "x_ch": -168.6751,
+    "x_duel": -6889.5254,
+    "x_fld": 0.0,
+    "x_frm": 2.1796,
+    "x_oth": 40.8413,
+    "x_pcs": -1.5559,
+    "x_pk": -52.8851,
+    "x_sexp": 179.5995,
+    "x_sres": 0.0,
+    "x_ump": 578.0498,
+    "x_x": 5865.0232
+   },
+   "corpus_pitches": 714482,
+   "dre_sum": -86.8032,
+   "effects": {
+    "fit": {
+     "converged": true,
+     "iterations": 25,
+     "nll": 50770.442689914125
+    },
+    "intercept": 0.0003600011526727521,
+    "n_persons": {
+     "batter": 660,
+     "catcher": 111,
+     "pitcher": 868,
+     "umpire": 91
+    },
+    "sd": {
+     "batter": 0.07249486512120043,
+     "catcher": 0.07958630889959317,
+     "pitcher": 0.06019237638868462,
+     "umpire": 0.07142783232576673
+    }
+   },
+   "league_p0_mean": 0.3113800187948161,
+   "p_full_calibration_gap": 0.0,
+   "pitch_steps": 714482,
+   "plays_not_walked": 0,
+   "refused": [],
+   "rows": {
+    "called": 371582,
+    "inplay": 124620,
+    "other_p": 218280,
+    "pickoff": 10126,
+    "rest": 106418,
+    "steal": 3726,
+    "wp": 1551
+   },
+   "steps": 836303,
+   "steps_per_play_max": 19,
+   "wp_lambda": 0.9882428274791797,
+   "x_oth_nonzero_on_called": 419,
+   "x_shift": 0.0022555048393099004
+  }
+ },
+ "sigma": {
+  "batter": 0.15,
+  "catcher": 0.15,
+  "pitcher": 0.15,
+  "umpire": 0.1
+ },
+ "version": "pitch_ledger_v1"
+}
