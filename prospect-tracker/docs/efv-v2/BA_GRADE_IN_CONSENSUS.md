@@ -176,6 +176,20 @@ consensus, so a consensus change would reach it at the next rebuild.
 - P3: every consensus point dated before 2023-02-15 is identical in every arm.
 - P4: arm R equals arm S on every development row.
 
+### 7a. Amendment to P3, before the read (2026-10-16)
+
+The first `--check` run (parity only; no outcome had been read, no statistic computed) refused at
+P3: arm X moves 2 points dated before 2023-02-15, both of one player, `zack_britton` (2011-01-22
+and 2011-04-01, consensus None in S, 55.0 in X). The cause is the same-name collision prune in
+`consensus.build_timeseries` (`_prune_collision_cluster` keeps only the most recent grading
+cluster of a key): a 2023 Blue Jays BA row is filed under the veteran's key (it reads as a
+different player, a Blue Jays prospect of the same name), so in S the 2011 cluster is pruned, and
+removing BA's rows in X restores it. He is in no development frame (debut 2011). P3 is
+therefore operationalized as: no point dated before 2023-02-15 of any player with a scored
+development row moves between arms (the run refuses otherwise), and every other moved point is
+listed in the artifact. Nothing else in the registration changes. The identity collision is
+reported to the owner as a finding outside this task's scope; it is not repaired here.
+
 ## 8. The reading rule
 
 A comparison RESOLVES only when all three hold: its CI95 excludes zero; it lies outside its null
