@@ -1,6 +1,6 @@
 # MILB_FIELDING_RUNS_GATE: in-house MiLB fielding runs (registered 2026-10-16)
 
-STATUS: REGISTERED 2026-10-16. This document is committed ALONE, before the measure's tool exists,
+STATUS: REGISTERED 2026-10-16; READ ONCE 2026-10-16: (a) PASS, (b) PASS, (c) UNDERPOWERED (part 10). This document is committed ALONE, before the measure's tool exists,
 before the fielder-credit fetch runs and before any number of its estimands or of its coverage
 census is computed. A change after the first number is a dated note in part 10, never an edit
 above it.
@@ -240,3 +240,53 @@ comparator or a pass rule.
    position; P-c's noise is scaled so the synthetic target has unit variance.
 8. The (b) predictor pools every MiLB level of seasons 2021 to D - 1; the read writes the (b) rows
    to `.cache/milb_fielding/tables/b_rows.parquet` (cache only) for the record.
+
+### 2026-10-16: THE READ, once (OWNER-WAIVED EARLY READ, EW3-5)
+
+`python tools/milb_fielding_runs.py read --gate-sha 0ab2ed5f`, run once at 2026-10-16T23:37Z after
+the fixture dry run; stdout and stderr kept in the task's output directory; no exception.
+Artifact `data/milb_fielding_runs_eval.json`. Inputs: war_daily bat.parquet sha256 e9571c42...fd55
+(modified 2026-10-16T03:48Z); grade rows sha256 eb7f31c1...206c (660 hitter rows with a field
+grade); FanGraphs fielding cache 2016 to 2026 (per-file sha256 in the artifact).
+
+Construction (part 3, from the build): split-half k in innings C 392, 1B 309, 2B 591, 3B 428,
+SS 574, LF 364, CF 290, RF 390 (r 0.41 to 0.57 at 320 to 400 innings); chained level factors
+f(ROK->A) 0.444 (190 links), f(A->A+) 0.292 (633), f(A+->AA) 0.469 (696), f(AA->AAA) 0.366
+(608), so F = AAA 1, AA 0.366, A+ 0.172, A 0.050, ROK 0.022: one shrunk run per 1,000 innings
+at a lower level maps to well under one at the next level up on the same players in the same
+season, and the AAA-equivalent measure is carried mostly by AA and AAA innings.
+
+**(a) Persistence: PASS.** 5,471 pairs (2,542 players), Spearman 0.2483, LB95 0.2163, UB95
+0.2786. N-a (fielder-shuffled, 2,775 pairs) -0.0050, CI95 -0.0473 to 0.0369, so LB95(rho)
+clears UB95(rho_null). P-a (planted sd 0.02): persistence 0.1574, LB95 0.1235, PASS; Spearman
+of the planted range measure with the planted skill 0.3865. Per position (reported): C 0.3079
+(1,015 pairs), 1B 0.2544 (631), 2B 0.1862 (625), 3B 0.2386 (571), SS 0.1984 (795), LF 0.2582
+(452), CF 0.2406 (777), RF 0.2492 (605); every LB95 above 0.09.
+
+**(b) Pre-debut MFR vs MLB fielding runs: PASS.** 374 debut rows (2022 to 2024), 275 with a
+predictor (200+ pre-debut MiLB innings at the MLB primary position; 2022 108, 2023 84, 2024 83).
+T1 B-Ref rfield per 1,000 innings: 0.2559 (203 rows), LB95 0.1073, one-sided p 0.0005 (Holm
+threshold 0.025, rejects). T2 OAA per 1,000 innings: 0.1980 (164 rows), LB95 0.0330, p 0.0100
+(threshold 0.05, rejects). N-b (predictor permuted within position) T1 0.0158 (LB95 -0.1262),
+T2 0.0505 (LB95 -0.1058): does not clear. P-b (planted rho 0.25): T1 0.0779 (LB95 -0.0602), T2
+0.3132 (LB95 0.1561), clears through T2. Reported, deciding nothing: FRP 0.2138 (177, LB95
+0.0618), DRS 0.2478 (177, LB95 0.0972), UZR to 2024 0.1358 (99, LB95 -0.0648); the predictor at
+the MiLB primary position: T1 0.2223 (268, LB95 0.1000), T2 0.2260 (227, LB95 0.0953). Per
+position (13 to 32 rows each, reported): CF clears on T1, T2 and FRP (0.41, 0.43, 0.46); the
+other cells' intervals span zero; LF reads negative on 16 rows.
+
+**(c) Incremental over the consensus field grade: UNDERPOWERED.** 289 (b) rows carry a frozen
+field grade. Rank partial correlation given the grade: T1 0.2774 (174 rows, LB95 0.1207, p
+0.0005, Holm rejects), T2 0.1455 (141, LB95 -0.0248, p 0.0535, does not). The grade alone on the
+same rows: T1 0.3327 (237, LB95 0.2126), T2 0.3562 (201, LB95 0.2150); MFR alone on the partial's
+rows: T1 0.2802, T2 0.1488. N-c does not clear (T1 -0.0004, T2 -0.1144). P-c fails on both
+targets (T1 0.1384, LB95 -0.0164; T2 0.0702, LB95 -0.0968), so under part 5 the estimand is
+UNDERPOWERED although the T1 partial itself clears: the design cannot certify a planted
+increment of the registered size on these rows, so no incremental claim is made.
+
+**What this licenses (part 6).** (b) PASS: MFR is served on PROSPX prospect pages (defense block
+by position, reliability band, levels), with a glossary entry and the registry row
+`milb_fielding_runs` (provisional), and the atlas-style eFV driver read runs under its own
+registration (part 11). No claim that MFR adds to the scouting field grade ((c) UNDERPOWERED),
+none at catcher or at any single position except as the reported cells read, and none on
+accuracy beyond the cells above. EWAR_SDR_PROSPECT_DISPLAY is superseded (EW3-33).
