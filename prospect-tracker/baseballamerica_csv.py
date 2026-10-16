@@ -244,6 +244,11 @@ _BA_ORG_SPLIT_KEYS: dict[tuple[str, str], str] = {
     # screen_identity would now quarantine it, but a pin routes the row to the
     # RIGHT human instead of merely refusing the wrong one.
     ("garrett_wright", "LAA"): "garrett_wright_laa",
+    # The Blue Jays OF Zach Britton (mlbam 676309, Louisville, drafted 2020 rd 5,
+    # pick 136) vs the veteran LHP Zack Britton (mlbam 502154, MLB debut 2011).
+    # BA's 2023 Blue Jays board printed "Zack Britton"; the row is the outfielder.
+    # Repaired by tools/repair_zack_britton_collision.py (BA_KEEP_FORWARD_READ).
+    ("zack_britton", "TOR"): "zach_britton",
 }
 
 # WHICH PUBLISHED NUMBER IS THE FV, and it depends on the season.
