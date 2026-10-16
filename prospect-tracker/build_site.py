@@ -6404,8 +6404,15 @@ def build_mlbstats() -> str:
     baserunning_export.MLBSTATS_BASERUNNING_LIVE: while it is False the shell
     carries no Baserunning button or panel, and mlbstats.js ignores
     section=baserunning. Live, the button and panel sit between Defense and
-    Leverage (the other non-batting part of a position player, beside Defense)."""
+    Leverage (the other non-batting part of a position player, beside Defense).
+
+    THE ABS CHALLENGES TAB (owner 2026-10-15, EW3-16 to EW3-19; task
+    EWAR_T4_EABS, docs/eabs-2026-10-15/EABS_GATE.md) rides
+    eabs_export.MLBSTATS_EABS_LIVE: live, a Challenges button and panel follow
+    Baserunning's place, before Leverage, and mlbstats.js reads
+    section=eabs; off, the shell carries neither."""
     import baserunning_export
+    import eabs_export
     import league_averages
     import mlbstats_trends_export
     league_root = league_btn = league_panel = teams_btn = teams_panel = ""
@@ -6416,6 +6423,13 @@ def build_mlbstats() -> str:
         baserunning_panel = ('<div id="mlbstats-section-baserunning" class="mlbstats-section" role="tabpanel" aria-label="Baserunning" hidden>'
                              f'<div id="mlbstats-baserunning-root"{_csv_optin("mlb-baserunning")}></div>'
                              '</div>')
+    eabs_btn = eabs_panel = ""
+    if eabs_export.MLBSTATS_EABS_LIVE:
+        eabs_btn = ('<button type="button" class="mlbstats-sectionbtn" data-mlbsection="eabs" role="tab" '
+                    'aria-selected="false" aria-controls="mlbstats-section-eabs">Challenges</button>')
+        eabs_panel = ('<div id="mlbstats-section-eabs" class="mlbstats-section" role="tabpanel" aria-label="ABS Challenges" hidden>'
+                      f'<div id="mlbstats-eabs-root"{_csv_optin("mlb-eabs")}></div>'
+                      '</div>')
     league_live = bool(league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE)
     drawer_root = (f' data-drawer-src="/assets/mlbstats-drawer.js?v={_asset_ver("assets/mlbstats-drawer.js")}"'
                    if mlbstats_trends_export.MLBSTATS_DRAWER_LIVE else "")
@@ -6446,8 +6460,9 @@ def build_mlbstats() -> str:
         # name the boards, and the year-range term rides the Years label of
         # every board's own control (display pass 2026-10-07).
         f'<span class="section-sub">{_gl("ewar", "eWAR")}, {_gl("hem_plus", "HEM+")}, '
-        f'{_gl("sem_plus", "SEM+")}, {_gl("rem_plus", "REM+")}, {_gl("dem_plus", "DEM+")} and '
-        f'{_gl("wpa", "WPA")} leaderboards. 100 is league average on every + scale.</span></div>'
+        f'{_gl("sem_plus", "SEM+")}, {_gl("rem_plus", "REM+")}, {_gl("dem_plus", "DEM+")}'
+        + (f', {_gl("wpa", "WPA")} and {_gl("eabs", "eABS")}' if eabs_btn else f' and {_gl("wpa", "WPA")}')
+        + ' leaderboards. 100 is league average on every + scale.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
         # Short labels: the section is the noun, "Leaderboards" was the noise,
         # and the phone strip reads at a glance (2026-09-11 overhaul, wave 2).
@@ -6466,7 +6481,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false" aria-controls="mlbstats-section-starters">Starters</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="bullpen" role="tab" aria-selected="false" aria-controls="mlbstats-section-bullpen">Bullpen</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
-        f'{baserunning_btn}'
+        f'{baserunning_btn}{eabs_btn}'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
         f'{teams_btn}{league_btn}'
         '</div>'
@@ -6487,7 +6502,7 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-defense" class="mlbstats-section" role="tabpanel" aria-label="Defense" hidden>'
         f'<div id="mlbstats-defense-root"{_csv_optin("mlb-defense")}></div>'
         '</div>'
-        f'{baserunning_panel}'
+        f'{baserunning_panel}{eabs_panel}'
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'

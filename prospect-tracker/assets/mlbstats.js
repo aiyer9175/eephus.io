@@ -455,6 +455,7 @@
       : section === "leverage" ? leverageTeam
       : section === "defense" ? defenseTeam
       : section === "baserunning" ? brTeam
+      : section === "eabs" ? abTeam
       : section === "war" ? warTeam : relTeam;
   }
   function clearActiveTeam() {
@@ -463,6 +464,7 @@
     else if (section === "leverage") { leverageTeam = ""; writeHash(); renderLeverageInPlace(); }
     else if (section === "defense") { defenseTeam = ""; writeHash(); renderDefenseInPlace(); }
     else if (section === "baserunning") { brTeam = ""; writeHash(); renderBaserunningInPlace(); }
+    else if (section === "eabs") { abTeam = ""; writeHash(); renderEabs(); }
     else if (section === "war") { warTeam = ""; writeHash(); renderWar(); }
     else { relTeam = ""; writeHash(); renderInPlace(); }
   }
@@ -1009,6 +1011,11 @@
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     brteam: [{ id: "standard", label: "Standard", phone: ["team_ebr", "team_sb", "team_sb_pct", "team_xbt_pct"], keys: null }],
+    // The ABS Challenges boards (EWAR_T4_EABS): one view each; the phone keeps
+    // eABS, its raw net, the count and the overturn rate.
+    abbat: [{ id: "standard", label: "Standard", phone: ["eabs", "raw", "n", "ovr"], keys: null }],
+    abcat: [{ id: "standard", label: "Standard", phone: ["eabs", "raw", "n", "ovr"], keys: null }],
+    abpit: [{ id: "standard", label: "Standard", phone: ["eabs", "raw", "n", "ovr"], keys: null }],
     // Single-view boards: no view strip, only a phone subset.
     levbat: [{ id: "standard", label: "Standard", phone: ["wpa", "wpa_li", "war", "pa"], keys: null }],
     levsp: [{ id: "standard", label: "Standard", phone: ["wpa", "wpa_per_start", "war", "gs"], keys: null }],
@@ -1277,6 +1284,7 @@
     else if (sec === "leverage") renderLeverage();
     else if (sec === "defense") renderDefense();
     else if (sec === "baserunning") renderBaserunning();
+    else if (sec === "eabs") renderEabs();
     else if (sec === "war") renderWar();
     else render();
   }
@@ -2780,6 +2788,7 @@
     def: "Fielders leaderboard", defteam: "Team defense",
     levbat: "Leverage leaderboard, hitters", levsp: "Leverage leaderboard, pitchers",
     br: "Baserunning leaderboard", brteam: "Team baserunning",
+    abbat: "ABS challenges, batters", abcat: "ABS challenges, catchers", abpit: "ABS challenges, pitchers",
   };
 
   // player_links map (mlbam -> merged-card key), preloaded once at init so
@@ -2852,6 +2861,7 @@
     else if (sec === "leverage") renderLeverageInPlace(focusId);
     else if (sec === "defense") renderDefenseInPlace(focusId);
     else if (sec === "baserunning") renderBaserunningInPlace(focusId);
+    else if (sec === "eabs") renderEabs(focusId);
     else if (sec === "war") renderWar(focusId);
     else renderInPlace(focusId);
   }
@@ -3524,6 +3534,7 @@
     dtsort: { key: "team_dem_plus", asc: false },   // Team Defense
     bsort:  { key: "ebr", asc: false },             // Baserunning: runners
     btsort: { key: "team_ebr", asc: false },        // Team Baserunning
+    asort:  { key: "eabs", asc: false },            // ABS Challenges
     wsort:  { key: "war", asc: false },             // eWAR: players
     wtsort: { key: "war", asc: false },             // eWAR: teams
   };
@@ -3584,8 +3595,8 @@
     // board, as an unknown section does.
     // `baserunning` likewise needs its panel (build_site writes it only while
     // baserunning_export.MLBSTATS_BASERUNNING_LIVE is on).
-    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams|baserunning)\b/.exec(h);
-    if (s && (s[1] === "baserunning" ? baserunningLive()
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams|baserunning|eabs)\b/.exec(h);
+    if (s && (s[1] === "baserunning" ? baserunningLive() : s[1] === "eabs" ? eabsLive()
               : (s[1] !== "league" && s[1] !== "teams") || leagueSrc())) section = s[1];
     var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
@@ -3606,11 +3617,14 @@
     var bs = /(?:^#|[#&])bseason=(\d{4})\b/.exec(h);
     if (bs) brSeason = bs[1];
     brYearsRefused = /(?:^#|[#&])byears=/.test(h);
+    // The ABS Challenges keys (a prefix): aview and asort.
+    var av = /(?:^#|[#&])aview=(batters|catchers|pitchers)\b/.exec(h);
+    if (av) abView = av[1];
     // One team for every section (section 7). Set before the boards render, so
     // a deep-linked club is the first thing each one is narrowed to.
     var tm = TEAM_HASH_RE.exec(h);
     if (tm) {
-      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = brTeam = tm[1];
+      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = brTeam = abTeam = tm[1];
     }
     var gr = GRAD_HASH_RE.exec(h);
     if (gr) gradSel = gr[1];
@@ -3649,6 +3663,7 @@
     readSort(h, "wtsort", WAR_TEAM_COLS, warTeamSort);
     readSort(h, "bsort", BR_COLS, brSort);
     readSort(h, "btsort", BR_TEAM_COLS, brTeamSort);
+    readSort(h, "asort", AB_COLS, abSort);
   }
 
   // Compose the FULL page state into the hash on every section/tab/season/sort
@@ -3672,6 +3687,7 @@
     if (warView !== "players") parts.push("wview=" + warView);
     if (brView !== "runners") parts.push("bview=" + brView);
     if (brSeason !== "current") parts.push("bseason=" + brSeason);
+    if (abView !== "batters") parts.push("aview=" + abView);
     pushWindow(parts, "bullpen", "rseason", "ryears");
     pushWindow(parts, "starters", "sseason", "syears");
     pushWindow(parts, "hitters", "hseason", "hyears");
@@ -3695,6 +3711,7 @@
     pushSort(parts, "wtsort", warTeamSort);
     pushSort(parts, "bsort", brSort);
     pushSort(parts, "btsort", brTeamSort);
+    pushSort(parts, "asort", abSort);
     leagueHashParts(parts);
     teamsHashParts(parts);
     // The ACTIVE section's team, so the URL describes the board on screen
@@ -6496,6 +6513,180 @@
     loadBaserunning();
   }
 
+  // ===========================================================================
+  // Section 8: ABS Challenges, eABS (owner 2026-10-15, EW3-16 to EW3-19; task
+  // EWAR_T4_EABS, registered in docs/eabs-2026-10-15/EABS_GATE.md before any
+  // number). The shell carries the tab while eabs_export.MLBSTATS_EABS_LIVE is
+  // on; without the panel readHash ignores section=eabs and nothing here runs.
+  //
+  // OURS, descriptive: what each player's challenges of ball and strike calls
+  // were worth this season, priced on RE288 (a ball against a strike at the
+  // challenged count, bases and outs). Three boards by who challenged: batters,
+  // catchers, pitchers. No run column carries a value-ruler colour. Not part of
+  // any WAR: whether a challenge part enters eWAR is the owner's decision.
+  // ===========================================================================
+  var AB_URL = "/data/eabs_leaderboards.json";
+  var abData = null;
+  var abErr = false;
+  var abInit = false;
+  var abView = "batters";                     // batters | catchers | pitchers
+  var abSort = { key: "eabs", asc: false };
+  var abQuery = "";
+  var abTeam = "";
+  var abMin = null;                           // null = no floor; challenges
+  function eabsLive() { return !!document.getElementById("mlbstats-section-eabs"); }
+
+  var AB_COLS = [
+    { key: "name", label: "Player", term: null, sortable: true, kind: "name", asc: true },
+    { key: "eabs", label: "eABS", term: "eabs", fmt: fSigned, num: true, desc: true,
+      title: "OURS. Runs above what the league's overturn rate on the same challenges earned, at the same run values and failed-challenge costs. 0 = a league-average challenger for this mix of counts. What happened this season, not a forecast." },
+    { key: "raw", label: "eABS raw", term: "eabs", fmt: fSigned, num: true,
+      title: "OURS. Runs won minus failed-challenge cost: the net run value of his challenges this season." },
+    { key: "rg", label: "Runs won", term: "eabs", fmt: fSigned, num: true,
+      title: "OURS. Runs his overturned challenges moved for his club: each worth a ball against a strike at that count, bases and outs, on this season's run expectancy (RE288)." },
+    { key: "fc", label: "Fail cost", term: "eabs", fmt: f1, num: true, asc: true,
+      title: "OURS. What his failed challenges cost his club: the value a held challenge had at that half-inning, score margin and challenges left, measured as the runs clubs went on to gain from their challenges with one more in hand." },
+    { key: "n", label: "Chal", fmt: fInt, num: true, title: "Challenges of a ball or strike call (ABS zone challenges)." },
+    { key: "won", label: "Won", fmt: fInt, num: true, title: "Challenges that overturned the call." },
+    { key: "lost", label: "Lost", fmt: fInt, num: true, asc: true, title: "Challenges where the call stood." },
+    { key: "ovr", label: "Ovr%", term: "abs_challenge", fmt: fPct, num: true,
+      title: "Share of his challenges that overturned the call." },
+    { key: "x_ovr", label: "xOvr%", fmt: fPct, num: true,
+      title: "The league's overturn rate on the same mix of challenges (his side of the ball and each challenge's count): the rate eABS measures him against." },
+    { key: "stake", label: "At stake", fmt: f1, num: true,
+      title: "OURS. The run value of every call he challenged, had each been overturned." },
+  ];
+  function abRows() { return (abData && abData.boards && abData.boards[abView]) || []; }
+  function abMatch(r) {
+    if (abTeam && (r.clubs || [r.team]).indexOf(abTeam) < 0) return false;
+    if (!passesGrad(r)) return false;
+    if (!passesMin(r.n, abMin)) return false;
+    var q = abQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0
+      || String(r.mlbam || "").indexOf(q) >= 0);
+  }
+  function abTabBar() {
+    var tabs = [["batters", "Batters"], ["catchers", "Catchers"], ["pitchers", "Pitchers"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === abView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-abview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === abView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function abControls() {
+    return '<div class="' + filtCls() + '">' + filtBtn(filtCount(abTeam, abMin, [], false))
+      + teamFilterChip(abTeam)
+      + teamSelect("mlbstats-ab-team", abRows(), abTeam, "eabs")
+      + minSelect("mlbstats-ab-min", "min challenges", abMin, "Minimum challenges this season.")
+      + gradSelect("eabs")
+      + '<input class="mlbstats-search" type="search" id="mlbstats-ab-q" placeholder="Search player or team" value="' + esc(abQuery) + '">'
+      + "</div>";
+  }
+  // The persistence line is derived from the payload's stability block (the
+  // registered look, EABS_GATE.md part 5): only a PERSISTS disposition may say
+  // results carry over (part 6); every other result says that it is not shown.
+  function abStabilityLine() {
+    var st = abData && abData.stability;
+    if (!st || !st.dispositions) return "";
+    var d = st.dispositions, roles = [], held = [];
+    ["batter", "catcher"].forEach(function (k) {
+      if (!d[k]) return;
+      (d[k] === "PERSISTS" ? held : roles).push(k === "batter" ? "batters" : "catchers");
+    });
+    var bits = [];
+    if (held.length) bits.push("Challenge results carried from one AAA season to the next for " + held.join(" and ")
+      + " (" + esc(st.frame || "") + ").");
+    if (roles.length) bits.push("Whether challenge results carry from one season to the next is not shown for "
+      + roles.join(" or ") + ": on " + esc(st.frame || "AAA seasons") + " they were not distinguishable from chance.");
+    return bits.join(" ");
+  }
+  function abExplainer() {
+    var v = (abData && abData.values) || {};
+    var html = gloss("eABS", "eabs") + " prices every " + gloss("ABS challenge", "abs_challenge")
+      + " on this season's " + gloss("run expectancy", "run_expectancy") + " by count, bases and outs: an overturned call is worth"
+      + " a ball against a strike at that moment, for the challenger's club. A failed challenge costs the value of the"
+      + " challenge it spent"
+      + (num(v.mean_fail_cost) != null ? " (" + num(v.mean_fail_cost).toFixed(2) + " runs on average this season)" : "")
+      + ". eABS is the net against the league's overturn rate on the same mix of counts; eABS raw is the net itself."
+      + " Descriptive: what happened this season, not a forecast, and not part of any WAR. " + abStabilityLine();
+    return explainer("eabs", html);
+  }
+  function abSourcesLine() {
+    var bits = [];
+    if (abData && abData.as_of) bits.push("challenges through " + esc(String(abData.as_of).slice(0, 10)));
+    var lg = abData && abData.league && abData.league.all;
+    if (lg && lg.n) bits.push(esc(lg.n) + " challenges league-wide, " + fPct(lg.ovr) + " overturned");
+    return bits.length ? '<p class="mlbstats-note">' + bits.join("; ") + ".</p>" : "";
+  }
+  function eabsInner() {
+    var rows = sortRows(abRows().filter(abMatch), AB_COLS, abSort);
+    var who = abView === "batters" ? "batters" : abView === "catchers" ? "catchers" : "pitchers";
+    return rows.length
+      ? proseFold("ab-about", rows.length + " " + who, abExplainer() + abSourcesLine())
+        + '<div class="mlbstats-scroll">' + renderTable(rows, AB_COLS, abSort, abData, abView === "catchers" ? "abcat" : abView === "pitchers" ? "abpit" : "abbat") + "</div>"
+      : noRowsNote(abTeam, "No players match these filters.");
+  }
+  function renderEabs(focusId) {
+    var root = document.getElementById("mlbstats-eabs-root");
+    if (!root) return;
+    if (!abData) {
+      root.innerHTML = abErr
+        ? pxState("failed", "ABS challenges board did not load. "
+          + '<button type="button" class="chip" id="mlbstats-ab-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("loading", "Loading the ABS challenges board.");
+      var retry = document.getElementById("mlbstats-ab-retry");
+      if (retry) retry.addEventListener("click", function () { root.innerHTML = pxState("loading", "Loading the ABS challenges board."); loadEabs(); });
+      return;
+    }
+    root.innerHTML = bannerHTML(abData, { sec: "eabs" }) + abTabBar() + abControls() + eabsInner();
+    if (focusId) restoreFocus(root, focusId);
+    bindEabsEvents(root);
+    wireGlossary(root);
+  }
+  function bindEabsEvents(root) {
+    bindCollapse(root);
+    stampCsv("eabs", root);
+    root.querySelectorAll("[data-abview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        abView = b.getAttribute("data-abview");
+        writeHash();
+        renderEabs();
+      });
+    });
+    var q = root.querySelector("#mlbstats-ab-q");
+    if (q) q.addEventListener("input", function () { abQuery = q.value; renderEabs("mlbstats-ab-q"); });
+    var t = root.querySelector("#mlbstats-ab-team");
+    if (t) t.addEventListener("change", function () { abTeam = t.value || ""; writeHash(); renderEabs("mlbstats-ab-team"); });
+    var mn = root.querySelector("#mlbstats-ab-min");
+    if (mn) mn.addEventListener("input", function () { abMin = readMin(mn); renderEabs("mlbstats-ab-min"); });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      bindSortKeys(th, root, function () {
+        var key = th.getAttribute("data-col"), col = null;
+        AB_COLS.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name")) return;
+        if (abSort.key === key) abSort.asc = !abSort.asc;
+        else { abSort.key = key; abSort.asc = !!col.asc; }
+        writeHash();
+        renderEabs();
+      });
+    });
+  }
+  function loadEabs() {
+    abErr = false;
+    fetch(AB_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { abData = j; renderEabs(); })
+      .catch(function () { abData = null; abErr = true; renderEabs(); });
+  }
+  function initEabs() {
+    if (!eabsLive()) return;
+    if (abInit) { renderEabs(); return; }
+    abInit = true;
+    renderEabs();
+    loadEabs();
+  }
+
   // ---- the drawer panels (assets/mlbstats-drawer.js asks for these) ----------
   // The drawer shell owns the row, the caret and the deep link; this board
   // supplies its four panels (baserunning.md 3.7): Speed (percentile bars
@@ -7399,7 +7590,8 @@
                   starters: "mlbstats-section-starters",
                   hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
                   defense: "mlbstats-section-defense", league: "mlbstats-section-league",
-                  teams: "mlbstats-section-teams", baserunning: "mlbstats-section-baserunning" };
+                  teams: "mlbstats-section-teams", baserunning: "mlbstats-section-baserunning",
+                  eabs: "mlbstats-section-eabs" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
@@ -7411,6 +7603,7 @@
     else if (name === "leverage") initLeverage();
     else if (name === "defense") initDefense();
     else if (name === "baserunning") initBaserunning();
+    else if (name === "eabs") initEabs();
     else if (name === "war") initWar();
     else if (name === "bullpen") initBullpen();
     else if (name === "league") initLeague();
@@ -7668,6 +7861,7 @@
       else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
       else if (section === "defense") { if (defenseInit) renderDefense(); }
       else if (section === "baserunning") { if (brInit) renderBaserunning(); }
+      else if (section === "eabs") { if (abInit) renderEabs(); }
       else if (section === "war") { if (warInit) renderWar(); }
       else if (relInit) render();
     });

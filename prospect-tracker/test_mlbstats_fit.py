@@ -762,8 +762,13 @@ def test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels():
     # active paints the wrong tab over the board the script opens.
     # The League tab joins after Leverage only in a live build (and Teams,
     # task Q8_13b, before it); a dark shell is the six sections exactly.
-    assert list(labels)[:6] == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
-    assert list(labels)[6:] in ([], ["league"], ["teams", "league"]), list(labels)
+    # The ABS Challenges tab (EWAR_T4_EABS, eabs_export.MLBSTATS_EABS_LIVE) sits
+    # between Defense and Leverage while live.
+    order = [s for s in labels if s != "eabs"]
+    if "eabs" in labels:
+        assert list(labels).index("eabs") == list(labels).index("leverage") - 1, list(labels)
+    assert order[:6] == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
+    assert order[6:] in ([], ["league"], ["teams", "league"]), list(labels)
     assert 'class="mlbstats-sectionbtn active" data-mlbsection="war"' in shell, "rerun build_site.py"
     assert '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">' \
         in shell, "rerun build_site.py"
