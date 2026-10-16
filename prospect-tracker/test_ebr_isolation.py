@@ -134,8 +134,11 @@ def test_only_the_builder_and_the_look_import_the_core():
     # fitted consumer under I9, and scanned below for year-to-year statistics.
     # tools/pitch_basis_build.py reuses ebr.fit_mask for the runner-scoring table
     # of eWAR's pitching bases (EBR_GATE.md part 11.3.3), on the same terms.
-    assert users == ["tools/build_count_value.py", "tools/build_ebr.py", "tools/ebr_gate.py",
-                     "tools/pitch_basis_build.py"]
+    # tools/build_pitch_ledger.py reuses ebr.base_code and ebr.fit_mask for the pitch
+    # ledger's walk and its telescope check (docs/ewar/PITCH_LEDGER_GATE.md parts 2 and
+    # 7), a same-season measurement on the same terms.
+    assert users == ["tools/build_count_value.py", "tools/build_ebr.py", "tools/build_pitch_ledger.py",
+                     "tools/ebr_gate.py", "tools/pitch_basis_build.py"]
 
 
 def test_only_the_look_computes_a_year_to_year_statistic():
