@@ -1,0 +1,854 @@
+{
+ "schema": 1,
+ "item": "EFV_PIT_AUDIT_FIXES",
+ "produced_by": "efv5_refit.py --reread-served",
+ "role": "development",
+ "adjudicates": false,
+ "doc": "docs/efv-v2/EFV_PIT_AUDIT_FIXES.md",
+ "owner_decision": "EW3-36 (2026-10-16)",
+ "side": "pit",
+ "source_fit": "data/_labs/efv5/efv5_refit_fit.json",
+ "source_fit_generated_at": "2026-10-16T00:24:08Z",
+ "served_weights": {
+  "w_skill": 1.0,
+  "w_time": 0.0,
+  "source": "data/efv5_refit_weights.json"
+ },
+ "cross_fitted_as_read": {
+  "lv_dev|pit|2017": {
+   "w_skill": 1.0,
+   "w_time": 1.0,
+   "w_skill_ratio": 1.2143650436229911,
+   "w_time_ratio": 1.8947682151066239
+  },
+  "lv_dev|pit|2018": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.116793479418671,
+   "w_time_ratio": -0.4913154538044082
+  },
+  "lv_dev|pit|2019": {
+   "w_skill": 0.9134142497641357,
+   "w_time": 0.0,
+   "w_skill_ratio": 0.9134142497641357,
+   "w_time_ratio": -0.45979155535765676
+  },
+  "vm_dev|pit|2017": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.046703541568267,
+   "w_time_ratio": -0.5168074064487322
+  },
+  "vm_dev|pit|2018": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0401089972731077,
+   "w_time_ratio": -0.49586289919470644
+  },
+  "vm_dev|pit|2019": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0311650658049545,
+   "w_time_ratio": -0.496174942312273
+  },
+  "vm_dev|pit|2020": {
+   "w_skill": 0.9840852474030415,
+   "w_time": 0.0,
+   "w_skill_ratio": 0.9840852474030415,
+   "w_time_ratio": -0.4875656184899847
+  },
+  "vm_dev|pit|2021": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.1285103993620818,
+   "w_time_ratio": -0.5102231628063104
+  },
+  "vm_dev|pit|2022": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0300147649121252,
+   "w_time_ratio": -0.511920898647569
+  },
+  "vm_dev|pit|2023": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.04766931209321,
+   "w_time_ratio": -0.5182479191067786
+  }
+ },
+ "cross_fitted_guarded": {
+  "lv_dev|pit|2017": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.2365874418831333,
+   "w_time_ratio": null,
+   "nonzero": {
+    "e_skill": 1352,
+    "e_time": 16
+   },
+   "held_at_zero": [
+    "e_time"
+   ]
+  },
+  "lv_dev|pit|2018": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.116793479418671,
+   "w_time_ratio": -0.4913154538044082,
+   "nonzero": {
+    "e_skill": 1382,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "lv_dev|pit|2019": {
+   "w_skill": 0.9134142497641357,
+   "w_time": 0.0,
+   "w_skill_ratio": 0.9134142497641357,
+   "w_time_ratio": -0.45979155535765676,
+   "nonzero": {
+    "e_skill": 1332,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2017": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.046703541568267,
+   "w_time_ratio": -0.5168074064487322,
+   "nonzero": {
+    "e_skill": 1805,
+    "e_time": 469
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2018": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0401089972731077,
+   "w_time_ratio": -0.49586289919470644,
+   "nonzero": {
+    "e_skill": 1783,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2019": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0311650658049545,
+   "w_time_ratio": -0.496174942312273,
+   "nonzero": {
+    "e_skill": 1758,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2020": {
+   "w_skill": 0.9840852474030415,
+   "w_time": 0.0,
+   "w_skill_ratio": 0.9840852474030415,
+   "w_time_ratio": -0.4875656184899847,
+   "nonzero": {
+    "e_skill": 1744,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2021": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.1285103993620818,
+   "w_time_ratio": -0.5102231628063104,
+   "nonzero": {
+    "e_skill": 1746,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2022": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.0300147649121252,
+   "w_time_ratio": -0.511920898647569,
+   "nonzero": {
+    "e_skill": 1756,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  },
+  "vm_dev|pit|2023": {
+   "w_skill": 1.0,
+   "w_time": 0.0,
+   "w_skill_ratio": 1.04766931209321,
+   "w_time_ratio": -0.5182479191067786,
+   "nonzero": {
+    "e_skill": 1731,
+    "e_time": 485
+   },
+   "held_at_zero": []
+  }
+ },
+ "guard_min_nonzero": 100,
+ "B": 2000,
+ "seed": 20260906,
+ "read": {
+  "lv_dev": {
+   "n": 1397,
+   "raters": {
+    "rr_served": 0.1714,
+    "rr_read": 0.1442,
+    "rr_guard": 0.1712,
+    "efv_v5_v5": 0.1749,
+    "prospx_consensus": 0.1629
+   },
+   "served_vs_V5": {
+    "n": 1397,
+    "a": 0.17138,
+    "b": 0.17489,
+    "delta": -0.00351,
+    "ci95": [
+     -0.0107,
+     0.0037
+    ],
+    "mde95": 0.006,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 1397,
+    "a": 0.17138,
+    "b": 0.16286,
+    "delta": 0.00852,
+    "ci95": [
+     -0.0187,
+     0.0344
+    ],
+    "mde95": 0.0222,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 1397,
+    "a": 0.14425,
+    "b": 0.17489,
+    "delta": -0.03065,
+    "ci95": [
+     -0.0527,
+     -0.0076
+    ],
+    "mde95": 0.0189,
+    "status": "derived",
+    "reading": "development only; CI95 below zero"
+   },
+   "read_vs_consensus": {
+    "n": 1397,
+    "a": 0.14425,
+    "b": 0.16286,
+    "delta": -0.01861,
+    "ci95": [
+     -0.0554,
+     0.0155
+    ],
+    "mde95": 0.0296,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_V5": {
+    "n": 1397,
+    "a": 0.17119,
+    "b": 0.17489,
+    "delta": -0.0037,
+    "ci95": [
+     -0.0109,
+     0.0034
+    ],
+    "mde95": 0.0061,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 1397,
+    "a": 0.17119,
+    "b": 0.16286,
+    "delta": 0.00834,
+    "ci95": [
+     -0.0183,
+     0.0338
+    ],
+    "mde95": 0.0218,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 1397,
+    "a": 0.17489,
+    "b": 0.16286,
+    "delta": 0.01204,
+    "ci95": [
+     -0.0157,
+     0.037
+    ],
+    "mde95": 0.0224,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  },
+  "vm_dev": {
+   "n": 424,
+   "raters": {
+    "rr_served": 0.3854,
+    "rr_read": 0.3853,
+    "rr_guard": 0.3853,
+    "efv_v5_v5": 0.3773,
+    "prospx_consensus": 0.3674
+   },
+   "served_vs_V5": {
+    "n": 424,
+    "a": 0.38544,
+    "b": 0.37734,
+    "delta": 0.0081,
+    "ci95": [
+     -0.0156,
+     0.0325
+    ],
+    "mde95": 0.0201,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 424,
+    "a": 0.38544,
+    "b": 0.36744,
+    "delta": 0.018,
+    "ci95": [
+     -0.021,
+     0.0561
+    ],
+    "mde95": 0.0323,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 424,
+    "a": 0.38534,
+    "b": 0.37734,
+    "delta": 0.008,
+    "ci95": [
+     -0.0157,
+     0.0325
+    ],
+    "mde95": 0.0201,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_consensus": {
+    "n": 424,
+    "a": 0.38534,
+    "b": 0.36744,
+    "delta": 0.0179,
+    "ci95": [
+     -0.0211,
+     0.056
+    ],
+    "mde95": 0.0323,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_V5": {
+    "n": 424,
+    "a": 0.38534,
+    "b": 0.37734,
+    "delta": 0.008,
+    "ci95": [
+     -0.0157,
+     0.0325
+    ],
+    "mde95": 0.0201,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 424,
+    "a": 0.38534,
+    "b": 0.36744,
+    "delta": 0.0179,
+    "ci95": [
+     -0.0211,
+     0.056
+    ],
+    "mde95": 0.0323,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 424,
+    "a": 0.37734,
+    "b": 0.36744,
+    "delta": 0.0099,
+    "ci95": [
+     -0.0163,
+     0.0344
+    ],
+    "mde95": 0.0213,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  },
+  "both": {
+   "n": 1821,
+   "raters": {
+    "rr_served": 0.2198,
+    "rr_read": 0.1987,
+    "rr_guard": 0.2196,
+    "efv_v5_v5": 0.2207,
+    "prospx_consensus": 0.2091
+   },
+   "served_vs_V5": {
+    "n": 1821,
+    "a": 0.21977,
+    "b": 0.22065,
+    "delta": -0.00089,
+    "ci95": [
+     -0.0086,
+     0.0076
+    ],
+    "mde95": 0.0068,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 1821,
+    "a": 0.21977,
+    "b": 0.2091,
+    "delta": 0.01067,
+    "ci95": [
+     -0.0127,
+     0.0345
+    ],
+    "mde95": 0.0199,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 1821,
+    "a": 0.19874,
+    "b": 0.22065,
+    "delta": -0.02191,
+    "ci95": [
+     -0.0404,
+     -0.0038
+    ],
+    "mde95": 0.0154,
+    "status": "derived",
+    "reading": "development only; CI95 below zero"
+   },
+   "read_vs_consensus": {
+    "n": 1821,
+    "a": 0.19874,
+    "b": 0.2091,
+    "delta": -0.01036,
+    "ci95": [
+     -0.0399,
+     0.0197
+    ],
+    "mde95": 0.0248,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_V5": {
+    "n": 1821,
+    "a": 0.2196,
+    "b": 0.22065,
+    "delta": -0.00105,
+    "ci95": [
+     -0.009,
+     0.0073
+    ],
+    "mde95": 0.0068,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 1821,
+    "a": 0.2196,
+    "b": 0.2091,
+    "delta": 0.0105,
+    "ci95": [
+     -0.0123,
+     0.034
+    ],
+    "mde95": 0.0196,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 1821,
+    "a": 0.22065,
+    "b": 0.2091,
+    "delta": 0.01156,
+    "ci95": [
+     -0.0107,
+     0.0343
+    ],
+    "mde95": 0.0188,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  },
+  "lv_dev|pit|2017": {
+   "n": 469,
+   "raters": {
+    "rr_served": 0.1359,
+    "rr_read": 0.0556,
+    "rr_guard": 0.1359,
+    "efv_v5_v5": 0.1454,
+    "prospx_consensus": 0.1359
+   },
+   "served_vs_V5": {
+    "n": 469,
+    "a": 0.13587,
+    "b": 0.14543,
+    "delta": -0.00956,
+    "ci95": [
+     -0.0224,
+     0.0041
+    ],
+    "mde95": 0.0112,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 469,
+    "a": 0.13587,
+    "b": 0.1359,
+    "delta": -3e-05,
+    "ci95": [
+     -0.0419,
+     0.0455
+    ],
+    "mde95": 0.0358,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 469,
+    "a": 0.0556,
+    "b": 0.14543,
+    "delta": -0.08983,
+    "ci95": [
+     -0.1532,
+     -0.0259
+    ],
+    "mde95": 0.0528,
+    "status": "derived",
+    "reading": "development only; CI95 below zero"
+   },
+   "read_vs_consensus": {
+    "n": 469,
+    "a": 0.0556,
+    "b": 0.1359,
+    "delta": -0.0803,
+    "ci95": [
+     -0.1537,
+     -0.0024
+    ],
+    "mde95": 0.0641,
+    "status": "derived",
+    "reading": "development only; CI95 below zero"
+   },
+   "guard_vs_V5": {
+    "n": 469,
+    "a": 0.13587,
+    "b": 0.14543,
+    "delta": -0.00956,
+    "ci95": [
+     -0.0224,
+     0.0041
+    ],
+    "mde95": 0.0112,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 469,
+    "a": 0.13587,
+    "b": 0.1359,
+    "delta": -3e-05,
+    "ci95": [
+     -0.0419,
+     0.0455
+    ],
+    "mde95": 0.0358,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 469,
+    "a": 0.14543,
+    "b": 0.1359,
+    "delta": 0.00953,
+    "ci95": [
+     -0.0326,
+     0.056
+    ],
+    "mde95": 0.0369,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  },
+  "lv_dev|pit|2018": {
+   "n": 439,
+   "raters": {
+    "rr_served": 0.1677,
+    "rr_read": 0.1677,
+    "rr_guard": 0.1677,
+    "efv_v5_v5": 0.169,
+    "prospx_consensus": 0.1677
+   },
+   "served_vs_V5": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16902,
+    "delta": -0.0013,
+    "ci95": [
+     -0.0129,
+     0.0101
+    ],
+    "mde95": 0.0098,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16771,
+    "delta": 1e-05,
+    "ci95": [
+     -0.039,
+     0.0424
+    ],
+    "mde95": 0.034,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16902,
+    "delta": -0.0013,
+    "ci95": [
+     -0.0129,
+     0.0101
+    ],
+    "mde95": 0.0098,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_consensus": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16771,
+    "delta": 1e-05,
+    "ci95": [
+     -0.039,
+     0.0424
+    ],
+    "mde95": 0.034,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_V5": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16902,
+    "delta": -0.0013,
+    "ci95": [
+     -0.0129,
+     0.0101
+    ],
+    "mde95": 0.0098,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 439,
+    "a": 0.16772,
+    "b": 0.16771,
+    "delta": 1e-05,
+    "ci95": [
+     -0.039,
+     0.0424
+    ],
+    "mde95": 0.034,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 439,
+    "a": 0.16902,
+    "b": 0.16771,
+    "delta": 0.00132,
+    "ci95": [
+     -0.0392,
+     0.0434
+    ],
+    "mde95": 0.0345,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  },
+  "lv_dev|pit|2019": {
+   "n": 489,
+   "raters": {
+    "rr_served": 0.2087,
+    "rr_read": 0.2082,
+    "rr_guard": 0.2082,
+    "efv_v5_v5": 0.2084,
+    "prospx_consensus": 0.1843
+   },
+   "served_vs_V5": {
+    "n": 489,
+    "a": 0.20872,
+    "b": 0.20842,
+    "delta": 0.0003,
+    "ci95": [
+     -0.0095,
+     0.0098
+    ],
+    "mde95": 0.0082,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "served_vs_consensus": {
+    "n": 489,
+    "a": 0.20872,
+    "b": 0.18435,
+    "delta": 0.02437,
+    "ci95": [
+     -0.0055,
+     0.0542
+    ],
+    "mde95": 0.0253,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_V5": {
+    "n": 489,
+    "a": 0.20819,
+    "b": 0.20842,
+    "delta": -0.00023,
+    "ci95": [
+     -0.0102,
+     0.0101
+    ],
+    "mde95": 0.0084,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "read_vs_consensus": {
+    "n": 489,
+    "a": 0.20819,
+    "b": 0.18435,
+    "delta": 0.02384,
+    "ci95": [
+     -0.0037,
+     0.0518
+    ],
+    "mde95": 0.0235,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_V5": {
+    "n": 489,
+    "a": 0.20819,
+    "b": 0.20842,
+    "delta": -0.00023,
+    "ci95": [
+     -0.0102,
+     0.0101
+    ],
+    "mde95": 0.0084,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "guard_vs_consensus": {
+    "n": 489,
+    "a": 0.20819,
+    "b": 0.18435,
+    "delta": 0.02384,
+    "ci95": [
+     -0.0037,
+     0.0518
+    ],
+    "mde95": 0.0235,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   },
+   "V5_vs_consensus": {
+    "n": 489,
+    "a": 0.20842,
+    "b": 0.18435,
+    "delta": 0.02407,
+    "ci95": [
+     -0.0071,
+     0.055
+    ],
+    "mde95": 0.0263,
+    "status": "derived",
+    "reading": "development only; CI95 spans zero"
+   }
+  }
+ },
+ "null": {
+  "n_perm": 1000,
+  "seed": 20261016,
+  "observed": 0.0107,
+  "q025": -0.0575,
+  "q975": -0.0131,
+  "share_at_or_above_observed": 0.0
+ },
+ "planted": {
+  "noise_sd": 0.3,
+  "seed": 20261016,
+  "k0": {
+   "n": 1821,
+   "a": 0.61975,
+   "b": 0.69317,
+   "delta": -0.07342,
+   "ci95": [
+    -0.0942,
+    -0.0551
+   ],
+   "mde95": 0.0161,
+   "status": "derived",
+   "reading": "development only; CI95 below zero"
+  },
+  "k1": {
+   "n": 1821,
+   "a": 0.77363,
+   "b": 0.69579,
+   "delta": 0.07784,
+   "ci95": [
+    0.0613,
+    0.0936
+   ],
+   "mde95": 0.0138,
+   "status": "derived",
+   "reading": "development only; CI95 above zero"
+  },
+  "recovered": true
+ },
+ "code": {
+  "commit": "7d110118",
+  "tool": "efv5_refit.py",
+  "tool_sha256": "c43a1c26f2fb5a54baf76f8eb397eaa917eef2a15d7889ff4a3c5e54db8d2999",
+  "efv5_combined_sha256": "d476b37a5fe1ecc1c636006f45b3b48c656c782389630c5b9615c4f9b3ccef8e",
+  "efv_w2_popmle_sha256": "2f8549c4f468b83256ff213ad29f00746b01a06db17a8ac346a67b436af3a7ce",
+  "efv_v2_model_sha256": "d2f8a1bf7a9031d49d025be065aae6d328d6fd5a6f686605bcd4c42209f6e317",
+  "doc": "docs/efv-v2/EFV_V5_REFIT.md",
+  "doc_sha256": "0dddf65cba967a6e1bc3890496f14e63e448b8af39ce4f4c347fd68aebbc4a18"
+ },
+ "generated_at": "2026-10-16T20:13:30Z"
+}

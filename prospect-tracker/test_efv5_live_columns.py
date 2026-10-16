@@ -269,6 +269,14 @@ def test_the_support_receipt_names_every_clip_withhold_and_drift(side):
         mine = {cands[n]["key"] for n in cols if X._family_of(n) == fam} & drifting
         if mine:
             assert set(note["drift"]) == mine and note["status"] != "lit", fam
+    # the spread report (report only): a ratio wherever both sides are lit enough, and the
+    # flag exactly above SPREAD_RATIO
+    for k, r in rep.items():
+        if r["withheld"]:
+            continue
+        assert bool(r.get("spread")) is (r["spread_ratio"] is not None
+                                         and r["spread_ratio"] > X.SPREAD_RATIO), k
+    assert rec["spread"] == sorted(k for k, r in rep.items() if r.get("spread"))
 
 
 def test_the_high_a_slider_gap_is_withheld_and_il_counts_stay_in_support():
@@ -313,6 +321,49 @@ def test_support_clip_on_a_synthetic_support(monkeypatch):
     # a thin column the board leaves at 0.0 everywhere is the training construction: kept
     out = X.support_clip("pit", {b: {1: 0.0, 2: 0.0}}, None)
     assert out[b] == {1: 0.0, 2: 0.0}
+
+
+def test_the_spread_report_is_report_only(monkeypatch):
+    """DRV-3 (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 3): the served nonzero SD against the
+    training nonzero SD, flagged above SPREAD_RATIO (the 2x rule), None under
+    SPREAD_MIN_NONZERO; no value, clip, withhold or family status moves."""
+    assert X.SPREAD_RATIO == X.DRIFT_RATIO == 2.0 and X.SPREAD_MIN_NONZERO == 20
+    names = [n for n in X.side_candidates("pit")
+             if X._family_of(n) == X._family_of(X.side_candidates("pit")[0])]
+    a, b = names[0], names[1]
+    cands = X.candidates()
+    ka, kb = cands[a]["key"], cands[b]["key"]
+    sup = {"n": 1000, "nonzero": 500, "nonzero_share": 0.5, "nonzero_seasons": 12,
+           "nonzero_sd": 1.0, "min": -100.0, "max": 100.0}
+    monkeypatch.setitem(X._SUPPORT, "pit", {ka: dict(sup), kb: dict(sup)})
+    rng = np.random.default_rng(7)
+    wide = {i: float(v) for i, v in enumerate(rng.normal(0, 3.0, 200))}       # planted 3x
+    calm = {i: float(v) for i, v in enumerate(rng.normal(0, 1.0, 200))}       # null 1x
+    fam = X._family_of(a)
+    rec = {"families": {fam: {"status": "lit"}}}
+    out = X.support_clip("pit", {a: wide, b: calm}, rec)
+    assert out[a] == wide and out[b] == calm
+    ra, rb = rec["support"][ka], rec["support"][kb]
+    assert ra["spread_ratio"] == pytest.approx(3.0, rel=0.15) and ra["spread"] is True
+    assert rb["spread_ratio"] == pytest.approx(1.0, rel=0.15) and "spread" not in rb
+    assert rec["spread"] == [ka] and rec["families"][fam]["spread"] == [ka]
+    assert rec["families"][fam]["status"] == "lit" and rec["withheld"] == []
+    # under SPREAD_MIN_NONZERO nonzero values on either side: no ratio
+    few = {i: float(v) for i, v in enumerate(rng.normal(0, 5.0, 10))}
+    rec2: dict = {"families": {}}
+    X.support_clip("pit", {a: few}, rec2)
+    assert rec2["support"][ka]["spread_ratio"] is None and rec2["spread"] == []
+    assert X.spread_ratio(list(wide.values()), dict(sup, nonzero=5)) is None
+    assert X.spread_ratio(list(wide.values()), dict(sup, nonzero_sd=None)) is None
+
+
+def test_the_popup_chip_says_which_way_it_grades():
+    """CON-3 (docs/efv-v2/EFV_PIT_AUDIT_FIXES.md section 4): the popup slope is negative,
+    so its chip says a low rate grades up and why."""
+    lab = X.CHIP_LABELS_V5["scr_w2b_pu_p"]
+    assert lab.startswith("Low popup rate allowed grades up")
+    assert "fewer popups went with more WAR" in lab
+    assert S.chip_label("scr_w2b_pu_p") == lab
 
 
 # ---------------------------------------------------------------------------

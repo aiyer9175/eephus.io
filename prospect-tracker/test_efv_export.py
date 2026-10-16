@@ -617,7 +617,13 @@ def test_committed_artifact_headline_alias_contract():
 #   regenerated on the merged code (arb_export.export, run_monthly --rebuild-only twice,
 #   export_trade_values); against the branch's stamped file 505 of 9,515 rows move dist and
 #   band_p90_mm (501) and surplus_mm on 23; no grade, quantile, p_bust or WAR field moves.
-_GOLDEN_XFV_SHA256 = "a1270cc3d6faa43980aa308a3e47cfdcf0ddbe730a9979b7eb6990cd179e1506"
+# 2026-10-16 RESTAMP: EFV_PIT_AUDIT_FIXES (owner decision EW3-36, CON-3). The pitcher popup
+#   chip label now says a low popup rate grades up and why, on 298 chips; no grade, order,
+#   quantile, p_bust, surplus or WAR field moves (efv_score.run_live pit and efv_export.run;
+#   the only other moved value is meta.served_model.disclosures.dark_basis, its read date).
+#   The committed file at HEAD already read ff17956c... against the a1270cc3... pinned here
+#   (stale before this change). Rowcount 9515 unchanged.
+_GOLDEN_XFV_SHA256 = "3c1f0b7d9d8a440d1184a1605e5e45ca3501dba83e146143ca3e0115aaa4eb6a"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
