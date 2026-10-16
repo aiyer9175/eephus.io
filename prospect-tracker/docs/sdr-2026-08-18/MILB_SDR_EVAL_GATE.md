@@ -41,6 +41,32 @@ The W2 MiLB SDR chip (display-only, the def_home contract), the W4 eFV
 driver attempt (one registered attempt, after W3 defines the label), the W4
 fallback COMPONENT model, and every W6 glove-board superlative.
 
+## Amendment 2026-10-15: what the in-house drop can carry for MiLB (owner decisions EW3-18, EW3-5)
+
+Committed alone, docs only, before the drop exists and before any census. Written
+from reading Will's code, not from any number.
+
+- **The open question is answered from the method itself.** The registration asked
+  whether defense-plus's 15_milb_translation emits player-level MiLB SDR. It does not.
+  Its own docstring: "No MiLB tracking exists, so position HISTORY is the signal." It
+  builds the AAA (else AA) primary-position to MLB primary-position transition matrix
+  from StatsAPI games started; it carries no runs. The only other MiLB output,
+  26_prospect_prior.py, is a prior assembled from scouting grades (field, speed) and
+  body frame, trained on realized MLB OAA; it measures nothing in the minors and its
+  main input is the FG field grade this gate names as a baseline.
+- **Rule, fixed now.** G-C's clauses need a pre-debut MiLB SDR in runs per inning. If
+  the census of the in-house drop (`sdr_intake`, task EWAR_SDR_INHOUSE) carries zero
+  rows with a level other than MLB, G-C is recorded NOT RUN: no predictor exists, so
+  C1 to C3 have nothing to score, and the result is not "MiLB SDR does not predict".
+  `data/milb_sdr_eval.json` then replaces the stub with that record, the census
+  evidence and the 15_milb_translation transition matrix run in-house from cached
+  StatsAPI fielding lines (descriptive context, no claim). No public MiLB SDR claim is
+  licensed by it.
+- **What would re-open it.** A MiLB defensive measurement in runs (Will's or ours)
+  registered as its own predictor before any number; the clauses above then run as
+  frozen.
+- **Timing (EW3-5).** Recorded as an OWNER-WAIVED EARLY READ.
+
 ## Results
 
 PENDING. Data-blocked at registration (2026-08-18). MiLB SDR coverage is
