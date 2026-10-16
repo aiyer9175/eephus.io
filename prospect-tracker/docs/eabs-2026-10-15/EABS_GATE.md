@@ -126,3 +126,23 @@ Registry row `eabs`: verdict provisional, provisional_kind measurement_only, eva
 ## 9. Results
 
 EMPTY AT REGISTRATION. Nothing above this line changes once an entry is written here, except a dated amendment.
+
+### 9.1 The stability check (2026-10-15)
+
+Run once by tools/eabs_stability.py, the code committed with this entry and run unchanged, after its dry run on fixtures with nulls passed; stdout and stderr were teed to the task's output directory before anything else ran. Output: data/_labs/eabs/stability.json (never shipped). Not a registered-date look, so no owner waiver was needed.
+
+AAA frame: 34,656 zone challenges after the part 1 exclusions (353 call/side mismatches, 9 call_suspect, 152 check-swing rows left out); batters 17,025 rows, catchers of record 17,631. C0 = 0.1073 runs (MLB 2026).
+
+| Role | Pair observations (players) | MDE95 | rho | lo95 | p | p Holm | twin rho (lo95) | planted rho (lo95) | null plant rho (lo95) | Disposition |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Batters | 259 (187): 2023-24 64, 2024-25 100, 2025-26 95 | 0.1069 | 0.0300 | -0.0757 | 0.334 | 0.334 | -0.0807 (-0.1919) | 0.3305 (0.2210) | -0.0248 (-0.1305) | NULL |
+| Catchers | 220 (129): 2022-23 6, 2023-24 65, 2024-25 73, 2025-26 76 | 0.1198 | 0.1215 | -0.0027 | 0.0535 | 0.107 | -0.0664 (-0.1812) | 0.4887 (0.3655) | 0.0014 (-0.1115) | NULL |
+
+Both twins and both null plants fail and both planted recoveries pass, so the frame could see an effect of the planted size; neither role's challenge decision skill is distinguishable from zero at these MDE95s. The batter 2022-2023 pair has no player with 8 challenges in both seasons.
+
+Reported beside, deciding nothing:
+
+- Overturn-rate excess, the same rho: batters 0.0967 (lo95 -0.0097), catchers 0.1206 (lo95 0.0009, unadjusted).
+- MLB 2026 split-half (option-value costs): batters 182 players, rho 0.0195 (lo95 -0.1013), Spearman-Brown 0.0382; catchers 91 players, rho -0.0676 (lo95 -0.2537), Spearman-Brown -0.1450.
+
+What part 6 licenses: no persistence or skill sentence for either role. The board says that season-to-season persistence was not distinguishable from chance on AAA 2022 to 2026. Nothing enters eWAR; the owner question (EABS-Q1, EABS-Q2) carries these numbers.
