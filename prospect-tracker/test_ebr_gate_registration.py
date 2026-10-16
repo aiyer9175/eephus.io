@@ -675,6 +675,44 @@ def test_amendment_11_2_the_skill_look_target_is_next_season_realized_runs():
     assert "The skill look (part 7.3) does not run until `tools/swar_lab.py` implements this amendment" in flat
     assert "Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this commit)." in flat
 
+
+def test_amendment_11_3_the_blended_pitching_basis_and_the_realized_basis():
+    flat = _flat(_section(_doc(), "## 11. Amendments", RESULTS_HEADING))
+    assert ("### 11.3 2026-10-15: the blended pitching basis, a second arm of candidate part 5, and the "
+            "realized pitching basis of eWAR realized (clause (i), owner decision EW3-20)") in flat
+    assert "| EW3-20 | The pitching basis of eWAR and of eWAR realized |" in flat
+    assert "it is recorded as an owner override of that sentence for these items alone" in flat
+    assert "its Holm family grows from k = 2 to k = 4" in flat
+    assert "\"xwOBA-allowed or contact-quality season estimators (X-S4, 0.377 vs 0.382)\"" in flat
+    # S2b, its terms and its rows.
+    assert "#### 11.3.1 The blended basis S2b (the second arm of candidate part 5): definition" in flat
+    for formula in ("C_j = AB_j - SO_j + SF_j",
+                    "X_j = (est_woba_j - woba_j) * D_j / scale_s",
+                    "H*_j = W_HR (m*_HR,j - C_j * h_s) / scale_s",
+                    "CQ_j = Xc_j - H*_j",
+                    "B_j = -X_j + sum over j's clubs t of BF_jt * F_t / BF_t",
+                    "L_j = RA*_j - E_j",
+                    "dFIP_b,j = dFIP_j (S2, on m*_HR) + 9 * G_j / IP_j",
+                    "Delta_b,j = dwar0_b,j - IP_j * (sum_k dwar0_b,k) / (sum_k IP_k)"):
+        assert formula in flat, formula
+    assert "With every K infinite, S2b equals S2 on every row." in flat
+    assert "The club's fielding part F_t is put back once, into the BABIP residual" in flat
+    # The constants, the realized basis and the runner reading.
+    assert "by B1's rule (`swar_lab.fit_b1`, the DEM+ K_INN precedent)" in flat
+    assert "never S2, a delta, a test value or a target" in flat
+    assert "eWAR realized, pitcher j = fWAR_j + Delta_r,j" in flat
+    assert "the sum over a season of RA*_j equals the sum of R_j" in flat
+    # Scoring, admission, expectations, timing.
+    assert "{P-rate, P-cum, S2b P-rate, S2b P-cum}, k = 4" in flat
+    assert ("S2 enters unless S2b's rate gap over S2's (rho of the S2b test value minus rho of the S2 "
+            "test value on the primary target") in flat
+    assert "has lo95 above 0, in which case S2b enters" in flat
+    assert "xwOBA-allowed 0.377 against FIP 0.382 on the same 592 starter seasons" in flat
+    assert "a tie or a loss" in flat
+    assert "No number of S2b, R2, CQ, B, L, RA9*, the runner terms or the three constants exists at this commit" in flat
+    assert flat.count("Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this commit).") == 2
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

@@ -1459,6 +1459,185 @@ every twin fails; every team guard is NON-INFERIOR.
 - Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.3 2026-10-15: the blended pitching basis, a second arm of candidate part 5, and the realized pitching basis of eWAR realized (clause (i), owner decision EW3-20)
+
+- **Owner answer, verbatim** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-20, recorded line): "TWO
+  NUMBERS. Headline eWAR = predictive, talent-true (parts admitted only by the forward skill look)
+  for eFV, projections, value, WAG; 'eWAR realized' = actual runs in the same frame for Awards, HoF,
+  recaps. [...] pitching basis S2 (SEM+/REM+) challenged by a blended FIP + regressed contact +
+  sequencing basis (EWAR_PITCH_BASIS, registered before the skill look)". The task the owner queued
+  (EW3-20, the fWAR FIP against bWAR RA9 row of the WAR comparison): a blended basis of S2's FIP
+  components plus regressed contact quality allowed and regressed sequencing, defense-neutralized
+  with the club's fielding part so no fielding run is counted twice, scored in the skill look with
+  Holm in the pitching family; and a realized basis (RA9 adjusted for defense, park and inherited
+  runners) for eWAR realized. Part 1 gains this row, recorded here because part 1 is not edited in
+  place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-20 | The pitching basis of eWAR and of eWAR realized | S2 stays candidate part 5's first arm; the blended basis S2b of 11.3.1 is its second arm, in the same Holm family, chosen over S2 only by 11.3.5's rule; eWAR realized prices pitchers on the realized basis R2 of 11.3.3, which has no forward target | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-20); registered by queue task EWAR_PITCH_BASIS |
+
+- **What this amendment departs from, disclosed.** Like 11.2 it changes items the sentence above
+  11.1 says never change: candidate part 5 gains a second arm, its Holm family grows from k = 2 to
+  k = 4, and an arm-choice rule is added. It does so only because the owner decided it (EW3-20)
+  before the skill look ran, and it is recorded as an owner override of that sentence for these
+  items alone. It also reopens, by the owner's direction, an item of the 2026-09-09 plan's negative
+  list ("xwOBA-allowed or contact-quality season estimators (X-S4, 0.377 vs 0.382)",
+  `docs/master-plan-2026-09-09-fangraphs-ewar-betting.md`), as an arm that must beat S2 on the same
+  pairs before it can enter. Unchanged: S2 itself (part 9.4), the HR-arm clause (computed on S2 only,
+  first), every other candidate part, 11.2's targets, B0, B1 rule, twin, team guard, secondary
+  estimand, dispositions and their precedence, the frame, the floors, the margin +0.02, B = 2,000 and
+  seed 20261008, and every clock of part 7.
+
+#### 11.3.1 The blended basis S2b (the second arm of candidate part 5): definition
+
+For pitcher j in season s, on the home-run term m*_HR the HR-arm clause chose for S2 (m~_HR under
+`hr_shrunk`, the actual count under `hr_fwar`; S2b is built in both variants and the clause's choice
+carries to it), with the StatsAPI season line, the season's solved wOBA weights W_s and scale_s
+(`league_constants`) and the Savant expected-stats pitcher cache (`.cache/savant_mlb/
+expected_pitcher_<season>.csv`, read only, never fetched for this build):
+
+```
+C_j      = AB_j - SO_j + SF_j                                   batted balls, home runs included
+V_j      = W_1B 1B_j + W_2B 2B_j + W_3B 3B_j + W_HR HR_j         1B = H - 2B - 3B - HR
+lc_s     = sum V / sum C,   h_s = sum HR / sum C                 over the season's pitchers, nopp rows out
+D_j      = AB_j + BB_j - IBB_j + SF_j + HBP_j                    the wOBA denominator
+X_j      = (est_woba_j - woba_j) * D_j / scale_s                Savant expected minus actual, in runs;
+                                                                 non-contact events enter both at their
+                                                                 actual values, so X_j lies on contact;
+                                                                 X_j = 0 for a pitcher the cache lacks
+A_j      = (V_j - C_j * lc_s) / scale_s                         actual contact runs above average
+Xc_j     = A_j + X_j                                            expected contact runs above average
+H*_j     = W_HR (m*_HR,j - C_j * h_s) / scale_s                 the home-run runs the arm already carries
+CQ_j     = Xc_j - H*_j                                          (a) contact quality beyond the home-run term
+F_t      = club t's fielding runs Fld (saber_feed `fielding`, summed over its fielders by their innings
+           at t; positive when the defense saved runs); BF_t the club's batters faced
+B_j      = -X_j + sum over j's clubs t of BF_jt * F_t / BF_t     (b1) the BABIP residual, actual minus
+                                                                 expected on contact, defense put back
+RA*_j    = R_j - BQS_j + E_BQ_j + (IRS_j - E_IR_j)              11.2.1's runner-adjusted runs (11.3.3)
+E_j      = D_j * (sum R / sum D)_s + (wOBA_j - lgwOBA_s) * D_j / scale_s
+                                                                 the runs the season's events imply
+N_j      = H_j + BB_j + HBP_j - HR_j                            runners allowed
+L_j      = RA*_j - E_j                                          (b2) the strand (LOB%) residual
+x~       = x * n / (n + K)                                      the shrink toward the skill prior
+G_j      = CQ_j~ (n = C_j, K_CQ) + B_j~ (n = C_j, K_BAB) + L_j~ (n = N_j, K_LOB)        runs
+dFIP_b,j = dFIP_j (S2, on m*_HR) + 9 * G_j / IP_j
+dwar0_b,j = war0(skill b) - war0(actual)    the replica's feed-only chain `plain_fip_loo_pf`, as S2
+Delta_b,j = dwar0_b,j - IP_j * (sum_k dwar0_b,k) / (sum_k IP_k)  the WARIP re-pin
+```
+
+- **The skill prior.** The FIP arm assumes league-average contact and sequencing beyond its four
+  components, so the prior of each added term is zero: CQ toward league contact quality beyond the
+  home-run term, B toward the outcome the contact quality implies, L toward the runs the events
+  imply. With every K infinite, S2b equals S2 on every row. With K_CQ at 0 the arm's contact runs
+  are its expected contact runs (the home-run term cancels in runs, though the chain prices it at
+  FIP's coefficient, so the cancellation is approximate in the chain).
+- **No fielding run counted twice.** The club's fielding part F_t is put back once, into the BABIP
+  residual, the term that carries outcomes on balls in play; framing is left out of F_t here
+  because it acts on strikeouts and walks, which S2 carries. The strand residual L carries errors
+  and double plays not turned beyond the events; that remainder is disclosed, not corrected.
+- **Rows.** Position players who pitch (nopp) carry Delta_b = 0, outside the re-pin. Seasons
+  without the runner record (2016, 2017 and 2020) take RA*_j = R_j, dropping the two runner terms,
+  as 11.2.1 does for the target, and the record says so.
+- **Invariants** (pinned in the build's tests): (1) every K infinite gives Delta_b = S2's Delta on
+  every row; (2) Delta_b sums to 0 per season within 1e-9 wins under both home-run variants; (3) a
+  nopp row carries 0; (4) sum over pitchers of RA*_j equals sum of R_j within 1e-6 runs in every
+  season with the runner record; (5) a build leaves the sha256 of `data/ewar.json` unchanged.
+
+#### 11.3.2 The three shrink constants
+
+K_CQ and K_BAB in batted balls and K_LOB in runners allowed are each fixed, before the skill look,
+by B1's rule (`swar_lab.fit_b1`, the DEM+ K_INN precedent): the pooled Pearson r of the term's rate
+(CQ / C, B / C, L / N) in Y and in Y+1 on the 2016 to 2018 predictor pairs of pitchers with 50 or
+more IP in both seasons, r clamped to 0.05 to 0.95, k = hm (1 - r) / r with hm the mean harmonic
+exposure of the pairs, rounded to a whole unit. The fit reads those three rates and the exposures
+only, never S2, a delta, a test value or a target, and its log is committed with the constants in
+the build commit. These are the same pairs B1 reads, which are also the era transport block, so the
+transport clause of S2b reads a block its constants were fitted on; that is disclosed and accepted
+as it was for B1.
+
+#### 11.3.3 The realized basis R2 (eWAR realized's pitching part)
+
+```
+RA9*_j   = 9 * (RA*_j / PF_j + BF_j * F'_t / BF_t) / IP_j        11.2.1's RA9*, F'_t = Fld + Frm
+dwar0_r,j = war0(pFIPR9 replaced by RA9*_j) - war0(actual)        the same chain, the published gmLI
+Delta_r,j = dwar0_r,j - IP_j * (sum_k dwar0_r,k) / (sum_k IP_k)
+eWAR realized, pitcher j = fWAR_j + Delta_r,j
+```
+
+- **The runner terms, read so the league's runs stay exact.** A runner's responsibility follows
+  MLB's charge (the pitcher who put him on base; a pinch runner takes the replaced runner's; a
+  placed extra-inning runner is charged to the half-inning's first pitcher). IR_j are the runners on
+  base when j entered whom another pitcher put on base or j inherited; IRS_j those of them who
+  scored while j pitched. BQ_j are the runners on base when j left, owned or inherited; E_BQ_j sums
+  p_s over all of them at j's exit; BQS_j counts those j owned who scored after he left (charged to
+  j in R_j). E_IR_j sums p_s at j's entry. A runner handed on twice therefore credits the middle
+  pitcher E at his exit minus E at his entry, and the sum over a season of RA*_j equals the sum of
+  R_j. p_s(base, outs) is the share of runners on that base with that many outs who scored before
+  the half-inning ended, on the fit set of part 2.3 (`ebr.fit_mask`). The pitcher of a play is the
+  play-by-play corpus's pitcher of record for that plate appearance; a change in the middle of a
+  plate appearance is read at the next plate appearance, disclosed. The counts IR and IRS are
+  reported beside StatsAPI's `inheritedRunners` and `inheritedRunnersScored`, descriptively.
+- R2 is 11.2.8's "eWAR realized" for pitchers: no forward target, no look, accounting checks only
+  (Delta_r sums to 0 per season and side; the runner terms net to 0 per season). RA9*_j in season Y
+  is also 11.2.1's pitching target construction, so the build publishes it per pitcher-season in the
+  preview for the skill look to read as RA9*(Y+1) and as B0r; the build computes no relation between
+  seasons.
+
+#### 11.3.4 How the skill look scores S2b
+
+- Target, B0 and frame: 11.2.1's pitching row. The target is RA9*(Y+1), sign reversed (rate per IP;
+  total runs prevented above average); B0 is S2's B0, war0 of the actual arm on the replica's
+  feed-only chain; the test value is B0 + Delta_b on the home-run term the HR-arm clause chose.
+  B0r (RA9*(Y)) and the gap over it are printed beside, with no weight.
+- Cells: S2b P-rate and S2b P-cum, in candidate part 5's Holm family, which becomes {P-rate, P-cum,
+  S2b P-rate, S2b P-cum}, k = 4. The twin, B1 (the pitching k of 11.2.1), MDE95 and floors first,
+  convention v2 primary with v1 required to agree in sign, the era transport clause on S2b's own
+  rate cell, and the dispositions are 11.2's, unchanged.
+- Team guard (11.2.4) on the pitcher side (run differential, wins, runs allowed) and the secondary
+  estimand (11.2.5) are computed for S2b as for S2.
+
+#### 11.3.5 Admission and the arm choice
+
+- S2b qualifies by S2's rule (11.2.6): its rate cell WIN (components), its total cell not LOSS and
+  its team guard NON-INFERIOR. When one arm qualifies it enters. When both qualify, S2 enters unless
+  S2b's rate gap over S2's (rho of the S2b test value minus rho of the S2 test value on the primary
+  target, same pairs, same bootstrap, computed only when both qualify and outside the Holm family)
+  has lo95 above 0, in which case S2b enters: EWV3-Q2 (a)'s form for the batting arms, recorded as
+  the default of the owner question PB-Q1 in the task report.
+- Copy follows 11.2.6 with [component's runs] "runs allowed (adjusted for park, defense and
+  inherited runners)"; when S2b enters, the card names it "eWAR skill: pitching (blended)".
+- eWAR realized prices pitchers on R2 whatever the look reads; R2 claims nothing forward (11.2.8)
+  and part 8's may-not list stands for both.
+
+#### 11.3.6 Registered expectations and the evidence they rest on
+
+- **Prior evidence, disclosed.** Contact quality allowed already lost as a season estimator: X-S4,
+  xwOBA-allowed 0.377 against FIP 0.382 on the same 592 starter seasons for next-season RA9, gap
+  lo95 -0.053 (`docs/master-plan-2026-09-05-opus.md` M3), and the 2026-09-09 plan lists it as a
+  measured null. SEM+ read +0.0264 over raw FIP under v2 on next-season RA9 and REM+ near 0 (part
+  10). BABIP and strand rates are known to repeat weakly for pitchers, so K_BAB and K_LOB are
+  expected to shrink hard.
+- **Expectations** (predictions, not measurements): S2b's P-rate is EQUIVALENT, UNRESOLVED or LOSS
+  against B0, a tie or a loss; when both arms qualify, S2b's gap over S2 is not above 0 and S2
+  enters; S2b's twin fails; its team guard is NON-INFERIOR. S2b carries a shrunk share of RA*(Y)
+  through L, so part of any gap over B0 is information B0r also holds; the gap over B0r printed
+  beside shows how much.
+
+#### 11.3.7 What was read before this amendment
+
+No number of S2b, R2, CQ, B, L, RA9*, the runner terms or the three constants exists at this
+commit: no code computes them yet. The prior numbers cited in 11.3.6 come from the documents named
+there.
+
+#### 11.3.8 Before the skill look
+
+- The build (the pure terms, the runner terms, the preview columns, the constants with their fit
+  log, the lab's family and arm rule with its fixture tests) lands in its own commit with no forward
+  number of S2b computed, and part 7.3's precondition 1 reads it with 11.2.10's.
+- Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
