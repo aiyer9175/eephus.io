@@ -324,6 +324,8 @@
   let PITCHLB_LOADING = false;
   let SWINGD = null;            // data/swing_delta.json (bat-tracking year-over-year), lazy
   let SWINGD_LOADING = false;
+  let SCC = null;               // Statcast catcher runs by MLBAM (statcast_catcher_export.py), lazy
+  let SCC_LOADING = false;
 
   // Board sort keys. Every key a share link has ever carried keeps working (the
   // retired tape bar's y0..y4 / warPeak / thru, the card header's rank / name /
@@ -3174,7 +3176,9 @@
   // grade.
   function defensePanel(p) {
     const d = (p.skills || {}).def;
-    if (!d || (d.demPlus == null && d.defRuns == null && d.fldTotal == null)) return "";
+    const scBlock = statcastCatcherBlock(p);
+    const sc = slotHTML("sccatcher", scBlock);
+    if (!d || (d.demPlus == null && d.defRuns == null && d.fldTotal == null)) return scBlock ? sc : "";
     const yr = d.season ? esc(String(d.season)) : "";
     const pos = esc(d.pos || "");
     const pct = [d.demPlusPct != null ? `p${d.demPlusPct} MLB` : "", d.demPlusPosPct != null && pos ? `p${d.demPlusPosPct} ${pos}` : ""].filter(Boolean).join(" · ");
@@ -3195,7 +3199,43 @@
     const chips = pi.map(([ps, v]) => `<span class="position-usage-chip"><span>${esc(ps)}</span>:${fmtInn(v)}</span>`).join("");
     const posSec = section("defense-positions", "Positions", `innings${yr ? " · " + yr : ""}`,
       chips ? `<div class="position-usage-strip">${chips}${d.inn != null ? `<span class="fa-sub">${fmtInn(d.inn)} total</span>` : ""}</div>` : "");
-    return demSec + runs + posSec;
+    return demSec + runs + posSec + sc;
+  }
+
+  // Statcast catcher runs by season (owner decision EW3-38, 2026-10-16): the
+  // catcher's framing, blocking and throwing run values and their total at C,
+  // Statcast's published whole runs as FanGraphs carries them, verbatim. A
+  // measurement with no model claim; nothing on this tab sums it with the
+  // FanGraphs rows above. Fetched once, after the first paint, into its slot.
+  function ensureStatcastCatcher() {
+    if (SCC || SCC_LOADING) return;
+    SCC_LOADING = true;
+    fetch("/data/statcast_catcher_runs.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const at = {};
+        ((d && d.fields) || []).forEach((k, i) => { at[k] = i; });
+        SCC = { at, players: (d && d.players) || {} };
+        SCC_LOADING = false;
+        const cur = currentCard();
+        if (cur && (!cur.isPit || cur.twoWay)) patchSlot("sccatcher", state.player, statcastCatcherBlock(cur));
+      })
+      .catch(() => { SCC = { at: {}, players: {} }; SCC_LOADING = false; });
+  }
+  function statcastCatcherBlock(p) {
+    if (!SCC || !p || p.mlbam == null) return "";
+    const a = SCC.at;
+    const rows = (SCC.players[String(p.mlbam)] || []).filter(r => Array.isArray(r) && r[a.season] != null);
+    if (a.season == null || !rows.length) return "";
+    const sg = v => (v == null || !isFinite(v)) ? EM_DASH : esc((Number(v) > 0 ? "+" : "") + Math.round(Number(v)));
+    const body = rows.slice().sort((x, y) => y[a.season] - x[a.season]).map(r =>
+      `<tr><td>${esc(String(r[a.season]))}</td><td>${fmtInn(r[a.inn])}</td><td>${sg(r[a.frm])}</td>`
+      + `<td>${sg(r[a.blk])}</td><td>${sg(r[a.thr])}</td><td><b>${sg(r[a.tot])}</b></td></tr>`).join("");
+    const head = `<th>Year</th><th>Inn at C</th><th>Framing</th><th>Blocking</th><th>Throwing</th>`
+      + `<th>${term("statcast_catcher_runs", "Statcast runs")}</th>`;
+    return section("defense-statcast-c", "Statcast catcher runs",
+      "Statcast's published run values at C, as FanGraphs carries them · not computed here · blocking from 2018",
+      `<div class="mlbp-table-wrap"><table class="detail-table" data-statcast-c><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }
 
   // ---- value -----------------------------------------------------------------
@@ -4096,6 +4136,7 @@
     ensureFielding();
     ensureEvents(key);
     if (hitSide) ensureSwingDelta();
+    if (hitSide) ensureStatcastCatcher();
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
     if (pitSide && !(p.skills && p.skills.pitch)) ensurePitchingStats();

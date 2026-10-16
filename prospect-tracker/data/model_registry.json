@@ -2763,6 +2763,20 @@
    "artifact_age_days": 63
   },
   {
+   "model_id": "statcast_catcher_runs",
+   "summary": "Measurement only: Statcast's published catcher runs (framing, blocking, throwing, total at C), displayed verbatim by season; no model claim, in no WAR.",
+   "surface": "/mlbstats/ Defense board (Catching view, All, past seasons) and the /projections/ player page Defense tab; data/statcast_catcher_runs.json",
+   "predicts": "Nothing: Statcast's own framing, blocking and throwing run values at C and their published total, per catcher-season, descriptive",
+   "champion": "Statcast's published number (fFRP, bFRP, tFRP, FRP on the FanGraphs fielding leaderboard catcher row), carried verbatim",
+   "baseline": "none: descriptive by design, a published measurement displayed as published; its forward reading lives in docs/sdr-2026-08-18/SDR_CATCHER_GATE.md and is quoted by no served sentence",
+   "metric": "Refusing invariants, no forward claim: every input file carries the pinned columns, one catcher row per player and season, 40 to 300 catcher rows a season, innings in baseball notation; blocking null before 2018",
+   "eval_artifact": "data/statcast_catcher_runs.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Owner decision EW3-38 (2026-10-16, SDR-CATCHER-Q1 options (b) and (d)), task STATCAST_CATCHER_RUNS. docs/sdr-2026-08-18/SDR_CATCHER_GATE.md read PARTIAL on 2026-10-16: SDR at catcher ties this series (E1 two-season persistence SDR 0.4315 against Statcast 0.4208, 244 pairs, LB95 of the gap -0.0624; on next-season DRS per inning at C, SDR's FRP reading 0.5160 against Statcast 0.5177) and beats only B-Ref rfield, so the owner chose to serve Statcast's own number as the catcher defense measurement, labelled as Statcast's. Those reads are the gate's, recorded here; the page quotes none of them. Served 2016 to 2026: 1207 catcher-seasons, 295 catchers, every catcher row with innings at C, as of 2026-10-16. Built by statcast_catcher_export.py from the cached FanGraphs fielding leaderboard files the SDR intake fetched (.cache/sdr; refresh with python tools/sdr_inhouse.py fetch). The same series is registered as eWAR v3's catcher component S3c in docs/ebr-2026-09-30/EBR_GATE.md part 11.6, scored only by the skill look; nothing here enters eWAR, DEM+, Position Fit or the team totals.",
+   "last_checked": "2026-10-16"
+  },
+  {
    "model_id": "sc_plus_component_diagnostic",
    "summary": "Validated measurement: Barrel%/BBE carries the hitter signal (r 0.333, n 62) and SwingMiss the pitcher signal (r 0.327, n 66); the composite stays, a reweight queued.",
    "surface": "model-dev artifact (rendered nowhere) - SC+ per-component forward-signal isolation",

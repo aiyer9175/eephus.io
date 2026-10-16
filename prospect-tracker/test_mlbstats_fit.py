@@ -16,9 +16,11 @@ THE BUDGET RULE, asserted on the SERVED page and the served data:
   * the page itself never scrolls sideways, at any width, on any board;
   * every named view (every view but All), qualified filter on and off, fits
     its own table box at 768px and wider, and its phone subset fits at 390px,
-    with ONE recorded exception: the Defense Catching view fits from 1024px
+    with ONE recorded exception: the Defense Catching view fits from 1280px
     and may scroll inside its own box below that (owner answer M26-4,
-    2026-09-25: one full Catching view, 826px against the 720px box at 768);
+    2026-09-25: one full Catching view, 826px against the 720px box at 768;
+    from 1024px until Statcast's four catcher run columns joined it, owner
+    decision EW3-38, 2026-10-16: 1,056px against the 976px box at 1024);
   * All carries EVERY column, the Baseball Savant display columns included
     (owner answer M26-3, 2026-09-25), so it may scroll sideways inside its own
     box, never the page, with the name column frozen at the box's left edge.
@@ -134,8 +136,9 @@ FOLD_PAGES = [p for p in PAGES if p[1] != "war" and "years=" not in p[2]][:5]
 WINDOW_PAGES = [p for p in PAGES if "years=" in p[2]]
 SIZES = [(390, 844), (768, 1024), (1024, 768), (1280, 800), (1440, 900)]
 # Named views that may scroll inside their own box below a width, and the width
-# they must fit from. The Catching view is the one (owner answer M26-4).
-VIEW_FITS_FROM = {"def:catching": 1024}
+# they must fit from. The Catching view is the one (owner answer M26-4), from
+# 1280 since Statcast's catcher runs joined it (owner decision EW3-38).
+VIEW_FITS_FROM = {"def:catching": 1280}
 # The widths the owner's answers name for the All and Catching cases.
 ANSWER_WIDTHS = [(390, 844), (1024, 768), (1280, 800), (1440, 900)]
 # The one Standard view that drops its eWAR column below 641px: Defense keeps
@@ -400,7 +403,7 @@ _ACTIVE_VIEW = r"""(sec) => {
 def test_the_catching_view_and_its_retired_links_resolve(browser, server, size):
     """Owner answer M26-4: Blocking and Throwing are one Catching view. A link
     or a stored pick naming either retired id opens Catching and rewrites the
-    hash to it; the page never scrolls sideways, and from 1024 the view fits."""
+    hash to it; the page never scrolls sideways, and from 1280 the view fits."""
     w, h = size
     problems = []
     for how, old in (("link", "blocking"), ("link", "throwing"), ("stored", "blocking"),

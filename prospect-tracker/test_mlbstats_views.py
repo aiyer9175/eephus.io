@@ -452,7 +452,7 @@ SAVANT_COLS = {
     "sp": {"swstr_pct", "whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct", "fb_velo"},
     "hit": {"chase_pct", "whiff_pct", "z_contact_pct", "sweet_spot_pct", "pull_pct"},
     "def": {"c_blk_runs", "c_blk_aa", "c_blk_pitches", "c_cs_runs", "c_cs_aa", "c_sb_att",
-            "c_pop", "c_exchange", "c_arm"},
+            "c_pop", "c_exchange", "c_arm", "c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr"},
 }
 
 
@@ -460,7 +460,7 @@ SAVANT_COLS = {
     ("#section=bullpen&rcols=all", _render_bullpen, 30, "rel"),
     ("#section=starters&scols=all", smoke._render_starters, 25, "sp"),
     ("#section=hitters&hcols=all", smoke._render_hitters, 31, "hit"),
-    ("#section=defense&dcols=all", smoke._render_defense, 26, "def"),
+    ("#section=defense&dcols=all", smoke._render_defense, 30, "def"),
 ])
 def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n, board):
     html = fn(hash_)
@@ -483,8 +483,11 @@ def test_no_column_is_left_out_of_all():
 # ONE Catching view with every catcher column, each sample count beside its rate
 # (owner answer M26-4, 2026-09-25). The Blocking and Throwing views it replaced
 # are retired ids that still resolve to it, from a link or a stored pick.
-CATCHING = ["name", "pos", "dem_plus", "frm_runs", "c_blk_runs", "c_blk_aa", "c_blk_pitches",
-            "c_cs_runs", "c_cs_aa", "c_sb_att", "c_pop", "c_exchange", "c_arm", "inn"]
+# Statcast's catcher runs lead it (owner decision EW3-38, 2026-10-16): framing,
+# blocking, throwing and their published total, one series; Savant's own
+# blocking and throwing run columns stay on All.
+CATCHING = ["name", "pos", "dem_plus", "frm_runs", "c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr",
+            "c_blk_aa", "c_blk_pitches", "c_cs_aa", "c_sb_att", "c_pop", "c_exchange", "c_arm", "inn"]
 
 
 @pytest.mark.parametrize("view", ["catching", "blocking", "throwing"])
@@ -493,6 +496,26 @@ def test_the_catching_view_and_its_retired_links(view):
     assert _visible(html) == CATCHING, _visible(html)
     assert 'data-colview="def:catching" aria-pressed="true"' in html
     assert 'data-colview="def:blocking"' not in html and 'data-colview="def:throwing"' not in html
+
+
+def _cell(html: str, key: str, name: str) -> str:
+    """A visible cell's text: the view's columns lead each row in header order."""
+    body = _table(html).split("<tbody>")[1]
+    row = next(tr for tr in body.split("<tr") if name in tr)
+    tds = re.findall(r"<td[^>]*>(.*?)</td>", row)
+    return re.sub(r"<[^>]+>", "", tds[_visible(html).index(key)]).strip()
+
+
+def test_statcast_catcher_runs_join_by_mlbam_and_season():
+    """The file joins onto the live and the past-season rows by (MLBAM, season),
+    verbatim, signed whole runs, glossary-linked as Statcast's number."""
+    html = smoke._render_defense("#section=defense&dcols=catching")
+    assert [_cell(html, k, "Frame Catcher") for k in ("c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr")] \
+        == ["+5", "+5", "+1", "-1"]
+    assert 'data-gl="statcast_catcher_runs"' in html
+    past = smoke._render_defense("#section=defense&dseason=2025&dcols=catching")
+    assert [_cell(past, k, "Past Catcher") for k in ("c_sc_runs", "c_sc_frm", "c_sc_blk", "c_sc_thr")] \
+        == ["-2", "-3", "0", "+1"]
 
 
 def test_the_all_pill_says_it_may_scroll():

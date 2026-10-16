@@ -911,13 +911,24 @@ DEFENSE_HISTORY_SAMPLE = json.dumps({
 })
 
 
+# data/statcast_catcher_runs.json as served (statcast_catcher_export.py): the
+# Frame Catcher (222) caught in 2026 and, as Past Catcher, in 2025.
+STATCAST_C_SAMPLE = json.dumps({
+    "label": "Statcast catcher runs", "as_of": "2026-10-16", "seasons": [2025, 2026],
+    "blocking_first_season": 2018, "fields": ["season", "inn", "frm", "blk", "thr", "tot"],
+    "players": {"222": [[2025, 900.0, -3, 0, 1, -2], [2026, 800.0, 5, 1, -1, 5]]},
+})
+
+
 def _defense_prelude(hash_: str, sample: str | None = None) -> str:
     override = f"""
     var DEFENSE_SAMPLE={sample or DEFENSE_SAMPLE};
     var DEFENSE_HISTORY_SAMPLE={DEFENSE_HISTORY_SAMPLE};
+    var STATCAST_C_SAMPLE={STATCAST_C_SAMPLE};
     fetch=function(url){{
       var u=String(url);
-      var body = (u.indexOf('defense_history')>=0) ? DEFENSE_HISTORY_SAMPLE
+      var body = (u.indexOf('statcast_catcher')>=0) ? STATCAST_C_SAMPLE
+               : (u.indexOf('defense_history')>=0) ? DEFENSE_HISTORY_SAMPLE
                : (u.indexOf('defense')>=0) ? DEFENSE_SAMPLE : SAMPLE;
       return FT({{ok:true,json:function(){{return FT(body);}}}});
     }};
