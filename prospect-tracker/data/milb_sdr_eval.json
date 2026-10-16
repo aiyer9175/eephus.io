@@ -1,7 +1,146 @@
 {
- "generated_at": "2026-08-18",
- "status": "pre-registered, data-blocked",
- "note": "Pre-registration stub, the card_market eval_stub precedent: the gate exists before the data so the clauses cannot be tuned to the result. This file is REPLACED by the real eval the day the gate runs; until then every cell is absent on purpose.",
+ "generated_at": "2026-10-15",
+ "status": "not run",
+ "read_kind": "OWNER-WAIVED EARLY READ (owner decision EW3-5)",
  "registration": "docs/sdr-2026-08-18/MILB_SDR_EVAL_GATE.md",
- "question": "does pre-debut MiLB SDR predict MLB defensive value, vs the FG field grade and prospect_def_value re-run on this frame"
+ "amendment": "Amendment 2026-10-15",
+ "question": "does pre-debut MiLB SDR predict MLB defensive value, vs the FG field grade and prospect_def_value re-run on this frame",
+ "census": {
+  "rows_by_level": {
+   "MLB": 3466
+  },
+  "milb_rows": 0,
+  "source": "data/sdr_census.json"
+ },
+ "why_not_run": "Will's method emits no MiLB defensive runs: 15_milb_translation reads position history only (AAA, else AA, primary position by games started) and 26_prospect_prior is a scouting-grade and body-frame prior, not a minor-league measurement. C1 to C3 have no predictor. This is not a finding that MiLB SDR fails to predict.",
+ "context_15_milb_translation": {
+  "note": "Will's stage run unedited on cached StatsAPI fielding lines (tools/sdr_inhouse.py milb). Descriptive; licenses no claim.",
+  "cohort_rule": "MLB position players, first MLB season 2015 or later, 100+ career GS at the primary position",
+  "n_usable": 487,
+  "transition_pct_milb_to_mlb": {
+   "C": {
+    "C": 96.5,
+    "SS": 0.0,
+    "CF": 0.0,
+    "2B": 0.0,
+    "3B": 0.0,
+    "RF": 0.0,
+    "LF": 2.3,
+    "1B": 0.0,
+    "DH": 1.2
+   },
+   "SS": {
+    "C": 0.0,
+    "SS": 53.9,
+    "CF": 2.6,
+    "2B": 28.9,
+    "3B": 10.5,
+    "RF": 0.0,
+    "LF": 3.9,
+    "1B": 0.0,
+    "DH": 0.0
+   },
+   "CF": {
+    "C": 0.0,
+    "SS": 1.1,
+    "CF": 69.3,
+    "2B": 0.0,
+    "3B": 0.0,
+    "RF": 15.9,
+    "LF": 13.6,
+    "1B": 0.0,
+    "DH": 0.0
+   },
+   "2B": {
+    "C": 0.0,
+    "SS": 6.8,
+    "CF": 4.5,
+    "2B": 59.1,
+    "3B": 15.9,
+    "RF": 2.3,
+    "LF": 4.5,
+    "1B": 6.8,
+    "DH": 0.0
+   },
+   "3B": {
+    "C": 0.0,
+    "SS": 1.7,
+    "CF": 1.7,
+    "2B": 10.2,
+    "3B": 62.7,
+    "RF": 0.0,
+    "LF": 3.4,
+    "1B": 15.3,
+    "DH": 5.1
+   },
+   "RF": {
+    "C": 0.0,
+    "SS": 0.0,
+    "CF": 11.6,
+    "2B": 0.0,
+    "3B": 0.0,
+    "RF": 62.8,
+    "LF": 20.9,
+    "1B": 2.3,
+    "DH": 2.3
+   },
+   "LF": {
+    "C": 0.0,
+    "SS": 0.0,
+    "CF": 7.3,
+    "2B": 7.3,
+    "3B": 2.4,
+    "RF": 24.4,
+    "LF": 43.9,
+    "1B": 4.9,
+    "DH": 9.8
+   },
+   "1B": {
+    "C": 0.0,
+    "SS": 0.0,
+    "CF": 2.1,
+    "2B": 2.1,
+    "3B": 4.3,
+    "RF": 4.3,
+    "LF": 0.0,
+    "1B": 78.7,
+    "DH": 8.5
+   },
+   "DH": {
+    "C": 0.0,
+    "SS": 0.0,
+    "CF": 0.0,
+    "2B": 33.3,
+    "3B": 0.0,
+    "RF": 0.0,
+    "LF": 0.0,
+    "1B": 33.3,
+    "DH": 33.3
+   }
+  },
+  "position_hold": {
+   "C": {
+    "n": 86,
+    "holds_pct": 96.5
+   },
+   "SS": {
+    "n": 76,
+    "holds_pct": 53.9
+   },
+   "CF": {
+    "n": 88,
+    "holds_pct": 69.3
+   },
+   "2B": {
+    "n": 44,
+    "holds_pct": 59.1
+   },
+   "3B": {
+    "n": 59,
+    "holds_pct": 62.7
+   }
+  },
+  "disclosed_difference": "Will's usage spine came from his playing_time_model, which is not in the repo; the spine here is StatsAPI MLB fielding games started 2000 to 2026 (DH included), so the cohort differs from his 2026-06-18 run (462 players there)."
+ },
+ "licenses": "no public MiLB SDR claim"
 }

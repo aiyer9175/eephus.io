@@ -1,7 +1,1869 @@
 {
- "generated_at": "2026-08-18",
- "status": "pre-registered, data-blocked",
- "note": "Pre-registration stub, the card_market eval_stub precedent: the gate exists before the data so the clauses cannot be tuned to the result. This file is REPLACED by the real eval the day the gate runs; until then every cell is absent on purpose.",
+ "generated_at": "2026-10-15",
+ "status": "measured",
+ "read_kind": "OWNER-WAIVED EARLY READ (owner decision EW3-5)",
  "registration": "docs/sdr-2026-08-18/SDR_EVAL_GATE.md",
- "question": "MLB SDR vs rfield vs OAA/FRP on forward legs (self-persistence, next-season team runs allowed)"
+ "amendment": "Amendment 2026-10-15 (owner decisions EW3-18, EW3-23)",
+ "question": "MLB SDR vs rfield vs OAA/FRP on forward legs (self-persistence, next-season team runs allowed)",
+ "inputs": {
+  "drop": {
+   "path": "data/drops/wills/sdr_defense_card__2026-10-15.csv",
+   "sha256": "8a41d1c20ce37a45fec3150fcf87ceae67f74a16d77cbdf53f44edc44691358e",
+   "rows": 3466
+  },
+  "war_daily_bat": {
+   "path": ".cache/war_daily/bat.parquet",
+   "sha256": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+   "modified": "2026-10-16T02:02:24.133548+00:00"
+  },
+  "fetch_manifest": ".cache/sdr/fetch_manifest.json",
+  "run_manifest": ".cache/sdr/run_manifest.json"
+ },
+ "frame": {
+  "seasons": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "positions": [
+   "C",
+   "1B",
+   "2B",
+   "3B",
+   "SS",
+   "LF",
+   "CF",
+   "RF"
+  ],
+  "innings_floor": 300,
+  "predictor_seasons": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "bootstrap_b": 2000,
+  "seed": 20261015,
+  "twin_seed": 20261016,
+  "alpha_holm": 0.05
+ },
+ "clauses": {
+  "C1": {
+   "n_pairs": 1644,
+   "n_players": 527,
+   "predictor_seasons": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "rho": {
+    "sdr": 0.4031,
+    "rfield": 0.3809,
+    "oaa": 0.4696
+   },
+   "better_incumbent": "oaa",
+   "d_point": -0.0665,
+   "beats_both_at_point": false,
+   "lb95": -0.1055,
+   "ub95": -0.0277,
+   "p_one_sided": 0.9995,
+   "lb_above_0": false,
+   "without_2020_pairs": {
+    "n_pairs": 1423,
+    "rho": {
+     "sdr": 0.4014,
+     "rfield": 0.3894,
+     "oaa": 0.4786
+    }
+   },
+   "holm": {
+    "p": 0.9995,
+    "threshold": 0.05,
+    "rejects": false
+   },
+   "twin": {
+    "rho": {
+     "sdr": -0.0146,
+     "rfield": 0.3809,
+     "oaa": 0.4696
+    },
+    "d_point": -0.4842,
+    "lb95": -0.5545,
+    "passes_rule": false
+   },
+   "passes": false
+  },
+  "C2": {
+   "n_club_pairs": 270,
+   "rho": {
+    "sdr": 0.1499,
+    "rfield": 0.1808,
+    "oaa": 0.1345
+   },
+   "better_incumbent": "rfield",
+   "d_point": -0.0308,
+   "beats_both_at_point": false,
+   "lb95": -0.0792,
+   "ub95": 0.0615,
+   "p_one_sided": 0.6215,
+   "lb_above_0": false,
+   "club_clustered_beside": {
+    "lb95": -0.123,
+    "ub95": 0.0601
+   },
+   "without_2020_pairs": {
+    "sdr": 0.1608,
+    "rfield": 0.1716,
+    "oaa": 0.0991
+   },
+   "holm": {
+    "p": 0.6215,
+    "threshold": 0.025,
+    "rejects": false
+   },
+   "twin": {
+    "rho": {
+     "sdr": 0.0018,
+     "rfield": 0.1808,
+     "oaa": 0.1345
+    },
+    "d_point": -0.179,
+    "lb95": -0.2546,
+    "passes_rule": false
+   },
+   "passes": false
+  }
+ },
+ "verdict": "FAIL",
+ "C3": {
+  "rfield": {
+   "n": 3207,
+   "spearman_same_season": 0.6419
+  },
+  "uzr": {
+   "n": 2108,
+   "spearman_same_season": 0.6149
+  },
+  "fg_defense": {
+   "n": 3207,
+   "spearman_same_season": 0.6967
+  },
+  "note": "Reported, never gated. FG fFld 0.28 and prospect_def_value 0.68 belong to the prospect frame; prospect_def_value has no MLB player-season value, so neither is recomputed here."
+ },
+ "C4": {
+  "season": 2026,
+  "by_position": {
+   "C": {
+    "n": 57,
+    "top": [
+     {
+      "player": "Dillon Dingler",
+      "player_id": 693307,
+      "innings": 995.2,
+      "sdr_runs": 13.6
+     },
+     {
+      "player": "Gabriel Moreno",
+      "player_id": 672515,
+      "innings": 886.0,
+      "sdr_runs": 9.4
+     },
+     {
+      "player": "Brandon Valenzuela",
+      "player_id": 678218,
+      "innings": 618.2,
+      "sdr_runs": 8.7
+     },
+     {
+      "player": "Luis Torrens",
+      "player_id": 620443,
+      "innings": 673.2,
+      "sdr_runs": 8.0
+     },
+     {
+      "player": "Adley Rutschman",
+      "player_id": 668939,
+      "innings": 675.2,
+      "sdr_runs": 7.4
+     },
+     {
+      "player": "Joe Mack",
+      "player_id": 691788,
+      "innings": 783.2,
+      "sdr_runs": 7.3
+     },
+     {
+      "player": "Austin Wells",
+      "player_id": 669224,
+      "innings": 959.1,
+      "sdr_runs": 6.2
+     },
+     {
+      "player": "Alejandro Kirk",
+      "player_id": 672386,
+      "innings": 599.2,
+      "sdr_runs": 6.2
+     },
+     {
+      "player": "Freddy Fermin",
+      "player_id": 666023,
+      "innings": 660.2,
+      "sdr_runs": 6.2
+     },
+     {
+      "player": "Tyler Heineman",
+      "player_id": 623168,
+      "innings": 518.2,
+      "sdr_runs": 5.7
+     },
+     {
+      "player": "Patrick Bailey",
+      "player_id": 672275,
+      "innings": 828.0,
+      "sdr_runs": 5.5
+     },
+     {
+      "player": "Daniel Susac",
+      "player_id": 691740,
+      "innings": 351.0,
+      "sdr_runs": 4.3
+     },
+     {
+      "player": "Henry Davis",
+      "player_id": 680779,
+      "innings": 744.2,
+      "sdr_runs": 4.0
+     },
+     {
+      "player": "Pedro Pag\u00e9s",
+      "player_id": 686780,
+      "innings": 532.1,
+      "sdr_runs": 3.3
+     },
+     {
+      "player": "Christian V\u00e1zquez",
+      "player_id": 543877,
+      "innings": 653.0,
+      "sdr_runs": 3.1
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Logan O'Hoppe",
+      "player_id": 681351,
+      "innings": 595.0,
+      "sdr_runs": -12.3
+     },
+     {
+      "player": "Jonah Heim",
+      "player_id": 641680,
+      "innings": 613.1,
+      "sdr_runs": -7.0
+     },
+     {
+      "player": "Connor Wong",
+      "player_id": 657136,
+      "innings": 570.0,
+      "sdr_runs": -6.6
+     },
+     {
+      "player": "Tyler Stephenson",
+      "player_id": 663886,
+      "innings": 921.1,
+      "sdr_runs": -5.4
+     },
+     {
+      "player": "James McCann",
+      "player_id": 543510,
+      "innings": 367.2,
+      "sdr_runs": -5.3
+     },
+     {
+      "player": "Yainer Diaz",
+      "player_id": 673237,
+      "innings": 694.0,
+      "sdr_runs": -5.1
+     },
+     {
+      "player": "Edgar Quero",
+      "player_id": 700337,
+      "innings": 438.0,
+      "sdr_runs": -4.8
+     },
+     {
+      "player": "Cal Raleigh",
+      "player_id": 663728,
+      "innings": 894.0,
+      "sdr_runs": -4.6
+     },
+     {
+      "player": "William Contreras",
+      "player_id": 661388,
+      "innings": 1085.2,
+      "sdr_runs": -3.9
+     },
+     {
+      "player": "Dalton Rushing",
+      "player_id": 687221,
+      "innings": 472.1,
+      "sdr_runs": -3.8
+     },
+     {
+      "player": "Salvador Perez",
+      "player_id": 521692,
+      "innings": 377.1,
+      "sdr_runs": -3.8
+     },
+     {
+      "player": "Iv\u00e1n Herrera",
+      "player_id": 671056,
+      "innings": 447.0,
+      "sdr_runs": -3.5
+     },
+     {
+      "player": "Danny Jansen",
+      "player_id": 643376,
+      "innings": 501.1,
+      "sdr_runs": -3.4
+     },
+     {
+      "player": "Ryan Jeffers",
+      "player_id": 680777,
+      "innings": 674.1,
+      "sdr_runs": -3.4
+     },
+     {
+      "player": "Nick Fortes",
+      "player_id": 663743,
+      "innings": 739.2,
+      "sdr_runs": -2.8
+     }
+    ]
+   },
+   "1B": {
+    "n": 43,
+    "top": [
+     {
+      "player": "Matt Olson",
+      "player_id": 621566,
+      "innings": 1424.0,
+      "sdr_runs": 9.9
+     },
+     {
+      "player": "Ty France",
+      "player_id": 664034,
+      "innings": 1030.1,
+      "sdr_runs": 8.5
+     },
+     {
+      "player": "Vladimir Guerrero Jr.",
+      "player_id": 665489,
+      "innings": 1095.1,
+      "sdr_runs": 5.1
+     },
+     {
+      "player": "Christian Walker",
+      "player_id": 572233,
+      "innings": 1299.2,
+      "sdr_runs": 4.0
+     },
+     {
+      "player": "Paul Goldschmidt",
+      "player_id": 502671,
+      "innings": 623.1,
+      "sdr_runs": 3.7
+     },
+     {
+      "player": "TJ Rumfield",
+      "player_id": 681198,
+      "innings": 1156.1,
+      "sdr_runs": 3.4
+     },
+     {
+      "player": "Nolan Schanuel",
+      "player_id": 694384,
+      "innings": 896.1,
+      "sdr_runs": 3.0
+     },
+     {
+      "player": "Ildemaro Vargas",
+      "player_id": 545121,
+      "innings": 486.1,
+      "sdr_runs": 2.6
+     },
+     {
+      "player": "Vinnie Pasquantino",
+      "player_id": 686469,
+      "innings": 943.0,
+      "sdr_runs": 2.3
+     },
+     {
+      "player": "Luis Garc\u00eda Jr.",
+      "player_id": 671277,
+      "innings": 985.2,
+      "sdr_runs": 2.1
+     },
+     {
+      "player": "Jake Burger",
+      "player_id": 669394,
+      "innings": 1307.1,
+      "sdr_runs": 2.0
+     },
+     {
+      "player": "Alec Burleson",
+      "player_id": 676475,
+      "innings": 1324.2,
+      "sdr_runs": 2.0
+     },
+     {
+      "player": "Michael Busch",
+      "player_id": 683737,
+      "innings": 1399.0,
+      "sdr_runs": 1.6
+     },
+     {
+      "player": "Freddie Freeman",
+      "player_id": 518692,
+      "innings": 1289.2,
+      "sdr_runs": 1.0
+     },
+     {
+      "player": "Kody Clemens",
+      "player_id": 665019,
+      "innings": 366.1,
+      "sdr_runs": 1.0
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Spencer Torkelson",
+      "player_id": 679529,
+      "innings": 1314.0,
+      "sdr_runs": -6.6
+     },
+     {
+      "player": "Mark Vientos",
+      "player_id": 668901,
+      "innings": 519.1,
+      "sdr_runs": -4.5
+     },
+     {
+      "player": "Bryce Harper",
+      "player_id": 547180,
+      "innings": 923.2,
+      "sdr_runs": -4.2
+     },
+     {
+      "player": "Ben Rice",
+      "player_id": 700250,
+      "innings": 474.2,
+      "sdr_runs": -4.0
+     },
+     {
+      "player": "Rhys Hoskins",
+      "player_id": 656555,
+      "innings": 423.1,
+      "sdr_runs": -3.6
+     },
+     {
+      "player": "Vaughn Grissom",
+      "player_id": 687093,
+      "innings": 428.0,
+      "sdr_runs": -3.6
+     },
+     {
+      "player": "Jake Bauers",
+      "player_id": 641343,
+      "innings": 836.1,
+      "sdr_runs": -3.1
+     },
+     {
+      "player": "Nathaniel Lowe",
+      "player_id": 663993,
+      "innings": 494.0,
+      "sdr_runs": -2.7
+     },
+     {
+      "player": "Kyle Stowers",
+      "player_id": 669065,
+      "innings": 484.2,
+      "sdr_runs": -2.7
+     },
+     {
+      "player": "Spencer Horwitz",
+      "player_id": 687462,
+      "innings": 871.2,
+      "sdr_runs": -2.5
+     },
+     {
+      "player": "Andrew Vaughn",
+      "player_id": 683734,
+      "innings": 547.0,
+      "sdr_runs": -2.3
+     },
+     {
+      "player": "Rafael Devers",
+      "player_id": 646240,
+      "innings": 874.2,
+      "sdr_runs": -2.0
+     },
+     {
+      "player": "Sal Stewart",
+      "player_id": 701398,
+      "innings": 948.0,
+      "sdr_runs": -1.7
+     },
+     {
+      "player": "Munetaka Murakami",
+      "player_id": 808959,
+      "innings": 1029.2,
+      "sdr_runs": -1.5
+     },
+     {
+      "player": "Josh Naylor",
+      "player_id": 647304,
+      "innings": 1333.1,
+      "sdr_runs": -1.2
+     }
+    ]
+   },
+   "2B": {
+    "n": 47,
+    "top": [
+     {
+      "player": "JJ Wetherholt",
+      "player_id": 802139,
+      "innings": 1101.1,
+      "sdr_runs": 16.5
+     },
+     {
+      "player": "Brice Turang",
+      "player_id": 668930,
+      "innings": 1311.2,
+      "sdr_runs": 13.3
+     },
+     {
+      "player": "Brandon Lowe",
+      "player_id": 664040,
+      "innings": 1181.0,
+      "sdr_runs": 10.3
+     },
+     {
+      "player": "Nasim Nu\u00f1ez",
+      "player_id": 683083,
+      "innings": 842.0,
+      "sdr_runs": 7.7
+     },
+     {
+      "player": "Michael Massey",
+      "player_id": 686681,
+      "innings": 994.1,
+      "sdr_runs": 5.7
+     },
+     {
+      "player": "Nico Hoerner",
+      "player_id": 663538,
+      "innings": 1019.2,
+      "sdr_runs": 5.3
+     },
+     {
+      "player": "Chase Meidroth",
+      "player_id": 805367,
+      "innings": 1275.2,
+      "sdr_runs": 5.0
+     },
+     {
+      "player": "Luis Arraez",
+      "player_id": 650333,
+      "innings": 1275.1,
+      "sdr_runs": 4.8
+     },
+     {
+      "player": "Jazz Chisholm Jr.",
+      "player_id": 665862,
+      "innings": 1155.0,
+      "sdr_runs": 3.8
+     },
+     {
+      "player": "Tommy Edman",
+      "player_id": 669242,
+      "innings": 386.1,
+      "sdr_runs": 2.2
+     },
+     {
+      "player": "Ketel Marte",
+      "player_id": 606466,
+      "innings": 989.2,
+      "sdr_runs": 2.2
+     },
+     {
+      "player": "Jorbit Vivas",
+      "player_id": 678391,
+      "innings": 379.0,
+      "sdr_runs": 1.8
+     },
+     {
+      "player": "Alex Freeland",
+      "player_id": 690976,
+      "innings": 579.0,
+      "sdr_runs": 0.9
+     },
+     {
+      "player": "Miguel Rojas",
+      "player_id": 500743,
+      "innings": 302.1,
+      "sdr_runs": 0.5
+     },
+     {
+      "player": "Bryson Stott",
+      "player_id": 681082,
+      "innings": 953.1,
+      "sdr_runs": 0.4
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Jose Altuve",
+      "player_id": 514888,
+      "innings": 1061.2,
+      "sdr_runs": -10.6
+     },
+     {
+      "player": "Marcus Semien",
+      "player_id": 543760,
+      "innings": 1203.2,
+      "sdr_runs": -6.6
+     },
+     {
+      "player": "Jeff McNeil",
+      "player_id": 643446,
+      "innings": 759.1,
+      "sdr_runs": -5.0
+     },
+     {
+      "player": "Luke Keaschall",
+      "player_id": 807712,
+      "innings": 636.1,
+      "sdr_runs": -4.5
+     },
+     {
+      "player": "Donovan Walton",
+      "player_id": 622268,
+      "innings": 338.0,
+      "sdr_runs": -4.3
+     },
+     {
+      "player": "Richie Palacios",
+      "player_id": 680700,
+      "innings": 863.2,
+      "sdr_runs": -3.8
+     },
+     {
+      "player": "Edouard Julien",
+      "player_id": 666397,
+      "innings": 467.1,
+      "sdr_runs": -3.7
+     },
+     {
+      "player": "Hao-Yu Lee",
+      "player_id": 701678,
+      "innings": 492.2,
+      "sdr_runs": -3.2
+     },
+     {
+      "player": "Josh Smith",
+      "player_id": 669701,
+      "innings": 338.2,
+      "sdr_runs": -2.9
+     },
+     {
+      "player": "Kody Clemens",
+      "player_id": 665019,
+      "innings": 576.1,
+      "sdr_runs": -2.8
+     },
+     {
+      "player": "Ernie Clement",
+      "player_id": 676391,
+      "innings": 981.2,
+      "sdr_runs": -2.5
+     },
+     {
+      "player": "Jake Cronenworth",
+      "player_id": 630105,
+      "innings": 781.1,
+      "sdr_runs": -2.4
+     },
+     {
+      "player": "Jackson Holliday",
+      "player_id": 702616,
+      "innings": 706.2,
+      "sdr_runs": -2.3
+     },
+     {
+      "player": "Xavier Edwards",
+      "player_id": 669364,
+      "innings": 1176.0,
+      "sdr_runs": -2.3
+     },
+     {
+      "player": "Gleyber Torres",
+      "player_id": 650402,
+      "innings": 613.1,
+      "sdr_runs": -2.0
+     }
+    ]
+   },
+   "3B": {
+    "n": 50,
+    "top": [
+     {
+      "player": "Alex Bregman",
+      "player_id": 608324,
+      "innings": 1248.0,
+      "sdr_runs": 10.9
+     },
+     {
+      "player": "Caleb Durbin",
+      "player_id": 702332,
+      "innings": 1302.0,
+      "sdr_runs": 9.2
+     },
+     {
+      "player": "Manny Machado",
+      "player_id": 592518,
+      "innings": 1210.0,
+      "sdr_runs": 7.5
+     },
+     {
+      "player": "Matt Chapman",
+      "player_id": 656305,
+      "innings": 718.2,
+      "sdr_runs": 7.0
+     },
+     {
+      "player": "Brooks Lee",
+      "player_id": 686797,
+      "innings": 939.2,
+      "sdr_runs": 6.7
+     },
+     {
+      "player": "Joey Ortiz",
+      "player_id": 687401,
+      "innings": 388.1,
+      "sdr_runs": 6.5
+     },
+     {
+      "player": "Ke'Bryan Hayes",
+      "player_id": 663647,
+      "innings": 655.1,
+      "sdr_runs": 5.7
+     },
+     {
+      "player": "Javier Sanoja",
+      "player_id": 691594,
+      "innings": 778.1,
+      "sdr_runs": 5.7
+     },
+     {
+      "player": "Nick Loftin",
+      "player_id": 679845,
+      "innings": 582.1,
+      "sdr_runs": 5.5
+     },
+     {
+      "player": "Maikel Garcia",
+      "player_id": 672580,
+      "innings": 636.0,
+      "sdr_runs": 4.5
+     },
+     {
+      "player": "Zack Gelof",
+      "player_id": 680869,
+      "innings": 572.2,
+      "sdr_runs": 2.7
+     },
+     {
+      "player": "Jos\u00e9 Ram\u00edrez",
+      "player_id": 608070,
+      "innings": 864.1,
+      "sdr_runs": 2.3
+     },
+     {
+      "player": "Ezequiel Duran",
+      "player_id": 677649,
+      "innings": 369.1,
+      "sdr_runs": 1.9
+     },
+     {
+      "player": "Christian Encarnacion-Strand",
+      "player_id": 687952,
+      "innings": 411.2,
+      "sdr_runs": 1.8
+     },
+     {
+      "player": "Austin Riley",
+      "player_id": 663586,
+      "innings": 1387.0,
+      "sdr_runs": 1.6
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Nick Gonzales",
+      "player_id": 693304,
+      "innings": 884.1,
+      "sdr_runs": -11.5
+     },
+     {
+      "player": "Alec Bohm",
+      "player_id": 664761,
+      "innings": 907.2,
+      "sdr_runs": -7.9
+     },
+     {
+      "player": "Junior Caminero",
+      "player_id": 691406,
+      "innings": 1401.2,
+      "sdr_runs": -5.8
+     },
+     {
+      "player": "Max Muncy",
+      "player_id": 691777,
+      "innings": 444.2,
+      "sdr_runs": -5.5
+     },
+     {
+      "player": "Josh Jung",
+      "player_id": 673962,
+      "innings": 847.0,
+      "sdr_runs": -5.4
+     },
+     {
+      "player": "Miguel Vargas",
+      "player_id": 678246,
+      "innings": 1142.0,
+      "sdr_runs": -5.2
+     },
+     {
+      "player": "Amed Rosario",
+      "player_id": 642708,
+      "innings": 317.1,
+      "sdr_runs": -4.9
+     },
+     {
+      "player": "Eugenio Su\u00e1rez",
+      "player_id": 553993,
+      "innings": 401.0,
+      "sdr_runs": -4.8
+     },
+     {
+      "player": "Weston Wilson",
+      "player_id": 642215,
+      "innings": 364.2,
+      "sdr_runs": -4.8
+     },
+     {
+      "player": "Brady House",
+      "player_id": 691781,
+      "innings": 644.1,
+      "sdr_runs": -4.1
+     },
+     {
+      "player": "Isaac Paredes",
+      "player_id": 670623,
+      "innings": 1167.0,
+      "sdr_runs": -3.1
+     },
+     {
+      "player": "Willi Castro",
+      "player_id": 650489,
+      "innings": 305.0,
+      "sdr_runs": -2.9
+     },
+     {
+      "player": "Coby Mayo",
+      "player_id": 691723,
+      "innings": 568.2,
+      "sdr_runs": -2.6
+     },
+     {
+      "player": "Curtis Mead",
+      "player_id": 678554,
+      "innings": 380.2,
+      "sdr_runs": -2.4
+     },
+     {
+      "player": "Brendan Donovan",
+      "player_id": 680977,
+      "innings": 307.1,
+      "sdr_runs": -2.2
+     }
+    ]
+   },
+   "SS": {
+    "n": 47,
+    "top": [
+     {
+      "player": "Bobby Witt Jr.",
+      "player_id": 677951,
+      "innings": 1209.0,
+      "sdr_runs": 11.8
+     },
+     {
+      "player": "Masyn Winn",
+      "player_id": 691026,
+      "innings": 1141.1,
+      "sdr_runs": 11.1
+     },
+     {
+      "player": "Geraldo Perdomo",
+      "player_id": 672695,
+      "innings": 1372.0,
+      "sdr_runs": 8.9
+     },
+     {
+      "player": "Andr\u00e9s Gim\u00e9nez",
+      "player_id": 665926,
+      "innings": 1179.0,
+      "sdr_runs": 8.7
+     },
+     {
+      "player": "Otto Lopez",
+      "player_id": 672640,
+      "innings": 1357.0,
+      "sdr_runs": 7.6
+     },
+     {
+      "player": "Dansby Swanson",
+      "player_id": 621020,
+      "innings": 1087.2,
+      "sdr_runs": 7.4
+     },
+     {
+      "player": "Mookie Betts",
+      "player_id": 605141,
+      "innings": 1050.2,
+      "sdr_runs": 4.1
+     },
+     {
+      "player": "Brayan Rocchio",
+      "player_id": 677587,
+      "innings": 1253.2,
+      "sdr_runs": 4.0
+     },
+     {
+      "player": "Ezequiel Duran",
+      "player_id": 677649,
+      "innings": 403.0,
+      "sdr_runs": 3.0
+     },
+     {
+      "player": "Taylor Walls",
+      "player_id": 670764,
+      "innings": 1036.2,
+      "sdr_runs": 3.0
+     },
+     {
+      "player": "Colson Montgomery",
+      "player_id": 695657,
+      "innings": 979.0,
+      "sdr_runs": 2.8
+     },
+     {
+      "player": "Joey Ortiz",
+      "player_id": 687401,
+      "innings": 580.2,
+      "sdr_runs": 2.4
+     },
+     {
+      "player": "Jos\u00e9 Caballero",
+      "player_id": 676609,
+      "innings": 579.0,
+      "sdr_runs": 2.4
+     },
+     {
+      "player": "Anthony Volpe",
+      "player_id": 683011,
+      "innings": 454.2,
+      "sdr_runs": 1.8
+     },
+     {
+      "player": "Jacob Wilson",
+      "player_id": 805779,
+      "innings": 637.1,
+      "sdr_runs": 1.6
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Trea Turner",
+      "player_id": 607208,
+      "innings": 1343.1,
+      "sdr_runs": -10.5
+     },
+     {
+      "player": "Willy Adames",
+      "player_id": 642715,
+      "innings": 1046.1,
+      "sdr_runs": -10.4
+     },
+     {
+      "player": "CJ Abrams",
+      "player_id": 682928,
+      "innings": 1118.0,
+      "sdr_runs": -9.4
+     },
+     {
+      "player": "J.P. Crawford",
+      "player_id": 641487,
+      "innings": 720.0,
+      "sdr_runs": -9.3
+     },
+     {
+      "player": "Jeremy Pe\u00f1a",
+      "player_id": 665161,
+      "innings": 904.1,
+      "sdr_runs": -5.1
+     },
+     {
+      "player": "Brooks Lee",
+      "player_id": 686797,
+      "innings": 400.0,
+      "sdr_runs": -4.7
+     },
+     {
+      "player": "Andruw Monasterio",
+      "player_id": 655316,
+      "innings": 459.0,
+      "sdr_runs": -4.3
+     },
+     {
+      "player": "Konnor Griffin",
+      "player_id": 804606,
+      "innings": 664.1,
+      "sdr_runs": -2.5
+     },
+     {
+      "player": "Francisco Lindor",
+      "player_id": 596019,
+      "innings": 894.1,
+      "sdr_runs": -2.0
+     },
+     {
+      "player": "Bo Bichette",
+      "player_id": 666182,
+      "innings": 391.1,
+      "sdr_runs": -2.0
+     },
+     {
+      "player": "Trevor Story",
+      "player_id": 596115,
+      "innings": 544.0,
+      "sdr_runs": -2.0
+     },
+     {
+      "player": "Colt Emerson",
+      "player_id": 806068,
+      "innings": 459.0,
+      "sdr_runs": -1.9
+     },
+     {
+      "player": "Zach Neto",
+      "player_id": 687263,
+      "innings": 1340.1,
+      "sdr_runs": -1.9
+     },
+     {
+      "player": "Nasim Nu\u00f1ez",
+      "player_id": 683083,
+      "innings": 319.0,
+      "sdr_runs": -1.6
+     },
+     {
+      "player": "Gunnar Henderson",
+      "player_id": 683002,
+      "innings": 1311.1,
+      "sdr_runs": -1.4
+     }
+    ]
+   },
+   "LF": {
+    "n": 37,
+    "top": [
+     {
+      "player": "Cody Bellinger",
+      "player_id": 641355,
+      "innings": 1008.2,
+      "sdr_runs": 11.1
+     },
+     {
+      "player": "Jackson Chourio",
+      "player_id": 694192,
+      "innings": 1021.2,
+      "sdr_runs": 9.4
+     },
+     {
+      "player": "Chandler Simpson",
+      "player_id": 802415,
+      "innings": 1264.0,
+      "sdr_runs": 7.2
+     },
+     {
+      "player": "Ian Happ",
+      "player_id": 664023,
+      "innings": 1243.2,
+      "sdr_runs": 6.3
+     },
+     {
+      "player": "Wyatt Langford",
+      "player_id": 694671,
+      "innings": 750.0,
+      "sdr_runs": 5.4
+     },
+     {
+      "player": "Jarren Duran",
+      "player_id": 680776,
+      "innings": 1052.0,
+      "sdr_runs": 4.9
+     },
+     {
+      "player": "Daylen Lile",
+      "player_id": 695734,
+      "innings": 1106.2,
+      "sdr_runs": 4.3
+     },
+     {
+      "player": "Steven Kwan",
+      "player_id": 680757,
+      "innings": 626.2,
+      "sdr_runs": 3.6
+     },
+     {
+      "player": "Austin Martin",
+      "player_id": 668885,
+      "innings": 324.2,
+      "sdr_runs": 2.3
+     },
+     {
+      "player": "Heriberto Hern\u00e1ndez",
+      "player_id": 681715,
+      "innings": 932.0,
+      "sdr_runs": 2.2
+     },
+     {
+      "player": "Taylor Trammell",
+      "player_id": 666211,
+      "innings": 349.2,
+      "sdr_runs": 2.1
+     },
+     {
+      "player": "Bryan Reynolds",
+      "player_id": 668804,
+      "innings": 939.0,
+      "sdr_runs": 0.9
+     },
+     {
+      "player": "Lars Nootbaar",
+      "player_id": 663457,
+      "innings": 448.1,
+      "sdr_runs": 0.9
+     },
+     {
+      "player": "Ram\u00f3n Laureano",
+      "player_id": 657656,
+      "innings": 375.0,
+      "sdr_runs": 0.8
+     },
+     {
+      "player": "Taylor Ward",
+      "player_id": 621493,
+      "innings": 793.0,
+      "sdr_runs": 0.7
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Sam Antonacci",
+      "player_id": 803011,
+      "innings": 918.2,
+      "sdr_runs": -8.0
+     },
+     {
+      "player": "Riley Greene",
+      "player_id": 682985,
+      "innings": 1048.2,
+      "sdr_runs": -7.6
+     },
+     {
+      "player": "Teoscar Hern\u00e1ndez",
+      "player_id": 606192,
+      "innings": 966.1,
+      "sdr_runs": -6.3
+     },
+     {
+      "player": "Randy Arozarena",
+      "player_id": 668227,
+      "innings": 1289.1,
+      "sdr_runs": -5.8
+     },
+     {
+      "player": "Tyler Soderstrom",
+      "player_id": 691016,
+      "innings": 860.1,
+      "sdr_runs": -5.1
+     },
+     {
+      "player": "Heliot Ramos",
+      "player_id": 671218,
+      "innings": 712.1,
+      "sdr_runs": -4.4
+     },
+     {
+      "player": "Trevor Larnach",
+      "player_id": 663616,
+      "innings": 809.1,
+      "sdr_runs": -4.4
+     },
+     {
+      "player": "Alejandro Osuna",
+      "player_id": 696030,
+      "innings": 376.0,
+      "sdr_runs": -4.2
+     },
+     {
+      "player": "Juan Soto",
+      "player_id": 665742,
+      "innings": 572.0,
+      "sdr_runs": -4.0
+     },
+     {
+      "player": "Dylan Beavers",
+      "player_id": 687637,
+      "innings": 381.0,
+      "sdr_runs": -3.6
+     },
+     {
+      "player": "JJ Bleday",
+      "player_id": 668709,
+      "innings": 985.1,
+      "sdr_runs": -2.4
+     },
+     {
+      "player": "Angel Mart\u00ednez",
+      "player_id": 682657,
+      "innings": 522.0,
+      "sdr_runs": -1.6
+     },
+     {
+      "player": "Brandon Marsh",
+      "player_id": 669016,
+      "innings": 1031.1,
+      "sdr_runs": -1.6
+     },
+     {
+      "player": "Wade Meckler",
+      "player_id": 685133,
+      "innings": 558.0,
+      "sdr_runs": -1.3
+     },
+     {
+      "player": "Jake McCarthy",
+      "player_id": 664983,
+      "innings": 559.1,
+      "sdr_runs": -0.4
+     }
+    ]
+   },
+   "CF": {
+    "n": 44,
+    "top": [
+     {
+      "player": "Pete Crow-Armstrong",
+      "player_id": 691718,
+      "innings": 1370.0,
+      "sdr_runs": 19.7
+     },
+     {
+      "player": "Ceddanne Rafaela",
+      "player_id": 678882,
+      "innings": 1174.1,
+      "sdr_runs": 13.6
+     },
+     {
+      "player": "Andy Pages",
+      "player_id": 681624,
+      "innings": 1151.2,
+      "sdr_runs": 9.9
+     },
+     {
+      "player": "Michael Harris II",
+      "player_id": 671739,
+      "innings": 1246.0,
+      "sdr_runs": 8.3
+     },
+     {
+      "player": "Cedric Mullins",
+      "player_id": 656775,
+      "innings": 1086.0,
+      "sdr_runs": 6.0
+     },
+     {
+      "player": "Evan Carter",
+      "player_id": 694497,
+      "innings": 1009.2,
+      "sdr_runs": 5.5
+     },
+     {
+      "player": "Tristan Peters",
+      "player_id": 671976,
+      "innings": 926.0,
+      "sdr_runs": 4.2
+     },
+     {
+      "player": "Jackson Merrill",
+      "player_id": 701538,
+      "innings": 1362.1,
+      "sdr_runs": 4.1
+     },
+     {
+      "player": "Colton Cowser",
+      "player_id": 681297,
+      "innings": 664.0,
+      "sdr_runs": 3.7
+     },
+     {
+      "player": "Jacob Young",
+      "player_id": 696285,
+      "innings": 1085.0,
+      "sdr_runs": 3.5
+     },
+     {
+      "player": "Steven Kwan",
+      "player_id": 680757,
+      "innings": 637.0,
+      "sdr_runs": 2.5
+     },
+     {
+      "player": "Garrett Mitchell",
+      "player_id": 669003,
+      "innings": 1105.0,
+      "sdr_runs": 2.4
+     },
+     {
+      "player": "Henry Bolte",
+      "player_id": 703607,
+      "innings": 909.0,
+      "sdr_runs": 1.9
+     },
+     {
+      "player": "Jonny DeLuca",
+      "player_id": 676356,
+      "innings": 324.0,
+      "sdr_runs": 1.1
+     },
+     {
+      "player": "Daulton Varsho",
+      "player_id": 662139,
+      "innings": 1128.0,
+      "sdr_runs": 1.0
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Trent Grisham",
+      "player_id": 663757,
+      "innings": 961.1,
+      "sdr_runs": -8.2
+     },
+     {
+      "player": "Mike Trout",
+      "player_id": 545361,
+      "innings": 945.2,
+      "sdr_runs": -7.5
+     },
+     {
+      "player": "Lane Thomas",
+      "player_id": 657041,
+      "innings": 458.2,
+      "sdr_runs": -6.8
+     },
+     {
+      "player": "Justin Crawford",
+      "player_id": 702222,
+      "innings": 1113.1,
+      "sdr_runs": -6.0
+     },
+     {
+      "player": "Julio Rodr\u00edguez",
+      "player_id": 677594,
+      "innings": 1239.1,
+      "sdr_runs": -6.0
+     },
+     {
+      "player": "Cole Carrigg",
+      "player_id": 694249,
+      "innings": 634.2,
+      "sdr_runs": -5.4
+     },
+     {
+      "player": "Leody Taveras",
+      "player_id": 665750,
+      "innings": 607.1,
+      "sdr_runs": -4.9
+     },
+     {
+      "player": "Dane Myers",
+      "player_id": 667472,
+      "innings": 663.2,
+      "sdr_runs": -4.2
+     },
+     {
+      "player": "Spencer Jones",
+      "player_id": 682987,
+      "innings": 315.1,
+      "sdr_runs": -4.1
+     },
+     {
+      "player": "Jake McCarthy",
+      "player_id": 664983,
+      "innings": 437.2,
+      "sdr_runs": -3.7
+     },
+     {
+      "player": "Oneil Cruz",
+      "player_id": 665833,
+      "innings": 756.1,
+      "sdr_runs": -3.6
+     },
+     {
+      "player": "Brenton Doyle",
+      "player_id": 686668,
+      "innings": 509.1,
+      "sdr_runs": -2.7
+     },
+     {
+      "player": "Jake Mangum",
+      "player_id": 663968,
+      "innings": 492.1,
+      "sdr_runs": -2.2
+     },
+     {
+      "player": "Petey Halpin",
+      "player_id": 690984,
+      "innings": 457.0,
+      "sdr_runs": -2.2
+     },
+     {
+      "player": "James Outman",
+      "player_id": 681546,
+      "innings": 354.1,
+      "sdr_runs": -1.7
+     }
+    ]
+   },
+   "RF": {
+    "n": 46,
+    "top": [
+     {
+      "player": "Wilyer Abreu",
+      "player_id": 677800,
+      "innings": 1357.0,
+      "sdr_runs": 9.8
+     },
+     {
+      "player": "Corbin Carroll",
+      "player_id": 682998,
+      "innings": 1314.1,
+      "sdr_runs": 9.2
+     },
+     {
+      "player": "Seiya Suzuki",
+      "player_id": 673548,
+      "innings": 972.2,
+      "sdr_runs": 8.8
+     },
+     {
+      "player": "Victor Mesa Jr.",
+      "player_id": 683748,
+      "innings": 510.1,
+      "sdr_runs": 8.0
+     },
+     {
+      "player": "Nathan Lukes",
+      "player_id": 664770,
+      "innings": 786.2,
+      "sdr_runs": 6.2
+     },
+     {
+      "player": "Jonny DeLuca",
+      "player_id": 676356,
+      "innings": 441.0,
+      "sdr_runs": 5.5
+     },
+     {
+      "player": "Zach McKinstry",
+      "player_id": 656716,
+      "innings": 417.1,
+      "sdr_runs": 5.4
+     },
+     {
+      "player": "Cam Smith",
+      "player_id": 701358,
+      "innings": 1259.2,
+      "sdr_runs": 5.3
+     },
+     {
+      "player": "Carson Benge",
+      "player_id": 701807,
+      "innings": 1140.0,
+      "sdr_runs": 4.0
+     },
+     {
+      "player": "Luis Lara",
+      "player_id": 800325,
+      "innings": 327.0,
+      "sdr_runs": 3.2
+     },
+     {
+      "player": "Adolis Garc\u00eda",
+      "player_id": 666969,
+      "innings": 563.0,
+      "sdr_runs": 3.1
+     },
+     {
+      "player": "Fernando Tatis Jr.",
+      "player_id": 665487,
+      "innings": 930.0,
+      "sdr_runs": 3.0
+     },
+     {
+      "player": "Chase DeLauter",
+      "player_id": 800050,
+      "innings": 559.2,
+      "sdr_runs": 2.2
+     },
+     {
+      "player": "Braden Montgomery",
+      "player_id": 695731,
+      "innings": 785.0,
+      "sdr_runs": 2.1
+     },
+     {
+      "player": "Dylan Crews",
+      "player_id": 686611,
+      "innings": 528.0,
+      "sdr_runs": 2.0
+     }
+    ],
+    "bottom": [
+     {
+      "player": "Kyle Tucker",
+      "player_id": 663656,
+      "innings": 1295.2,
+      "sdr_runs": -7.8
+     },
+     {
+      "player": "Jordan Walker",
+      "player_id": 691023,
+      "innings": 1306.1,
+      "sdr_runs": -7.4
+     },
+     {
+      "player": "Owen Caissie",
+      "player_id": 683357,
+      "innings": 619.1,
+      "sdr_runs": -6.6
+     },
+     {
+      "player": "Brandon Nimmo",
+      "player_id": 607043,
+      "innings": 1229.1,
+      "sdr_runs": -6.5
+     },
+     {
+      "player": "Jac Caglianone",
+      "player_id": 695506,
+      "innings": 766.0,
+      "sdr_runs": -6.4
+     },
+     {
+      "player": "Jo Adell",
+      "player_id": 666176,
+      "innings": 1093.1,
+      "sdr_runs": -5.3
+     },
+     {
+      "player": "Ronald Acu\u00f1a Jr.",
+      "player_id": 660670,
+      "innings": 793.1,
+      "sdr_runs": -4.5
+     },
+     {
+      "player": "Tyler Freeman",
+      "player_id": 671289,
+      "innings": 429.2,
+      "sdr_runs": -4.2
+     },
+     {
+      "player": "James Wood",
+      "player_id": 695578,
+      "innings": 751.0,
+      "sdr_runs": -4.1
+     },
+     {
+      "player": "Jung Hoo Lee",
+      "player_id": 808982,
+      "innings": 1044.1,
+      "sdr_runs": -4.0
+     },
+     {
+      "player": "Lawrence Butler",
+      "player_id": 671732,
+      "innings": 909.1,
+      "sdr_runs": -3.9
+     },
+     {
+      "player": "Kerry Carpenter",
+      "player_id": 681481,
+      "innings": 316.1,
+      "sdr_runs": -3.6
+     },
+     {
+      "player": "Ryan O'Hearn",
+      "player_id": 656811,
+      "innings": 335.1,
+      "sdr_runs": -2.9
+     },
+     {
+      "player": "Luke Raley",
+      "player_id": 670042,
+      "innings": 529.1,
+      "sdr_runs": -2.8
+     },
+     {
+      "player": "Troy Johnston",
+      "player_id": 687859,
+      "innings": 394.0,
+      "sdr_runs": -2.7
+     }
+    ]
+   }
+  }
+ },
+ "C5": {
+  "n_pairs": 1644,
+  "gap_point": 0.0044,
+  "lb95": -0.0146,
+  "ub95": 0.0223,
+  "per_system": {
+   "drs_system": {
+    "sdr_without_drs": 0.2925,
+    "oaa": 0.2891,
+    "gap": 0.0035,
+    "target": "FanGraphs DRS per inning, Y+1"
+   },
+   "statcast_system": {
+    "sdr_without_statcast": 0.3328,
+    "rfield": 0.3275,
+    "gap": 0.0053,
+    "target": "FRP per inning, Y+1"
+   }
+  },
+  "twin": {
+   "gap": -0.3031,
+   "lb95": -0.3653,
+   "clears": false
+  },
+  "disposition": "UNRESOLVED"
+ },
+ "C6": {
+  "n_pairs": 1247,
+  "predictor_seasons": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "rho_vs_uzr_next": {
+   "sdr": 0.2787,
+   "rfield": 0.2233,
+   "oaa": 0.2736
+  },
+  "better_incumbent": "oaa",
+  "d_point": 0.005,
+  "beats_both_at_point": true,
+  "lb95": -0.0248,
+  "ub95": 0.0344,
+  "p_one_sided": 0.366,
+  "lb_above_0": false
+ },
+ "per_position": {
+  "C": {
+   "n_pairs": 321,
+   "self_persistence": {
+    "sdr": 0.6145,
+    "rfield": 0.0248
+   },
+   "better_incumbent": "rfield",
+   "d_point": 0.5897,
+   "lb95": 0.451,
+   "ub95": 0.7161,
+   "framing_self_persistence": {
+    "n_pairs": 321,
+    "rho": 0.6139
+   },
+   "blocking_self_persistence": {
+    "n_pairs": 277,
+    "rho": 0.5248
+   }
+  },
+  "1B": {
+   "n_pairs": 219,
+   "self_persistence": {
+    "sdr": 0.3501,
+    "rfield": 0.2942,
+    "oaa": 0.2999
+   },
+   "better_incumbent": "oaa",
+   "d_point": 0.0502,
+   "lb95": -0.0468,
+   "ub95": 0.1431,
+   "c6_vs_uzr_next": {
+    "n_pairs": 163,
+    "sdr": 0.2329,
+    "rfield": 0.1612,
+    "oaa": 0.2222
+   }
+  },
+  "2B": {
+   "n_pairs": 192,
+   "self_persistence": {
+    "sdr": 0.3967,
+    "rfield": 0.3712,
+    "oaa": 0.3616
+   },
+   "better_incumbent": "rfield",
+   "d_point": 0.0256,
+   "lb95": -0.1313,
+   "ub95": 0.1928,
+   "c6_vs_uzr_next": {
+    "n_pairs": 148,
+    "sdr": 0.248,
+    "rfield": 0.1322,
+    "oaa": 0.2662
+   }
+  },
+  "3B": {
+   "n_pairs": 214,
+   "self_persistence": {
+    "sdr": 0.4684,
+    "rfield": 0.3935,
+    "oaa": 0.4154
+   },
+   "better_incumbent": "oaa",
+   "d_point": 0.053,
+   "lb95": -0.0239,
+   "ub95": 0.1272,
+   "c6_vs_uzr_next": {
+    "n_pairs": 163,
+    "sdr": 0.3737,
+    "rfield": 0.2698,
+    "oaa": 0.3926
+   }
+  },
+  "SS": {
+   "n_pairs": 227,
+   "self_persistence": {
+    "sdr": 0.4435,
+    "rfield": 0.4081,
+    "oaa": 0.4388
+   },
+   "better_incumbent": "oaa",
+   "d_point": 0.0047,
+   "lb95": -0.0727,
+   "ub95": 0.0823,
+   "c6_vs_uzr_next": {
+    "n_pairs": 170,
+    "sdr": 0.1134,
+    "rfield": 0.1578,
+    "oaa": 0.084
+   }
+  },
+  "LF": {
+   "n_pairs": 172,
+   "self_persistence": {
+    "sdr": 0.421,
+    "rfield": 0.3655,
+    "oaa": 0.4316
+   },
+   "better_incumbent": "oaa",
+   "d_point": -0.0106,
+   "lb95": -0.1107,
+   "ub95": 0.0883,
+   "c6_vs_uzr_next": {
+    "n_pairs": 135,
+    "sdr": 0.2345,
+    "rfield": 0.1974,
+    "oaa": 0.2972
+   }
+  },
+  "CF": {
+   "n_pairs": 210,
+   "self_persistence": {
+    "sdr": 0.5525,
+    "rfield": 0.404,
+    "oaa": 0.529
+   },
+   "better_incumbent": "oaa",
+   "d_point": 0.0235,
+   "lb95": -0.0743,
+   "ub95": 0.1133,
+   "c6_vs_uzr_next": {
+    "n_pairs": 160,
+    "sdr": 0.4175,
+    "rfield": 0.2768,
+    "oaa": 0.3739
+   }
+  },
+  "RF": {
+   "n_pairs": 204,
+   "self_persistence": {
+    "sdr": 0.5069,
+    "rfield": 0.3776,
+    "oaa": 0.4579
+   },
+   "better_incumbent": "oaa",
+   "d_point": 0.049,
+   "lb95": -0.0311,
+   "ub95": 0.1319,
+   "c6_vs_uzr_next": {
+    "n_pairs": 158,
+    "sdr": 0.3339,
+    "rfield": 0.2351,
+    "oaa": 0.3049
+   }
+  }
+ }
 }

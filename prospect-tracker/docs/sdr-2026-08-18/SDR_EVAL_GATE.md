@@ -181,6 +181,78 @@ the framing and blocking components. No Holm; no position is credited from these
 
 ## Results
 
-PENDING. Data-blocked at registration (2026-08-18): no SDR data exists in the
-repo or the environment; defense-plus has no export adapter. See
-docs/sdr-intake-request-2026-08-18.md for what was asked of Will.
+At registration (2026-08-18): data-blocked; no SDR data existed in the repo or the
+environment and defense-plus had no export adapter
+(docs/sdr-intake-request-2026-08-18.md).
+
+### 2026-10-15: G-A read once, OWNER-WAIVED EARLY READ (EW3-5). Verdict: FAIL
+
+Artifact `data/sdr_eval.json` (tools/sdr_eval_gate.py, one run, stdout and stderr kept with
+the task's report). Inputs: the accepted drop `sdr_defense_card__2026-10-15.csv` (sha256
+8a41d1c2...358e, 3,466 rows, census committed first at 133b0566); `.cache/war_daily/bat.parquet`
+sha256 e9571c42...fd55, modified 2026-10-16T02:02Z; fetch and run manifests under
+`.cache/sdr/`. Amendment 2026-10-15 fixed every choice before the drop existed (0cffb4be); the
+adapter and this tool were committed before the drop was built (a2200821).
+
+Adapter receipt, read before any clause: Will's 06 run here for 2025 reproduces his PART2
+report (system reliabilities FRP 0.515, OAA 0.469, DRS 0.400 against his .52, .47, .40; his
+2025 board order Bailey, Witt, Kirk, Hayes, Rafaela, Crow-Armstrong, Winn, Hoerner).
+
+| Clause | SDR | rfield | OAA | d vs better | LB95, UB95 | Holm p | Twin | Result |
+|---|---|---|---|---|---|---|---|---|
+| C1 self-persistence (1,644 player-season pairs, 527 players, 2017 to 2025) | 0.4031 | 0.3809 | 0.4696 | -0.0665 (OAA) | -0.1055, -0.0277 | 0.9995 | fails (SDR -0.0146) | FAIL: SDR beats rfield, loses to OAA |
+| C2 club runs allowed beyond FIP, Y+1 (270 club-season pairs) | 0.1499 | 0.1808 | 0.1345 | -0.0308 (rfield) | -0.0792, +0.0615 | 0.6215 | fails (SDR 0.0018) | FAIL: SDR beats OAA, loses to rfield |
+
+- Without pairs touching 2020: C1 SDR 0.4014, rfield 0.3894, OAA 0.4786 (1,423 pairs); C2 SDR
+  0.1608, rfield 0.1716, OAA 0.0991. Same ordering on C1; C2's SDR-rfield gap narrows.
+- C2's club-clustered interval, beside: -0.1230 to +0.0601.
+- **C3 (reported).** Same-season Spearman of the SDR rate: with rfield 0.6419 (3,207
+  player-seasons), with UZR 0.6149 (2,108, 2017 to 2024), with FanGraphs Defense 0.6967.
+- **C4 (reported), 2026 boards.** Face-valid at the top of every position (Crow-Armstrong
+  +19.7 and Rafaela +13.6 in CF; Witt +11.8 and Winn +11.1 at SS; Turang +13.3 at 2B; Olson
+  +9.9 at 1B; Bregman +10.9 at 3B; Dingler +13.6 at C). No absurdity found; rows worth a
+  look against the players' other seasons: the largest negatives at premium positions (Trea
+  Turner -10.5 and Willy Adames -10.4 at SS, Julio Rodriguez -6.0 in CF), and at catcher Cal
+  Raleigh -4.6 and Patrick Bailey only +5.5, because SDR for catchers
+  rests on DRS and FRP alone (OAA does not rate catchers) and carries framing only as far as
+  those two systems do. Full top and bottom 15 per position are in the artifact.
+- **C5, the EW3-23 leg (EBR_GATE.md 11.2.2), deciding for that read: UNRESOLVED.** Gap +0.0044
+  (LB95 -0.0146, UB95 +0.0223, 1,644 pairs): SDR without DRS 0.2925 against OAA 0.2891 on
+  DRS(Y+1) (gap +0.0035); SDR without Statcast 0.3328 against rfield 0.3275 on FRP(Y+1) (gap
+  +0.0053). Twin gap -0.3031, does not clear.
+- **C6 (reported).** On UZR(Y+1), the series none of the three reads (1,247 pairs, predictor
+  seasons 2017 to 2023): SDR 0.2787, OAA 0.2736, rfield 0.2233; SDR leads at the point,
+  d +0.0050, LB95 -0.0248.
+
+**Per position (A5, reported, never gated).** Self-persistence on player-position rows, SDR
+against the better incumbent:
+
+| Pos | Pairs | SDR | rfield | OAA | d (better) | LB95, UB95 | On UZR(Y+1): SDR, rfield, OAA |
+|---|---|---|---|---|---|---|---|
+| C | 321 | 0.6145 | 0.0248 | n/a | +0.5897 (rfield) | +0.4510, +0.7161 | n/a (UZR does not rate catchers) |
+| 1B | 219 | 0.3501 | 0.2942 | 0.2999 | +0.0502 (OAA) | -0.0468, +0.1431 | 0.2329, 0.1612, 0.2222 |
+| 2B | 192 | 0.3967 | 0.3712 | 0.3616 | +0.0256 (rfield) | -0.1313, +0.1928 | 0.2480, 0.1322, 0.2662 |
+| 3B | 214 | 0.4684 | 0.3935 | 0.4154 | +0.0530 (OAA) | -0.0239, +0.1272 | 0.3737, 0.2698, 0.3926 |
+| SS | 227 | 0.4435 | 0.4081 | 0.4388 | +0.0047 (OAA) | -0.0727, +0.0823 | 0.1134, 0.1578, 0.0840 |
+| LF | 172 | 0.4210 | 0.3655 | 0.4316 | -0.0106 (OAA) | -0.1107, +0.0883 | 0.2345, 0.1974, 0.2972 |
+| CF | 210 | 0.5525 | 0.4040 | 0.5290 | +0.0235 (OAA) | -0.0743, +0.1133 | 0.4175, 0.2768, 0.3739 |
+| RF | 204 | 0.5069 | 0.3776 | 0.4579 | +0.0490 (OAA) | -0.0311, +0.1319 | 0.3339, 0.2351, 0.3049 |
+
+Catchers also: framing component self-persistence 0.6139 (321 pairs), blocking 0.5248 (277).
+The catcher cell is the one place SDR clears its better incumbent at LB95; it is reported, not
+credited, and B-Ref's catcher rfield (rSB plus rCERA, no framing) is a weak incumbent there.
+
+**Post-hoc observation, disclosed, deciding nothing.** Within position SDR leads OAA at the
+point at six of seven non-catcher positions, yet loses the pooled C1. The pooled OAA rate
+carries persistent differences in position means among 300-inning regulars (per 1,000
+innings: CF +4.49, SS +1.37, LF -2.60, RF -1.42), which a player keeps when he keeps his
+position; SDR is centred within position and season by construction. Centring each rate
+within (primary position, season) after the fact gives SDR 0.3994, OAA 0.3823, rfield
+0.3516 on the same pairs. This was computed after the read, by a one-off command recorded
+in the task report, and changes no clause: C1 as registered is FAIL. Any position-centred
+read would need its own registration and a frame it has not seen (the 2026 to 2027 pairs).
+
+**What this licenses.** No claim that SDR is a better measure of MLB fielding value than
+rfield or OAA. SDR is not served and does not enter eWAR on this gate; G-B (the merge gate)
+is untouched by this read. The descriptive per-position and catcher cells may be quoted as
+measurements with their frames, never as a validation.
