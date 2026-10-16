@@ -713,6 +713,25 @@ def test_amendment_11_3_the_blended_pitching_basis_and_the_realized_basis():
     assert flat.count("Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this commit).") == 2
 
 
+def test_amendment_11_5_the_triangulated_fielding_arm():
+    flat = _flat(_section(_doc(), "### 11.5 2026-10-16", RESULTS_HEADING))
+    assert ("### 11.5 2026-10-16: the triangulated fielding arm S3t of candidate part 6 (clause (i), owner "
+            "decisions EW3-18, EW3-20 and EW3-23)") in flat
+    assert "| EW3-20 (defense) | The fielding part of eWAR v3 |" in flat
+    assert "it is recorded as an owner override of that sentence for these items alone" in flat
+    assert "its Holm family may grow from k = 2 to k = 4" in flat
+    assert "`docs/ewar/FIELDING_TRIANGULATION_GATE.md` parts 3 and 4, by reference" in flat
+    assert "S3t's cells exist only if the read of `docs/ewar/FIELDING_TRIANGULATION_GATE.md` part 5.5 makes S3t eligible" in flat
+    assert "{H-rate, H-cum, S3t H-rate, S3t H-cum}, k = 4" in flat
+    assert ("S3 enters unless S3t's rate gap over S3's (rho of the S3t test value minus rho of the S3 test "
+            "value on the primary target") in flat
+    assert "On the Statcast system B0 shares the target's system" in flat
+    assert "eWAR realized (11.2.8) carries no S3t term under this registration." in flat
+    assert "The skill look (part 7.3) does not score S3t until `tools/swar_lab.py` implements 11.5.2" in flat
+    assert ("Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at "
+            "this commit).") in flat
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

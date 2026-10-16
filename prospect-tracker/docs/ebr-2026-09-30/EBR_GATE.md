@@ -1860,6 +1860,85 @@ W_i(Y+1)   = w_Y+1 * Pres_i(Y+1)
 - Committed alone, docs and their pin test only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.5 2026-10-16: the triangulated fielding arm S3t of candidate part 6 (clause (i), owner decisions EW3-18, EW3-20 and EW3-23)
+
+- **Owner answer, as recorded** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-20 and its UZR
+  amendment): "defense = reliability-weighted triangulation of SDR, OAA, DRS, UZR, DEM+ per
+  position; catchers on SDR catcher components (UZR does not rate catchers)". Part 1 gains this
+  row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-20 (defense) | The fielding part of eWAR v3 | S3 stays candidate part 6's first arm; the triangulated fielding S3t of `docs/ewar/FIELDING_TRIANGULATION_GATE.md` is its second arm, scored in the same Holm family only when that document's read makes it eligible (its part 5.5), and chosen over S3 only by 11.5.3's rule | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-20); registered by queue task EWAR_LADDER |
+
+- **What this amendment departs from, disclosed.** Like 11.3 it changes items the sentence above
+  11.1 says never change: candidate part 6 may gain a second arm, its Holm family may grow from
+  k = 2 to k = 4, and an arm-choice rule is added. It does so only because the owner decided it
+  (EW3-20) before the skill look ran, and it is recorded as an owner override of that sentence for
+  these items alone. 11.2.7 named the fielding triangulation as a part registered after 11.2 and
+  required its registration to name its target, its B0 and its cells before any number; this
+  amendment and the document it cites do that. Unchanged: S3 itself (part 9.4), every other
+  candidate part, 11.2's targets, B0, B1 rule, twin, team guard, secondary estimand, dispositions
+  and their precedence, the frame, the floors, the margin +0.02, B = 2,000 and seed 20261008, and
+  every clock of part 7.
+- **Pinned by** `test_fielding_triangulation_registration.py` and this file's own pin test.
+
+#### 11.5.1 The arm S3t: definition
+
+`docs/ewar/FIELDING_TRIANGULATION_GATE.md` parts 3 and 4, by reference: per non-catcher row the
+best linear predictor of next season's FanGraphs fielding rate from the readings SDR, OAA, DRS,
+UZR and FRP present on the row, at the row's innings, with weights fitted once per position on data
+seasons 2016 to 2018 and frozen; per catcher row SDR's catcher components (framing, blocking,
+throwing) each shrunk by its own reliability; summed per hitter-season to T_i; g_fldt,i = T_i minus
+the base's fielding (Fld, plus Frm for a catcher); re-centred per season over hitters per PA. The
+test value is the part 9.4 form, fWAR_i + d_fldt,i / RPW_s. Pitcher-batters carry 0. DEM+ is nested
+in it (that document's part 2) and stays S3's own arm.
+
+#### 11.5.2 How the skill look scores S3t, when it is eligible
+
+- **Eligibility.** S3t's cells exist only if the read of `docs/ewar/FIELDING_TRIANGULATION_GATE.md`
+  part 5.5 makes S3t eligible (its forward leg passes and its team leg is NON-INFERIOR). If not,
+  candidate part 6 keeps {H-rate, H-cum}, k = 2, and the record of part 12.2 says S3t was not
+  eligible.
+- **Target and B0:** 11.2.1's fielding row. B0 is Fld + Frm in Y, as for S3. The target is 11.2.2's
+  blend rule: for each system the arm reads (DRS with UZR, which shares its data provider; Statcast;
+  UZR alone, through 2024), the arm rebuilt without that system, on that document's configurations
+  X_DRS, X_SC and X_UZR, is scored on that system's fielding runs in Y+1, and the cell's gap is the
+  mean of the per-system gaps, one cell inside the same bootstrap. On the Statcast system B0 shares
+  the target's system (Fld is Statcast-based), which favours B0; this is disclosed and not corrected.
+  Catchers' rows carry DRS at C in Y+1 as their target, reported beside with no weight, as 11.2.2
+  says of the C rows.
+- **Cells:** S3t H-rate and S3t H-cum, in candidate part 6's Holm family, which becomes {H-rate,
+  H-cum, S3t H-rate, S3t H-cum}, k = 4. The twin, B1 (the fielding k of 11.2.1), MDE95 and floors
+  first, convention v2 primary with v1 required to agree in sign, and the dispositions are 11.2's,
+  unchanged.
+- **Team guard (11.2.4)** on the hitter side (run differential and wins) and the **secondary
+  estimand (11.2.5)** are computed for S3t as for S3.
+
+#### 11.5.3 Admission and the arm choice
+
+- S3t qualifies by S3's rule (11.2.6): its rate cell WIN (components), its total cell not LOSS and
+  its team guard NON-INFERIOR. When one arm qualifies it enters. When both qualify, S3 enters
+  unless S3t's rate gap over S3's (rho of the S3t test value minus rho of the S3 test value on the
+  primary target, same pairs, same bootstrap, computed only when both qualify and outside the Holm
+  family) has lo95 above 0, in which case S3t enters: EWV3-Q2 (a)'s form, as 11.3.5 uses it.
+- Copy follows 11.2.6 with [component's runs] "fielding runs (from <the target source>)"; when S3t
+  enters, the card names it "eWAR skill: fielding (triangulated)".
+- eWAR realized (11.2.8) carries no S3t term under this registration.
+
+#### 11.5.4 What was read before this amendment, and before the skill look
+
+- `docs/ewar/FIELDING_TRIANGULATION_GATE.md` part 10 lists what was read before its registration;
+  its own read (part 5, predictor seasons 2019 to 2025) runs before the skill look and overlaps the
+  skill look's pairs, so S3t's skill-look cells are not blind on those pairs; the twin, B1 and the
+  team guard carry the blind weight, as 11.4.6 says of the pitch-economy parts.
+- The skill look (part 7.3) does not score S3t until `tools/swar_lab.py` implements 11.5.2 (the arm,
+  its three configurations, the per-system targets, its B1 and twin) with a fixture test carrying a
+  null comparator and a planted recovery, and a dry run on fixtures with nulls passes, in its own
+  commit with no number of S3t computed.
+- Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
