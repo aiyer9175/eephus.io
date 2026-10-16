@@ -1,0 +1,363 @@
+{
+ "lab": "xhem_ppa_shrink_v1",
+ "registration": "docs/ewar/XHEM_PPA_SHRINK_GATE.md",
+ "generated_at": "2026-10-16T03:23:52+00:00",
+ "git_head": "6cd7ea56",
+ "fixture": null,
+ "override": {
+  "decision": "EW3-32 item 2 (owner 2026-10-15)",
+  "verbatim": "Run it (owner override)",
+  "what_was_overridden": "docs/ewar/PITCH_ECONOMY_LAB.md part 8 trigger (h): partial Spearman of P/PA(Y) with wOBA(Y+1) after BB%, K% and xwOBA(Y) read +0.0563, CI95 -0.0002 to +0.1161, a miss by 0.0002",
+  "scope": "the trigger only; every rule of the registration binds as written"
+ },
+ "frozen": {
+  "pred_years": [
+   2016,
+   2017,
+   2018,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "pair_min_pa": 200.0,
+  "served_min_pa": 100.0,
+  "k_ppa": 100.0,
+  "k_ubb": 120.0,
+  "gain": 2.28,
+  "fit_min_pa": 300.0,
+  "boot": 2000,
+  "seed": 20261015,
+  "perm_seed": 20261018,
+  "mde_z": 1.645
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "Savant wOBA in Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "Savant wOBA in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": null,
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "slope_fit": {
+  "b": 0.08389966,
+  "n": 807,
+  "by_season": {
+   "2013": {
+    "n": 276,
+    "slope": 0.080831
+   },
+   "2014": {
+    "n": 263,
+    "slope": 0.083363
+   },
+   "2015": {
+    "n": 268,
+    "slope": 0.087836
+   }
+  },
+  "seasons": [
+   2013,
+   2014,
+   2015
+  ]
+ },
+ "seasons": {
+  "2016": {
+   "league_ppa": 3.878107,
+   "league_ubb_rate": 0.077532,
+   "w_ubb": 0.6906,
+   "served_pool": 438,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.321143,
+    "V": 0.32111,
+    "P": 0.321124,
+    "M": 0.320988
+   }
+  },
+  "2017": {
+   "league_ppa": 3.892409,
+   "league_ubb_rate": 0.081039,
+   "w_ubb": 0.693,
+   "served_pool": 435,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.324599,
+    "V": 0.324614,
+    "P": 0.324623,
+    "M": 0.324489
+   }
+  },
+  "2018": {
+   "league_ppa": 3.895398,
+   "league_ubb_rate": 0.080487,
+   "w_ubb": 0.6895,
+   "served_pool": 448,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.319562,
+    "V": 0.319661,
+    "P": 0.319684,
+    "M": 0.319556
+   }
+  },
+  "2021": {
+   "league_ppa": 3.90419,
+   "league_ubb_rate": 0.083705,
+   "w_ubb": 0.6917,
+   "served_pool": 463,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.323696,
+    "V": 0.323746,
+    "P": 0.32378,
+    "M": 0.323636
+   }
+  },
+  "2022": {
+   "league_ppa": 3.891965,
+   "league_ubb_rate": 0.079387,
+   "w_ubb": 0.6887,
+   "served_pool": 469,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.314578,
+    "V": 0.314794,
+    "P": 0.314816,
+    "M": 0.314815
+   }
+  },
+  "2023": {
+   "league_ppa": 3.899671,
+   "league_ubb_rate": 0.083804,
+   "w_ubb": 0.6959,
+   "served_pool": 461,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.322803,
+    "V": 0.322943,
+    "P": 0.322915,
+    "M": 0.322977
+   }
+  },
+  "2024": {
+   "league_ppa": 3.888824,
+   "league_ubb_rate": 0.079498,
+   "w_ubb": 0.6891,
+   "served_pool": 455,
+   "served_pool_unjoined": 0,
+   "pool_means": {
+    "N": 0.317778,
+    "V": 0.317878,
+    "P": 0.317861,
+    "M": 0.317915
+   }
+  }
+ },
+ "pairs": {
+  "n": 1871,
+  "hitters": 649,
+  "by_predictor_season": {
+   "2016": 261,
+   "2017": 277,
+   "2018": 262,
+   "2021": 267,
+   "2022": 261,
+   "2023": 278,
+   "2024": 265
+  },
+  "dropped_no_statsapi_line": 0,
+  "dropped_partial_outcome": 0,
+  "cluster": {
+   "n_pairs": 1871,
+   "n_players": 649,
+   "max_pairs_per_player": 7,
+   "mean_pairs_per_player": 2.88,
+   "n_strata_first_pred_season": 7
+  }
+ },
+ "results_by_convention": {
+  "v1": {
+   "V": {
+    "rho_arm": 0.4592,
+    "rho_null": 0.4617,
+    "gap_point": -0.0025,
+    "gap_ci": {
+     "mean": -0.0025,
+     "lo95": -0.0067,
+     "hi95": 0.0018
+    },
+    "gap_sd_bootstrap": 0.0022,
+    "mde95_in_run": 0.0036,
+    "share_draws_at_or_below_0": 0.8745,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   },
+   "P": {
+    "rho_arm": 0.4549,
+    "rho_null": 0.4617,
+    "gap_point": -0.0068,
+    "gap_ci": {
+     "mean": -0.0067,
+     "lo95": -0.0133,
+     "hi95": -0.0001
+    },
+    "gap_sd_bootstrap": 0.0033,
+    "mde95_in_run": 0.0055,
+    "share_draws_at_or_below_0": 0.976,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   },
+   "M": {
+    "rho_arm": 0.4546,
+    "rho_null": 0.4617,
+    "gap_point": -0.0071,
+    "gap_ci": {
+     "mean": -0.0071,
+     "lo95": -0.013,
+     "hi95": -0.0014
+    },
+    "gap_sd_bootstrap": 0.003,
+    "mde95_in_run": 0.005,
+    "share_draws_at_or_below_0": 0.991,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   }
+  },
+  "v2": {
+   "V": {
+    "rho_arm": 0.4693,
+    "rho_null": 0.4708,
+    "gap_point": -0.0015,
+    "gap_ci": {
+     "mean": -0.0015,
+     "lo95": -0.0063,
+     "hi95": 0.003
+    },
+    "gap_sd_bootstrap": 0.0023,
+    "mde95_in_run": 0.0038,
+    "share_draws_at_or_below_0": 0.739,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   },
+   "P": {
+    "rho_arm": 0.4649,
+    "rho_null": 0.4708,
+    "gap_point": -0.0059,
+    "gap_ci": {
+     "mean": -0.0059,
+     "lo95": -0.013,
+     "hi95": 0.001
+    },
+    "gap_sd_bootstrap": 0.0035,
+    "mde95_in_run": 0.0058,
+    "share_draws_at_or_below_0": 0.9495,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   },
+   "M": {
+    "rho_arm": 0.4645,
+    "rho_null": 0.4708,
+    "gap_point": -0.0063,
+    "gap_ci": {
+     "mean": -0.0063,
+     "lo95": -0.0126,
+     "hi95": -0.0002
+    },
+    "gap_sd_bootstrap": 0.0032,
+    "mde95_in_run": 0.0053,
+    "share_draws_at_or_below_0": 0.9775,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false
+   }
+  }
+ },
+ "rho_by_predictor_season": {
+  "2016": {
+   "pairs": 261,
+   "N": 0.3657,
+   "V": 0.3649,
+   "P": 0.3636,
+   "M": 0.3633
+  },
+  "2017": {
+   "pairs": 277,
+   "N": 0.5014,
+   "V": 0.5057,
+   "P": 0.5129,
+   "M": 0.5057
+  },
+  "2018": {
+   "pairs": 262,
+   "N": 0.4885,
+   "V": 0.4885,
+   "P": 0.4796,
+   "M": 0.4845
+  },
+  "2021": {
+   "pairs": 267,
+   "N": 0.4764,
+   "V": 0.4799,
+   "P": 0.4735,
+   "M": 0.4784
+  },
+  "2022": {
+   "pairs": 261,
+   "N": 0.5064,
+   "V": 0.5004,
+   "P": 0.4886,
+   "M": 0.4815
+  },
+  "2023": {
+   "pairs": 278,
+   "N": 0.5027,
+   "V": 0.501,
+   "P": 0.4969,
+   "M": 0.4963
+  },
+  "2024": {
+   "pairs": 265,
+   "N": 0.4485,
+   "V": 0.442,
+   "P": 0.4314,
+   "M": 0.434
+  }
+ },
+ "descriptive": {
+  "rank_agreement_V_N": 0.9951,
+  "rank_agreement_P_N": 0.9884,
+  "rank_agreement_M_N": 0.9908,
+  "V_minus_N_xhem_points_sd": 2.416,
+  "V_minus_N_xhem_points_max_abs": 13.404
+ },
+ "verdict": {
+  "status": "NOT VALIDATED",
+  "v1_lo95_gt_0": false,
+  "v2_lo95_gt_0": false,
+  "twin_fails": true,
+  "holm": {
+   "k": 1,
+   "family": [
+    "V vs N"
+   ],
+   "note": "k = 1, so Holm leaves the 95 percent interval as it is"
+  },
+  "builds_dark": false
+ },
+ "runtime_seconds": 38.7
+}

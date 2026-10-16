@@ -294,3 +294,12 @@ recorded as one, and the rule is applied as registered.
 
 Nothing here is a forward statistic of PE-P or PE-H; the skill look scores them under the eWAR v3
 gate's part 11.4.
+
+**Note dated 2026-10-15 (after the run above): the owner overrode part F's near miss.** Owner
+decision EW3-32 item 2, verbatim "Run it (owner override)", registered the X-R1-style xHEM+ test of
+part 8 for item (h) despite its 0.0002 miss: `docs/ewar/XHEM_PPA_SHRINK_GATE.md`
+(xhem_ppa_shrink_v1), committed alone before its one run. The run read NOT VALIDATED: the variant
+against the unmodified xHEM+ gap is -0.0025 (95 percent interval -0.0067 to +0.0018) under v1 and
+-0.0015 (-0.0063 to +0.0030) under v2, and the permuted-P/PA twin fails. Part F's answer stands:
+no, P/PA does not go into HEM+ or xHEM+, and it stays a context column. Items (s) and (r) were not
+overridden and no SEM+ or REM+ test is registered.

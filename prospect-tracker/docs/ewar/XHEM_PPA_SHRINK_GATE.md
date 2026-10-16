@@ -144,4 +144,45 @@ Per hitter-season in Y, from the StatsAPI line:
 
 ## 9. Results
 
-EMPTY AT REGISTRATION.
+### 2026-10-15: the run (`python -u tools/xhem_ppa_shrink_lab.py --run`, at 6cd7ea56)
+
+**Run under the owner's override.** This test was registered and run only because the owner
+overrode the pitch-economy trigger miss (EW3-32 item 2, "Run it (owner override)"; item (h) read
++0.0563 with its lower bound 0.0002 below 0). The artifact carries the override in its `override`
+block. Run once, stdout and stderr teed before anything else ran; the dry run on fixtures (nulls,
+planted, null) ran first and recovered the planted signal under both conventions.
+
+**Inputs.** The slope b, fitted on 2013 to 2015 StatsAPI lines only, is 0.08390 walks per wOBA
+plate appearance per pitch per plate appearance (807 hitter-seasons; 0.0808, 0.0834 and 0.0878 by
+season). 1,871 pairs, 649 hitters, 261 to 278 pairs per predictor season; no pair dropped for a
+missing StatsAPI line or a partial outcome season; every served-pool hitter (435 to 469 a season)
+joined. League P/PA 3.878 to 3.904, league unintentional-walk rate 0.0775 to 0.0838. The variant
+moves xHEM+ by 2.4 points (sd) and at most 13.4 points; its rank agreement with the unmodified
+xHEM+ is 0.9951. The harness reproduction held: the V minus N intervals match
+`plus_lab_harness` exactly.
+
+| Convention | Arm minus N | Rho arm | Rho N | Gap | 95 percent interval | MDE95 | Share of draws at or below 0 |
+|---|---|---|---|---|---|---|---|
+| v1 | V, the variant | 0.4592 | 0.4617 | -0.0025 | -0.0067 to +0.0018 | 0.0036 | 0.8745 |
+| v1 | P, the permuted twin | 0.4549 | 0.4617 | -0.0068 | -0.0133 to -0.0001 | 0.0055 | 0.9760 |
+| v1 | M, b = 0 (reported only) | 0.4546 | 0.4617 | -0.0071 | -0.0130 to -0.0014 | 0.0050 | 0.9910 |
+| v2 | V, the variant | 0.4693 | 0.4708 | -0.0015 | -0.0063 to +0.0030 | 0.0038 | 0.7390 |
+| v2 | P, the permuted twin | 0.4649 | 0.4708 | -0.0059 | -0.0130 to +0.0010 | 0.0058 | 0.9495 |
+| v2 | M, b = 0 (reported only) | 0.4645 | 0.4708 | -0.0063 | -0.0126 to -0.0002 | 0.0053 | 0.9775 |
+
+By predictor season (rho with wOBA(Y+1), N then V): 2016 0.3657, 0.3649; 2017 0.5014, 0.5057;
+2018 0.4885, 0.4885; 2021 0.4764, 0.4799; 2022 0.5064, 0.5004; 2023 0.5027, 0.5010; 2024 0.4485,
+0.4420. The variant is ahead in two seasons, level in one and behind in four.
+
+**Verdict: NOT VALIDATED.** The variant does not beat the unmodified xHEM+ under either convention
+(lower bounds -0.0067 under v1 and -0.0063 under v2; the point is below 0 under both). The twin
+fails as required (no lower bound above 0), so the test is not void; it is a plain null. The
+intervals put any gain under +0.0018 (v1) and +0.0030 (v2), inside the plan's expected "tie under
+0.005", with MDE95 0.0036 and 0.0038, and the point estimate is a small loss. Reported only, not gated: shrinking the walk rate toward the league (M) loses about
+0.007 to the raw walk rate, and the P/PA target recovers most of that loss without overtaking the
+raw rate. On this pair set, Savant xwOBA's unshrunk walks are the better forward input.
+
+**Consequence.** Nothing is built and no flag exists. P/PA stays a context column. The owner's
+question (EW3-16, P/PA into HEM+ or xHEM+) is answered no on this test as well as on the
+pitch-economy lab. No registry row, glossary entry or served number moves; the artifact
+`data/_labs/xhem_ppa_shrink_eval.json` ships in neither deploy consumer.
