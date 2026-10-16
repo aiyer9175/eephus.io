@@ -1459,6 +1459,228 @@ every twin fails; every team guard is NON-INFERIOR.
 - Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.3 2026-10-15: the pitch-economy candidate parts PE-P and PE-H (clause (i), owner decisions EW3-19 and EW3-23)
+
+- **Owner answer, as recorded** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-19): "pitch economy =
+  register BOTH a hitter and a pitcher part for the v3 skill look". Part 1 gains this row, recorded
+  here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-19 (pitch economy) | Whether pitch economy is a candidate part of eWAR v3 | both: a pitcher part PE-P and a hitter part PE-H, registered here before the skill look and scored in it on the amended estimand of 11.2 | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-19); registered by queue task EWAR_T1_PITCH_ECON |
+
+- **What this amendment departs from, disclosed.** Clause (i) lets an amendment record an owner
+  answer; adding two candidate parts goes beyond recording one. 11.2.7 named these parts as parts
+  registered after 11.2 and requires each registration to name its target, its B0 and its cells
+  before any number. This amendment does that, before the skill look ran, and is recorded as an
+  owner-decided addition (EW3-19) on the footing of 11.2. Nothing registered for candidate parts 1
+  to 6 changes: their definitions, frames, statistics, thresholds, margins, Holm families, twins,
+  guards, dates and claims stand as part 9 and 11.2 leave them.
+- **Pinned by** `test_pitch_economy_registration.py`, beside `test_ebr_gate_registration.py`. The
+  descriptive lab, the decomposition and the fit of this amendment's frozen constants are
+  registered in `docs/ewar/PITCH_ECONOMY_LAB.md`, committed with this amendment.
+
+#### 11.3.1 What the two parts are, and why neither adds a pitch count to WAR
+
+- Realized WAR already counts what pitches buy: a hitter's walks and strikeouts are in his batting
+  runs, and a pitcher's innings are in his innings. A pitch count added on top would count twice.
+  Each pitch-economy part is therefore a SKILL departure in the form of part 9.4's rule 2: a skill
+  arm minus an actual arm through the same function, shrunk with constants frozen before the look,
+  re-centred to zero per season and side (rule 3), and scored on next-season realized runs (11.2).
+  Neither part is a raw P/PA, P/BF, P/IP or PAR term.
+- **PE-P (pitchers)** replaces the outs a pitcher actually recorded by the outs his shrunk
+  efficiency implies through the passed starter-workload chain, and prices the difference against
+  the bullpen that covers the outs he does not, with a times-through-order decay for starters.
+- **PE-H (hitters)** credits two shrunk residuals that wOBA's events do not carry: the count
+  lift a hitter gains beyond what his plate-appearance outcomes imply (RE288), and the pitches
+  he makes the opposing starter throw beyond what his outcomes imply, priced as starter wear.
+- **Inputs, read from caches, never fetched by this part:** the StatsAPI season lines
+  (`.cache/fa_statsapi_pitching_<Y>.json`, `.cache/fa_statsapi_hitting_<Y>.json`); the StatsAPI
+  start and relief split lines (`.cache/pitch_rates/pitching_sprp_1_<Y>.json`, the files
+  `pitch_rates.py` keeps); the play-by-play corpus (`.cache/pbp_corpus`) and eBR's runner record
+  (`.cache/pbp_runners`); RE288 (`data/count_value.json`, `count_value_v1`); the season constants
+  of `league_constants`; the starter-workload model's frozen priors (`data/starter_workload_eval.json`
+  `burn_in.priors`). The arithmetic lives in the pure module `pitch_economy.py`, built after this
+  commit, which also holds the frozen constants of 11.3.6.
+
+#### 11.3.2 PE-P, the pitcher part
+
+```
+for pitcher j in season s and role r in {SP, RP}       (the start and relief split lines, stints summed)
+  n_j,r      appearances: GS for SP, G - GS for RP
+  P_j,r      pitches in role r;  O_j,r  outs in role r
+  L_ppo,s,r  = sum P / sum O over the season's role-r lines (pooled)
+  L_pa,s,r   = sum P / sum n over the season's role-r lines (pooled)
+  ppo~_j,r   = (P_j,r + K_o * L_ppo,s,r) / (O_j,r + K_o)            K_o = 120 outs
+  b~_j,r     = (P_j,r + k_b * L_pa,s,r) / (n_j,r + k_b)             k_b = 2 appearances
+  X~_j,r     = n_j,r * min(27, b~_j,r / ppo~_j,r)                   efficiency-implied outs (skill arm)
+  G_j,r      = X~_j,r - O_j,r                                       skill arm minus actual arm, in outs
+  F~_j       = (13*m~_HR + 3*(m~_BB + m~_HBP) - 2*m~_K) / IP_j + cFIP_s
+               the S2 skill arm's FIP per nine (part 9.4, the start-share blend), before the park term,
+               on the home-run term part 9.5's HR-arm clause chose
+  F_RP,s     = the season's pooled FIP per nine of true relievers (GS / G at or below 0.10), on cFIP_s
+  pi_s       = the season's league batters faced per out
+  T9_s       = 27 * pi_s * delta_TTO                                times-through-order decay, runs per nine
+  c_j,SP     = (F_RP,s - F~_j - T9_s) / 27                          runs per out: the starter against the bullpen
+  c_j,RP     = (F_RP,s - F~_j) / 27                                 runs per out: the reliever against the bullpen
+  g_j,r      = G_j,r * c_j,r
+  Delta_PE,j = sum over r of ( g_j,r - O_j,r * (sum_k g_k,r) / (sum_k O_k,r) )   zero-sum per season and role
+  test value = B0_j + Delta_PE,j / RPW_s                            RPW_s as part 9.2
+```
+
+- K_o and k_b are the starter-workload model's frozen priors, taken by reference: the model whose
+  stage 1 PASSED (`data/starter_workload_eval.json`, outs MAE 2.918 against A0's 3.442), whose
+  candidate is xouts = min(27, budget / (ppo x r_L)). The lineup ratio r_L is 1 here: the opposing
+  lineup's P/PA earned nothing in that lab (its T1), and a season line has no single opponent. The
+  priors were chosen on starts; relief appearances use them unchanged, disclosed.
+- delta_TTO is the one constant fitted for this part (11.3.6), on the 2018 and 2019 corpus seasons,
+  frozen before any look; every other quantity above is a same-season league aggregate or a frozen
+  constant taken by reference.
+- A position player who pitches (the nopp rule) carries Delta_PE = 0, outside the re-centring. A
+  pitcher with no split line carries 0 and is counted as a coverage gap. A pitcher with both roles
+  carries each role's own terms.
+
+#### 11.3.3 PE-H, the hitter part
+
+```
+for hitter i in season s, over his corpus plate appearances a
+(intentional walks with no pitch thrown, plays with no pitch, and pitcher-batter rows excluded)
+  e(a)       the terminal class of a: walk, hit by pitch, strikeout, single, double, triple, home run,
+             out in play, other
+  CL_a       = count lift: sum, over the pitches of a before its last pitch whose step leaves the bases and outs
+               unchanged, of [V(after) - V(before)]     V: the RE288 ledger's state value (count_value), season s
+  CLres_i    = sum over a of (CL_a - CLbar_s,e(a))      CLbar_s,e: the season's league mean CL_a by class
+  Pres_i     = sum over a faced against the opposing starter of (p_a - pbar_s,e(a))
+               p_a: pitches thrown in a; pbar_s,e: the season's league mean by class, plate appearances against starters
+  w_s        = (F_RP,s - F_SP,s - T9_s) / (27 * L_ppo,s,SP)     starter-wear runs per pitch, to the batting side
+               F_SP,s: the season's pooled FIP per nine of true starters (GS / G at or above 0.50)
+  g_PEH,i    = CLres_i * n_i / (n_i + K_CL) + w_s * Pres_i * m_i / (m_i + K_P)
+               n_i: his counted plate appearances; m_i: those against the opposing starter
+  d_PEH,i    = g_PEH,i - PA_i * (sum_k g_PEH,k) / (sum_k PA_k)   zero-sum per season, MLB-wide per PA, every hitting row
+  test value = B0_i + d_PEH,i                                    runs, on the batting B0 of 11.2.1
+```
+
+- The starter is the first pitcher of each fielding half (the starter-workload lab's unit, owner
+  decision O22). K_CL and K_P are fitted for this part (11.3.6). PA_i is the StatsAPI season line's.
+- The corpus holds 2018, 2019 and 2021 on; every season of the frame and its outcome seasons is a
+  corpus season. A season outside the corpus carries d_PEH = 0, marked `fg`.
+- Pitcher-batters carry 0; two-way players are hitters here.
+- **Why residuals and not P/PA.** P/PA largely restates the walk and strikeout rates wOBA already
+  prices (relative P/PA correlates 0.624 with the relative walk rate and 0.450 with the relative
+  strikeout rate, `data/_labs/efv_pitch_rate_features.json`). Measuring each plate appearance against
+  the league mean for its own terminal class removes the event mix, so neither term restates an
+  event wOBA counts.
+
+#### 11.3.4 Targets, bases and cells (as 11.2.7 requires)
+
+| Part | Component | Base B0, season Y | Test value | Target, season Y+1: rate cell; total cell | Exposure; floors |
+|---|---|---|---|---|---|
+| PE-P | pitching: innings and bullpen cost, outside the four components of 11.2.1 | the pitching B0 of 11.2.1 (war0 of the actual arm of S2 on `plain_fip_loo_pf`) | B0 + Delta_PE / RPW_s | RSB in Y+1: per game pitched; in runs | games pitched; pitchers 50 IP in both seasons |
+| PE-H | batting plus starter wear | wRAA_i(Y), the batting B0 of 11.2.1 | B0 + d_PEH | wRAA_i(Y+1) + W_i(Y+1): per PA; in runs | PA; hitters 200 PA in both seasons |
+
+```
+RSB_j(Y+1) = (O_j(Y+1) / 27) * (lgRA9*_RP,Y+1 - RA9*_j(Y+1))
+             runs saved over a league-average reliever across the outs he actually recorded;
+             RA9* as 11.2.1 defines it (park, the club's defense, inherited and bequeathed runners);
+             lgRA9*_RP the season's pooled RA9* of true relievers
+W_i(Y+1)   = w_Y+1 * Pres_i(Y+1)
+             realized starter wear: the pitches he actually made opposing starters throw beyond his
+             outcomes' league means, priced at the season's league rate, unshrunk
+```
+
+- **Frame, population and statistics** as part 9.5 amended by 11.2: predictor seasons 2021 to 2024
+  (2020 out on both sides); MLB player-seasons by MLBAM; Spearman gaps; convention v2 primary with
+  v1 required to agree in sign; B = 2,000 and seed 20261008; MDE95 and the floors printed first;
+  the dispositions and their precedence.
+- **Holm families:** {PE-P rate, PE-P total}, k = 2; {PE-H rate, PE-H total}, k = 2; one per
+  candidate part, as part 9.5 has it; no correction across parts.
+- **B1, the amended rule of 11.2.1,** one k per part, fitted from B0 and the part's own target
+  only, frozen with its log before the look: PE-P on the 2016 to 2018 predictor pairs at the floors
+  (RA9* dropping its runner terms where 11.2.1 says so); PE-H on the 2018 to 2019 pair, the only
+  corpus pair before the frame.
+- **The twin:** the part's delta permuted across players within (season, side, exposure decile)
+  and added back to B0; its gap's lo95 must be at or below 0.
+- **Era transport (PE-P):** the rate cell's point gap against B0 is positive in BOTH the 2016 to
+  2018 block and the 2021 to 2024 block (part 5's clause, applied to this pitcher part; its delta
+  needs no corpus season, and delta_TTO is frozen).
+- **The sensitivity guard (PE-H, deciding):** W is the part's own construct in Y+1, so a gain on W
+  is partly persistence. The rate cell's gap on wRAA_i(Y+1) alone, W left out, must not be LOSS
+  (hi95 below 0); it is computed in the same bootstrap and printed beside the cell.
+- **The team guard of 11.2.4,** unchanged: PE-P on the pitcher side (runs allowed, run differential,
+  wins), PE-H on the hitter side (runs scored, run differential, wins).
+- **The secondary estimand of 11.2.5,** unchanged: published fWAR(Y+1) per IP or per PA and in
+  total, B1 at the constants frozen at a32ff1bb; it decides nothing.
+- **Reported beside, no weight:** PE-P on 11.2.1's pitching target (RA9* per IP; runs prevented
+  above average in total); the starter-heavy (sigma at or above 0.5) and reliever (sigma at or below
+  0.10) subsets; PE-H's two terms scored one at a time; the delta sizes per season (sd, max, share
+  of rows moving 0.1, 0.5 and 1.0 WAR, top movers).
+
+#### 11.3.5 Admission, assembly and copy
+
+- **Admission.** PE-P or PE-H enters eWAR v3 only when, on its primary target, its rate cell is WIN
+  (components) (Holm rejects, lo95 above 0 and the point gap at least +0.02 against B0; lo95 above
+  0 against its B1; the twin fails; for PE-P the era transport holds), its total cell is not LOSS,
+  its team guard is NON-INFERIOR and, for PE-H, the sensitivity guard is not LOSS. Each part is
+  scored alone; their combination with each other or with candidate parts 1 to 6 is never scored
+  and copy claims nothing about it. A part not admitted leaves FanGraphs' own number, with no
+  pitch-economy term. A VOID skill look admits neither.
+- **Assembly** (part 9.7, extended): a hitter's g_i gains g_PEH,i when PE-H is admitted, before the
+  per-PA re-centring (re-centring is linear, so the result equals adding d_PEH,i); a pitcher's
+  eWAR v3 gains Delta_PE,j / RPW_s when PE-P is admitted.
+- **Headline only.** Both are predictive parts (owner decision EW3-20): an admitted part enters the
+  headline eWAR. "eWAR realized" (11.2.8) carries no pitch-economy term under this registration.
+- **Labels** on the card's reference (SWAR-Q4): "eWAR skill: pitch economy (pitching)" and "eWAR
+  skill: pitch economy (batting)".
+- **Copy.** The sentence table of 11.2.6, with [component's runs] read as "runs saved over a
+  league-average reliever (adjusted for park, defense and inherited runners)" for PE-P and "batting
+  runs plus starter-wear runs" for PE-H; each sentence names its frame as part 9.6 requires; part
+  8's may-not list stands.
+
+#### 11.3.6 Frozen constants, the lab, and what was read before this amendment
+
+- **The constants.** delta_TTO (PE-P and PE-H's w_s), K_CL and K_P (PE-H) are fitted ONCE by
+  `tools/pitch_economy_lab.py` under `docs/ewar/PITCH_ECONOMY_LAB.md` part 7, on the 2018 and 2019
+  corpus seasons only (outside the frame's predictor and outcome seasons), from same-season data,
+  and frozen in `pitch_economy.py` with their log in `data/_labs/pitch_economy_constants.json`
+  before any look. K_CL and K_P come from a split-half reliability of the two residuals, which is a
+  split-half statistic of an input to a skill delta; part 7.6 reserves such statistics to the look
+  tools, and this one fit is allowed as part of the owner-decided addition, on the footing of B1's
+  pre-look fit. A split-half correlation at or below 0 sets that K to infinity (the term carries 0),
+  never re-chosen. The skill look reads the frozen values and refits nothing.
+- **Read before this amendment** (each related, none a statistic of either part):
+  `data/pitch_rates.json` `stability` (consecutive-season pairs 2021 to 2026): hitter P/PA 0.778,
+  starter P/BF 0.692, starter P/IP 0.489, reliever P/IP 0.362; the eFV pitch-rate arms `ppa_rel`
+  and `pbf_rel`, refused at DS-06 on 2026-10-14 (`data/xfv_arm_ledger.json`); `ppa_rel` against
+  `bb_rel` 0.624 and against `k_rel` 0.450; the starter-workload stage 1 (PASS; the pitcher's own
+  pitches per out earned credit for length, its T2; the opposing lineup's P/PA earned nothing, its
+  T1); RE288 (`data/count_value.json`, built 2026-10-15), which values no player. None relates a
+  pitch rate or a pitch-economy delta to a next-season quantity on this frame's pairs.
+- **What the lab reads after this commit.** `docs/ewar/PITCH_ECONOMY_LAB.md` (owner ask T1, steps 1
+  and 2) relates raw pitch rates to next-season wOBA, wRAA, RA9, innings and innings per start on
+  pairs overlapping the frame (2016 to 2025 without 2020), and computes the decomposition, the PE
+  deltas included, for the same season only. It computes no year-to-year, forward or split-half
+  statistic of Delta_PE or d_PEH, and no 2026 outcome. The skill look is therefore not blind on the
+  raw rates, as part 10 says of the components; the twin, B1 and the team guard carry the blind
+  weight. Nothing in 11.3.2 to 11.3.5 changes after the lab: a change is a new registration on the
+  unseen frame (predictor season 2026, outcome 2027).
+- **Registered expectations** (predictions, not measurements): PE-H's rate cell is EQUIVALENT or
+  UNRESOLVED (pitches seen mostly restate events wOBA prices); PE-P's rate point gap is small,
+  EQUIVALENT or UNRESOLVED most likely, because a shrink of pitches per out at K_o 120 moves few outs
+  for a 50-IP pitcher and B1 captures most of any shrink; every twin fails; each team guard is
+  NON-INFERIOR or underpowered.
+
+#### 11.3.7 Before the skill look
+
+- The skill look (part 7.3) does not run until `tools/swar_lab.py` implements this amendment (both
+  parts, their targets RSB and W, their B1 fits, the twin, PE-P's era transport, PE-H's sensitivity
+  guard, the team guard and the secondary block), its fixture test pins them, and a dry run on
+  fixtures with nulls passes. The fixture test carries a null comparator and a planted recovery: a
+  delta planted as a fixed share of the target's own Y+1 deviation reads WIN on both cells, an
+  all-zero delta never reads WIN, and the planted delta's twin fails. That lands in its own commit,
+  with no number of a candidate part computed, and part 7.3's precondition 1 reads it.
+- Committed alone, docs and their pin test only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
