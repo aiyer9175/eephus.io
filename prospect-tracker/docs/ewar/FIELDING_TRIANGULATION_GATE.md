@@ -397,3 +397,13 @@ position by that position's league level, which no reading's skill explains (G-A
 `docs/sdr-2026-08-18/SDR_EVAL_GATE.md`). L2's base stays the vintage's Fld + Frm, as registered.
 S3 on L1 is rel x the centred FRP rate, rel = innings / (innings + K), K the innings-weighted mean
 of `dem_plus.K_INN` over the player's frame rows. Nothing else changes.
+
+### A2, 2026-10-16, a fact the fit found (recorded, nothing re-chosen)
+
+FanGraphs' catcher blocking (bFRP) is zero on every catcher row of 2016 and 2017 (Statcast catcher
+blocking begins in 2018), so part 2's "2016 on" for it is wrong and its year-to-year r is undefined
+on the fit's catcher pairs (2016 to 2017 and 2017 to 2018, 90 pairs). The code carries a
+component whose K the fit could not set at 0, as it carries a missing one, so blocking holds no
+weight in T_C; framing and throwing carry the catcher value. Found by the one fit
+(`data/_labs/fielding_triangulation_fit.json`), before the read; no rule, window or constant is
+re-chosen, and the fit is not re-run.
