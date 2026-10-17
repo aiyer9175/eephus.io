@@ -326,7 +326,7 @@ moves; passing candidates are handed to EFV_X3 as candidates, nothing more.
 
 ### Note N2 (2026-10-16): the driver read's planted check ran on more rows than the metric
 
-Written after the part 11 read ran (once, 2026-10-17T00:0xZ, no exception) and before anything
+Written after the part 11 read ran (once, 2026-10-17T00:00:26Z, no exception) and before anything
 below is computed. As implemented, P-d's synthetic metric was defined on every labelled row of
 the frame (S <= 2021, back to 2005), while `mfr_row` exists only on S = 2021, so the planted
 check in a cell read about six times the metric's rows and overstates the power of the cells
@@ -336,3 +336,29 @@ metric was scored (`tools/milb_fielding_runs_driver.py --planted-same-rows`, com
 `data/_labs/milb_fielding_runs/driver_planted_same_rows.json`); the metric and N-d are not
 re-scored; a real candidate goes to EFV_X3 only if the same-row P-d is a candidate in its cell,
 else that cell is UNDERPOWERED. Both readings are reported.
+
+### 2026-10-17: the eFV driver read (part 11), once, with note N2's same-row check
+
+`python tools/milb_fielding_runs_driver.py` (once; artifact
+`data/_labs/milb_fielding_runs/driver_read.json`, fWAR vintage 2026-10-02-57bf90f7143e), then
+`--planted-same-rows` under note N2 (`driver_planted_same_rows.json`). The atlas hitter table holds
+56,727 rows; 12,152 carry `mfr_row`, 2,342 of them inside the development frame (S = 2021). Only
+four cells reach the atlas minimums on the metric's listed rows: A and A+, age band all, group
+all, for reach3 and w3 (AA and AAA in 2021 hold too few listed rows with the metric; no position
+group or age band cell reaches 150 players).
+
+| cell | label | listed rows | incremental (CI95) | q | candidate |
+| --- | --- | --- | --- | --- | --- |
+| A, all, all | reach3 (AUC) | 171 | +0.0178 (-0.0079 to 0.0436) | 0.187 | no |
+| A, all, all | w3 (rho) | 171 | -0.0265 (-0.0606 to 0.0086) | 0.255 | no |
+| A+, all, all | reach3 (AUC) | 155 | +0.0458 (0.0068 to 0.0898) | 0.066 | YES |
+| A+, all, all | w3 (rho) | 155 | -0.0010 (-0.0422 to 0.0386) | 0.961 | no |
+
+N-d (permuted within level-season): no candidate in any cell (A+ w3 reads -0.0425, CI95 -0.0818
+to -0.0097, negative). P-d as registered: a candidate in every scored cell. P-d on the metric's
+own rows (note N2): a candidate in all four cells (A reach3 +0.0481, w3 +0.2002; A+ reach3
++0.0532, w3 +0.3026; q 0.0481 or lower), so the four cells are powered for a 0.3 label-rank
+signal. Verdict: CANDIDATES, one cell: MFR adds to consensus FV on reaching MLB within three
+seasons among High-A hitters of 2021 (AUC 0.7672 with MFR vs 0.7214 without, out of fold). It is
+handed to EFV_X3 as a candidate only; one season, one level, q 0.066, nothing selected or
+served. The same metric reads no lift on short-horizon fWAR (w3) in either cell.

@@ -1,0 +1,67 @@
+{
+ "generated_at": "2026-10-17T00:02:06Z",
+ "gate": "docs/sdr-2026-08-18/MILB_FIELDING_RUNS_GATE.md",
+ "note": "part 10 note N2",
+ "cells": [
+  {
+   "level": "A",
+   "age_band": "all",
+   "group": "all",
+   "label": "reach3",
+   "n": 171,
+   "incr": 0.0481,
+   "ci95": [
+    0.0068,
+    0.0935
+   ],
+   "p": 0.0320124011207743,
+   "q": 0.0481,
+   "candidate": true
+  },
+  {
+   "level": "A",
+   "age_band": "all",
+   "group": "all",
+   "label": "w3",
+   "n": 171,
+   "incr": 0.2002,
+   "ci95": [
+    0.0627,
+    0.3445
+   ],
+   "p": 0.004351070237202048,
+   "q": 0.00435,
+   "candidate": true
+  },
+  {
+   "level": "A+",
+   "age_band": "all",
+   "group": "all",
+   "label": "reach3",
+   "n": 155,
+   "incr": 0.0532,
+   "ci95": [
+    0.0007,
+    0.1068
+   ],
+   "p": 0.04810436638130389,
+   "q": 0.0481,
+   "candidate": true
+  },
+  {
+   "level": "A+",
+   "age_band": "all",
+   "group": "all",
+   "label": "w3",
+   "n": 155,
+   "incr": 0.3026,
+   "ci95": [
+    0.1591,
+    0.4537
+   ],
+   "p": 6.224421674927427e-05,
+   "q": 0.00012,
+   "candidate": true
+  }
+ ]
+}

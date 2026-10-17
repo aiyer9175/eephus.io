@@ -102,7 +102,6 @@ def claim_from_eval(ev: dict) -> str:
 
 def build_payload(st, meta: dict, ev: dict, key2mlbam: dict[str, int], debut: dict[int, int],
                   generated_at: str | None = None) -> dict:
-    import pandas as pd
     kpos = meta["k"]
     F = {s: float(meta["levels"]["F"][M.SPORTS[s]]) for s in M.SPORTS}
     want = set(key2mlbam.values())

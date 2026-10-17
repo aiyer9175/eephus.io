@@ -245,3 +245,26 @@ def test_prospx_card_reads_the_sidecar_and_sits_in_signals():
     assert "defHomeHtml, milbFieldingHtml].filter(Boolean)" in src
     blk = src[src.index("function milbFieldingCard(p)"):src.index("// ===== eTools: the shown grade")]
     assert "\u2014" not in blk and "\u2013" not in blk
+
+
+# --- the eFV driver read (gate part 11) ------------------------------------------------
+
+def test_driver_row_metric_and_bh():
+    import milb_fielding_runs_driver as D
+    st = pd.DataFrame({"pid": [1, 1, 2], "season": [2021, 2021, 2021], "sport": [13, 13, 13],
+                       "pos": [6, 4, 6], "inn": [300.0, 100.0, 40.0], "runs": [3.0, 1.0, 2.0]})
+    k = {p: {"k": 400.0} for p in M.POS_RATED}
+    rm = D.row_metric(st, k)
+    assert set(rm) == {(1, 2021, 13)}                 # 40 innings is under the floor
+    assert abs(rm[(1, 2021, 13)] - 1000.0 * 4.0 / 800.0) < 1e-9
+    assert D._bh([0.01, None, 0.04]) == [0.02, None, 0.04]
+
+
+def test_driver_dry_run_scores_real_null_and_planted():
+    import milb_fielding_runs_driver as D
+    T, A = D.fixture_table()
+    res = D.score(T, A, log=lambda *a: None)
+    fams = {c["family"] for c in res["cells"]}
+    assert fams == {"fielding", "null", "planted"}
+    assert res["verdict"] in {"VOID", "CANDIDATES", "NO CANDIDATE", "UNDERPOWERED"}
+    assert all(c["powered"] in (True, False) for c in res["cells"] if c["family"] == "fielding")
