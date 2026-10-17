@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**385 models.** Verdicts: validated: 55, provisional: 187, unvalidated: 51, deprecated: 92.
+**386 models.** Verdicts: validated: 55, provisional: 188, unvalidated: 51, deprecated: 92.
 
 ## Instrument boundary
 
@@ -404,6 +404,7 @@ can be measured.
 | `game_intensity_effects` | Registered, not run: whether game intensity moves moneylines and totals beyond a quality-only price, which team types and archetypes differ in high-stakes games, and what wins in October. | No surface: nothing served reads it; the stage-1 lab tool... | Stage 1, model-free on the 2018, 2019 and 2021-2025 regular seasons: IX-A the home result against the literature Elo price give... | the members of docs/diamond-betting.md section 'Game intensity: stakes, match... | the literature Elo (1500, K 4, 24 points of home field, flat start each seaso... | Registered, not computed: IX-A paired Brier improvement on the focus set \|ds... | **unvalidated** | - | - | no |
 | `par` | Descriptive display index: a pitch rate against the league rate for the same role and season, 100 = average; no forward claim. | /mlbstats/ Starters, Relievers and Hitters boards (Pitche... | nothing forward; DESCRIPTIVE DISPLAY INDEX. A pitch rate against the league rate for the same role and season: pitchers 100 x P... | pitch_rates.par (ratio, unshrunk, nearest) | n/a: a DESCRIPTIVE ratio index (FIP- shape), not a predictive model | descriptive; no forward gate by design | **provisional** | - | - | no |
 | `dvm_difficulty` | Read once 2026-10-14, NO SHIP: DV ties C0 on prediction but tracks origin mix (V-C 0.362 vs 0.377); served DvM+ unchanged, the flag stays off. | None served: the DvM+ difficulty arm (dvm_difficulty_serv... | Nothing about MLB outcomes: a descriptive expectation table of how a prospect's grade on one source's list moves in 12 and 24 m... | none - read once, not adopted: arm DV (value above expected, the owner's choi... | C0, the DvM+ logic served on 2026-10-14, rebuilt on the same same-source fram... | Computed once at the look (FULL frame, list years 2012 to 2025): V-P1 Spearma... | **provisional** | `data/dvm_difficulty_eval.json` | - | no |
+| `milb_fielding_runs` | Pre-debut MiLB fielding runs rank later MLB fielding: Spearman 0.256 with rfield (203 debuts, LB95 0.107) and 0.198 with OAA (164, LB95 0.033). Provisional. | PROSPX prospect pages, the MiLB fielding runs block (by p... | MiLB fielding in runs per inning from StatsAPI play-by-play fielder credits 2021 to 2026 (expected outs by trajectory, directio... | MFR served as a descriptive MiLB fielding reading; it enters no eFV, eWAR or... | Zero (LB95 above 0), a fielder-shuffled and a within-position permuted null,... | Pre-registered, read once: (a) MiLB year-to-year Spearman; (b) pre-debut MFR... | **provisional** | `data/milb_fielding_runs_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

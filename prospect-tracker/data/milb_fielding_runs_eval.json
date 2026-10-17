@@ -1,0 +1,913 @@
+{
+ "generated_at": "2026-10-16T23:37:38Z",
+ "gate": "docs/sdr-2026-08-18/MILB_FIELDING_RUNS_GATE.md",
+ "gate_sha": "0ab2ed5f",
+ "dry_run": false,
+ "read": "OWNER-WAIVED EARLY READ (EW3-5); read once",
+ "question": "Does an in-house MiLB fielding-runs measure (MFR) persist within the minors, predict MLB fielding runs after debut, and add to the consensus field grade?",
+ "verdicts": {
+  "a": "PASS",
+  "b": "PASS",
+  "c": "UNDERPOWERED"
+ },
+ "serves": true,
+ "construction": {
+  "k_innings": {
+   "2": {
+    "k": 391.87,
+    "r_half": 0.3216,
+    "r": 0.4867,
+    "n_rows": 1891,
+    "n_bar": 371.55
+   },
+   "3": {
+    "k": 308.68,
+    "r_half": 0.3831,
+    "r": 0.554,
+    "n_rows": 1660,
+    "n_bar": 383.41
+   },
+   "4": {
+    "k": 590.971,
+    "r_half": 0.2292,
+    "r": 0.373,
+    "n_rows": 1571,
+    "n_bar": 351.55
+   },
+   "5": {
+    "k": 428.36,
+    "r_half": 0.2907,
+    "r": 0.4504,
+    "n_rows": 1508,
+    "n_bar": 351.08
+   },
+   "6": {
+    "k": 573.948,
+    "r_half": 0.2595,
+    "r": 0.4121,
+    "n_rows": 1796,
+    "n_bar": 402.24
+   },
+   "7": {
+    "k": 363.7,
+    "r_half": 0.3074,
+    "r": 0.4703,
+    "n_rows": 1340,
+    "n_bar": 322.86
+   },
+   "8": {
+    "k": 289.722,
+    "r_half": 0.3938,
+    "r": 0.565,
+    "n_rows": 1798,
+    "n_bar": 376.36
+   },
+   "9": {
+    "k": 390.134,
+    "r_half": 0.3048,
+    "r": 0.4672,
+    "n_rows": 1529,
+    "n_bar": 342.08
+   }
+  },
+  "levels": {
+   "pairs": {
+    "ROK->A": {
+     "f": 0.4435,
+     "links": 190,
+     "identified": true
+    },
+    "A->A+": {
+     "f": 0.2915,
+     "links": 633,
+     "identified": true
+    },
+    "A+->AA": {
+     "f": 0.4693,
+     "links": 696,
+     "identified": true
+    },
+    "AA->AAA": {
+     "f": 0.3663,
+     "links": 608,
+     "identified": true
+    }
+   },
+   "F": {
+    "AAA": 1.0,
+    "AA": 0.3663,
+    "A+": 0.1719,
+    "A": 0.0501,
+    "ROK": 0.0222
+   }
+  },
+  "in_cells": [
+   [
+    11,
+    2021
+   ],
+   [
+    11,
+    2022
+   ],
+   [
+    11,
+    2023
+   ],
+   [
+    11,
+    2024
+   ],
+   [
+    11,
+    2025
+   ],
+   [
+    11,
+    2026
+   ],
+   [
+    12,
+    2021
+   ],
+   [
+    12,
+    2022
+   ],
+   [
+    12,
+    2023
+   ],
+   [
+    12,
+    2024
+   ],
+   [
+    12,
+    2025
+   ],
+   [
+    12,
+    2026
+   ],
+   [
+    13,
+    2021
+   ],
+   [
+    13,
+    2022
+   ],
+   [
+    13,
+    2023
+   ],
+   [
+    13,
+    2024
+   ],
+   [
+    13,
+    2025
+   ],
+   [
+    13,
+    2026
+   ],
+   [
+    14,
+    2021
+   ],
+   [
+    14,
+    2022
+   ],
+   [
+    14,
+    2023
+   ],
+   [
+    14,
+    2024
+   ],
+   [
+    14,
+    2025
+   ],
+   [
+    14,
+    2026
+   ],
+   [
+    16,
+    2021
+   ],
+   [
+    16,
+    2022
+   ],
+   [
+    16,
+    2023
+   ],
+   [
+    16,
+    2024
+   ],
+   [
+    16,
+    2025
+   ],
+   [
+    16,
+    2026
+   ]
+  ],
+  "constants": {
+   "inn_floor": 200.0,
+   "mlb_inn_floor": 300.0,
+   "debut_years": [
+    2022,
+    2023,
+    2024
+   ],
+   "B": 2000,
+   "seed": 20261016,
+   "planted_sd": 0.02,
+   "planted_b_rho": 0.25,
+   "dp_runs": 0.4,
+   "kill_rv": -0.65,
+   "xb_rv": 0.25,
+   "frame_runs": 0.13,
+   "cs_runs": 0.65,
+   "rv": {
+    "out": -0.27,
+    "single": 0.47,
+    "double": 0.77,
+    "triple": 1.04,
+    "field_error": 0.47,
+    "fielders_choice": 0.47
+   }
+  }
+ },
+ "inputs": {
+  "mlb": {
+   "fg_files": {
+    "2016": "115491cd47651c3c77c534ca22b1ce7ee937249842934bc4bd20b7903dc06d5a",
+    "2017": "4f8661ded724eed0e291604e918400f599a5f9d7885cd5d54f5dcd20679c299f",
+    "2018": "a900238e8c459ba3452c2b0bb04a55e5a35ddb07570f73cf92ee4ce80e237608",
+    "2019": "7ad1552ec9719d78546566c64e0060b191fee38d1183b1bf67671839d1d70347",
+    "2020": "8be0a647ead4c9c7b9c06769ef0018b3fbeed54b1bae21e8277b849301ec7a91",
+    "2021": "a28ad2e6780d0fc977e1fdd1ebd4abdbb8faf45df2146178a031a8ad3cb7b238",
+    "2022": "435a35d0fe701b8f34fd2b717edd7bfd1aabfe381a62f25efd7d56f44d32d2e7",
+    "2023": "ac0bf48666d991b32d56f67cf3d836eefe18ef379df79a2392e1926db729fe73",
+    "2024": "c8d1c9311692dc2e0ab67b990523d6d997b2ec6c687838a3c4cc79c596458a2a",
+    "2025": "9bbd2fc9c7b8fa38021c38d1a0dd05adad5945805ad514adc2c306712f22ffc9",
+    "2026": "58e53c3a5ca76befeae87a5d5d32035da9fb7073f88275c69914b3263fe671cc"
+   },
+   "war_daily": {
+    "sha256": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+    "modified": "2026-10-16T03:48:21.890449+00:00"
+   },
+   "statsapi_field_seasons": [
+    2000,
+    2026
+   ]
+  },
+  "grades": {
+   "path": "data/_labs/tool_tables_rederived/grade_rows_frozen.json",
+   "sha256": "eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c",
+   "n_rows": 1379,
+   "field_rows_hit": 660
+  }
+ },
+ "a_persistence": {
+  "pairs": 5471,
+  "players": 2542,
+  "point": 0.2483,
+  "lb95": 0.2163,
+  "ub95": 0.2786,
+  "p_one_sided": 0.0005,
+  "draws": 2000,
+  "per_position": {
+   "C": {
+    "pairs": 1015,
+    "point": 0.3079,
+    "lb95": 0.2345,
+    "ub95": 0.3763,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "1B": {
+    "pairs": 631,
+    "point": 0.2544,
+    "lb95": 0.1535,
+    "ub95": 0.348,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "2B": {
+    "pairs": 625,
+    "point": 0.1862,
+    "lb95": 0.099,
+    "ub95": 0.2793,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "3B": {
+    "pairs": 571,
+    "point": 0.2386,
+    "lb95": 0.1439,
+    "ub95": 0.3286,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "SS": {
+    "pairs": 795,
+    "point": 0.1984,
+    "lb95": 0.1116,
+    "ub95": 0.2836,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "LF": {
+    "pairs": 452,
+    "point": 0.2582,
+    "lb95": 0.1491,
+    "ub95": 0.3626,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "CF": {
+    "pairs": 777,
+    "point": 0.2406,
+    "lb95": 0.1573,
+    "ub95": 0.3196,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "RF": {
+    "pairs": 605,
+    "point": 0.2492,
+    "lb95": 0.153,
+    "ub95": 0.3375,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   }
+  },
+  "null_N_a": {
+   "pairs": 2775,
+   "point": -0.005,
+   "lb95": -0.0473,
+   "ub95": 0.0369
+  },
+  "planted_P_a": {
+   "planted_sd": 0.02,
+   "persistence": {
+    "pairs": 5471,
+    "point": 0.1574,
+    "lb95": 0.1235,
+    "ub95": 0.1919
+   },
+   "spearman_with_planted": 0.3865,
+   "verdict": "PASS"
+  },
+  "verdict": "PASS"
+ },
+ "b_mlb": {
+  "rows": 374,
+  "rows_with_predictor": 275,
+  "by_debut": {
+   "2022": 108,
+   "2023": 84,
+   "2024": 83
+  },
+  "primary": {
+   "T1": {
+    "n": 203,
+    "point": 0.2559,
+    "lb95": 0.1073,
+    "ub95": 0.3872,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "T2": {
+    "n": 164,
+    "point": 0.198,
+    "lb95": 0.033,
+    "ub95": 0.3491,
+    "p_one_sided": 0.01,
+    "draws": 2000
+   }
+  },
+  "rule": {
+   "holm": {
+    "T1": {
+     "p": 0.0005,
+     "threshold": 0.025,
+     "rejects": true
+    },
+    "T2": {
+     "p": 0.01,
+     "threshold": 0.05,
+     "rejects": true
+    }
+   },
+   "clears": {
+    "T1": true,
+    "T2": true
+   },
+   "any": true
+  },
+  "null_N_b": {
+   "cells": {
+    "T1": {
+     "n": 202,
+     "point": 0.0158,
+     "lb95": -0.1262,
+     "ub95": 0.1553,
+     "p_one_sided": 0.43728,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 168,
+     "point": 0.0505,
+     "lb95": -0.1058,
+     "ub95": 0.1971,
+     "p_one_sided": 0.27786,
+     "draws": 2000
+    }
+   },
+   "rule": {
+    "holm": {
+     "T2": {
+      "p": 0.27786,
+      "threshold": 0.025,
+      "rejects": false
+     },
+     "T1": {
+      "p": 0.43728,
+      "threshold": 0.05,
+      "rejects": false
+     }
+    },
+    "clears": {
+     "T1": false,
+     "T2": false
+    },
+    "any": false
+   }
+  },
+  "planted_P_b": {
+   "rho": 0.25,
+   "cells": {
+    "T1": {
+     "n": 203,
+     "point": 0.0779,
+     "lb95": -0.0602,
+     "ub95": 0.2158,
+     "p_one_sided": 0.12994,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 164,
+     "point": 0.3132,
+     "lb95": 0.1561,
+     "ub95": 0.461,
+     "p_one_sided": 0.0005,
+     "draws": 2000
+    }
+   },
+   "rule": {
+    "holm": {
+     "T2": {
+      "p": 0.0005,
+      "threshold": 0.025,
+      "rejects": true
+     },
+     "T1": {
+      "p": 0.12994,
+      "threshold": 0.05,
+      "rejects": false
+     }
+    },
+    "clears": {
+     "T1": false,
+     "T2": true
+    },
+    "any": true
+   }
+  },
+  "reported": {
+   "FRP": {
+    "n": 177,
+    "point": 0.2138,
+    "lb95": 0.0618,
+    "ub95": 0.3603,
+    "p_one_sided": 0.0035,
+    "draws": 2000
+   },
+   "UZR": {
+    "n": 99,
+    "point": 0.1358,
+    "lb95": -0.0648,
+    "ub95": 0.3315,
+    "p_one_sided": 0.10245,
+    "draws": 2000
+   },
+   "DRS": {
+    "n": 177,
+    "point": 0.2478,
+    "lb95": 0.0972,
+    "ub95": 0.3895,
+    "p_one_sided": 0.0025,
+    "draws": 2000
+   }
+  },
+  "predictor_at_milb_primary": {
+   "T1": {
+    "n": 268,
+    "point": 0.2223,
+    "lb95": 0.1,
+    "ub95": 0.3395,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "T2": {
+    "n": 227,
+    "point": 0.226,
+    "lb95": 0.0953,
+    "ub95": 0.3499,
+    "p_one_sided": 0.001,
+    "draws": 2000
+   }
+  },
+  "per_position": {
+   "C": {
+    "T1": {
+     "n": 32,
+     "point": 0.1535,
+     "lb95": -0.2237,
+     "ub95": 0.4757,
+     "p_one_sided": 0.2079,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 2,
+     "point": null,
+     "lb95": null,
+     "ub95": null,
+     "p_one_sided": null,
+     "draws": 0
+    },
+    "FRP": {
+     "n": 31,
+     "point": 0.2315,
+     "lb95": -0.1779,
+     "ub95": 0.6035,
+     "p_one_sided": 0.13993,
+     "draws": 2000
+    }
+   },
+   "1B": {
+    "T1": {
+     "n": 23,
+     "point": 0.5682,
+     "lb95": 0.1859,
+     "ub95": 0.7976,
+     "p_one_sided": 0.003,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 20,
+     "point": 0.0271,
+     "lb95": -0.4716,
+     "ub95": 0.5096,
+     "p_one_sided": 0.46627,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 20,
+     "point": 0.1128,
+     "lb95": -0.3202,
+     "ub95": 0.5078,
+     "p_one_sided": 0.32684,
+     "draws": 2000
+    }
+   },
+   "2B": {
+    "T1": {
+     "n": 27,
+     "point": 0.1716,
+     "lb95": -0.2495,
+     "ub95": 0.5656,
+     "p_one_sided": 0.21339,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 25,
+     "point": 0.0846,
+     "lb95": -0.3594,
+     "ub95": 0.5231,
+     "p_one_sided": 0.35532,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 22,
+     "point": 0.2095,
+     "lb95": -0.2584,
+     "ub95": 0.6162,
+     "p_one_sided": 0.18341,
+     "draws": 2000
+    }
+   },
+   "3B": {
+    "T1": {
+     "n": 24,
+     "point": 0.0722,
+     "lb95": -0.3639,
+     "ub95": 0.5571,
+     "p_one_sided": 0.37231,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 24,
+     "point": 0.2079,
+     "lb95": -0.2559,
+     "ub95": 0.6228,
+     "p_one_sided": 0.18291,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 22,
+     "point": 0.1417,
+     "lb95": -0.3459,
+     "ub95": 0.6094,
+     "p_one_sided": 0.29685,
+     "draws": 2000
+    }
+   },
+   "SS": {
+    "T1": {
+     "n": 29,
+     "point": 0.368,
+     "lb95": -0.048,
+     "ub95": 0.6937,
+     "p_one_sided": 0.04598,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 28,
+     "point": 0.081,
+     "lb95": -0.3431,
+     "ub95": 0.4614,
+     "p_one_sided": 0.36282,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 26,
+     "point": 0.0509,
+     "lb95": -0.3872,
+     "ub95": 0.442,
+     "p_one_sided": 0.41229,
+     "draws": 2000
+    }
+   },
+   "LF": {
+    "T1": {
+     "n": 16,
+     "point": -0.1,
+     "lb95": -0.5876,
+     "ub95": 0.4111,
+     "p_one_sided": 0.65267,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 15,
+     "point": -0.1333,
+     "lb95": -0.6776,
+     "ub95": 0.4863,
+     "p_one_sided": 0.67716,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 13,
+     "point": -0.1678,
+     "lb95": -0.7842,
+     "ub95": 0.5301,
+     "p_one_sided": 0.69265,
+     "draws": 2000
+    }
+   },
+   "CF": {
+    "T1": {
+     "n": 31,
+     "point": 0.4113,
+     "lb95": 0.0317,
+     "ub95": 0.6956,
+     "p_one_sided": 0.01899,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 30,
+     "point": 0.4269,
+     "lb95": 0.0326,
+     "ub95": 0.7237,
+     "p_one_sided": 0.01949,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 26,
+     "point": 0.4557,
+     "lb95": 0.0103,
+     "ub95": 0.7732,
+     "p_one_sided": 0.02149,
+     "draws": 2000
+    }
+   },
+   "RF": {
+    "T1": {
+     "n": 21,
+     "point": 0.2224,
+     "lb95": -0.2286,
+     "ub95": 0.5874,
+     "p_one_sided": 0.15142,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 20,
+     "point": 0.2692,
+     "lb95": -0.2399,
+     "ub95": 0.6985,
+     "p_one_sided": 0.13193,
+     "draws": 2000
+    },
+    "FRP": {
+     "n": 17,
+     "point": 0.4387,
+     "lb95": -0.0957,
+     "ub95": 0.8548,
+     "p_one_sided": 0.05297,
+     "draws": 2000
+    }
+   }
+  },
+  "verdict": "PASS"
+ },
+ "c_incremental": {
+  "rows_with_grade": 289,
+  "primary": {
+   "T1": {
+    "n": 174,
+    "point": 0.2774,
+    "lb95": 0.1207,
+    "ub95": 0.4207,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "T2": {
+    "n": 141,
+    "point": 0.1455,
+    "lb95": -0.0248,
+    "ub95": 0.3142,
+    "p_one_sided": 0.05347,
+    "draws": 2000
+   }
+  },
+  "rule": {
+   "holm": {
+    "T1": {
+     "p": 0.0005,
+     "threshold": 0.025,
+     "rejects": true
+    },
+    "T2": {
+     "p": 0.05347,
+     "threshold": 0.05,
+     "rejects": false
+    }
+   },
+   "clears": {
+    "T1": true,
+    "T2": false
+   },
+   "any": true
+  },
+  "grade_alone_spearman": {
+   "T1": {
+    "n": 237,
+    "point": 0.3327,
+    "lb95": 0.2126,
+    "ub95": 0.4458,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "T2": {
+    "n": 201,
+    "point": 0.3562,
+    "lb95": 0.215,
+    "ub95": 0.4763,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   }
+  },
+  "predictor_alone_spearman_same_rows": {
+   "T1": {
+    "n": 174,
+    "point": 0.2802,
+    "lb95": 0.1186,
+    "ub95": 0.4245,
+    "p_one_sided": 0.0005,
+    "draws": 2000
+   },
+   "T2": {
+    "n": 141,
+    "point": 0.1488,
+    "lb95": -0.0312,
+    "ub95": 0.3188,
+    "p_one_sided": 0.05647,
+    "draws": 2000
+   }
+  },
+  "null_N_c": {
+   "cells": {
+    "T1": {
+     "n": 180,
+     "point": -0.0004,
+     "lb95": -0.147,
+     "ub95": 0.1482,
+     "p_one_sided": 0.50575,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 147,
+     "point": -0.1144,
+     "lb95": -0.2566,
+     "ub95": 0.0435,
+     "p_one_sided": 0.91854,
+     "draws": 2000
+    }
+   },
+   "rule": {
+    "holm": {
+     "T1": {
+      "p": 0.50575,
+      "threshold": 0.025,
+      "rejects": false
+     },
+     "T2": {
+      "p": 0.91854,
+      "threshold": 0.05,
+      "rejects": false
+     }
+    },
+    "clears": {
+     "T1": false,
+     "T2": false
+    },
+    "any": false
+   }
+  },
+  "planted_P_c": {
+   "cells": {
+    "T1": {
+     "n": 174,
+     "point": 0.1384,
+     "lb95": -0.0164,
+     "ub95": 0.2879,
+     "p_one_sided": 0.04098,
+     "draws": 2000
+    },
+    "T2": {
+     "n": 141,
+     "point": 0.0702,
+     "lb95": -0.0968,
+     "ub95": 0.2409,
+     "p_one_sided": 0.2024,
+     "draws": 2000
+    }
+   },
+   "rule": {
+    "holm": {
+     "T1": {
+      "p": 0.04098,
+      "threshold": 0.025,
+      "rejects": false
+     },
+     "T2": {
+      "p": 0.2024,
+      "threshold": 0.05,
+      "rejects": false
+     }
+    },
+    "clears": {
+     "T1": false,
+     "T2": false
+    },
+    "any": false
+   }
+  },
+  "verdict": "UNDERPOWERED"
+ },
+ "survivorship": "(b) and (c) are among debuts only: players who reached the majors in 2022 to 2024 with 300+ MLB innings."
+}

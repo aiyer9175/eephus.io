@@ -34413,6 +34413,67 @@ function defHomeChip(p) {
       </div>
     </div>`;
 }
+// ===== MiLB fielding runs (MILB_FIELDING_RUNS gate, part 6) ==================
+// Served because the gate's estimand (b) passed on its one read: pre-debut MiLB
+// fielding runs (MFR) ranked later MLB fielding runs. Descriptive context beside the
+// grade, by position: AAA-equivalent runs per 1,000 innings, a reliability band from
+// the shrinkage and the levels the innings came from. NEVER part of any grade, rank
+// or sort. Hitters only; the claim line in the tooltip comes from the sidecar, which
+// derives it from the gate's eval artifact.
+let _MFR = null, _MFR_LOADING = false;
+function ensureMfr() {
+  if (_MFR !== null || _MFR_LOADING) return;
+  _MFR_LOADING = true;
+  fetch("/data/milb_fielding_runs.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _MFR = (j && j.by_mlbam) ? j : { by_mlbam: {}, key_to_mlbam: {} };
+      scheduleRender();
+    })
+    .catch(() => { _MFR = { by_mlbam: {}, key_to_mlbam: {} }; });
+}
+function _mfrFor(p) {
+  if (!_MFR || !p) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id
+           || (_MFR.key_to_mlbam || {})[p.player_key];
+  if (!mid) return null;
+  return _MFR.by_mlbam[String(mid)] || null;
+}
+function milbFieldingCard(p) {
+  if (!p) return "";
+  const pos = String(p.position || "").toUpperCase();
+  const isPit = !!(p.statline && p.statline.is_pitcher)
+             || ((p.sabermetrics || {}).is_pitcher === true)
+             || /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos);
+  if (isPit) return "";                // position players only
+  ensureMfr();                         // lazy-load on the first hitter card
+  const r = _mfrFor(p);
+  if (!r || !Array.isArray(r.positions) || !r.positions.length) return "";
+  const fmt = v => (v > 0 ? "+" : "") + Number(v).toFixed(1);
+  const rows = r.positions.map(x => {
+    const lv = (x.levels || []).map(l => `${l[0]} ${l[1]}`).join(", ");
+    const lvShort = (x.levels || []).map(l => l[0]).join(", ");
+    const yrs = x.seasons && x.seasons[0] !== x.seasons[1]
+      ? `${x.seasons[0]} to ${x.seasons[1]}` : String((x.seasons || [""])[0]);
+    const cls = x.mfr > 0 ? "is-pos" : (x.mfr < 0 ? "is-neg" : "is-neutral");
+    const tip = `${x.pos}: ${fmt(x.mfr)} AAA-equivalent fielding runs per 1,000 innings over `
+      + `${x.inn} MiLB innings (${yrs}; innings by level: ${lv}). Reliability `
+      + `${Number(x.rel).toFixed(2)} (${x.band}): the share of the reading the shrinkage keeps.`;
+    return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;">
+        <span class="rps-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(x.pos)} ${escapeHtml(fmt(x.mfr))}</span>
+        <span style="font-size:11px;color:var(--text-secondary);">${x.inn} inn · ${escapeHtml(x.band)} reliability · ${escapeHtml(lvShort)}</span>
+      </div>`;
+  }).join("");
+  const head = `${_MFR.what || ""} ${_MFR.claim || ""}`.trim();
+  const suffix = `runs / 1,000 inn, AAA-equiv.${r.pre_debut_only ? " · pre-debut" : ""}`;
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="${escapeHtml(head)}">MiLB fielding runs</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(suffix)}</div>
+      </div>
+      ${rows}
+    </div>`;
+}
 // ===== eTools: the shown grade for each tool (ETOOLS_SITEWIDE_FLIP) =====
 // Owner decision EW3-27 (2026-10-15): "eTools should be our shown version of each
 // tool across the site." An eTool is the consensus tool grade moved by the
@@ -53633,6 +53694,7 @@ function renderPlayerDetail(key) {
   // asset. Ledgered in docs/efv-2026-07-29/GATED_CANDIDATES.md.
   const archetypeHtml = "";
   const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
+  const milbFieldingHtml = (typeof milbFieldingCard === "function") ? milbFieldingCard(p) : "";  // MiLB fielding runs (MILB_FIELDING_RUNS gate, descriptive)
   // H1 - the Overview was FIFTEEN stacked sections with no navigation: a reader
   // who wanted the FV chart or the notes box had to drag past everything above it,
   // and on a phone that is several screens. NOTHING is removed. The same blocks,
@@ -53649,7 +53711,7 @@ function renderPlayerDetail(key) {
     { id: "efv",       label: "eFV",        html: efvCardHtml },
     { id: "signals",   label: "Signals",    html: [efvProxyHtml, palFitHtml, aaaStatcastHtml,
                                                    alevelSignalHtml, apPaceHtml, archetypeHtml,
-                                                   defHomeHtml].filter(Boolean).join("") },
+                                                   defHomeHtml, milbFieldingHtml].filter(Boolean).join("") },
     { id: "valuation", label: "Valuation",  html: valuationHtml },
     { id: "fvchart",   label: "FV history", html: chartSection },
     { id: "news",      label: "News",       html: _ovNews },
