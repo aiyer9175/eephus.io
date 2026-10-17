@@ -323,3 +323,16 @@ moves; passing candidates are handed to EFV_X3 as candidates, nothing more.
   P-d is a candidate.
 - **Output.** `data/_labs/milb_fielding_runs/driver_read.json` (lab only, ships in neither
   publish list); results appended below as a dated note.
+
+### Note N2 (2026-10-16): the driver read's planted check ran on more rows than the metric
+
+Written after the part 11 read ran (once, 2026-10-17T00:0xZ, no exception) and before anything
+below is computed. As implemented, P-d's synthetic metric was defined on every labelled row of
+the frame (S <= 2021, back to 2005), while `mfr_row` exists only on S = 2021, so the planted
+check in a cell read about six times the metric's rows and overstates the power of the cells
+the metric was scored in. The registration's intent is a power check on the metric's own design.
+Rule fixed now: P-d is re-scored on the rows where `mfr_row` is finite, in the cells where the
+metric was scored (`tools/milb_fielding_runs_driver.py --planted-same-rows`, companion
+`data/_labs/milb_fielding_runs/driver_planted_same_rows.json`); the metric and N-d are not
+re-scored; a real candidate goes to EFV_X3 only if the same-row P-d is a candidate in its cell,
+else that cell is UNDERPOWERED. Both readings are reported.
