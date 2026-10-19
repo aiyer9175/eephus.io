@@ -1,0 +1,163 @@
+{
+ "task": "SG_6_HITTER_LEAN_C6_READ",
+ "what": "SG_6 C6 hitter-lean probe: DESCRIPTIVE, not a driver, not a ledger row, not a read of the surrogate gate; read once.",
+ "run_at": "2026-10-19T14:24:00",
+ "gate_sha": "f5dcf500855ed914dca8212b7739b6caa795319b",
+ "owner_answers": {
+  "efv2026 OQ2": "A",
+  "efv2026 OQ5": "A"
+ },
+ "look_records": [
+  "rvm_look_1"
+ ],
+ "list": "2025report",
+ "outcome_seasons": [
+  2025,
+  2026
+ ],
+ "min_pa": 150.0,
+ "bootstrap": {
+  "B": 2000,
+  "seed": 20260925
+ },
+ "counts": {
+  "list_rows_hitters": 602,
+  "dropped_missing_inputs": 0,
+  "index_rows": 602,
+  "ABSENT_IDENTITY": 77,
+  "ABSENT_IDENTITY_also_lv2026_by_key": 42,
+  "lv2026_excluded": 275,
+  "rvm_2026_cohort_left": 6,
+  "rvm_2025_cohort_kept": 71,
+  "rvm_2025_cohort_left": 0,
+  "candidate_rows": 244,
+  "cons_from_consensus": 202,
+  "cons_from_fg_fv": 42,
+  "baseline_iso_missing": 24,
+  "O1_under_150_pa": 24,
+  "analysis_rows": 220,
+  "analysis_players": 220,
+  "analysis_also_on_2024_list": 168,
+  "analysis_rvm_2025_cohort": 60
+ },
+ "fits": {
+  "primary_LEAN_given_TALL": {
+   "n": 220,
+   "n_players": 220,
+   "coef": -0.08698627521584748,
+   "ols_t": -1.4598478124919487,
+   "ci95": [
+    -0.19254615661792496,
+    0.025036453557155072
+   ],
+   "feats": [
+    "TALL",
+    "LEAN"
+   ],
+   "target": "LEAN"
+  },
+  "secondary_PROJ": {
+   "n": 220,
+   "n_players": 220,
+   "coef": 0.016369161723442598,
+   "ols_t": 0.29097597186037694,
+   "ci95": [
+    -0.0914901267462866,
+    0.13155821272615598
+   ],
+   "feats": [
+    "PROJ"
+   ],
+   "target": "PROJ"
+  },
+  "secondary_LEAN_alone": {
+   "n": 220,
+   "n_players": 220,
+   "coef": -0.06266214753182908,
+   "ols_t": -1.0682017983232952,
+   "ci95": [
+    -0.16761015535379917,
+    0.05049825088509541
+   ],
+   "feats": [
+    "LEAN"
+   ],
+   "target": "LEAN"
+  }
+ },
+ "primary_reading": "SAME SIGN, NOT RESOLVED",
+ "strata": {
+  "side": {
+   "hit": {
+    "n": 220,
+    "rho": -0.06677448256819732
+   }
+  },
+  "age_band": {
+   "20_or_under": {
+    "n": 63,
+    "rho": 0.06326804915514593
+   },
+   "21_to_22": {
+    "n": 64,
+    "rho": -0.115018315018315
+   },
+   "23_or_over": {
+    "n": 93,
+    "rho": -0.08953776371937572
+   }
+  },
+  "last_level": {
+   "AA_AAA": {
+    "n": 125,
+    "rho": 0.0037235023041474647
+   },
+   "A_Aplus": {
+    "n": 58,
+    "rho": -0.3782644806053709
+   },
+   "DSL_CPX": {
+    "n": 34,
+    "rho": 0.20763941940412528
+   },
+   "none": {
+    "n": 3,
+    "rho": null
+   }
+  },
+  "route": {
+   "college_draft": {
+    "n": 79,
+    "rho": -0.22368549172346644
+   },
+   "hs_draft": {
+    "n": 41,
+    "rho": -0.1231707317073171
+   },
+   "international_fa": {
+    "n": 100,
+    "rho": 0.12453645364536452
+   }
+  },
+  "bonus_band": {
+   "1M_or_over": {
+    "n": 71,
+    "rho": -0.24443326626425216
+   },
+   "250k_to_1M": {
+    "n": 61,
+    "rho": -0.22453728186144895
+   },
+   "under_250k": {
+    "n": 38,
+    "rho": 0.15570631360105044
+   },
+   "unknown": {
+    "n": 50,
+    "rho": 0.14698679471788717
+   }
+  }
+ },
+ "selected_subset": "every lv_2026 player is excluded (OQ2 = A), so the rows are players on no 2026 rater list plus released 2025 debutants: a selected subset, not the 2025 list",
+ "elapsed_s": 12.7
+}
