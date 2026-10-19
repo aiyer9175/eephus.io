@@ -1,6 +1,6 @@
 # eFV hitter position calibration (EFV_HITTER_POSITION_CALIBRATION): registration
 
-Registration status: REGISTERED; NOT READ
+Registration status: REGISTERED; READ ONCE 2026-10-19 (sections 12 and 13)
 
 Registered 2026-10-19, committed ALONE, before any number of its read is computed. Owner
 decisions (`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, 2026-10-19): EW3-47, verbatim "Should we
@@ -297,3 +297,110 @@ second `--run` refuses.
 
 Run: `python -u efv_hitter_position_calibration.py --run --cache <EFV_FIX_B_REFIT cache> --work
 <scratch>` after this registration and the module's commit.
+
+## 12. The read (2026-10-19, once; `python -u efv_hitter_position_calibration.py --run`)
+
+Artifact: `data/_labs/efv5/efv_hitter_position_calibration.json` (role development, adjudicates
+false; tool sha256 b67e9c3e, module commit 5608cc0b, registration commit 9a08d9eb, label
+fwar@2026-10-02). Elapsed 71 s.
+
+Checks, all held before any outcome was read: Q1 the 20 cached fold models match the fit
+artifact's receipts; Q2 the cross-fitted RT within reproduces the fit artifact (lv_dev hit 0.1913,
+vm_dev hit 0.4021; pitchers 0.1442, 0.3853, served 0.2198); Q3 no reserved fold; Q4 the live board
+reproduces (u_c to 5e-7, map A to the served one-decimal grade within 0.05 on all 1,055 hitters
+and 941 pitchers). Rows, listings and clubs as section 3.
+
+THE GROUP FACTOR. Pooled over all 1,871 rows, the groups' realized over implied ratios relative
+to the pool (the production fit, player-clustered delta-method SE of the log ratio, and the
+one-sided minimum detectable log effect at 80 percent power):
+
+| group | rows | ratio over the pool | SE (log) | MDE (log) | MDE as a factor |
+|---|---|---|---|---|---|
+| C | 241 | 1.04 | 0.18 | 0.46 | x1.58 |
+| SS/CF | 650 | 1.05 | 0.11 | 0.26 | x1.30 |
+| 2B/3B | 389 | 0.82 | 0.18 | 0.46 | x1.58 |
+| LF/RF | 418 | 0.99 | 0.16 | 0.41 | x1.51 |
+| 1B/DH | 140 | 1.01 | 0.32 | 0.79 | x2.21 |
+
+The heterogeneity statistic Q is 1.44 on 4 degrees of freedom, below its null expectation of 4,
+so the DerSimonian-Laird between-group variance is 0 and every partially pooled factor is 1.000:
+the correction IS zero adjustment. In the cross-fit the between-group variance is 0 in nine of the
+ten held-out folds and 0.00002 in the tenth (vm_dev 2017, factors within 0.0002 of 1).
+PRIMARY, delta against zero adjustment (frame-standardized squared error; positive: the
+correction is closer), two-way clustered, B 4000: -0.00000 (one-sided 95 percent lower bound
+-0.00001; lv_dev -0.00000, vm_dev -0.00001); on the term frame 0.00000. The group-permuted twin's
+delta has mean -0.0014 and 95th percentile +0.0029 over 200 draws.
+
+Planted recovery (K 100, B 500): SS/CF x1.25 POWER 0.02, the median recovered SS/CF factor 1.07
+(10th to 90th percentile 1.00 to 1.28; the band was 1.12 to 1.40), so NOT RECOVERED; SIZE 0.00
+(median recovered factor 1.00). On these frames a 25 percent SS/CF effect moves the log ratio by
+about two standard errors, which the five-group heterogeneity test does not separate from noise
+in most draws, so the pooled factor stays at 1.
+
+Sensitivity (decides nothing): the 259 rows whose only listing is a generic OF (by the default in
+LF/RF) as a sixth pooled cell: Q 3.81 on 5 degrees of freedom, between-group variance 0, every
+factor 1.000; delta against zero adjustment -0.0010 (lower bound -0.0027). Raw ratios over the
+pool: the generic-OF cell 1.24, the specific LF/RF listings 0.80.
+
+THE AS-OF TERMS (term frame: 227 rows, vm_dev debut cohorts 2021 to 2023; 2021 rows carry no
+term value; seasons observed through 2026: 2021 six, 2022 five, 2023 four). Each against the
+group-only model, two-way clustered, B 4000:
+
+| term | delta | one-sided 95 percent lower bound | production slope (per SD) | two-way SE | MDE (one-sided) | planted 0.30: power, recovered slope | size |
+|---|---|---|---|---|---|---|---|
+| MFR at the listed position | -0.0086 | -0.0430 | +0.17 | 0.19 | 0.48 | 0.05, 0.28 | 0.00 |
+| versatility (positions; premium share) | -0.0031 | -0.0493 | +0.15; +0.19 | 0.15; 0.17 | 0.37; 0.42 | 0.04, 0.25 and 0.24 | 0.00 |
+| listed SS/CF x MFR | -0.0010 | -0.0250 | +0.17 | 0.29 | 0.73 | 0.01, 0.27 | 0.00 |
+
+Each slope is positive (better defenders, more versatile players and players with a larger share
+of games at C, SS or CF realize more of their implied value), but every slope sits within about
+one standard error of 0, and out of fold every term model is farther from the label than the
+group-only model. The planted slopes are recovered (the estimator is close to unbiased) but
+resolved in at most 5 of 100 draws: 175 rows with fielding data cannot resolve a slope of 0.30
+per SD. The term-permuted twins' 95th percentiles: MFR +0.0081, versatility +0.0087, SS/CF x MFR
++0.0042.
+
+Reported, deciding nothing (section 7): realized over implied under zero adjustment, two-way
+clustered CI95, B 4000.
+
+| group | pooled | lv_dev | vm_dev |
+|---|---|---|---|
+| C | 1.05 (0.42 to 1.78) | 0.94 (0.09 to 1.78) | 1.11 (0.49 to 1.95) |
+| SS/CF | 1.07 (0.72 to 1.45) | 1.07 (0.49 to 1.79) | 1.07 (0.73 to 1.45) |
+| 2B/3B | 0.83 (0.41 to 1.36) | 0.83 (0.24 to 1.55) | 0.83 (0.42 to 1.38) |
+| LF/RF | 1.01 (0.51 to 1.57) | 1.20 (0.44 to 2.15) | 0.89 (0.43 to 1.43) |
+| 1B/DH | 1.03 (0.09 to 2.01) | 0.68 (-0.26 to 2.17) | 1.20 (0.25 to 2.27) |
+
+Q-MOVE (outcome side): of the 650 rows listed SS/CF, 540 have a later position in the season
+census; 194 of them (35.9 percent; lv_dev 36.4, vm_dev 34.7) played mainly at 2B/3B, LF/RF or
+1B/DH from the grade year on. Movers realized 1.27 of their implied value (CI95 0.61 to 2.05),
+stayers 1.04 (0.63 to 1.48), movers over stayers 1.22 (0.54 to 2.37; lv_dev 1.82, vm_dev 1.06).
+The 110 rows with no later position realized 0.04 of implied: they are mostly prospects who never
+played again under a tracked id, which is why the census stays an outcome-side read and never a
+frame input. A move is observed only for a player who kept playing, so movers are hitters whose
+bat carried them to another position; the comparison explains, it does not predict.
+
+Board effect of the production factors (decides nothing): every factor is 1.000, so no live
+hitter's implied six-season WAR changes (top 50 hitters by grade: 4.666 served, 4.666 calibrated).
+
+## 13. The verdict
+
+Nothing passes; nothing is built, no flag is added and no served number moves.
+`HITTER_POSITION_CALIBRATION_ON` stays False and is read by nothing.
+
+- The group factor FAILS (G1 and G2 fail; G3 holds), worded UNRESOLVED (planted power 0.02): the
+  partial pooling finds no between-group variance (Q 1.44 on 4 degrees of freedom), so the
+  correction collapses to zero adjustment and ties it exactly. The frames can resolve only a group
+  effect of about x1.30 for SS/CF and x1.5 to x2.2 for the other groups.
+- Q-POS, reported: at the same eFV grade, no listed-position group realizes a resolved share
+  different from the others; the largest point gap is 2B/3B at 0.83 of implied (CI95 0.41 to
+  1.36), and SS/CF realizes 1.07 (0.72 to 1.45). Within what these frames can check, the graders'
+  FV and the served grade already price the listed position.
+- Q-MOVE, reported: about 36 percent of listed SS and CF who keep playing move down the spectrum;
+  their realized value is not lower than the stayers' (1.22 of the stayers' share, not resolved).
+- Q-TERMS: all three terms FAIL T1 and are worded UNDERPOWERED (planted power 0.05, 0.04, 0.01);
+  their slopes point the expected way (+0.15 to +0.19 per SD) inside one standard error. The MFR
+  and versatility data reach only 175 development rows with a fielding history before their grade
+  date; the read gains power only when more debut cohorts with 2021+ MiLB fielding history have
+  outcome windows (the 2024 cohort is outside the development frames and the 2025+ cohorts are
+  reserved).
