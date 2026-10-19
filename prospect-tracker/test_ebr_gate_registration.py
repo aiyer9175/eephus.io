@@ -780,6 +780,21 @@ def test_amendment_11_7_s3t_is_scored_by_owner_override():
     assert doc.index("### 11.6 2026-10-16") < doc.index("### 11.7 2026-10-19") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_8_the_displayed_name_is_plain_ewar():
+    flat = _flat(_section(_doc(), "### 11.8 2026-10-19", RESULTS_HEADING))
+    assert "### 11.8 2026-10-19: eWAR v3's displayed name (clause (i), owner decision EW3-19)" in flat
+    assert "| EW3-19 (naming) | The displayed name of eWAR v3 (the label clause of EBR-Q0's recorded answer) |" in flat
+    assert ("this replaces \"a column labelled eWAR v3 and never plain eWAR\" in EBR-Q0's row and the "
+            "naming sentences of parts 0 and 9.1") in flat
+    assert "**What it touches: the displayed name only.**" in flat
+    assert "**Unchanged:** part 1's EBR-Q1 to EBR-Q3 rows; every clause either look reads" in flat
+    assert ("Committed alone, docs and its pin test only, before the outcome look (part 12.1 is empty at "
+            "this commit).") in flat
+    # 11.8 sits after 11.7 and before part 12.
+    doc = _doc()
+    assert doc.index("### 11.7 2026-10-19") < doc.index("### 11.8 2026-10-19") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

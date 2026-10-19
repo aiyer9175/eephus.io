@@ -2104,6 +2104,32 @@ hitter i, season s (2016 on):
 - Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.8 2026-10-19: eWAR v3's displayed name (clause (i), owner decision EW3-19)
+
+- **Owner answer, as recorded** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-19): "eWAR v3 naming =
+  plain "eWAR", shown INSTEAD of v2 on player pages too". It arrived after this registration and
+  changes the label clause of part 1's EBR-Q0 row ("a column labelled eWAR v3 and never plain
+  eWAR"); the rest of that row, eWAR v3 on FanGraphs' frame with part 9.3 not requested, stands.
+  Part 1 gains this row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-19 (naming) | The displayed name of eWAR v3 (the label clause of EBR-Q0's recorded answer) | plain "eWAR", shown in place of eWAR v2, player pages included; this replaces "a column labelled eWAR v3 and never plain eWAR" in EBR-Q0's row and the naming sentences of parts 0 and 9.1 | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-19); recorded by queue task EBR_LOOK under its precondition (5) |
+
+- **What it touches: the displayed name only.** The name applies when the series serves, through
+  task EWAR_V3_ASSEMBLE (into which EW3-19 folded EBR_3_EWAR_V3) behind that task's own flag; until
+  then eWAR v2 stays the displayed eWAR (EPOCH-Q4, EBR-Q5). The ids stay `ewar_v3` (provider,
+  registry row, files), this document keeps calling the series eWAR v3, and the part labels of part
+  9.1 ("eWAR skill", "position (our ladder)", the eBR names) are unchanged. Whether the series later
+  becomes a training label (owner decisions EW3-17 and EW3-20) is for that label epoch's own
+  registration; this amendment changes nothing in part 9.1 on it.
+- **Unchanged:** part 1's EBR-Q1 to EBR-Q3 rows; every clause either look reads (parts 2 to 6, the
+  outcome look's frame, Leg E, the guards, the DP leg, BEM+, what part 6 licenses and the copy
+  sentences of 6.3; parts 9.2 to 9.6 and 11.1 to 11.7); the frames, statistics, thresholds,
+  margins, Holm families, twins, guards and dates.
+- Committed alone, docs and its pin test only, before the outcome look (part 12.1 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
