@@ -139,11 +139,11 @@ var out = keys.map(function (k) {
   var rec = side.players[k];
   var p = { player_key: k, mlbam_id: null, tools: { grades: {} }, statline: { is_pitcher: rec.side === "pit" } };
   var q = { player_key: "nobody", mlbam_id: rec.mlbam, tools: { grades: {} } };
-  return { key: k, chip: eToolsPlusChipHTML(p), tip: eToolsPlusTip(_eToolsPlusFor(p)), detail: eToolsPlusDetailHTML(p),
+  return { key: k, chip: "", tip: eToolsPlusTip(_eToolsPlusFor(p)), detail: "",
            by_mlbam: (_eToolsPlusFor(q) || {}).plus };
 });
 _ETOOLS_UI = false;
-out.push({ off: eToolsPlusChipHTML({ player_key: keys[0], tools: { grades: {} } }) });
+out.push({ off: "" });
 process.stdout.write(JSON.stringify(out));
 """
 
@@ -153,12 +153,13 @@ def test_prospx_chip_tooltip_detail_and_sort(tmp_path):
     assert '<option value="etools_plus">eTools+ (highest)</option>' in js
     assert 'state.sort === "etools_plus"' in js and '"xfv", "etools_plus",' in js
     assert 'fetch("/data/etools_plus.json"' in js
-    assert "${eToolsPlusDetailHTML(p)}" in js and "const etPlusChip = eToolsPlusChipHTML(p);" in js
+    # EW3-45: cards show ONE tools composite; the eT+ chip and detail block are gone
+    assert "eToolsPlusDetailHTML" not in js and "eToolsPlusChipHTML" not in js and "tg-etplus" not in js
     cmd, extra = _runtime()
     if cmd is None:
         pytest.skip("no JS runtime (node or VS Code) on this box")
     parts = [_extract(js, c) + ";" for c in _PX_OBJECTS] + [_const(js, c) for c in _PX_STATEMENTS]
-    parts += [_extract(js, f"function {n}(") for n in _PX_FUNCS + ["_indexETPlus", "eToolsPlusDetailHTML"]]
+    parts += [_extract(js, f"function {n}(") for n in _PX_FUNCS + ["_indexETPlus", "_eToolsPlusFor", "_eToolsPlusParts", "eToolsPlusTip"]]
     src = tmp_path / "px.js"
     src.write_text("\n".join(parts), encoding="utf-8")
     (tmp_path / "side.json").write_text(json.dumps(SIDE), encoding="utf-8")
@@ -173,12 +174,10 @@ def test_prospx_chip_tooltip_detail_and_sort(tmp_path):
     assert got[-1]["off"] == ""                          # eTools flag off: no chip
     for r in got[:-1]:
         rec = SIDE["players"][r["key"]]
-        assert f'<span class="tg-code">eT+</span><span class="tg-val">{rec["plus"]}</span>' in r["chip"]
         assert r["tip"].startswith(f"eTools+ {rec['plus']}:") and "not a forecast" in r["tip"]
         assert "Weight 0, contributes nothing:" in r["tip"]
         for t, w, _s, _p in rec["parts"]:
             assert f"{SIDE['keys'][t]} " in r["tip"] and f"(weight {round(w * 100)}%)" in r["tip"]
-        assert f'<span class="fv-badge size-sm">{rec["plus"]}</span>' in r["detail"]
         assert r["by_mlbam"] == rec["plus"] or rec["mlbam"] is None
         if rec["coverage"] < 1:
-            assert "Coverage" in r["tip"] and "coverage" in r["detail"]
+            assert "Coverage" in r["tip"]
