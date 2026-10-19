@@ -2179,14 +2179,17 @@ def grade_revisions(rows: list[dict]) -> dict:
 # ---------------------------------------------------------------------------
 # the dark preview (gate 7)
 # ---------------------------------------------------------------------------
-def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) -> Path:
+def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, stale: bool = False, log=print) -> Path:
     """The dark preview (gate 7; amendment 2 F4). Every tool row carries the consensus
     grade; a PASS tool also carries its eTool, the 80% band and each sub-driver's
     contribution in grade points. With the flip-prep reads (flip_doc), the F1.7
     construction is served as `etool` (re-centred on this cohort, or uncentred) with
     both values kept, plus the drift and promotion labels. The full detail always goes to
-    the .cache preview; ETOOLS_ON True also writes data/etools.json (served_doc)."""
+    the .cache preview; ETOOLS_ON True also writes data/etools.json (served_doc). With
+    stale (amendment 4, `--preview`), etools_stale adds the eFV-board players whose grade
+    predates the 2026 lists, for each tool whose stale read HOLDS, on the same fits."""
     rows = live_rows(log=log)
+    tool_fits: dict = {}
     verdicts = eval_doc.get("etools") or {}
     f1 = (flip_doc or {}).get("F1_drift_recentring") or {}
     f2 = (flip_doc or {}).get("F2_promotion") or {}
@@ -2203,6 +2206,7 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
         U = etool_residuals(gc, Z, lines)
         contrib_unc = np.where(np.isfinite(Z), U, 0.0) * np.asarray(ff["c"], float)[None, :]
         rc = contrib_rc = None
+        delta = np.zeros(len(adm))
         construction = "look"
         if tool in f1:
             mu_tr = np.array([f1[tool]["train_mean_residual"][j] for j in adm], float)
@@ -2210,6 +2214,8 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
             rc, contrib_rc = etool_centred(gc, Z, lines, ff["c"], delta)
             construction = f1[tool].get("serve") or "uncentred"
         sig = ff.get("sigma") or 0.0
+        tool_fits[tool] = {"admitted": adm, "lines": lines, "c": ff["c"], "sigma": sig,
+                           "delta": delta if construction == "recentred" else np.zeros(len(adm))}
         tool_meta[tool] = {"construction": construction, "admitted": adm,
                            "drifted": ((f1.get(tool) or {}).get("drift") or {}).get("drifted"),
                            "promotion": ((f2.get(tool) or {}).get("promotion") or {}).get("label"),
@@ -2251,6 +2257,10 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
         if tools_out:
             out_players[r["player_key"]] = {"name": r.get("name"), "mlbam": r["pid"], "side": r["side"],
                                             "tools": tools_out}
+    stale_info = None
+    if stale:
+        import etools_stale
+        stale_info = etools_stale.extend_preview(out_players, tool_fits, log=log)
     doc = {"generated_at": _now(), "item": ITEM, "flag_etools_on": ETOOLS_ON,
            "note": "the full detail; the site reads data/etools.json (written only while ETOOLS_ON)",
            "verdicts": {t: (verdicts.get(t) or {}).get("verdict") for t in TOOLS},
@@ -2258,7 +2268,7 @@ def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) ->
            "labels": {t: {"mlb": TOOLS[t]["mlb"], "um": TOOLS[t]["um"]} for t in TOOLS},
            "tools": tool_meta, "flip_prep_sha": (flip_doc or {}).get("amendment_sha"),
            "band": "80% band: eTool +/- 1.2816 x the fit's residual sd",
-           "players": out_players}
+           "stale_graded": stale_info, "players": out_players}
     PREVIEW_PATH.parent.mkdir(parents=True, exist_ok=True)
     PREVIEW_PATH.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
     log(f"  preview: {len(out_players)} players -> {PREVIEW_PATH}")
@@ -2296,6 +2306,10 @@ def served_doc(doc: dict) -> dict:
                            "consensus": rec.get("consensus"),
                            "band80": [_r(b, 1) for b in (rec.get("band80") or [])],
                            "drivers": [[d["key"], d["points"]] for d in rec.get("drivers") or []]}
+            if rec.get("grade_date"):
+                # amendment 4: a carried-forward (pre-2026) consensus grade and its date
+                tools[tool]["grade_date"] = rec["grade_date"]
+                tools[tool]["grade_age_months"] = rec.get("grade_age_months")
         if tools:
             players[pk] = {"mlbam": p.get("mlbam"), "side": p.get("side"), "tools": tools}
     meta = doc.get("tools") or {}
@@ -2308,6 +2322,7 @@ def served_doc(doc: dict) -> dict:
                           "admitted": (meta.get(t) or {}).get("admitted") or []}
                       for t in PASS_TOOLS if t in meta},
             "consensus_tools": [t for t in TOOLS if t not in PASS_TOOLS],
+            "stale_tools": list((doc.get("stale_graded") or {}).get("tools") or []),
             "driver_labels": dict(SUBDRIVER_LABELS),
             "players": players}
 
@@ -2846,7 +2861,7 @@ def main(argv=None) -> int:
         flip = json.loads(FLIP_PATH.read_text(encoding="utf-8")) if FLIP_PATH.exists() else None
         if flip is not None and not flip.get("F1_drift_recentring"):
             flip = None
-        build_preview(json.loads(EVAL_PATH.read_text(encoding="utf-8")), flip_doc=flip)
+        build_preview(json.loads(EVAL_PATH.read_text(encoding="utf-8")), flip_doc=flip, stale=True)
         return 0
     ap.print_help()
     return 0

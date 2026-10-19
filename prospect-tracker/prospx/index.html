@@ -34685,6 +34685,13 @@ function _eToolPts(v) {
 function _eToolBand(r) {
   return (r.band80 && r.band80.length === 2) ? `${Math.round(r.band80[0])} to ${Math.round(r.band80[1])}` : "";
 }
+// A carried-forward (pre-2026) consensus grade (eTools amendment 4): "scouting grade from Aug 2024".
+const _ETOOL_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function _eToolGradeDate(r) {
+  const d = r && r.grade_date;
+  if (!d || !/^\d{4}-\d{2}/.test(d)) return "";
+  return `scouting grade from ${_ETOOL_MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`;
+}
 function _eToolDrivers(r) {
   const labels = (_ETOOLS && _ETOOLS.labels) || {};
   return (r.drivers || []).map(d => ({ label: labels[d[0]] || d[0], points: d[1] }));
@@ -34713,8 +34720,10 @@ function toolGradeTip(p, cardKey, info, grades) {
   const moved = _eToolDrivers(r).map(d => `${d.label} ${_eToolPts(d.points)}`).join(", ");
   const start = r.consensus != null ? ` It starts from ${Number(r.consensus).toFixed(1)}, the FanGraphs, MLB Pipeline and Baseball America mean${moved ? `: ${moved}` : ", with no sub-driver on file"}.` : "";
   const band = _eToolBand(r);
+  const dated = _eToolGradeDate(r);
+  const stale = dated ? ` Its consensus is the last on file: ${dated}${r.grade_age_months != null ? `, ${Math.round(r.grade_age_months)} months old` : ""}; the stats are current.` : "";
   return `${name} ${r.shown} (${r.key}): the consensus grade moved by the prospect's own minor-league stats,`
-    + ` ${Number(r.etool).toFixed(1)} shown to the nearest grade. ${cons}${start}${band ? ` 80% band ${band}.` : ""}`;
+    + ` ${Number(r.etool).toFixed(1)} shown to the nearest grade. ${cons}${start}${stale}${band ? ` 80% band ${band}.` : ""}`;
 }
 // The block under the card's grade grid: each eTool with its band, its start
 // and the sub-drivers that moved it, in grade points.
@@ -34725,7 +34734,8 @@ function eToolsBlockHTML(p, keys, side) {
     const drivers = _eToolDrivers(r).map(d =>
       `<span class="etool-driver">${escapeHtml(d.label)} <b>${escapeHtml(_eToolPts(d.points))}</b></span>`).join("");
     const meta = (_ETOOLS && _ETOOLS.tools && _ETOOLS.tools[r.tool]) || {};
-    const centred = meta.construction === "recentred" ? " · centred on the 2026 board" : "";
+    const centred = (meta.construction === "recentred" ? " · centred on the 2026 board" : "")
+      + (_eToolGradeDate(r) ? ` · ${_eToolGradeDate(r)}` : "");
     return `<div class="etool-row">
       <span class="etool-name"><span class="g-term" data-term="${escapeHtml(r.key.toLowerCase())}">${escapeHtml(r.key)}</span> <span class="etool-what">${escapeHtml(_ETOOL_WHAT[r.tool] || "")}</span></span>
       <span class="etool-vals"><span class="fv-badge ${fvClass(String(r.shown))} size-sm">${r.shown}</span>

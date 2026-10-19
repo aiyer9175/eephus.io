@@ -1,0 +1,2256 @@
+{
+ "item": "ETOOLS_STALE_GRADES",
+ "tool": "etools_stale.py",
+ "spent": true,
+ "spent_at": "2026-10-19T21:06:04Z",
+ "started": "2026-10-19T21:05:59Z",
+ "amendment_doc": "docs/tools-2026-10/ETOOLS_AMENDMENT_4.md",
+ "amendment_sha": "dff62ea9",
+ "head": "d3824ea85c9f1b2059c069d6ed7d3ae5677981b5",
+ "survivorship": "L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to Y + 2 capped at 2024) does not require a debut, but it does require reaching Double-A or Triple-A for 300 PA (150 BF), itself a promotion outcome: among hitter rows with no debut by 2024 only about 37% carry it, and non-debuts who stalled below Double-A are on neither label. L_UM is accuracy AMONG PROMOTED players (amendment 1, A1).",
+ "constants": {
+  "B": 2000,
+  "seed": 20261023,
+  "stale_days": 365,
+  "read_date": "board year-05-01",
+  "reserved_list_years": [
+   2020,
+   2021
+  ],
+  "null_seed": 20261025,
+  "plant_seed": 20261026,
+  "plant_load": 0.25
+ },
+ "fresh_universe": {
+  "mlb_line_before_board_year": 1127,
+  "identity_ambiguous": 232,
+  "identity_disagrees_with_record": 177,
+  "identity_no_candidate": 282,
+  "no_record": 159,
+  "duplicate_player": 4,
+  "rows": 8898
+ },
+ "stale_universe": {
+  "identity_ambiguous": 399,
+  "mlb_line_before_board_year": 7062,
+  "identity_disagrees_with_record": 289,
+  "identity_no_candidate": 126,
+  "no_record": 425,
+  "duplicate_player": 5,
+  "rows": 6333,
+  "side_conflict_dropped": 2,
+  "tools_dropped_reserved_list_year": 15284,
+  "slots": 18234
+ },
+ "reproduction": {
+  "hit:mlb": {
+   "flip_prep": 0.3021,
+   "now": 0.3021
+  },
+  "hit:um": {
+   "flip_prep": 0.2737,
+   "now": 0.2737
+  },
+  "game_pwr:mlb": {
+   "flip_prep": 0.0328,
+   "now": 0.0328
+  },
+  "game_pwr:um": {
+   "flip_prep": 0.0393,
+   "now": 0.0393
+  },
+  "pitch_sel:mlb": {
+   "flip_prep": 0.0892,
+   "now": 0.0892
+  },
+  "pitch_sel:um": {
+   "flip_prep": 0.071,
+   "now": 0.071
+  },
+  "bat_ctrl:mlb": {
+   "flip_prep": 0.0921,
+   "now": 0.0921
+  },
+  "bat_ctrl:um": {
+   "flip_prep": 0.0803,
+   "now": 0.0803
+  },
+  "fb:mlb": {
+   "flip_prep": 0.0667,
+   "now": 0.0667
+  },
+  "fb:um": {
+   "flip_prep": 0.1759,
+   "now": 0.1759
+  },
+  "cmd:mlb": {
+   "flip_prep": 0.0405,
+   "now": 0.0405
+  },
+  "cmd:um": {
+   "flip_prep": 0.0732,
+   "now": 0.0732
+  }
+ },
+ "reads": {
+  "hit": {
+   "admitted": [
+    "k_rw",
+    "ppa_par",
+    "babip_rw"
+   ],
+   "rows": 2971,
+   "age12_rows": 2739,
+   "under12_rows": 232,
+   "second_label": "any",
+   "fold_c": {
+    "2012": [
+     -75.10701,
+     -0.88664,
+     -76.37042
+    ],
+    "2013": [
+     -74.26943,
+     -0.94842,
+     -72.48621
+    ],
+    "2014": [
+     -69.78072,
+     -1.03742,
+     -80.17269
+    ],
+    "2015": [
+     -64.77122,
+     -0.63484,
+     -86.61372
+    ],
+    "2016": [
+     -62.88687,
+     -0.45019,
+     -88.87598
+    ],
+    "2017": [
+     -72.3397,
+     -0.69951,
+     -99.48052
+    ],
+    "2018": [
+     -81.99529,
+     -0.70245,
+     -97.32853
+    ],
+    "2019": [
+     -86.52081,
+     -1.26162,
+     -105.30889
+    ],
+    "2022": [
+     -79.1019,
+     -0.50562,
+     -66.4294
+    ],
+    "2023": [
+     -78.58225,
+     -0.47915,
+     -61.23265
+    ],
+    "2024": [
+     -80.13605,
+     -1.0688,
+     -66.67306
+    ]
+   },
+   "rows_with_a_subdriver_age12": 2207,
+   "mean_shift_age12": -0.729,
+   "sd_shift_age12": 6.469,
+   "S12": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 694,
+     "players": 365,
+     "rho_a": 0.7694,
+     "rho_b": 0.3522,
+     "d": 0.4171,
+     "lb95": 0.3403,
+     "ci95": [
+      0.3286,
+      0.5059
+     ],
+     "sd": 0.04509,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 951,
+     "players": 515,
+     "rho_a": 0.7842,
+     "rho_b": 0.3086,
+     "d": 0.4756,
+     "lb95": 0.4043,
+     "ci95": [
+      0.3897,
+      0.5579
+     ],
+     "sd": 0.04253,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 694,
+     "players": 365,
+     "rho_a": 0.7674,
+     "rho_b": 0.3522,
+     "d": 0.4152,
+     "lb95": 0.3388,
+     "ci95": [
+      0.3275,
+      0.504
+     ],
+     "sd": 0.04508,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 951,
+     "players": 515,
+     "rho_a": 0.7829,
+     "rho_b": 0.3086,
+     "d": 0.4743,
+     "lb95": 0.4025,
+     "ci95": [
+      0.3881,
+      0.5563
+     ],
+     "sd": 0.04255,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 10,
+     "players": 10
+    },
+    "um": {
+     "computable": false,
+     "n": 74,
+     "players": 74
+    },
+    "any": {
+     "computable": true,
+     "n": 140,
+     "players": 140,
+     "rho_a": 0.7358,
+     "rho_b": 0.2481,
+     "d": 0.4877,
+     "lb95": 0.3681,
+     "ci95": [
+      0.3474,
+      0.6304
+     ],
+     "sd": 0.07035,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": false,
+     "n": 115,
+     "players": 69
+    },
+    "um": {
+     "computable": true,
+     "n": 768,
+     "players": 410,
+     "rho_a": 0.768,
+     "rho_b": 0.3668,
+     "d": 0.4012,
+     "lb95": 0.3326,
+     "ci95": [
+      0.3201,
+      0.4856
+     ],
+     "sd": 0.04179,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 1091,
+     "players": 611,
+     "rho_a": 0.7825,
+     "rho_b": 0.3083,
+     "d": 0.4743,
+     "lb95": 0.41,
+     "ci95": [
+      0.4,
+      0.5496
+     ],
+     "sd": 0.0389,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": false,
+     "n": 61,
+     "players": 58
+    },
+    "um": {
+     "computable": true,
+     "n": 315,
+     "players": 298,
+     "rho_a": 0.748,
+     "rho_b": 0.3712,
+     "d": 0.3768,
+     "lb95": 0.2941,
+     "ci95": [
+      0.2815,
+      0.4657
+     ],
+     "sd": 0.04788,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 483,
+     "players": 463,
+     "rho_a": 0.7835,
+     "rho_b": 0.3344,
+     "d": 0.4491,
+     "lb95": 0.3816,
+     "ci95": [
+      0.3707,
+      0.5216
+     ],
+     "sd": 0.03928,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 44,
+     "players": 35
+    },
+    "um": {
+     "computable": true,
+     "n": 379,
+     "players": 221,
+     "rho_a": 0.773,
+     "rho_b": 0.3003,
+     "d": 0.4727,
+     "lb95": 0.3641,
+     "ci95": [
+      0.3458,
+      0.5922
+     ],
+     "sd": 0.06299,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 468,
+     "players": 272,
+     "rho_a": 0.7881,
+     "rho_b": 0.2658,
+     "d": 0.5223,
+     "lb95": 0.4148,
+     "ci95": [
+      0.3966,
+      0.6387
+     ],
+     "sd": 0.06164,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "zero_comparator": {
+    "mlb": null,
+    "um": 0.0,
+    "any": 0.0
+   },
+   "null": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 694,
+     "players": 365,
+     "rho_a": 0.1183,
+     "rho_b": 0.3522,
+     "d": -0.2339,
+     "lb95": -0.3112,
+     "ci95": [
+      -0.3253,
+      -0.135
+     ],
+     "sd": 0.04908,
+     "p": 0.999999,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 951,
+     "players": 515,
+     "rho_a": 0.1058,
+     "rho_b": 0.3086,
+     "d": -0.2028,
+     "lb95": -0.2722,
+     "ci95": [
+      -0.2855,
+      -0.1155
+     ],
+     "sd": 0.04258,
+     "p": 0.999999,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "planted": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 694,
+     "players": 365,
+     "rho_a": 0.4879,
+     "rho_b": 0.3522,
+     "d": 0.1356,
+     "lb95": 0.0894,
+     "ci95": [
+      0.0819,
+      0.1877
+     ],
+     "sd": 0.02724,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 951,
+     "players": 515,
+     "rho_a": 0.4468,
+     "rho_b": 0.3086,
+     "d": 0.1382,
+     "lb95": 0.0995,
+     "ci95": [
+      0.0922,
+      0.1824
+     ],
+     "sd": 0.02241,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "verdict": "HOLDS",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 1385,
+     "players": 602,
+     "rho_a": 0.6,
+     "rho_b": 0.2979,
+     "d": 0.3021,
+     "lb95": 0.2565,
+     "ci95": [
+      0.2485,
+      0.3544
+     ],
+     "sd": 0.02747,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2704,
+     "players": 1334,
+     "rho_a": 0.7095,
+     "rho_b": 0.4358,
+     "d": 0.2737,
+     "lb95": 0.247,
+     "ci95": [
+      0.2419,
+      0.3052
+     ],
+     "sd": 0.01593,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  },
+  "game_pwr": {
+   "admitted": [
+    "iso_rw",
+    "bb_fb"
+   ],
+   "rows": 2970,
+   "age12_rows": 2738,
+   "under12_rows": 232,
+   "second_label": "any",
+   "fold_c": {
+    "2012": [
+     67.76674,
+     2.50884
+    ],
+    "2013": [
+     62.60234,
+     2.52915
+    ],
+    "2014": [
+     72.73134,
+     2.71773
+    ],
+    "2015": [
+     67.04793,
+     2.52417
+    ],
+    "2016": [
+     81.87038,
+     2.64491
+    ],
+    "2017": [
+     80.51908,
+     2.58878
+    ],
+    "2018": [
+     84.84365,
+     2.82324
+    ],
+    "2019": [
+     80.95049,
+     3.21108
+    ],
+    "2022": [
+     85.22688,
+     2.77765
+    ],
+    "2023": [
+     78.33891,
+     3.09274
+    ],
+    "2024": [
+     91.10452,
+     3.33175
+    ]
+   },
+   "rows_with_a_subdriver_age12": 2201,
+   "mean_shift_age12": 0.695,
+   "sd_shift_age12": 2.548,
+   "S12": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 693,
+     "players": 364,
+     "rho_a": 0.5572,
+     "rho_b": 0.4632,
+     "d": 0.094,
+     "lb95": 0.0665,
+     "ci95": [
+      0.062,
+      0.125
+     ],
+     "sd": 0.01656,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 950,
+     "players": 514,
+     "rho_a": 0.5475,
+     "rho_b": 0.3945,
+     "d": 0.1529,
+     "lb95": 0.1258,
+     "ci95": [
+      0.1216,
+      0.1808
+     ],
+     "sd": 0.0152,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 693,
+     "players": 364,
+     "rho_a": 0.557,
+     "rho_b": 0.4632,
+     "d": 0.0938,
+     "lb95": 0.0663,
+     "ci95": [
+      0.0619,
+      0.125
+     ],
+     "sd": 0.01658,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 950,
+     "players": 514,
+     "rho_a": 0.5477,
+     "rho_b": 0.3945,
+     "d": 0.1532,
+     "lb95": 0.1262,
+     "ci95": [
+      0.1217,
+      0.1815
+     ],
+     "sd": 0.01522,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 10,
+     "players": 10
+    },
+    "um": {
+     "computable": false,
+     "n": 74,
+     "players": 74
+    },
+    "any": {
+     "computable": true,
+     "n": 140,
+     "players": 140,
+     "rho_a": 0.6142,
+     "rho_b": 0.454,
+     "d": 0.1601,
+     "lb95": 0.102,
+     "ci95": [
+      0.092,
+      0.2262
+     ],
+     "sd": 0.03382,
+     "p": 1e-06,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": false,
+     "n": 115,
+     "players": 69
+    },
+    "um": {
+     "computable": true,
+     "n": 767,
+     "players": 409,
+     "rho_a": 0.5612,
+     "rho_b": 0.4716,
+     "d": 0.0896,
+     "lb95": 0.0631,
+     "ci95": [
+      0.059,
+      0.118
+     ],
+     "sd": 0.0153,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 1090,
+     "players": 610,
+     "rho_a": 0.5518,
+     "rho_b": 0.3978,
+     "d": 0.154,
+     "lb95": 0.13,
+     "ci95": [
+      0.1256,
+      0.1805
+     ],
+     "sd": 0.01421,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": false,
+     "n": 61,
+     "players": 58
+    },
+    "um": {
+     "computable": true,
+     "n": 314,
+     "players": 297,
+     "rho_a": 0.5553,
+     "rho_b": 0.4973,
+     "d": 0.058,
+     "lb95": 0.0206,
+     "ci95": [
+      0.0153,
+      0.0939
+     ],
+     "sd": 0.02045,
+     "p": 0.002282,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 482,
+     "players": 462,
+     "rho_a": 0.5763,
+     "rho_b": 0.4361,
+     "d": 0.1402,
+     "lb95": 0.1085,
+     "ci95": [
+      0.1042,
+      0.1721
+     ],
+     "sd": 0.0175,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 44,
+     "players": 35
+    },
+    "um": {
+     "computable": true,
+     "n": 379,
+     "players": 221,
+     "rho_a": 0.5422,
+     "rho_b": 0.4191,
+     "d": 0.1232,
+     "lb95": 0.0827,
+     "ci95": [
+      0.0752,
+      0.1675
+     ],
+     "sd": 0.02349,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 468,
+     "players": 272,
+     "rho_a": 0.5217,
+     "rho_b": 0.3602,
+     "d": 0.1615,
+     "lb95": 0.1224,
+     "ci95": [
+      0.1171,
+      0.204
+     ],
+     "sd": 0.02187,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "zero_comparator": {
+    "mlb": null,
+    "um": 0.0,
+    "any": 0.0
+   },
+   "null": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 693,
+     "players": 364,
+     "rho_a": 0.3978,
+     "rho_b": 0.4632,
+     "d": -0.0655,
+     "lb95": -0.0906,
+     "ci95": [
+      -0.0966,
+      -0.0353
+     ],
+     "sd": 0.0154,
+     "p": 0.999989,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 950,
+     "players": 514,
+     "rho_a": 0.3433,
+     "rho_b": 0.3945,
+     "d": -0.0513,
+     "lb95": -0.0749,
+     "ci95": [
+      -0.0784,
+      -0.0255
+     ],
+     "sd": 0.01381,
+     "p": 0.999897,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "planted": {
+    "mlb": {
+     "computable": false,
+     "n": 105,
+     "players": 63
+    },
+    "um": {
+     "computable": true,
+     "n": 693,
+     "players": 364,
+     "rho_a": 0.5426,
+     "rho_b": 0.4632,
+     "d": 0.0794,
+     "lb95": 0.0536,
+     "ci95": [
+      0.049,
+      0.1079
+     ],
+     "sd": 0.01501,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 950,
+     "players": 514,
+     "rho_a": 0.4776,
+     "rho_b": 0.3945,
+     "d": 0.0831,
+     "lb95": 0.0607,
+     "ci95": [
+      0.0567,
+      0.1085
+     ],
+     "sd": 0.01324,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": true
+   },
+   "verdict": "HOLDS",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 1385,
+     "players": 602,
+     "rho_a": 0.5722,
+     "rho_b": 0.5394,
+     "d": 0.0328,
+     "lb95": 0.0159,
+     "ci95": [
+      0.0129,
+      0.0511
+     ],
+     "sd": 0.0098,
+     "p": 0.000411,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2705,
+     "players": 1334,
+     "rho_a": 0.6334,
+     "rho_b": 0.5941,
+     "d": 0.0393,
+     "lb95": 0.0298,
+     "ci95": [
+      0.0282,
+      0.0494
+     ],
+     "sd": 0.00548,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  },
+  "pitch_sel": {
+   "admitted": [
+    "pbp_swing"
+   ],
+   "rows": 365,
+   "age12_rows": 119,
+   "under12_rows": 246,
+   "second_label": null,
+   "fold_c": {
+    "2023": [
+     -5.00429
+    ],
+    "2024": [
+     -5.66509
+    ]
+   },
+   "rows_with_a_subdriver_age12": 112,
+   "mean_shift_age12": -0.941,
+   "sd_shift_age12": 3.896,
+   "S12": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 22,
+     "players": 22
+    },
+    "holds": false
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 22,
+     "players": 22
+    },
+    "holds": false
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 6,
+     "players": 6
+    },
+    "um": {
+     "computable": false,
+     "n": 63,
+     "players": 63
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": false,
+     "n": 9,
+     "players": 6
+    },
+    "um": {
+     "computable": false,
+     "n": 85,
+     "players": 63
+    },
+    "holds": false
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 22,
+     "players": 22
+    },
+    "holds": false
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 0,
+     "players": 0
+    },
+    "um": {
+     "computable": false,
+     "n": 0,
+     "players": 0
+    },
+    "holds": false
+   },
+   "zero_comparator": {
+    "mlb": null,
+    "um": null
+   },
+   "null": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 22,
+     "players": 22
+    },
+    "holds": false
+   },
+   "planted": {
+    "holds": false,
+    "computable": false
+   },
+   "verdict": "NOT COMPUTABLE",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 234,
+     "players": 144,
+     "rho_a": 0.585,
+     "rho_b": 0.4958,
+     "d": 0.0892,
+     "lb95": 0.0448,
+     "ci95": [
+      0.0369,
+      0.1426
+     ],
+     "sd": 0.02693,
+     "p": 0.000465,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 649,
+     "players": 424,
+     "rho_a": 0.6271,
+     "rho_b": 0.5561,
+     "d": 0.071,
+     "lb95": 0.0477,
+     "ci95": [
+      0.0445,
+      0.0985
+     ],
+     "sd": 0.01401,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  },
+  "bat_ctrl": {
+   "admitted": [
+    "pbp_contact"
+   ],
+   "rows": 398,
+   "age12_rows": 136,
+   "under12_rows": 262,
+   "second_label": null,
+   "fold_c": {
+    "2023": [
+     6.28587
+    ],
+    "2024": [
+     5.955
+    ]
+   },
+   "rows_with_a_subdriver_age12": 120,
+   "mean_shift_age12": -3.46,
+   "sd_shift_age12": 4.161,
+   "S12": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 24,
+     "players": 24
+    },
+    "holds": false
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 24,
+     "players": 24
+    },
+    "holds": false
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 6,
+     "players": 6
+    },
+    "um": {
+     "computable": false,
+     "n": 65,
+     "players": 65
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": false,
+     "n": 9,
+     "players": 6
+    },
+    "um": {
+     "computable": false,
+     "n": 89,
+     "players": 65
+    },
+    "holds": false
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 24,
+     "players": 24
+    },
+    "holds": false
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 0,
+     "players": 0
+    },
+    "um": {
+     "computable": false,
+     "n": 0,
+     "players": 0
+    },
+    "holds": false
+   },
+   "zero_comparator": {
+    "mlb": null,
+    "um": null
+   },
+   "null": {
+    "mlb": {
+     "computable": false,
+     "n": 3,
+     "players": 3
+    },
+    "um": {
+     "computable": false,
+     "n": 24,
+     "players": 24
+    },
+    "holds": false
+   },
+   "planted": {
+    "holds": false,
+    "computable": false
+   },
+   "verdict": "NOT COMPUTABLE",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 237,
+     "players": 144,
+     "rho_a": 0.475,
+     "rho_b": 0.3828,
+     "d": 0.0921,
+     "lb95": 0.0612,
+     "ci95": [
+      0.0545,
+      0.1309
+     ],
+     "sd": 0.01905,
+     "p": 1e-06,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 663,
+     "players": 429,
+     "rho_a": 0.5575,
+     "rho_b": 0.4772,
+     "d": 0.0803,
+     "lb95": 0.0627,
+     "ci95": [
+      0.0598,
+      0.1012
+     ],
+     "sd": 0.01057,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  },
+  "fb": {
+   "admitted": [
+    "k_rw",
+    "pbf_raw",
+    "pbp_swstr"
+   ],
+   "rows": 2638,
+   "age12_rows": 2382,
+   "under12_rows": 256,
+   "second_label": "mlb",
+   "fold_c": {
+    "2012": [
+     127.6225,
+     3.61369,
+     2.65858
+    ],
+    "2013": [
+     130.69083,
+     3.53089,
+     2.97667
+    ],
+    "2014": [
+     125.66053,
+     3.59502,
+     2.88818
+    ],
+    "2015": [
+     130.08816,
+     3.33145,
+     3.21041
+    ],
+    "2016": [
+     120.29104,
+     3.8028,
+     3.16386
+    ],
+    "2017": [
+     153.24777,
+     3.66011,
+     3.02271
+    ],
+    "2018": [
+     151.63652,
+     3.24304,
+     2.41256
+    ],
+    "2019": [
+     149.95117,
+     3.52411,
+     2.52284
+    ],
+    "2022": [
+     127.52466,
+     4.21654,
+     1.72057
+    ],
+    "2023": [
+     122.88133,
+     3.98344,
+     1.86392
+    ],
+    "2024": [
+     108.25008,
+     3.69325,
+     1.33054
+    ]
+   },
+   "rows_with_a_subdriver_age12": 1797,
+   "mean_shift_age12": -0.83,
+   "sd_shift_age12": 4.709,
+   "S12": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.2312,
+     "rho_b": 0.2785,
+     "d": -0.0473,
+     "lb95": -0.1794,
+     "ci95": [
+      -0.2059,
+      0.1134
+     ],
+     "sd": 0.08031,
+     "p": 0.721991,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.3838,
+     "rho_b": 0.1333,
+     "d": 0.2505,
+     "lb95": 0.1942,
+     "ci95": [
+      0.1855,
+      0.3101
+     ],
+     "sd": 0.03242,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.4091,
+     "rho_b": 0.095,
+     "d": 0.3141,
+     "lb95": 0.267,
+     "ci95": [
+      0.2583,
+      0.3663
+     ],
+     "sd": 0.02767,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.2325,
+     "rho_b": 0.2785,
+     "d": -0.046,
+     "lb95": -0.179,
+     "ci95": [
+      -0.2029,
+      0.1142
+     ],
+     "sd": 0.08011,
+     "p": 0.71706,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.3857,
+     "rho_b": 0.1333,
+     "d": 0.2524,
+     "lb95": 0.1967,
+     "ci95": [
+      0.1879,
+      0.3113
+     ],
+     "sd": 0.03207,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.4081,
+     "rho_b": 0.095,
+     "d": 0.3131,
+     "lb95": 0.2663,
+     "ci95": [
+      0.2585,
+      0.3648
+     ],
+     "sd": 0.02747,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 15,
+     "players": 15
+    },
+    "um": {
+     "computable": true,
+     "n": 116,
+     "players": 116,
+     "rho_a": 0.5021,
+     "rho_b": 0.3857,
+     "d": 0.1164,
+     "lb95": 0.0343,
+     "ci95": [
+      0.014,
+      0.2061
+     ],
+     "sd": 0.04866,
+     "p": 0.008365,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 178,
+     "players": 178,
+     "rho_a": 0.4775,
+     "rho_b": 0.2146,
+     "d": 0.2629,
+     "lb95": 0.183,
+     "ci95": [
+      0.1708,
+      0.3577
+     ],
+     "sd": 0.04708,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": true,
+     "n": 220,
+     "players": 136,
+     "rho_a": 0.2235,
+     "rho_b": 0.25,
+     "d": -0.0266,
+     "lb95": -0.1519,
+     "ci95": [
+      -0.1793,
+      0.1292
+     ],
+     "sd": 0.07768,
+     "p": 0.633932,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 768,
+     "players": 432,
+     "rho_a": 0.4042,
+     "rho_b": 0.1747,
+     "d": 0.2294,
+     "lb95": 0.1804,
+     "ci95": [
+      0.1714,
+      0.2832
+     ],
+     "sd": 0.029,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 1044,
+     "players": 591,
+     "rho_a": 0.4209,
+     "rho_b": 0.1176,
+     "d": 0.3033,
+     "lb95": 0.2593,
+     "ci95": [
+      0.2511,
+      0.3477
+     ],
+     "sd": 0.02477,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": true,
+     "n": 127,
+     "players": 123,
+     "rho_a": 0.2401,
+     "rho_b": 0.2321,
+     "d": 0.008,
+     "lb95": -0.139,
+     "ci95": [
+      -0.1681,
+      0.1897
+     ],
+     "sd": 0.08986,
+     "p": 0.464402,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 311,
+     "players": 297,
+     "rho_a": 0.4114,
+     "rho_b": 0.1804,
+     "d": 0.231,
+     "lb95": 0.1619,
+     "ci95": [
+      0.1485,
+      0.313
+     ],
+     "sd": 0.04167,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 455,
+     "players": 438,
+     "rho_a": 0.4184,
+     "rho_b": 0.1072,
+     "d": 0.3112,
+     "lb95": 0.256,
+     "ci95": [
+      0.2446,
+      0.3685
+     ],
+     "sd": 0.0312,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 78,
+     "players": 50
+    },
+    "um": {
+     "computable": true,
+     "n": 341,
+     "players": 194,
+     "rho_a": 0.3739,
+     "rho_b": 0.0938,
+     "d": 0.2801,
+     "lb95": 0.1947,
+     "ci95": [
+      0.1742,
+      0.3751
+     ],
+     "sd": 0.0504,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 411,
+     "players": 234,
+     "rho_a": 0.3878,
+     "rho_b": 0.0639,
+     "d": 0.3239,
+     "lb95": 0.2457,
+     "ci95": [
+      0.2314,
+      0.4094
+     ],
+     "sd": 0.04529,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "zero_comparator": {
+    "mlb": 0.0,
+    "um": 0.0,
+    "any": 0.0
+   },
+   "null": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.2093,
+     "rho_b": 0.2785,
+     "d": -0.0692,
+     "lb95": -0.1761,
+     "ci95": [
+      -0.1954,
+      0.0719
+     ],
+     "sd": 0.06783,
+     "p": 0.846092,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.1262,
+     "rho_b": 0.1333,
+     "d": -0.0071,
+     "lb95": -0.0598,
+     "ci95": [
+      -0.0681,
+      0.0522
+     ],
+     "sd": 0.03123,
+     "p": 0.589636,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.0771,
+     "rho_b": 0.095,
+     "d": -0.0179,
+     "lb95": -0.0659,
+     "ci95": [
+      -0.0749,
+      0.0407
+     ],
+     "sd": 0.02975,
+     "p": 0.726676,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "planted": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.3555,
+     "rho_b": 0.2785,
+     "d": 0.077,
+     "lb95": -0.0127,
+     "ci95": [
+      -0.0304,
+      0.1765
+     ],
+     "sd": 0.05318,
+     "p": 0.07379,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.2473,
+     "rho_b": 0.1333,
+     "d": 0.114,
+     "lb95": 0.0726,
+     "ci95": [
+      0.0636,
+      0.1612
+     ],
+     "sd": 0.02486,
+     "p": 2e-06,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.18,
+     "rho_b": 0.095,
+     "d": 0.085,
+     "lb95": 0.0465,
+     "ci95": [
+      0.039,
+      0.1315
+     ],
+     "sd": 0.0232,
+     "p": 0.000125,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "verdict": "DOES NOT HOLD; UNDERPOWERED",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 1932,
+     "players": 896,
+     "rho_a": 0.3599,
+     "rho_b": 0.2933,
+     "d": 0.0667,
+     "lb95": 0.0352,
+     "ci95": [
+      0.028,
+      0.1039
+     ],
+     "sd": 0.01936,
+     "p": 0.000287,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2919,
+     "players": 1513,
+     "rho_a": 0.4701,
+     "rho_b": 0.2942,
+     "d": 0.1759,
+     "lb95": 0.1526,
+     "ci95": [
+      0.1485,
+      0.2016
+     ],
+     "sd": 0.01362,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  },
+  "cmd": {
+   "admitted": [
+    "bb_rw",
+    "pbp_fstrike",
+    "pbf_par"
+   ],
+   "rows": 2637,
+   "age12_rows": 2382,
+   "under12_rows": 255,
+   "second_label": "mlb",
+   "fold_c": {
+    "2012": [
+     -44.02968,
+     3.50538,
+     -0.83164
+    ],
+    "2013": [
+     -44.38133,
+     3.5037,
+     -0.79081
+    ],
+    "2014": [
+     -46.61669,
+     3.40015,
+     -0.94041
+    ],
+    "2015": [
+     -41.06141,
+     3.49634,
+     -1.35429
+    ],
+    "2016": [
+     -45.62803,
+     3.6051,
+     -1.18486
+    ],
+    "2017": [
+     -47.16396,
+     3.60112,
+     -1.19928
+    ],
+    "2018": [
+     -51.2506,
+     3.23856,
+     -0.85685
+    ],
+    "2019": [
+     -52.30993,
+     3.05836,
+     -0.59925
+    ],
+    "2022": [
+     -42.41896,
+     1.50119,
+     -0.92175
+    ],
+    "2023": [
+     -43.59638,
+     1.84798,
+     -0.95775
+    ],
+    "2024": [
+     -45.32525,
+     2.82827,
+     -1.18021
+    ]
+   },
+   "rows_with_a_subdriver_age12": 1797,
+   "mean_shift_age12": -0.211,
+   "sd_shift_age12": 2.97,
+   "S12": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.3845,
+     "rho_b": 0.3591,
+     "d": 0.0254,
+     "lb95": -0.0525,
+     "ci95": [
+      -0.0666,
+      0.1153
+     ],
+     "sd": 0.04506,
+     "p": 0.28661,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.5784,
+     "rho_b": 0.4198,
+     "d": 0.1586,
+     "lb95": 0.1173,
+     "ci95": [
+      0.1123,
+      0.202
+     ],
+     "sd": 0.02356,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.6156,
+     "rho_b": 0.3896,
+     "d": 0.2261,
+     "lb95": 0.1877,
+     "ci95": [
+      0.182,
+      0.2695
+     ],
+     "sd": 0.02243,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_uncentred": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.388,
+     "rho_b": 0.3591,
+     "d": 0.0289,
+     "lb95": -0.0468,
+     "ci95": [
+      -0.0599,
+      0.1158
+     ],
+     "sd": 0.04471,
+     "p": 0.259171,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.5784,
+     "rho_b": 0.4198,
+     "d": 0.1586,
+     "lb95": 0.1179,
+     "ci95": [
+      0.1127,
+      0.2021
+     ],
+     "sd": 0.02344,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.6132,
+     "rho_b": 0.3896,
+     "d": 0.2236,
+     "lb95": 0.1857,
+     "ci95": [
+      0.1792,
+      0.2677
+     ],
+     "sd": 0.02218,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "U12": {
+    "mlb": {
+     "computable": false,
+     "n": 15,
+     "players": 15
+    },
+    "um": {
+     "computable": true,
+     "n": 116,
+     "players": 116,
+     "rho_a": 0.6021,
+     "rho_b": 0.4683,
+     "d": 0.1337,
+     "lb95": 0.0786,
+     "ci95": [
+      0.0668,
+      0.1958
+     ],
+     "sd": 0.03301,
+     "p": 2.5e-05,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 178,
+     "players": 178,
+     "rho_a": 0.501,
+     "rho_b": 0.2787,
+     "d": 0.2223,
+     "lb95": 0.163,
+     "ci95": [
+      0.1556,
+      0.2885
+     ],
+     "sd": 0.03481,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "ALL": {
+    "mlb": {
+     "computable": true,
+     "n": 220,
+     "players": 136,
+     "rho_a": 0.4003,
+     "rho_b": 0.3738,
+     "d": 0.0266,
+     "lb95": -0.0475,
+     "ci95": [
+      -0.063,
+      0.1084
+     ],
+     "sd": 0.04375,
+     "p": 0.271789,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 768,
+     "players": 432,
+     "rho_a": 0.5877,
+     "rho_b": 0.4316,
+     "d": 0.1561,
+     "lb95": 0.1222,
+     "ci95": [
+      0.1165,
+      0.1948
+     ],
+     "sd": 0.02004,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 1044,
+     "players": 591,
+     "rho_a": 0.6039,
+     "rho_b": 0.374,
+     "d": 0.2299,
+     "lb95": 0.1943,
+     "ci95": [
+      0.1879,
+      0.2686
+     ],
+     "sd": 0.0202,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_age_365_729": {
+    "mlb": {
+     "computable": true,
+     "n": 127,
+     "players": 123,
+     "rho_a": 0.3461,
+     "rho_b": 0.2723,
+     "d": 0.0738,
+     "lb95": -0.0267,
+     "ci95": [
+      -0.0478,
+      0.1852
+     ],
+     "sd": 0.05957,
+     "p": 0.107635,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 311,
+     "players": 297,
+     "rho_a": 0.6201,
+     "rho_b": 0.4838,
+     "d": 0.1363,
+     "lb95": 0.0967,
+     "ci95": [
+      0.0889,
+      0.1768
+     ],
+     "sd": 0.02249,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 455,
+     "players": 438,
+     "rho_a": 0.6468,
+     "rho_b": 0.4292,
+     "d": 0.2176,
+     "lb95": 0.1769,
+     "ci95": [
+      0.1708,
+      0.2573
+     ],
+     "sd": 0.02269,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "S12_age_730_plus": {
+    "mlb": {
+     "computable": false,
+     "n": 78,
+     "players": 50
+    },
+    "um": {
+     "computable": true,
+     "n": 341,
+     "players": 194,
+     "rho_a": 0.5318,
+     "rho_b": 0.3531,
+     "d": 0.1787,
+     "lb95": 0.1145,
+     "ci95": [
+      0.1052,
+      0.253
+     ],
+     "sd": 0.03724,
+     "p": 1e-06,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 411,
+     "players": 234,
+     "rho_a": 0.573,
+     "rho_b": 0.3355,
+     "d": 0.2375,
+     "lb95": 0.175,
+     "ci95": [
+      0.1647,
+      0.3091
+     ],
+     "sd": 0.03651,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "zero_comparator": {
+    "mlb": 0.0,
+    "um": 0.0,
+    "any": 0.0
+   },
+   "null": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.1687,
+     "rho_b": 0.3591,
+     "d": -0.1904,
+     "lb95": -0.2966,
+     "ci95": [
+      -0.323,
+      -0.0574
+     ],
+     "sd": 0.06717,
+     "p": 0.9977,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.2613,
+     "rho_b": 0.4198,
+     "d": -0.1585,
+     "lb95": -0.2041,
+     "ci95": [
+      -0.2117,
+      -0.1048
+     ],
+     "sd": 0.02779,
+     "p": 1.0,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.2517,
+     "rho_b": 0.3896,
+     "d": -0.1379,
+     "lb95": -0.1783,
+     "ci95": [
+      -0.186,
+      -0.0904
+     ],
+     "sd": 0.02444,
+     "p": 1.0,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "planted": {
+    "mlb": {
+     "computable": true,
+     "n": 205,
+     "players": 125,
+     "rho_a": 0.3982,
+     "rho_b": 0.3591,
+     "d": 0.0391,
+     "lb95": -0.0217,
+     "ci95": [
+      -0.0321,
+      0.1057
+     ],
+     "sd": 0.0351,
+     "p": 0.132915,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 652,
+     "players": 355,
+     "rho_a": 0.4646,
+     "rho_b": 0.4198,
+     "d": 0.0448,
+     "lb95": 0.0137,
+     "ci95": [
+      0.0084,
+      0.0788
+     ],
+     "sd": 0.01762,
+     "p": 0.005527,
+     "draws": 2000
+    },
+    "any": {
+     "computable": true,
+     "n": 866,
+     "players": 476,
+     "rho_a": 0.4047,
+     "rho_b": 0.3896,
+     "d": 0.0151,
+     "lb95": -0.0119,
+     "ci95": [
+      -0.0173,
+      0.0463
+     ],
+     "sd": 0.01576,
+     "p": 0.168379,
+     "draws": 2000
+    },
+    "holds": false
+   },
+   "verdict": "DOES NOT HOLD; UNDERPOWERED",
+   "fresh_reference": {
+    "mlb": {
+     "computable": true,
+     "n": 1931,
+     "players": 895,
+     "rho_a": 0.4175,
+     "rho_b": 0.377,
+     "d": 0.0405,
+     "lb95": 0.0232,
+     "ci95": [
+      0.0195,
+      0.0612
+     ],
+     "sd": 0.01067,
+     "p": 7.3e-05,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2917,
+     "players": 1511,
+     "rho_a": 0.6119,
+     "rho_b": 0.5386,
+     "d": 0.0732,
+     "lb95": 0.0603,
+     "ci95": [
+      0.058,
+      0.0872
+     ],
+     "sd": 0.00751,
+     "p": 0.0,
+     "draws": 2000
+    }
+   }
+  }
+ },
+ "serve": {
+  "hit": true,
+  "game_pwr": true,
+  "pitch_sel": false,
+  "bat_ctrl": false,
+  "fb": false,
+  "cmd": false
+ },
+ "inputs_sha256_start": {
+  "prospects.db": "178ed3f537202fd0f359d6f6786f34123cb751005f1cc4e56c563cf77862bebf",
+  "debuts.json": "448bdd95c36f8109c2a1c7d2d39e9ffe0caf7e78539124c711d50576fb66edea",
+  "inactive.json": "ba432a31275f7472a6eb3721ff7f21997072ba24b5bdca6bb5029bbb538f426c",
+  "timeseries.json": "6910400bc5143f81d56390f75a5eb608ef9b519f8d618d25ec6ba4ece7bf41bb",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "5213a49548cd01b223531d12a4d6f1acdd677291618e25924bc709fe99bc196c",
+  "xfv.json": "31400017209e551365ff955e31d4839aabd6853136dc751f87014ca1e91344ba"
+ },
+ "inputs_sha256_end": {
+  "prospects.db": "178ed3f537202fd0f359d6f6786f34123cb751005f1cc4e56c563cf77862bebf",
+  "debuts.json": "448bdd95c36f8109c2a1c7d2d39e9ffe0caf7e78539124c711d50576fb66edea",
+  "inactive.json": "ba432a31275f7472a6eb3721ff7f21997072ba24b5bdca6bb5029bbb538f426c",
+  "timeseries.json": "6910400bc5143f81d56390f75a5eb608ef9b519f8d618d25ec6ba4ece7bf41bb",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "5213a49548cd01b223531d12a4d6f1acdd677291618e25924bc709fe99bc196c",
+  "xfv.json": "31400017209e551365ff955e31d4839aabd6853136dc751f87014ca1e91344ba"
+ },
+ "seconds": 41.4
+}

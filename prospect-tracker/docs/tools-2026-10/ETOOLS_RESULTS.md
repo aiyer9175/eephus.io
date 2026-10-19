@@ -351,3 +351,34 @@ section 10; the verdicts:
 - **eARM: NO SUB-DRIVER; UNDERPOWERED.** The MLB-label test is not computable (62 players);
   minors analog d +0.061 (LB -0.0004, q 0.13), short of admission, and the planted check fails.
 - Null comparators do not clear; zero comparators read exactly 0. Nothing served moved.
+
+## eTools for stale-graded players (amendment 4, registered dff62ea9, run once)
+
+Owner decision EW3-46 (2026-10-19). The served eTools covered only players with a tool grade on a
+2026 list (1,632); the eFV board carries older grades forward (justin_riemer: FanGraphs only,
+2024-08-01, hit 70). `docs/tools-2026-10/ETOOLS_AMENDMENT_4.md` re-ran the eTool pass statistic on
+development rows whose consensus grade predates the board-year lists (the latest grade of each
+outlet before the window, never a 2020 or 2021 list grade), the fit trained on fresh rows and
+re-centred on the fresh test-year rows (the served construction), deciding on rows whose grade was
+12 or more months old at May 1 of the board year. Stale-graded players rarely debut, so the MLB
+label is not computable for the hitters (63 players); there the second label is L_ANY (amendment 2
+F2.1). The full read is the dated note in the amendment's section 8; the verdicts:
+
+- **eHIT HOLDS:** L_UM +0.417 (LB +0.340, 365 players), L_ANY +0.476 (LB +0.404). The gain is
+  larger than on fresh rows (+0.274) and grows with the grade's age.
+- **ePOW HOLDS:** L_UM +0.094 (LB +0.067), L_ANY +0.153 (LB +0.126).
+- **eFB and eCMD: DOES NOT HOLD; UNDERPOWERED.** Both gain on the minors labels (eFB +0.251, eCMD
+  +0.159 on L_UM), but on the MLB label (125 players) eFB reads -0.047 (LB -0.179) and eCMD +0.025
+  (LB -0.053), and a planted gain of the registered size is not recovered there.
+- **eSEL and eBAT: NOT COMPUTABLE** (22 and 24 players on L_UM).
+- Zero comparators read exactly 0; no null comparator clears; planted recovery succeeds for hit
+  and game power.
+
+Served: `data/etools.json` gains eHIT and ePOW for 287 eFV-board hitters (574 eTools), each with
+`grade_date` and `grade_age_months`; the 1,632 fresh players' records are unchanged. eHIT moves
+from the stale consensus by -1.33 on average (sd 7.17; 133 of 287 by 5 or more), ePOW by -0.43 (sd
+2.67; 17 by 5 or more). justin_riemer: eHIT 62 (61.57, from 70), ePOW 34 (from 35). The card
+tooltip and eTools block name the scouting grade's date ("scouting grade from Aug 2024"). eTools+
+follows by its registered pool (every player in `data/etools.json`): 1,116 hitters (was 829); the
+pool's ePOW mean falls from 47.25 to 46.49, so 755 of the 829 existing hitters' eTools+ rise by 1
+or 2. Stale-graded pitchers keep the consensus fastball and command grades.
