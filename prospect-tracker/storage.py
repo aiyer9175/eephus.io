@@ -5603,7 +5603,13 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-10-04"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-10-15"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-10-19 for the 2026-10-15 served-model moves (owner EW3-10 eFV v5 COMBINED and
+# EFV-REFIT-1 variant RT, flag 8ae40518): the served= term began hashing the re-fit weights
+# (2bf83f80) and moved efv_v2@bcc9b0dd -> efv_v2@22ec625f, but neither flip restamped the pin
+# or bumped this epoch. metric_snapshots held no rank row dated after 2026-10-02, so the bump
+# drops no rank history and no served movement chip changes; xfv_history.json was already
+# rebuilt on the new basis (2026-10-15 regen).
 # Bumped 2026-10-04 for the fWAR epoch's owed P5 re-derivation (owner answer B7-P5, option A;
 # commit c40c0dd0): eFV v2's DS-08 weights were re-fit once on the frozen fWAR label, so the
 # served= term's hash moved (efv_v2@f903b813 -> efv_v2@bcc9b0dd) and every V2-served grade
@@ -5758,7 +5764,7 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
                            "|label=fwar@2026-10-02-57bf90f7143e"
-                           "|injsides=pit|served=efv_v2@bcc9b0dd"
+                           "|injsides=pit|served=efv_v2@22ec625f"
                            "|section=label_graded")
 # label fwar@2026-10-02-0341299c20ec -> fwar@2026-10-02-57bf90f7143e on 2026-10-15: the
 # plate-appearance amendment of the frozen vintage (EWAR_P0_VINTAGE_PA, owner answer EW3-19
