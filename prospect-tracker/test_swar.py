@@ -632,6 +632,15 @@ def test_the_preview_carries_the_registered_fields_and_the_census(built):
             assert x["parts"][v]["test"] == pytest.approx(x["fwar"] + x["parts"][v]["delta"], abs=2e-6)
             assert "lb_dwar0" in x["parts"][v]
     assert blk["checks"]["chain_gap_max_abs"] <= B.CHAIN_TOL
+    # part 11.2.1's bases, same season only: wRAA, Fld + Frm and war0
+    for h in blk["hitters"]:
+        w = h["parts"]["bat"]["wraa"]
+        if h["parts"]["bat"]["woba"] is not None and w is not None:
+            assert w == pytest.approx((h["parts"]["bat"]["woba"] - blk["lg_woba"]) / blk["woba_scale"] * h["pa"],
+                                      abs=0.05 * max(1.0, h["pa"] / 100.0))
+        assert "b0" in h["parts"]["fld"]
+    assert all("war0" in x for x in blk["pitchers"])
+    assert any(x["war0"] is not None for x in blk["pitchers"])
     # the chain ran once on the actual counts and once per home-run variant
     inp = FixtureInputs()
     B.build([SEASON], inp=inp, out_path=None, log=lambda *a: None)

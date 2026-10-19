@@ -3,19 +3,42 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""The eWAR v3 skill look's lab (candidate parts 3 to 6), registered in
-docs/ebr-2026-09-30/EBR_GATE.md parts 9.5 and 9.6, which this file implements
-with their parameters exactly and does not extend.
+"""The eWAR v3 skill look's lab (candidate parts 3 to 6, PE-P and PE-H),
+registered in docs/ebr-2026-09-30/EBR_GATE.md parts 9.5 and 9.6 as amended by
+part 11 (11.2 to 11.7), which this file implements with their parameters
+exactly and does not extend.
 
     python tools/swar_lab.py --dry-run          # synthetic fixtures with nulls, a temp dir only
     python -u tools/swar_lab.py --out docs/ebr-2026-09-30/swar_eval.json   # THE LOOK, once
     python -u tools/swar_lab.py --holdout       # THE HOLDOUT, once, a later day
 
-THE QUESTION, per candidate part: does fWAR(Y) plus the part's re-centred delta
-rank published fWAR(Y+1) better than fWAR(Y) does? Pairs (Y, Y+1) for
+THE QUESTION, per candidate part, since part 11.2 (owner decision EW3-23):
+does the part's own component in season Y (B0, the actual arm of the part's
+delta function) plus the part's re-centred delta rank the NEXT season's
+REALIZED runs of that component better than B0 does? Pairs (Y, Y+1) for
 predictor seasons 2021 to 2024 (2020 out on both sides); hitters 200 PA and
-pitchers 50 IP in both seasons; the target published fWAR(Y+1) per PA or per
-IP (the rate cell) and in total (the cumulative cell).
+pitchers 50 IP in both seasons. The targets (11.2.1): batting runs (wRAA on
+the season's solved weights) for the batting part and PE-H (plus the realized
+starter wear W); RA9* (park, the club's defense, inherited and bequeathed
+runners) as runs prevented above average for the pitching part (S2, S2b);
+RSB, runs saved over a league-average reliever, for PE-P; an independent
+fielding source for the fielding part (11.2.2: Baseball-Reference runs_field
+for S3; for S3t the system each configuration leaves out, DRS, Statcast and
+UZR, the cell's gap the mean of the per-system gaps inside one bootstrap; DRS
+for the catcher component S3c on catchers with 300 or more innings at C).
+The position part keeps the ladder gate's out-of-sample dMAE against
+FanGraphs' positional adjustment (11.2.3). Every part also passes the team
+guard (11.2.4): roster-weighted series against the next season's club runs
+and wins, NON-INFERIOR under a player-clustered and a club-clustered
+bootstrap. Published fWAR(Y+1) is the secondary estimand (11.2.5), scored as
+part 9.5 first registered it and deciding nothing. The amended machinery's
+readers and pure arithmetic live in tools/swar_targets.py.
+
+THE PART 9.5 TEXT BELOW describes the secondary estimand's cells; the primary
+cells keep every one of its rules (Holm per family, the margin, the twin, the
+precedence, convention v2 primary with v1 agreeing in sign, B and the seed)
+with B0 in place of fWAR(Y), the primary target in place of fWAR(Y+1) and the
+amended B1 (one k per component, B1_K_AMENDED).
 
 WHAT IS FIXED HERE, BY REGISTRATION. Each candidate part is its own Holm
 family over its own cells (position {H-rate, H-cum}; batting {HEM+ H-rate,
@@ -67,9 +90,12 @@ era transport clause applies to each arm's own rate cell. Admission mirrors the
 batting arms: one qualifying arm enters; when both qualify S2 enters unless
 S2b's rate gap over S2's (same pairs, same bootstrap, outside the Holm family)
 has lo95 above 0 (PITCHING_ARM_RULE, the default of owner question PB-Q1).
-This lab still scores every cell on published fWAR(Y+1); part 11.2.10's
-amendment work (the primary targets, RA9*(Y+1) for pitching, which the preview
-now carries per pitcher-season as ra9_star) lands before the look.
+Part 11.2.10's amendment work is implemented here (EWV3_LAB_AMENDED_TARGETS):
+the primary targets, B0, B0r, the amended B1, the independent fielding source,
+the team guard, the position part's dMAE rule and the secondary block, with
+PE-P and PE-H (11.4), S3t (11.5, eligible by owner decision EW3-37, 11.7) and
+S3c (11.6). Every input is read and assembled BEFORE scoring begins, so a
+missing or malformed input is a STOP, never a VOID.
 
 CRASH PROTOCOL. The operator tees stdout and stderr to the writer's output
 directory before the run. An exception after scoring began writes a VOID
@@ -96,9 +122,10 @@ for _p in (str(ROOT), str(ROOT / "tools")):
         sys.path.insert(0, _p)
 
 import swar  # noqa: E402  (pure: the version stamp and the K constants, by reference)
+import swar_targets as T  # noqa: E402  (part 11.2's targets, readers and team guard)
 
-LAB_VERSION = "swar_lab/1"
-REGISTRATION = "docs/ebr-2026-09-30/EBR_GATE.md parts 9.5 and 9.6"
+LAB_VERSION = "swar_lab/2"   # swar_lab/2: part 11's amended targets (EWV3_LAB_AMENDED_TARGETS)
+REGISTRATION = "docs/ebr-2026-09-30/EBR_GATE.md parts 9.5 and 9.6, as amended by part 11 (11.2 to 11.7)"
 DEFAULT_RECORD = ROOT / "docs" / "ebr-2026-09-30" / "swar_eval.json"
 PREVIEW_PATH = ROOT / ".cache" / "swar" / "preview" / "swar.json"
 PBP_PLAYS_DIR = ROOT / ".cache" / "pbp_corpus" / "plays"
@@ -172,6 +199,8 @@ RATE, CUM = "rate", "cum"
 PART_POSITION, PART_BATTING, PART_PITCHING, PART_FIELDING = (
     "position", "batting", "pitching", "fielding")
 PARTS = (PART_POSITION, PART_BATTING, PART_PITCHING, PART_FIELDING)
+#: The pitch-economy candidate parts (part 11.4), each its own Holm family.
+PART_PE_P, PART_PE_H = "pe_p", "pe_h"
 
 #: Per part: its side, and its cells as {cell: (series, kind)}. The pitching
 #: part's series is the home-run variant the HR-arm clause picks (PITCH below).
@@ -210,9 +239,9 @@ RATE_CUM = {PART_POSITION: ("H-rate", "H-cum"), PART_PITCHING: ("P-rate", "P-cum
 
 #: B1 is a clause of WIN (components) for the shrunk-skill parts only; the
 #: ladder is no shrink (part 9.5).
-B1_PARTS = (PART_BATTING, PART_PITCHING, PART_FIELDING)
-#: Era transport is a clause of WIN (components) for the pitching part only.
-TRANSPORT_PARTS = (PART_PITCHING,)
+B1_PARTS = (PART_BATTING, PART_PITCHING, PART_FIELDING, PART_PE_P, PART_PE_H)
+#: Era transport is a clause of WIN (components) for the pitching part and PE-P (11.4.4).
+TRANSPORT_PARTS = (PART_PITCHING, PART_PE_P)
 
 # --------------------------------------------------------------------------
 # dispositions (part 9.5, orchestrator ruling X1), pure
@@ -672,6 +701,41 @@ class LabInputs:
         import pandas as pd
         return pd.read_parquet(path, columns=["game_pk", "batter_id", "pitcher_id", "event_type"])
 
+    # -- part 11's inputs, through swar_targets.Readers (caches only)
+    def readers(self) -> "T.Readers":
+        if getattr(self, "_readers", None) is None:
+            self._readers = T.Readers()
+        return self._readers
+
+    def fielding_by_player(self) -> dict:
+        return self.readers().fielding_by_player()
+
+    def triangulation_runs(self) -> dict:
+        return self.readers().triangulation_runs()
+
+    def pe_pitchers(self, season: int) -> dict:
+        return self.readers().pitch_economy_pitchers(int(season))
+
+    def pe_hitters(self, season: int) -> Optional[dict]:
+        return self.readers().pitch_economy_hitters(int(season))
+
+    def team_exposure(self) -> dict:
+        return self.readers().team_exposure()
+
+    def ladder_records(self):
+        return self.readers().ladder_records()
+
+    def input_meta(self) -> dict:
+        import war_source
+        meta = dict(self.readers().meta)
+        meta["preview_sha256"] = T.sha256_of(PREVIEW_PATH)
+        for side in ("bat", "pit"):
+            meta.setdefault("bwar_cache_sha256", {})[side] = T.sha256_of(war_source._cache_path(side))
+        return meta
+
+    def pe_wear(self, season: int) -> float:
+        return self.readers().pitch_economy_wear(int(season))
+
 
 def _num(v) -> Optional[float]:
     try:
@@ -688,12 +752,17 @@ def season_rows(payload: dict) -> dict:
     out: dict = {}
     for s, blk in (payload.get("seasons") or {}).items():
         hit, pit = {}, {}
+        rpw = _num(blk.get("rpw"))
         for r in blk.get("hitters") or []:
             parts = r.get("parts") or {}
             hit[int(r["mlbam"])] = {
                 "pa": _num(r.get("pa")), "fwar": _num(r.get("fwar")), "name": r.get("name", ""),
                 "pitcher_batter": bool(r.get("pitcher_batter")),
-                "tests": {p: _num((parts.get(p) or {}).get("test")) for p in swar.HITTER_PARTS}}
+                "tests": {p: _num((parts.get(p) or {}).get("test")) for p in swar.HITTER_PARTS},
+                # part 11.2.1: the bases and the re-centred deltas (runs)
+                "rpw": rpw, "wraa": _num((parts.get("bat") or {}).get("wraa")),
+                "fld_b0": _num((parts.get("fld") or {}).get("b0")),
+                "d": {p: _num((parts.get(p) or {}).get("d")) for p in swar.HITTER_PARTS}}
         for r in blk.get("pitchers") or []:
             parts = r.get("parts") or {}
             pit[int(r["mlbam"])] = {
@@ -701,7 +770,11 @@ def season_rows(payload: dict) -> dict:
                 "sigma": _num(r.get("sigma")), "nopp": bool(r.get("nopp")),
                 "tests": {v: _num((parts.get(v) or {}).get("test")) for v in swar.HR_VARIANTS + PB_VARIANTS},
                 "dwar0": {v: _num((parts.get(v) or {}).get("dwar0")) for v in swar.HR_VARIANTS},
-                "lb_dwar0": {v: _num((parts.get(v) or {}).get("lb_dwar0")) for v in swar.HR_VARIANTS}}
+                "lb_dwar0": {v: _num((parts.get(v) or {}).get("lb_dwar0")) for v in swar.HR_VARIANTS},
+                # part 11.2.1: the base war0, RA9*, games and the re-pinned Deltas (wins)
+                "rpw": rpw, "war0": _num(r.get("war0")), "ra9_star": _num(r.get("ra9_star")),
+                "g": _num(r.get("g")), "gs": _num(r.get("gs")),
+                "delta": {v: _num((parts.get(v) or {}).get("delta")) for v in swar.HR_VARIANTS + PB_VARIANTS}}
         out[int(s)] = {HIT: hit, PIT: pit}
     return out
 
@@ -795,7 +868,7 @@ def build_pairs(rows: Mapping[int, dict], side: str, seasons: Iterable[int]) -> 
                 continue
             out.append({"mlbam": mid, "y": y, "n0": n0, "n1": n1, "fwar0": r0["fwar"],
                         "fwar1": r1["fwar"], "tests": dict(r0["tests"]), "m": m,
-                        "sigma": r0.get("sigma")})
+                        "sigma": r0.get("sigma"), "c_inn": r0.get("c_inn")})
     return out
 
 
@@ -1010,8 +1083,9 @@ def leg_agreement(rows: dict, seasons: Iterable[int], variant: str, bwar: Mappin
 def leg_team_wins(rows: dict, seasons: Iterable[int], variant: str, shares: Mapping,
                   standings: Mapping) -> dict:
     """Team-season sums of each test value (the other side at fWAR) against
-    same-season wins and, on full-schedule pairs only, next-season wins.
-    Computed only inside the look run; printed only to its output and record."""
+    same-season wins. The next-season wins leg of part 9.5 is replaced by the
+    team guard (11.2.4) for every part it decides. Computed only inside the look
+    run; printed only to its output and record."""
     series_names = ["fwar"] + list(swar.HITTER_PARTS) + ["pit"]
     sums: dict = {}
     unallocated = 0
@@ -1038,7 +1112,7 @@ def leg_team_wins(rows: dict, seasons: Iterable[int], variant: str, shares: Mapp
                             v = r["fwar"]
                         tot[s] += w * (r["fwar"] if v is None else v)
     out = {"unallocated_rows": unallocated}
-    for label, shift in (("same_season_wins", 0), ("next_season_wins", 1)):
+    for label, shift in (("same_season_wins", 0),):
         xs = {s: [] for s in series_names}
         ws = []
         for (y, t), tot in sorted(sums.items()):
@@ -1254,12 +1328,37 @@ def write_record(record: dict, path: Path) -> Path:
     return path
 
 
+def secondary_cells() -> dict:
+    """The secondary estimand's families (11.2.5): part 9.5's cells as first
+    registered, with the cells of the parts registered after it (S3t when
+    eligible, S3c on the catcher frame, PE-P per IP, PE-H per PA)."""
+    fld = dict(PART_CELLS[PART_FIELDING])
+    if S3T_ELIGIBLE:
+        fld.update({"S3t H-rate": ("fldt", RATE), "S3t H-cum": ("fldt", CUM)})
+    fld.update({"C-rate": ("cat", RATE), "C-cum": ("cat", CUM)})
+    return {PART_POSITION: PART_CELLS[PART_POSITION], PART_BATTING: PART_CELLS[PART_BATTING],
+            PART_PITCHING: PART_CELLS[PART_PITCHING], PART_FIELDING: fld,
+            PART_PE_P: {"side": PIT, "cells": {"PE-P rate": (PEP, RATE), "PE-P total": (PEP, CUM)}},
+            PART_PE_H: {"side": HIT, "cells": {"PE-H rate": ("peh", RATE), "PE-H total": ("peh", CUM)}}}
+
+
+def _secondary_frame(key: str, pairs: list[dict]) -> list[dict]:
+    """The catcher component's cells read the catcher frame (11.6.2)."""
+    if key == "cat":
+        return [p for p in pairs if float(p.get("c_inn") or 0.0) >= T.CATCHER_MIN_INN]
+    return pairs
+
+
 def score_block(rows: dict, seasons: tuple, boot: int,
                 log: Callable, early_pairs_p: Optional[list] = None,
-                hr_choice: Optional[dict] = None, label: str = "look") -> dict:
-    """The cells of one block (the look's 2021 to 2024, or the holdout's 2025):
-    floors first, the HR-arm clause first among decisions, then gaps,
-    Holm per part, dispositions and admission."""
+                hr_choice: Optional[dict] = None, label: str = "look",
+                spec: Optional[Mapping] = None) -> dict:
+    """The fWAR-target cells of one block (the look's 2021 to 2024, or the
+    holdout's 2025), since part 11.2 the secondary estimand: floors first, the
+    HR-arm clause first among decisions (or the primary's, passed in), then
+    gaps, Holm per part and dispositions. Admission never reads this block."""
+    fams = spec if spec is not None else {p: PART_CELLS[p] for p in PARTS}
+    fams = {p: (v if "side" in v else {"side": PART_CELLS[p]["side"], "cells": v}) for p, v in fams.items()}
     pairs_h = build_pairs(rows, HIT, seasons)
     pairs_p = build_pairs(rows, PIT, seasons)
     early_p = early_pairs_p if early_pairs_p is not None else build_pairs(rows, PIT, TRANSPORT_EARLY_SEASONS)
@@ -1268,13 +1367,13 @@ def score_block(rows: dict, seasons: tuple, boot: int,
 
     # -- score every cell (both home-run variants on the pitcher side); draws kept
     recs: dict = {}
-    for i, part in enumerate(PARTS):
-        spec = PART_CELLS[part]
+    for i, (part, spec) in enumerate(fams.items()):
         for j, (cell, (key, kind)) in enumerate(spec["cells"].items()):
             keys = (list(swar.HR_VARIANTS) if key == PITCH
-                    else list(PB_VARIANTS) if key == PITCH_B else [key])
+                    else list(PB_VARIANTS) if key == PITCH_B
+                    else ["pep_" + v for v in swar.HR_VARIANTS] if key == PEP else [key])
             for v in keys:
-                pairs = pairs_p if spec["side"] == PIT else pairs_h
+                pairs = _secondary_frame(key, pairs_p if spec["side"] == PIT else pairs_h)
                 recs[(part, cell, v)] = score_cell(part, cell, v, kind, spec["side"], pairs,
                                                    boot, SEED, SEED + 101 * (i + 1) + 7 * j)
     # -- floors first: sd, half-width, MDE95, before any gap
@@ -1301,16 +1400,16 @@ def score_block(rows: dict, seasons: tuple, boot: int,
     variant = hr_choice["variant"]
 
     def _series(key: str) -> str:
-        return variant if key == PITCH else pb_key(variant) if key == PITCH_B else key
+        return (variant if key == PITCH else pb_key(variant) if key == PITCH_B
+                else "pep_" + variant if key == PEP else key)
 
     # -- gaps and clauses
     cells: dict = {}
-    for part in PARTS:
-        spec = PART_CELLS[part]
+    for part, spec in fams.items():
         fam = {}
         for cell, (key, kind) in spec["cells"].items():
             rec = finish_cell(recs[(part, cell, _series(key))])
-            if part == PART_PITCHING and kind == RATE:
+            if part in TRANSPORT_PARTS and kind == RATE:
                 ge = point_gap_v2(early_p, _series(key), None, RATE, PIT)
                 rec["transport_gap_2016_2018"] = ge
                 rec["transport"] = transport_holds(ge, rec.get("gap"))
@@ -1318,6 +1417,8 @@ def score_block(rows: dict, seasons: tuple, boot: int,
         if part == PART_PITCHING:
             for r_cell, c_cell in PITCHING_ARMS.values():
                 fam[c_cell]["transport"] = fam[r_cell].get("transport")
+        if part == PART_PE_P:
+            fam["PE-P total"]["transport"] = fam["PE-P rate"].get("transport")
         hr = holm({c: r.get("p_one_sided") for c, r in fam.items()})
         for c, r in fam.items():
             r["holm_family"] = list(fam)
@@ -1335,7 +1436,7 @@ def score_block(rows: dict, seasons: tuple, boot: int,
             if len(hits) != 1:
                 raise RuntimeError(f"{part} {c}: {len(hits)} dispositions")
 
-    _p(log, f"[{label}] GAPS AND DISPOSITIONS (convention v2 against B0; v1 must agree in sign)")
+    _p(log, f"[{label}] GAPS AND DISPOSITIONS (convention v2 against fWAR(Y); v1 must agree in sign)")
     for part, fam in cells.items():
         for c, r in fam.items():
             _p(log, f"  {part:9s} {c:13s} n {r['n_pairs']:5d} gap {_fmt(r.get('gap'))} "
@@ -1389,10 +1490,1042 @@ def admissions(cells: dict, pairs_h: list, boot: int, answers: Mapping, log: Cal
     return out, contrast
 
 
+# --------------------------------------------------------------------------
+# part 11.2: the primary targets, B0, B0r, the amended B1, the team guard
+# --------------------------------------------------------------------------
+
+#: The component frames of the primary cells (11.2.1, 11.4.4, 11.5.2, 11.6.2):
+#: side, the floor's exposure (hitters 200 PA, pitchers 50 IP in both seasons)
+#: and the cell's own exposure (per PA, per IP, or per game pitched for PE-P).
+COMPONENTS = {
+    "bat": {"side": HIT, "n": "pa"},
+    "pit": {"side": PIT, "n": "ip"},
+    "fld": {"side": HIT, "n": "pa"},
+    "fldt:DRS": {"side": HIT, "n": "pa"},
+    "fldt:Statcast": {"side": HIT, "n": "pa"},
+    "fldt:UZR": {"side": HIT, "n": "pa"},
+    "cat": {"side": HIT, "n": "pa"},
+    "pep": {"side": PIT, "n": "g"},
+    "peh": {"side": HIT, "n": "pa"},
+}
+#: S3t's systems (11.5.2): (component frame, the arm rebuilt without the system).
+S3T_SYSTEMS = (("DRS", "fldt:DRS", "X_DRS"), ("Statcast", "fldt:Statcast", "X_SC"),
+               ("UZR", "fldt:UZR", "X_UZR"))
+S3T_CONFIGS = ("FULL", "X_DRS", "X_SC", "X_UZR")
+
+#: Owner decision EW3-37 (EBR_GATE.md 11.7): S3t is scored, by override of 11.5.2's
+#: eligibility sentence. False would drop its two cells (k = 4 with S3c).
+S3T_ELIGIBLE = True
+
+#: The primary families: {family: {cell: (frames, test key, kind)}}, where frames
+#: names one component or the S3t systems. The pitching test keys resolve to the
+#: home-run term the HR-arm clause chose (PITCH, PITCH_B), and PE-P's too (PEP).
+PEP = "__pe_p__"
+PRIMARY_FAMILIES: Mapping[str, dict] = {
+    PART_BATTING: {"HEM+ H-rate": ("bat", "bat", RATE), "HEM+ H-cum": ("bat", "bat", CUM),
+                   "xHEM+ H-rate": ("bat", "batx", RATE), "xHEM+ H-cum": ("bat", "batx", CUM)},
+    PART_PITCHING: {"P-rate": ("pit", PITCH, RATE), "P-cum": ("pit", PITCH, CUM),
+                    "S2b P-rate": ("pit", PITCH_B, RATE), "S2b P-cum": ("pit", PITCH_B, CUM)},
+    PART_FIELDING: {"H-rate": ("fld", "fld", RATE), "H-cum": ("fld", "fld", CUM),
+                    "S3t H-rate": ("S3t", "fldt", RATE), "S3t H-cum": ("S3t", "fldt", CUM),
+                    "C-rate": ("cat", "cat", RATE), "C-cum": ("cat", "cat", CUM)},
+    PART_PE_P: {"PE-P rate": ("pep", PEP, RATE), "PE-P total": ("pep", PEP, CUM)},
+    PART_PE_H: {"PE-H rate": ("peh", "peh", RATE), "PE-H total": ("peh", "peh", CUM)},
+}
+PRIMARY_PARTS = tuple(PRIMARY_FAMILIES)
+#: B1's component k per component frame (the S3t systems take the fielding k, 11.5.2).
+B1_COMPONENT = {"bat": "bat", "pit": "pit", "fld": "fld", "S3t": "fld", "cat": "cat",
+                "pep": "pep", "peh": "peh"}
+#: The arms of each family with arms: {arm: (rate cell, total cell, guard series)}.
+FIELDING_ARMS = {"S3": ("H-rate", "H-cum", "fld"), "S3t": ("S3t H-rate", "S3t H-cum", "fldt")}
+CATCHER_CELLS = ("C-rate", "C-cum", "cat")
+#: The one comparative sentence's [component's runs] (11.2.6, 11.4.5, 11.5.3, 11.6.3).
+COMPONENT_RUNS = {
+    "bat": "batting runs",
+    "pit": "runs allowed (adjusted for park, defense and inherited runners)",
+    "fld": "fielding runs (from Baseball-Reference's runs_field)",
+    "fldt": "fielding runs (from the system the arm leaves out: DRS, Statcast or UZR)",
+    "cat": "fielding runs (from Sports Info Solutions' DRS)",
+    "pep": ("runs saved over a league-average reliever (adjusted for park, defense and "
+            "inherited runners)"),
+    "peh": "batting runs plus starter-wear runs",
+}
+AMENDED_SENTENCES = {
+    WIN_COMPONENTS: ("ranked the next season's realized {x} better than the season's own {x} did, "
+                     "and better than a uniformly shrunk version of them"),
+    WIN_REGRESSION: "ranked the next season's realized {x} better than the season's own {x} did",
+    EQUIVALENT: "ranked the next season's realized {x} about as well as the season's own {x} did",
+    LOSS: "ranked the next season's realized {x} less well than the season's own {x} did",
+    UNRESOLVED: None,
+}
+POSITION_SENTENCE = ("on held-out seasons, our ladder matched position switchers' realized defensive "
+                     "and positional runs more closely than FanGraphs' positional adjustment did")
+
+
+def amended_sentence(component: str, disp: str, gap=None, lo95=None, hi95=None, n=None,
+                     seasons=PREDICTOR_SEASONS) -> Optional[str]:
+    """The one sentence copy may carry for a part's rate cell on the primary
+    target (11.2.6), with its frame and numbers; None for UNRESOLVED."""
+    base = AMENDED_SENTENCES[counts_as(disp)]
+    if base is None:
+        return None
+    base = base.format(x=COMPONENT_RUNS[component])
+    if component == "cat":
+        who = "catchers with 300 or more innings at C and 200 or more PA"
+    elif component in ("pit", "pep"):
+        who = "pitchers with 50 or more IP"
+    else:
+        who = "hitters with 200 or more PA"
+    nums = ""
+    if gap is not None and lo95 is not None and hi95 is not None and n is not None:
+        nums = f", Spearman gap {gap:+.3f} (95 percent interval {lo95:+.3f} to {hi95:+.3f}, {n:,} pairs)"
+    return f"{base}, on {seasons[0]} to {seasons[-1]} seasons, {who} in both seasons{nums}"
+
+
+# ---- B1, amended (11.2.1): one k per component, from B0 and the target only
+
+#: FIXED by EWV3_LAB_AMENDED_TARGETS from B0 and each component's own target
+#: (no candidate part, delta or test value read), with the rule of fit_b1:
+#: pooled Pearson r of the B0 rate in Y and the target rate in Y+1 on the
+#: predictor pairs at the floors, r clamped [0.05, 0.95], k = hm (1 - r) / r,
+#: hm the mean harmonic exposure, rounded. tools/swar_b1_fit.py --amended
+#: reproduces it. The frozen fWAR constants B1_K serve the secondary estimand only.
+#: Fit output, 2026-10-19, for the record (exposure: PA, IP, or games pitched):
+#:   bat  pairs 800  players 380  r 0.4676  hm 471.4 PA   k 537 PA
+#:   pit  pairs 670  players 356  r 0.2146  hm 109.9 IP   k 402 IP
+#:   fld  pairs 800  players 380  r 0.2522  hm 471.4 PA   k 1398 PA
+#:   cat  pairs 102  players 49   r 0.4547  hm 366.5 PA   k 440 PA
+#:   pep  pairs 670  players 356  r 0.2327  hm 39.5 G     k 130 G
+#:   peh  pairs 262  players 262  r 0.5202  hm 463.0 PA   k 427 PA   (the 2018 to 2019 pair)
+#: (preview vintage 2026-10-02-57bf90f7143e, preview built 2026-10-19.)
+B1_K_AMENDED: dict = {"bat": 537.0, "pit": 402.0, "fld": 1398.0, "cat": 440.0, "pep": 130.0, "peh": 427.0}
+B1_AMENDED_FIT_LOG: dict = {
+    "fixed_on": "2026-10-19",
+    "task": "EWV3_LAB_AMENDED_TARGETS",
+    "producer": "python tools/swar_b1_fit.py --amended",
+    "rule": ("fit_b1's rule on the component's own pairs: pooled Pearson r of the B0 rate in Y and "
+             "the target rate in Y+1 at the floors, r clamped [0.05, 0.95], k = hm (1 - r) / r, hm the "
+             "mean harmonic exposure of the pairs, rounded to a whole unit; B0 and the target only"),
+    "shrink_target": ("m: the season's exposure-weighted mean B0 rate over the component's rows at the "
+                      "floor (the catcher frame for cat)"),
+    "floors": {"hit_pa": 200.0, "pit_ip": 50.0, "catcher_inn_c": 300.0},
+    "fwar_vintage_id": "2026-10-02-57bf90f7143e",
+    "preview_sha256": "cc01fbf462f10ea26b254ba74729766a1ee8e9439c7cb3c10c2305e39f076bef",
+    "bat": {"target": "wRAA per PA in Y+1", "fit_seasons": [2016, 2017, 2018], "n_pairs": 800,
+            "n_players": 380, "r": 0.4676, "hm": 471.4, "k": 537.0},
+    "pit": {"target": "RA9* runs prevented per IP in Y+1", "fit_seasons": [2016, 2017, 2018],
+            "n_pairs": 670, "n_players": 356, "r": 0.2146, "hm": 109.9, "k": 402.0},
+    "fld": {"target": "Baseball-Reference runs_field per PA in Y+1", "fit_seasons": [2016, 2017, 2018],
+            "n_pairs": 800, "n_players": 380, "r": 0.2522, "hm": 471.4, "k": 1398.0},
+    "cat": {"target": "DRS per PA in Y+1, catchers at 300 or more innings at C in Y",
+            "fit_seasons": [2016, 2017, 2018], "n_pairs": 102, "n_players": 49, "r": 0.4547,
+            "hm": 366.5, "k": 440.0},
+    "pep": {"target": "RSB per game pitched in Y+1", "fit_seasons": [2016, 2017, 2018], "n_pairs": 670,
+            "n_players": 356, "r": 0.2327, "hm": 39.5, "k": 130.0},
+    "peh": {"target": "wRAA plus realized starter wear W per PA in Y+1", "fit_seasons": [2018],
+            "n_pairs": 262, "n_players": 262, "r": 0.5202, "hm": 463.0, "k": 427.0},
+}
+#: Fit seasons per component: 2016 to 2018 predictor pairs; PE-H on the 2018 to
+#: 2019 pair, the only corpus pair before the frame (11.4.4).
+B1_AMENDED_SEASONS = {"bat": (2016, 2017, 2018), "pit": (2016, 2017, 2018), "fld": (2016, 2017, 2018),
+                      "cat": (2016, 2017, 2018), "pep": (2016, 2017, 2018), "peh": (2018,)}
+
+
+def fit_b1_pairs(pairs: list[dict]) -> dict:
+    """fit_b1's rule on component pairs: B0 rate in Y against the target rate in
+    Y+1. Reads n0, n1, b0 and tgt only."""
+    x0, x1, hm, players = [], [], [], set()
+    for p in pairs:
+        if p["b0"] is None or p["tgt"] is None or p["n0"] <= 0 or p["n1"] <= 0:
+            continue
+        x0.append(p["b0"] / p["n0"])
+        x1.append(p["tgt"] / p["n1"])
+        hm.append(2.0 / (1.0 / p["n0"] + 1.0 / p["n1"]))
+        players.add(p["mlbam"])
+    if len(x0) < 30:
+        raise LabStop(f"B1 fit: {len(x0)} pairs, under 30")
+    r_raw = pearson(x0, x1)
+    if r_raw is None:
+        raise LabStop("B1 fit: an undefined correlation")
+    r = min(max(r_raw, R_CLAMP[0]), R_CLAMP[1])
+    hmm = float(np.mean(hm))
+    return {"n_pairs": len(x0), "n_players": len(players), "r_raw": round(r_raw, 4), "r": round(r, 4),
+            "hm": round(hmm, 1), "k": float(round(hmm * (1.0 - r) / r))}
+
+
+# ---- assembling the amended inputs onto the preview's rows
+
+def assemble(rows: dict, inputs: "LabInputs", seasons: Iterable[int], peh_seasons: Iterable[int],
+             log: Callable = print, deltas: bool = True) -> dict:
+    """Adds, in place, every input of the amended targets to the preview's rows
+    and returns the season constants {season: {lg_ra9s, lg_ra9s_rp, w, corpus}}.
+    Same-season quantities only. Called before scoring begins. With `deltas`
+    False (B1's fit) no candidate part's delta is computed: only the bases'
+    and the targets' inputs are attached."""
+    import pitch_economy as pe
+    seasons = sorted(set(int(s) for s in seasons) & set(rows))
+    fb = inputs.fielding_by_player()
+    tri = inputs.triangulation_runs() if (S3T_ELIGIBLE and deltas) else {}
+    peh_seasons = set(int(s) for s in peh_seasons)
+    consts: dict = {}
+    for y in seasons:
+        hit, pit = rows[y][HIT], rows[y][PIT]
+        pa = {m: float(r.get("pa") or 0.0) for m, r in hit.items()}
+        pb = {m for m, r in hit.items() if r.get("pitcher_batter")}
+        f = fb.get(y) or {}
+        for m, r in hit.items():
+            x = f.get(m) or {}
+            r["fg"] = {k: x.get(k) for k in ("drs", "uzr", "frp", "c_drs")}
+            r["rfield"] = x.get("runs_field")
+            r["c_inn"] = float(x.get("c_inn") or 0.0)
+            r["sc"], r["nonc_frp"] = x.get("sc"), float(x.get("nonc_frp") or 0.0)
+        lg, lg_rp = T.league_ra9_star(pit.values()), T.league_ra9_star(pit.values(), relievers_only=True)
+        if not deltas:
+            consts[y] = {"lg_ra9s": lg, "lg_ra9s_rp": lg_rp, "w": inputs.pe_wear(y), "corpus": False}
+            peh = inputs.pe_hitters(y) if y in peh_seasons else None
+            for m, r in hit.items():
+                res = ((peh or {}).get("resid") or {}).get(m) or {}
+                r["W"] = None if peh is None else float(consts[y]["w"]) * float(res.get("pres") or 0.0)
+            consts[y]["corpus"] = peh is not None
+            continue
+        dc = T.catcher_deltas({m: {"sc": (f.get(m) or {}).get("sc"), "b0": r.get("fld_b0") or 0.0,
+                                   "nonc_frp": (f.get(m) or {}).get("nonc_frp") or 0.0,
+                                   "c_inn": r["c_inn"]} for m, r in hit.items()}, pa, pb)
+        b0 = {m: r.get("fld_b0") or 0.0 for m, r in hit.items()}
+        t = tri.get(y) or {}
+        for cfg in (S3T_CONFIGS if S3T_ELIGIBLE else ()):
+            dd = T.fldt_deltas({m: (t.get(m) or {}).get(cfg, 0.0) for m in hit}, b0, pa, pb)
+            for m, r in hit.items():
+                r["d"]["fldt_" + cfg] = dd[m]
+        for m, r in hit.items():
+            r["d"]["cat"] = dc[m]
+        pep = inputs.pe_pitchers(y)
+        for m, r in pit.items():
+            r["d_pe"] = {v: float(pep["delta"][v].get(m, 0.0)) for v in swar.HR_VARIANTS}
+        consts[y] = {"lg_ra9s": lg, "lg_ra9s_rp": lg_rp, "w": pep["w"], "corpus": False,
+                     "pe_p_coverage": pep.get("coverage")}
+        peh = inputs.pe_hitters(y) if y in peh_seasons else None
+        if peh is None:
+            for m, r in hit.items():
+                r["d"].update({"peh": 0.0, "peh_cl": 0.0, "peh_p": 0.0})
+                r["W"] = None
+            continue
+        dd = T.pe_h_deltas(peh["resid"], peh["pa"], pep["w"], pe.K_CL, pe.K_P)
+        consts[y]["corpus"] = True
+        for m, r in hit.items():
+            res = peh["resid"].get(m) or {}
+            pbat = m in pb
+            r["d"].update({"peh": 0.0 if pbat else float(dd["peh"].get(m, 0.0)),
+                           "peh_cl": 0.0 if pbat else float(dd["cl"].get(m, 0.0)),
+                           "peh_p": 0.0 if pbat else float(dd["p"].get(m, 0.0))})
+            r["W"] = float(pep["w"]) * float(res.get("pres") or 0.0)
+        log(f"  assembled {y}: {len(hit)} hitters, {len(pit)} pitchers, corpus {consts[y]['corpus']}")
+    return consts
+
+
+# ---- the component values of one row (B0, the target construction, test values)
+
+def _add(a, b) -> Optional[float]:
+    return None if a is None or b is None else float(a) + float(b)
+
+
+def comp_b0(comp: str, r: Mapping) -> Optional[float]:
+    if comp in ("bat", "peh"):
+        return r.get("wraa")
+    if comp in ("pit", "pep"):
+        return r.get("war0")
+    return r.get("fld_b0")
+
+
+def comp_target(comp: str, r: Mapping, k: Mapping, season: int) -> Optional[float]:
+    """The target's construction on one row of `season` (the target when the row
+    is Y+1, B0r when it is Y)."""
+    if comp == "bat":
+        return r.get("wraa")
+    if comp == "pit":
+        return T.runs_prevented(k.get("lg_ra9s"), r.get("ra9_star"), r.get("ip"))
+    if comp == "pep":
+        ip = r.get("ip")
+        return T.rsb(None if ip is None else ip * 3.0, k.get("lg_ra9s_rp"), r.get("ra9_star"))
+    if comp == "peh":
+        return _add(r.get("wraa"), r.get("W"))
+    if comp == "fld":
+        return r.get("rfield")
+    fg = r.get("fg") or {}
+    if comp == "fldt:DRS" or comp == "cat":
+        return fg.get("drs")
+    if comp == "fldt:Statcast":
+        return fg.get("frp")
+    if comp == "fldt:UZR":
+        return fg.get("uzr") if int(season) <= T.UZR_LAST else None
+    raise ValueError(comp)
+
+
+def comp_tests(comp: str, r: Mapping) -> dict:
+    d = r.get("d") or {}
+    b0 = comp_b0(comp, r)
+    if comp == "bat":
+        return {"bat": _add(b0, d.get("bat")), "batx": _add(b0, d.get("batx"))}
+    if comp == "pit":
+        out = {v: _add(b0, (r.get("delta") or {}).get(v)) for v in swar.HR_VARIANTS + PB_VARIANTS}
+        rpw = r.get("rpw")
+        for v in swar.HR_VARIANTS:
+            dp = (r.get("d_pe") or {}).get(v)
+            out["pep_" + v] = None if (dp is None or not rpw) else _add(b0, dp / rpw)
+        return out
+    if comp == "pep":
+        rpw = r.get("rpw")
+        return {"pep_" + v: (None if not rpw else _add(b0, ((r.get("d_pe") or {}).get(v) or 0.0) / rpw))
+                for v in swar.HR_VARIANTS}
+    if comp == "peh":
+        return {k: _add(b0, d.get(k)) for k in ("peh", "peh_cl", "peh_p")}
+    if comp == "fld":
+        return {"fld": _add(b0, d.get("fld")), "fldt": _add(b0, d.get("fldt_FULL"))}
+    if comp.startswith("fldt:"):
+        cfg = dict((c, x) for _s, c, x in S3T_SYSTEMS)[comp]
+        return {"fldt": _add(b0, d.get("fldt_" + cfg)), "fld": _add(b0, d.get("fld")),
+                "fldt_full": _add(b0, d.get("fldt_FULL"))}
+    if comp == "cat":
+        return {"cat": _add(b0, d.get("cat")), "fldt_full": _add(b0, d.get("fldt_FULL"))}
+    raise ValueError(comp)
+
+
+def _in_frame(comp: str, r: Mapping) -> bool:
+    return comp != "cat" or float(r.get("c_inn") or 0.0) >= T.CATCHER_MIN_INN
+
+
+def component_pairs(rows: Mapping[int, dict], comp: str, seasons: Iterable[int], consts: Mapping,
+                    with_tests: bool = True) -> list[dict]:
+    """(Y, Y+1) pairs of one component at the side's floor in both seasons (2020
+    out on both sides), the catcher frame for S3c. Each pair: n0, n1 (the
+    component's exposure), b0, tgt (the target in Y+1), b0r (the target's
+    construction in Y), tgt_alt (PE-H's wRAA(Y+1) alone), m (the season's
+    exposure-weighted mean B0 rate at the floor, in the frame) and, unless
+    `with_tests` is False (B1's fit), the test values."""
+    spec = COMPONENTS[comp]
+    side, nkey, fkey = spec["side"], spec["n"], EXPOSURE[spec["side"]]
+    out = []
+    for y in seasons:
+        y = int(y)
+        if y == EXCLUDED_SEASON or y + 1 == EXCLUDED_SEASON:
+            continue
+        a, b = (rows.get(y) or {}).get(side) or {}, (rows.get(y + 1) or {}).get(side) or {}
+        ka, kb = consts.get(y) or {}, consts.get(y + 1) or {}
+        num = den = 0.0
+        for r in a.values():
+            b0, n = comp_b0(comp, r), r.get(nkey)
+            if _at_floor(r.get(fkey), side) and _in_frame(comp, r) and b0 is not None and n:
+                num += b0
+                den += n
+        m = num / den if den > 0 else None
+        for mid in sorted(a):
+            if mid not in b:
+                continue
+            r0, r1 = a[mid], b[mid]
+            if not (_at_floor(r0.get(fkey), side) and _at_floor(r1.get(fkey), side)):
+                continue
+            if not _in_frame(comp, r0):
+                continue
+            n0, n1 = r0.get(nkey), r1.get(nkey)
+            b0, tgt = comp_b0(comp, r0), comp_target(comp, r1, kb, y + 1)
+            if not n0 or not n1 or n0 <= 0 or n1 <= 0 or b0 is None or tgt is None:
+                continue
+            p = {"mlbam": mid, "y": y, "n0": float(n0), "n1": float(n1), "b0": float(b0),
+                 "tgt": float(tgt), "b0r": comp_target(comp, r0, ka, y), "m": m,
+                 "sigma": r0.get("sigma"), "c_inn1": r1.get("c_inn"),
+                 "c_drs1": (r1.get("fg") or {}).get("c_drs"), "tests": {}}
+            if comp == "peh":
+                p["tgt_alt"] = r1.get("wraa")
+            if with_tests:
+                p["tests"] = comp_tests(comp, r0)
+            out.append(p)
+    return out
+
+
+# ---- the primary cell: one or several systems, one bootstrap
+
+def _permute_deltas(ys, ns, deltas, rng) -> np.ndarray:
+    """The twin's draw: deltas permuted within (predictor season, exposure decile)."""
+    out = np.zeros(len(deltas))
+    ys, ns, deltas = np.asarray(ys), np.asarray(ns, float), np.asarray(deltas, float)
+    for y in sorted(set(ys.tolist())):
+        idx = np.flatnonzero(ys == y)
+        if len(idx) >= 10:
+            edges = np.quantile(ns[idx], np.linspace(0, 1, 11)[1:-1])
+            dec = np.searchsorted(edges, ns[idx], side="right")
+        else:
+            dec = np.zeros(len(idx), dtype=int)
+        for dval in sorted(set(dec.tolist())):
+            members = idx[dec == dval]
+            out[members] = deltas[members][rng.permutation(len(members))]
+    return out
+
+
+def frame_arrays(frames: list[tuple], kind: str, k_b1: float, twin_seed: int,
+                 key_b: Optional[str] = None) -> Optional[dict]:
+    """Stack one cell's frames [(system, pairs, test key)] into arrays: the
+    series test, b0, b1, twin, b0r (and `key_b`'s test, for a contrast), the
+    targets (v1 raw, v2 z within system and outcome season) and the labels."""
+    lab, mid, ys, n0, n1, b0, tv, tg, m, b0r, tb = ([] for _ in range(11))
+    for li, (_name, pairs, key) in enumerate(frames):
+        for p in pairs:
+            t = p["tests"].get(key)
+            if t is None:
+                continue
+            if key_b is not None and p["tests"].get(key_b) is None:
+                continue
+            lab.append(li)
+            mid.append(p["mlbam"])
+            ys.append(p["y"])
+            n0.append(p["n0"])
+            n1.append(p["n1"])
+            b0.append(p["b0"])
+            tv.append(t)
+            tg.append(p["tgt"])
+            m.append(p["m"] if p["m"] is not None else 0.0)
+            b0r.append(np.nan if p.get("b0r") is None else p["b0r"])
+            tb.append(np.nan if key_b is None else p["tests"][key_b])
+    if len(lab) < 4:
+        return None
+    A = {k: np.asarray(v, float) for k, v in (("n0", n0), ("n1", n1), ("b0", b0), ("test", tv),
+                                                 ("tgt", tg), ("m", m), ("b0r", b0r), ("tb", tb))}
+    lab, ys = np.asarray(lab), np.asarray(ys)
+    rng = np.random.default_rng(twin_seed)
+    tw = np.zeros(len(lab))
+    for li in sorted(set(lab.tolist())):
+        idx = np.flatnonzero(lab == li)
+        tw[idx] = _permute_deltas(ys[idx], A["n0"][idx], A["test"][idx] - A["b0"][idx], rng)
+    b1r = (A["b0"] + A["m"] * k_b1) / (A["n0"] + k_b1)
+    if kind == RATE:
+        s = {"test": A["test"] / A["n0"], "b0": A["b0"] / A["n0"], "b1": b1r,
+             "twin": (A["b0"] + tw) / A["n0"]}
+        if key_b is not None:
+            s["test_b"] = A["tb"] / A["n0"]
+        raw = A["tgt"] / A["n1"]
+        b0r_s = A["b0r"] / A["n0"]
+    else:
+        s = {"test": A["test"], "b0": A["b0"], "b1": b1r * A["n0"], "twin": A["b0"] + tw}
+        if key_b is not None:
+            s["test_b"] = A["tb"]
+        raw = A["tgt"]
+        b0r_s = A["b0r"]
+    grp = [f"{int(a)}|{int(y) + 1}" for a, y in zip(lab, ys)]
+    return {"series": s, "target_v1": raw, "target_v2": zscore_within(grp, raw), "lab": lab,
+            "players": list(mid), "strata": ys.tolist(), "b0r": b0r_s, "n_systems": len(frames),
+            "names": [f[0] for f in frames]}
+
+
+def multi_rho(series: Mapping[str, np.ndarray], target: np.ndarray, lab: np.ndarray,
+              idx: Optional[np.ndarray] = None, systems: Optional[Iterable[int]] = None) -> dict:
+    """The mean over systems of each series' Spearman with the target on the
+    rows `idx` (all rows when None); NaN when a system's rho is undefined."""
+    idx = np.arange(len(lab)) if idx is None else idx
+    systems = sorted(set(lab.tolist())) if systems is None else list(systems)
+    acc = {k: [] for k in series}
+    for li in systems:
+        sel = idx[lab[idx] == li]
+        if len(sel) < 4:
+            for k in series:
+                acc[k].append(np.nan)
+            continue
+        rt = _rank(target[sel])
+        for k, v in series.items():
+            r = _pearson(_rank(v[sel]), rt)
+            acc[k].append(np.nan if r is None else r)
+    return {k: float(np.mean(v)) if v else np.nan for k, v in acc.items()}
+
+
+def _rho_draws_multi(series, target, lab, draws) -> dict[str, np.ndarray]:
+    systems = sorted(set(lab.tolist()))
+    out = {k: np.full(len(draws), np.nan) for k in series}
+    for b, idx in enumerate(draws):
+        r = multi_rho(series, target, lab, idx, systems)
+        for k in series:
+            out[k][b] = r[k]
+    return out
+
+
+def _nan_none(v):
+    return None if v is None or (isinstance(v, float) and not math.isfinite(v)) else float(v)
+
+
+def prep_primary(part: str, cell: str, frames: list[tuple], kind: str, k_b1: float,
+                 boot: int, seed: int, twin_seed: int) -> dict:
+    """Every number a primary cell needs, draws kept; the floors are read off
+    the draws before any gap prints."""
+    rec = {"part": part, "cell": cell, "kind": kind, "systems": [f[0] for f in frames],
+           "series": sorted(set(f[2] for f in frames)), "b1_k": k_b1}
+    fa = frame_arrays(frames, kind, k_b1, twin_seed)
+    if fa is None:
+        rec.update(empty=True, n_pairs=0, n_players=0)
+        return rec
+    # a pair is one player's (Y, Y+1); S3t's systems score the same pair up to three times
+    rec["n_pairs"] = len(set(zip(fa["players"], fa["strata"])))
+    rec["n_rows"] = int(len(fa["lab"]))
+    rec["n_players"] = len(set(fa["players"]))
+    rec["n_pairs_by_system"] = {fa["names"][li]: int((fa["lab"] == li).sum()) for li in sorted(set(fa["lab"].tolist()))}
+    d2 = _rho_draws_multi(fa["series"], fa["target_v2"], fa["lab"],
+                          cluster_draws(fa["players"], fa["strata"], boot, seed))
+    d1 = _rho_draws_multi({"test": fa["series"]["test"], "b0": fa["series"]["b0"]}, fa["target_v1"], fa["lab"],
+                          iid_draws(len(fa["lab"]), boot, seed))
+    rec["_fa"], rec["_draws"] = fa, {"v2": d2, "v1": d1}
+    rec["floors"] = {k: v for k, v in gap_summary(d2["test"], d2["b0"]).items()
+                     if k in ("n_draws", "sd", "half_width95", "mde95")}
+    return rec
+
+
+def finish_primary(rec: dict) -> dict:
+    """The gaps, intervals and clauses of a prepared primary cell; B0r and the
+    gap over it beside, with no weight."""
+    if rec.get("empty"):
+        return finish_cell(rec)
+    fa, d2, d1 = rec["_fa"], rec["_draws"]["v2"], rec["_draws"]["v1"]
+    s, t2, t1, lab = fa["series"], fa["target_v2"], fa["target_v1"], fa["lab"]
+    rho = {k: _nan_none(v) for k, v in multi_rho(s, t2, lab).items()}
+    g, gb1 = gap_summary(d2["test"], d2["b0"]), gap_summary(d2["test"], d2["b1"])
+    gtw, g1 = gap_summary(d2["twin"], d2["b0"]), gap_summary(d1["test"], d1["b0"])
+    gap = None if rho["test"] is None or rho["b0"] is None else rho["test"] - rho["b0"]
+    r1 = multi_rho({"test": s["test"], "b0": s["b0"]}, t1, lab)
+    v1_gap = _nan_none(r1["test"] - r1["b0"])
+    pears = []
+    for li in sorted(set(lab.tolist())):
+        sel = lab == li
+        pt, pb = pearson(s["test"][sel], t2[sel]), pearson(s["b0"][sel], t2[sel])
+        if pt is not None and pb is not None:
+            pears.append(pt - pb)
+    ok = np.isfinite(fa["b0r"])
+    b0r = None
+    if ok.sum() >= 4:
+        rr = multi_rho({"test": s["test"][ok], "b0r": fa["b0r"][ok]}, t2[ok], lab[ok])
+        b0r = {"n_pairs": int(ok.sum()), "rho_b0r": _nan_none(rr["b0r"]),
+               "gap_over_b0r": _nan_none(rr["test"] - rr["b0r"]), "weight": "none (11.2.1)"}
+    per_system = {}
+    for li in sorted(set(lab.tolist())):
+        sel = lab == li
+        a, b = spearman(s["test"][sel], t2[sel]), spearman(s["b0"][sel], t2[sel])
+        per_system[fa["names"][li]] = {"n_pairs": int(sel.sum()), "rho_test": a, "rho_b0": b,
+                                       "gap": None if a is None or b is None else a - b}
+    rec.update({
+        "rho_test": rho["test"], "rho_b0": rho["b0"], "rho_b1": rho["b1"], "rho_twin": rho["twin"],
+        "gap": gap, "lo95": g["lo95"], "hi95": g["hi95"], "lo90": g["lo90"], "hi90": g["hi90"],
+        "p_one_sided": g["p_one_sided"],
+        "gap_b1": (None if rho["test"] is None or rho["b1"] is None else rho["test"] - rho["b1"]),
+        "b1_lo95": gb1["lo95"], "b1_hi95": gb1["hi95"],
+        "twin_gap": (None if rho["twin"] is None or rho["b0"] is None else rho["twin"] - rho["b0"]),
+        "twin_lo95": gtw["lo95"], "twin_hi95": gtw["hi95"],
+        "v1_gap": v1_gap, "v1_lo95": g1["lo95"], "v1_hi95": g1["hi95"],
+        "v1_sign_agrees": bool(v1_gap is not None and gap is not None
+                               and (v1_gap > 0) == (gap > 0) and v1_gap != 0 and gap != 0),
+        "pearson_gap_v2": (float(np.mean(pears)) if pears else None),
+        "equivalent_reachable": bool(g["mde95"] is not None and g["mde95"] <= MARGIN),
+        "b0r": b0r, "per_system": per_system,
+    })
+    return rec
+
+
+def point_gap_frames(frames: list[tuple], kind: str, k_b1: float, key_b: Optional[str] = None) -> Optional[float]:
+    """The v2 point gap of the frames' test over B0 (or over `key_b`'s test, on
+    the rows carrying both); no bootstrap."""
+    fa = frame_arrays(frames, kind, k_b1, 0, key_b=key_b)
+    if fa is None:
+        return None
+    other = "test_b" if key_b is not None else "b0"
+    r = multi_rho({"a": fa["series"]["test"], "b": fa["series"][other]}, fa["target_v2"], fa["lab"])
+    return _nan_none(r["a"] - r["b"])
+
+
+def contrast_frames(frames: list[tuple], key_b: str, boot: int, seed: int, k_b1: float) -> dict:
+    """An arm tie-break on the primary target: rho(arm a) - rho(arm b) on the
+    rate cell, the same pairs, the same bootstrap, outside the Holm family."""
+    fa = frame_arrays(frames, RATE, k_b1, 0, key_b=key_b)
+    if fa is None:
+        return {"n_pairs": 0, "gap": None, "lo95": None, "hi95": None, "sd": None}
+    s = {"a": fa["series"]["test"], "b": fa["series"]["test_b"]}
+    d = _rho_draws_multi(s, fa["target_v2"], fa["lab"], cluster_draws(fa["players"], fa["strata"], boot, seed))
+    g = gap_summary(d["a"], d["b"])
+    r = multi_rho(s, fa["target_v2"], fa["lab"])
+    return {"n_pairs": int(len(fa["lab"])), "gap": _nan_none(r["a"] - r["b"]), "lo95": g["lo95"],
+            "hi95": g["hi95"], "sd": g["sd"]}
+
+
+# ---- the primary block: floors first, the HR-arm clause first, then the cells
+
+def decide_family(fam: dict) -> dict:
+    """Holm over one family's cells, then each cell's one disposition (in
+    place). The cells carry their part, gaps, intervals and clauses."""
+    hr = holm({c: r.get("p_one_sided") for c, r in fam.items()})
+    for c, r in fam.items():
+        r["holm_family"] = list(fam)
+        r["holm_reject"] = hr[c]
+        r["disposition"] = disposition(r)
+        r["counts_as"] = counts_as(r["disposition"])
+        r["ship_flag_no_weight"] = (None if r["disposition"] not in WINS
+                                    else bool(r.get("gap") is not None and (r["floors"].get("sd") or 0) > 0
+                                              and r["gap"] - MDE_Z * r["floors"]["sd"] > MARGIN))
+        if sum(1 for d in DISPOSITIONS if d == r["disposition"]) != 1:
+            raise RuntimeError(f"{r.get('part')} {c}: not exactly one disposition")
+    return fam
+
+
+def _resolve(key: str, variant: str) -> str:
+    if key == PITCH:
+        return variant
+    if key == PITCH_B:
+        return pb_key(variant)
+    if key == PEP:
+        return "pep_" + variant
+    return key
+
+
+def _cell_frames(frames_name: str, key: str, pairs: Mapping[str, list]) -> list[tuple]:
+    if frames_name == "S3t":
+        return [(sysname, pairs[comp], key) for sysname, comp, _cfg in S3T_SYSTEMS]
+    return [(frames_name, pairs[frames_name], key)]
+
+
+def primary_families() -> dict:
+    """The families scored: S3t's cells only while S3t is eligible (11.5.2, 11.7)."""
+    out = {}
+    for part, cells in PRIMARY_FAMILIES.items():
+        out[part] = {c: v for c, v in cells.items() if S3T_ELIGIBLE or v[0] != "S3t"}
+    return out
+
+
+def build_all_pairs(rows: dict, seasons: tuple, consts: Mapping) -> dict:
+    return {comp: component_pairs(rows, comp, seasons, consts) for comp in COMPONENTS}
+
+
+def score_primary(rows: dict, consts: Mapping, seasons: tuple, boot: int, log: Callable,
+                  hr_choice: Optional[dict] = None, label: str = "look") -> dict:
+    pairs = build_all_pairs(rows, seasons, consts)
+    early = {c: component_pairs(rows, c, TRANSPORT_EARLY_SEASONS, consts) for c in ("pit", "pep")}
+    _p(log, f"[{label}] PRIMARY frame (part 11.2): " + ", ".join(f"{c} {len(v)}" for c, v in pairs.items())
+            + f"; 2016 to 2018 block: pit {len(early['pit'])}, pep {len(early['pep'])}")
+    fams = primary_families()
+    recs: dict = {}
+    for i, (part, cells) in enumerate(fams.items()):
+        for j, (cell, (fname, key, kind)) in enumerate(cells.items()):
+            k_b1 = B1_K_AMENDED[B1_COMPONENT[fname]]
+            keys = [_resolve(key, v) for v in swar.HR_VARIANTS] if key in (PITCH, PITCH_B, PEP) else [key]
+            for kk in keys:
+                recs[(part, cell, kk)] = prep_primary(part, cell, _cell_frames(fname, kk, pairs), kind, k_b1,
+                                                      boot, SEED, SEED + 101 * (i + 1) + 7 * j)
+    _p(log, f"[{label}] FLOORS, primary (convention v2, B = {boot}; MDE95 = 1.645 sd; no gap is printed here)")
+    floors = {}
+    for (part, cell, kk), rec in recs.items():
+        f = rec.get("floors") or {}
+        floors[f"{part}|{cell}|{kk}"] = _rd(f, 5)
+        unreach = f.get("mde95") is not None and f["mde95"] > MARGIN
+        _p(log, f"  {part:9s} {cell:12s} {kk:16s} n {rec['n_pairs']:5d}  sd {_fmt(f.get('sd'))}  "
+                f"half-width {_fmt(f.get('half_width95'))}  MDE95 {_fmt(f.get('mde95'))}"
+                + ("  EQUIVALENT unreachable (MDE95 > 0.02)" if unreach else ""))
+
+    k_pit = B1_K_AMENDED["pit"]
+    if hr_choice is None:
+        g_early = point_gap_frames([("pitching", early["pit"], swar.HR_SHRUNK)], RATE, k_pit, key_b=swar.HR_FWAR)
+        g_late = point_gap_frames([("pitching", pairs["pit"], swar.HR_SHRUNK)], RATE, k_pit, key_b=swar.HR_FWAR)
+        hr_choice = hr_arm_clause(g_early, g_late)
+        hr_choice["target"] = "RA9* in Y+1 (11.2.1), B0 the actual arm of S2"
+        _p(log, f"[{label}] HR-ARM CLAUSE (primary target): P-rate gap hr_shrunk over hr_fwar, 2016-2018 "
+                f"{_fmt(g_early)}, 2021-2024 {_fmt(g_late)}: "
+                f"{'holds' if hr_choice['holds'] else 'fails'}; home-run term {hr_choice['variant']}")
+    else:
+        _p(log, f"[{label}] home-run term carried from the look: {hr_choice['variant']}")
+    variant = hr_choice["variant"]
+
+    cells: dict = {}
+    for part, spec in fams.items():
+        fam = {}
+        for cell, (fname, key, kind) in spec.items():
+            rec = finish_primary(recs[(part, cell, _resolve(key, variant))])
+            if part in TRANSPORT_PARTS and kind == RATE:
+                comp = "pep" if part == PART_PE_P else "pit"
+                ge = point_gap_frames([(part, early[comp], _resolve(key, variant))], RATE,
+                                      B1_K_AMENDED[B1_COMPONENT[fname]])
+                rec["transport_gap_2016_2018"] = ge
+                rec["transport"] = transport_holds(ge, rec.get("gap"))
+            fam[cell] = rec
+        if part in TRANSPORT_PARTS:
+            for c, r in fam.items():
+                if r["kind"] == CUM:
+                    rate = c.replace("P-cum", "P-rate").replace("PE-P total", "PE-P rate")
+                    r["transport"] = fam.get(rate, {}).get("transport")
+        cells[part] = decide_family(fam)
+
+    # PE-H's sensitivity guard (11.4.4): the rate cell on wRAA(Y+1) alone, the same bootstrap
+    sens_pairs = [dict(p, tgt=p["tgt_alt"]) for p in pairs["peh"] if p.get("tgt_alt") is not None]
+    srec = finish_primary(prep_primary(PART_PE_H, "PE-H rate on wRAA alone", [("pe_h", sens_pairs, "peh")],
+                                       RATE, B1_K_AMENDED["peh"], boot, SEED, SEED + 101 * 5))
+    sens = {"n_pairs": srec.get("n_pairs"), "gap": srec.get("gap"), "lo95": srec.get("lo95"),
+            "hi95": srec.get("hi95"), "loss": bool(_lt(srec.get("hi95"), 0.0)),
+            "rule": "the PE-H rate cell's gap on wRAA(Y+1) alone, W left out, must not be LOSS (hi95 below 0)"}
+
+    _p(log, f"[{label}] GAPS AND DISPOSITIONS, primary (convention v2 against B0; v1 must agree in sign)")
+    for part, fam in cells.items():
+        for c, r in fam.items():
+            _p(log, f"  {part:9s} {c:12s} n {r['n_pairs']:5d} gap {_fmt(r.get('gap'))} "
+                    f"[{_fmt(r.get('lo95'))}, {_fmt(r.get('hi95'))}] 90% [{_fmt(r.get('lo90'))}, "
+                    f"{_fmt(r.get('hi90'))}] p {_fmt(r.get('p_one_sided'))} holm {r['holm_reject']} "
+                    f"| vs B1 lo95 {_fmt(r.get('b1_lo95'))} | twin lo95 {_fmt(r.get('twin_lo95'))} "
+                    f"| v1 {_fmt(r.get('v1_gap'))} | B0r gap {_fmt((r.get('b0r') or {}).get('gap_over_b0r'))} "
+                    f"=> {r['disposition']}")
+    _p(log, f"  pe_h sensitivity (wRAA alone): gap {_fmt(sens['gap'])} hi95 {_fmt(sens['hi95'])} "
+            f"loss {sens['loss']}")
+    return {"pairs": pairs, "early": early, "hr": hr_choice, "variant": variant, "cells": cells,
+            "floors": floors, "sensitivity": sens}
+
+
+# ---- the team guard (11.2.4)
+
+#: Each guarded series: (side, how the series reads a row, the outcomes it carries).
+GUARD_SERIES = {
+    "pos": (HIT, "pos", T.OUTCOMES_FIELD), "bat": (HIT, "bat", T.OUTCOMES_HIT),
+    "batx": (HIT, "batx", T.OUTCOMES_HIT), "fld": (HIT, "fld", T.OUTCOMES_FIELD),
+    "fldt": (HIT, "fldt_FULL", T.OUTCOMES_FIELD), "cat": (HIT, "cat", T.OUTCOMES_FIELD),
+    "peh": (HIT, "peh", T.OUTCOMES_HIT),
+    "S2": (PIT, PITCH, T.OUTCOMES_PIT), "S2b": (PIT, PITCH_B, T.OUTCOMES_PIT),
+    "pep": (PIT, PEP, T.OUTCOMES_PIT),
+}
+
+
+def _series_value(side: str, how: str, r: Mapping, variant: str) -> Optional[float]:
+    """The series value v_i(Y) of one row: fWAR plus the part's departure in wins."""
+    fw = r.get("fwar")
+    if fw is None:
+        return None
+    if side == HIT:
+        d = (r.get("d") or {}).get(how)
+        rpw = r.get("rpw")
+        return fw if (d is None or not rpw) else fw + d / rpw
+    if how == PEP:
+        dp, rpw = (r.get("d_pe") or {}).get(variant), r.get("rpw")
+        return fw if (dp is None or not rpw) else fw + dp / rpw
+    d = (r.get("delta") or {}).get(_resolve(how, variant))
+    return fw if d is None else fw + d
+
+
+def team_guards(rows: dict, seasons: tuple, variant: str, team_exp: Mapping, standings: Mapping,
+                bwar: Mapping, which: Iterable[str], boot: int, log: Callable, label: str) -> dict:
+    """The guard of every named series on the club-seasons Y+1 of `seasons`."""
+    ys = [int(y) for y in seasons if int(y) != EXCLUDED_SEASON and int(y) + 1 != EXCLUDED_SEASON]
+    clubs = sorted({(y + 1, t) for y in ys for t in (standings.get(y + 1) or {})})
+    if not clubs:
+        raise RuntimeError("the team guard has no club-season with standings")
+    outcomes = {
+        "runs_scored": np.array([_num((standings[s][t]).get("rs")) or np.nan for s, t in clubs], float),
+        "runs_allowed": np.array([-(_num((standings[s][t]).get("ra")) or np.nan) for s, t in clubs], float),
+        "run_differential": np.array([(_num(standings[s][t].get("rs")) or np.nan)
+                                      - (_num(standings[s][t].get("ra")) or np.nan) for s, t in clubs], float),
+        "wins": np.array([float(standings[s][t]["w"]) for s, t in clubs], float),
+    }
+    players = sorted({m for y in ys for side in (HIT, PIT) for m in ((rows.get(y) or {}).get(side) or {})})
+    nxt = {side: {(s, m): e for (sd, s, m), e in team_exp.items() if sd == side} for side in (HIT, PIT)}
+
+    def mat(side: str, value_of) -> np.ndarray:
+        vals, expo = {}, {}
+        for y in ys:
+            for m, r in ((rows.get(y) or {}).get(side) or {}).items():
+                vals[(y, m)] = value_of(m, y, r)
+                expo[(y, m)] = r.get(EXPOSURE[side])
+        return T.roster_matrix(vals, expo, nxt[side], players, clubs)
+
+    bkey = {HIT: "bat", PIT: "pit"}
+    base = {side: {"frame": mat(side, lambda m, y, r: r.get("fwar")),
+                   "ref": mat(side, lambda m, y, r, s=side: (bwar.get((m, y)) or {}).get(bkey[s]))}
+            for side in (HIT, PIT)}
+    out = {}
+    for name in which:
+        side, how, carried = GUARD_SERIES[name]
+        part_m = mat(side, lambda m, y, r, s=side, h=how: _series_value(s, h, r, variant))
+        mats = {s: {"frame": base[s]["frame"], "ref": base[s]["ref"],
+                    "part": (part_m if s == side else base[s]["frame"])} for s in (HIT, PIT)}
+        out[name] = T.team_guard(mats, outcomes, carried, clubs, boot=boot, seed=T.GUARD_SEED)
+    _p(log, f"[{label}] TEAM GUARD FLOORS (11.2.4; B = {boot} each, seed {T.GUARD_SEED}; no dT is printed here)")
+    for name, g in out.items():
+        for oname, legs in T.guard_floors(g).items():
+            _p(log, f"  {name:5s} {oname:16s} player sd {_fmt(legs['player']['sd'])} half-width "
+                    f"{_fmt(legs['player']['half_width95'])} | club sd {_fmt(legs['club']['sd'])} half-width "
+                    f"{_fmt(legs['club']['half_width95'])}")
+    _p(log, f"[{label}] TEAM GUARD dT (part r minus frame r; NON-INFERIOR when dT - 1.645 sd > -0.02 under both)")
+    for name, g in out.items():
+        for oname, o in g["outcomes"].items():
+            _p(log, f"  {name:5s} {oname:16s} n {o['n_club_seasons']:4d} dT {_fmt(o['dT'])} lower player "
+                    f"{_fmt(o['player'].get('lower'))} club {_fmt(o['club'].get('lower'))} => "
+                    f"{'NON-INFERIOR' if o['non_inferior'] else 'not non-inferior'}")
+        _p(log, f"  {name:5s} guard: {'NON-INFERIOR' if g['non_inferior'] else 'NOT NON-INFERIOR'}"
+                + (" (underpowered: a half-width above 0.02)" if g.get("underpowered") else ""))
+    return out
+
+
+# ---- admission, amended (11.2.6, 11.3.5, 11.4.5, 11.5.3, 11.6.3)
+
+def _guard_ok(guards: Mapping, name: str) -> bool:
+    return bool((guards.get(name) or {}).get("non_inferior"))
+
+
+def arm_qualifies(cells: Mapping, rate: str, cum: str, guard_ok: bool, q1: str, extra_ok: bool = True) -> bool:
+    """11.2.6: the rate cell WIN (components) (EWV3-Q1 (a)), the total cell not
+    LOSS, the team guard NON-INFERIOR (and a part's own extra guard)."""
+    return qualifies(_disp_of(cells, rate), _disp_of(cells, cum), q1) and guard_ok and extra_ok
+
+
+def admit_amended(part: str, cells: Mapping, guards: Mapping, answers: Mapping,
+                  extras: Optional[Mapping] = None) -> dict:
+    """Whether a candidate part enters eWAR v3 on the primary target. `extras`
+    carries "contrast" ({"lo95"}) when two arms qualify, "sensitivity" for PE-H
+    and "ladder" for the position part. Returns {"part", "admitted", "arm",
+    "needs_contrast", "reason"} (and "catcher_component" for fielding)."""
+    extras = extras or {}
+    out = {"part": part, "admitted": False, "arm": None, "needs_contrast": False, "reason": ""}
+    if answers.get("void"):
+        out["reason"] = "VOID run: nothing is admitted"
+        if part == PART_FIELDING:
+            out["catcher_component"] = {"admitted": False, "reason": out["reason"]}
+        return out
+    q1 = answers.get("EWV3-Q1", ANSWERS["EWV3-Q1"])
+    if part == PART_POSITION:
+        lad = extras.get("ladder") or {}
+        ok = bool(lad.get("passes")) and _guard_ok(guards, "pos")
+        out.update(admitted=ok, reason=(f"dMAE lo95 {lad.get('lo95')!r}, control fails "
+                                        f"{lad.get('control_fails')!r}, guard {_guard_ok(guards, 'pos')}"))
+        return out
+    if part in (PART_PE_P, PART_PE_H):
+        r, c = list(PRIMARY_FAMILIES[part])
+        gname = "pep" if part == PART_PE_P else "peh"
+        extra = True if part == PART_PE_P else not bool((extras.get("sensitivity") or {}).get("loss", True))
+        ok = arm_qualifies(cells, r, c, _guard_ok(guards, gname), q1, extra)
+        out.update(admitted=ok, reason=f"{r} {_disp_of(cells, r)}, {c} {_disp_of(cells, c)}, guard "
+                                       f"{_guard_ok(guards, gname)}" + ("" if part == PART_PE_P
+                                                                        else f", sensitivity not LOSS {extra}"))
+        return out
+    if part == PART_BATTING:
+        arms = {"HEM+": ("HEM+ H-rate", "HEM+ H-cum", "bat"), "xHEM+": ("xHEM+ H-rate", "xHEM+ H-cum", "batx")}
+        first, second = "HEM+", "xHEM+"
+    elif part == PART_PITCHING:
+        arms = {"S2": ("P-rate", "P-cum", "S2"), "S2b": ("S2b P-rate", "S2b P-cum", "S2b")}
+        first, second = "S2", "S2b"
+    elif part == PART_FIELDING:
+        arms = {a: v for a, v in FIELDING_ARMS.items() if a == "S3" or (S3T_ELIGIBLE and v[0] in cells)}
+        first, second = "S3", "S3t"
+        r, c, g = CATCHER_CELLS
+        cat_ok = arm_qualifies(cells, r, c, _guard_ok(guards, g), q1)
+        out["catcher_component"] = {"admitted": cat_ok, "reason": (f"{r} {_disp_of(cells, r)}, {c} "
+                                                                   f"{_disp_of(cells, c)}, guard {_guard_ok(guards, g)}")}
+    else:
+        raise ValueError(f"unknown candidate part {part!r}")
+    quals = {a: arm_qualifies(cells, rc, cc, _guard_ok(guards, g), q1) for a, (rc, cc, g) in arms.items()}
+    desc = "; ".join(f"{a}: {rc} {_disp_of(cells, rc)}, {cc} {_disp_of(cells, cc)}, guard {_guard_ok(guards, g)}"
+                     for a, (rc, cc, g) in arms.items())
+    if not any(quals.values()):
+        out["reason"] = f"no arm qualifies ({desc})"
+        return out
+    if sum(quals.values()) == 1:
+        arm = next(a for a, q in quals.items() if q)
+        out.update(admitted=True, arm=arm, reason=f"only the {arm} arm qualifies ({desc})")
+        return out
+    if part == PART_BATTING and answers.get("EWV3-Q2", ANSWERS["EWV3-Q2"]) != "a":
+        q2 = answers["EWV3-Q2"]
+        if q2 == "c":
+            out.update(admitted=True, arm="xHEM+", reason="both qualify; EWV3-Q2 (c): xHEM+")
+            return out
+        gh, gx = _gap_of(cells, "HEM+ H-rate"), _gap_of(cells, "xHEM+ H-rate")
+        out.update(admitted=True, arm=("xHEM+" if (gx or 0) > (gh or 0) else "HEM+"),
+                   reason="both qualify; EWV3-Q2 (b): the larger point gap against B0")
+        return out
+    contrast = extras.get("contrast")
+    if not contrast:
+        out.update(needs_contrast=True, reason=f"both arms qualify; the {second}-over-{first} contrast decides")
+        return out
+    lo = contrast.get("lo95")
+    arm = second if (lo is not None and lo > 0.0) else first
+    out.update(admitted=True, arm=arm, reason=(f"both qualify; contrast lo95 {lo!r} "
+                                               f"{'above' if arm == second else 'not above'} 0"))
+    return out
+
+
+def admissions_amended(blk: dict, guards: Mapping, ladder: Mapping, boot: int, answers: Mapping,
+                       log: Callable) -> dict:
+    out = {}
+    variant = blk["variant"]
+    for part in PRIMARY_PARTS + (PART_POSITION,):
+        cells = blk["cells"].get(part, {})
+        extras = {"ladder": ladder, "sensitivity": blk.get("sensitivity")}
+        a = admit_amended(part, cells, guards, answers, extras)
+        if a["needs_contrast"]:
+            if part == PART_BATTING:
+                c = contrast_frames([("batting", blk["pairs"]["bat"], "batx")], "bat", boot, SEED + 9001,
+                                    B1_K_AMENDED["bat"])
+                what = "xHEM+ over HEM+"
+            elif part == PART_PITCHING:
+                c = contrast_frames([("pitching", blk["pairs"]["pit"], pb_key(variant))], variant, boot,
+                                    SEED + 9002, B1_K_AMENDED["pit"])
+                what = "S2b over S2"
+            else:
+                c = contrast_frames([(s, blk["pairs"][comp], "fldt") for s, comp, _c in S3T_SYSTEMS], "fld",
+                                    boot, SEED + 9003, B1_K_AMENDED["fld"])
+                what = "S3t over S3, on S3t's systems"
+            _p(log, f"  {part} contrast ({what}, rate, primary target, outside Holm): gap "
+                    f"{_fmt(c['gap'])} lo95 {_fmt(c['lo95'])}")
+            a = admit_amended(part, cells, guards, answers, dict(extras, contrast=c))
+            a["contrast"] = _rd(c, 5)
+        out[part] = a
+        _p(log, f"  ADMIT {part:9s}: {a['admitted']}" + (f" arm {a['arm']}" if a["arm"] else "")
+                + f" ({a['reason']})"
+                + (f"; catcher component {a['catcher_component']['admitted']}" if "catcher_component" in a else ""))
+    return out
+
+
+def amended_sentences(cells: Mapping, adm: Mapping, ladder: Mapping, mode: str) -> dict:
+    """The one sentence per part (11.2.6), on the admitted arm's rate cell (else
+    the first arm's), and S3c's on its own; the position part on a pass only."""
+    seasons = PREDICTOR_SEASONS if mode == "look" else HOLDOUT_SEASONS
+    rate_of = {PART_BATTING: {"HEM+": ("HEM+ H-rate", "bat"), "xHEM+": ("xHEM+ H-rate", "bat")},
+               PART_PITCHING: {"S2": ("P-rate", "pit"), "S2b": ("S2b P-rate", "pit")},
+               PART_FIELDING: {"S3": ("H-rate", "fld"), "S3t": ("S3t H-rate", "fldt")},
+               PART_PE_P: {None: ("PE-P rate", "pep")}, PART_PE_H: {None: ("PE-H rate", "peh")}}
+    out = {}
+    for part, arms in rate_of.items():
+        a = (adm.get(part) or {}).get("arm")
+        cell, comp = arms.get(a) or next(iter(arms.values()))
+        r = (cells.get(part) or {}).get(cell)
+        out[part] = (None if not r else amended_sentence(comp, r["disposition"], r.get("gap"), r.get("lo95"),
+                                                         r.get("hi95"), r.get("n_pairs"), seasons))
+    rc = (cells.get(PART_FIELDING) or {}).get(CATCHER_CELLS[0])
+    out["fielding_catcher_component"] = (None if not rc else amended_sentence(
+        "cat", rc["disposition"], rc.get("gap"), rc.get("lo95"), rc.get("hi95"), rc.get("n_pairs"), seasons))
+    out[PART_POSITION] = POSITION_SENTENCE if (ladder or {}).get("passes") else None
+    return out
+
+
+# ---- reported beside the primary cells (no weight)
+
+def primary_beside(blk: dict, rows: dict, seasons: tuple) -> dict:
+    variant, pairs = blk["variant"], blk["pairs"]
+    k = B1_K_AMENDED
+
+    def sub(ps, keep):
+        return [p for p in ps if keep(p.get("sigma"))]
+    starter = lambda s: s is not None and s >= 0.5  # noqa: E731
+    reliever = lambda s: s is not None and s <= 0.10  # noqa: E731
+    out = {"label": DESCRIPTIVE}
+    out["pitching_subsets"] = {
+        lab: {"n_pairs": len(sub(pairs["pit"], f)),
+              "s2_p_rate_gap": _r(point_gap_frames([("p", sub(pairs["pit"], f), variant)], RATE, k["pit"])),
+              "s2b_p_rate_gap": _r(point_gap_frames([("p", sub(pairs["pit"], f), pb_key(variant))], RATE, k["pit"])),
+              "pe_p_rate_gap": _r(point_gap_frames([("p", sub(pairs["pep"], f), "pep_" + variant)], RATE, k["pep"]))}
+        for lab, f in (("starter_heavy_sigma_ge_0_5", starter), ("reliever_sigma_le_0_10", reliever))}
+    out["pe_p_on_the_pitching_target"] = {
+        "rate_gap": _r(point_gap_frames([("p", pairs["pit"], "pep_" + variant)], RATE, k["pit"])),
+        "total_gap": _r(point_gap_frames([("p", pairs["pit"], "pep_" + variant)], CUM, k["pit"]))}
+    out["pe_h_terms_one_at_a_time"] = {
+        t: {"rate_gap": _r(point_gap_frames([("h", pairs["peh"], t)], RATE, k["peh"])),
+            "total_gap": _r(point_gap_frames([("h", pairs["peh"], t)], CUM, k["peh"]))}
+        for t in ("peh_cl", "peh_p")}
+    # S3t's catcher rows on DRS at C in Y+1 (11.5.2), and S3c's per-inning form (11.6.2)
+    crow = [dict(p, tgt=p["c_drs1"]) for p in pairs["fld"]
+            if p.get("c_drs1") is not None and (rows.get(p["y"]) or {}).get(HIT, {}).get(p["mlbam"], {}).get("c_inn", 0.0)
+            >= T.CATCHER_MIN_INN]
+    out["s3t_catcher_rows_on_drs_at_c"] = {"n_pairs": len(crow),
+                                           "rate_gap": _r(point_gap_frames([("c", crow, "fldt")], RATE, k["fld"]))}
+    sc_y, bc_y, drs_n = [], [], []
+    for y in seasons:
+        y = int(y)
+        a, b = (rows.get(y) or {}).get(HIT) or {}, (rows.get(y + 1) or {}).get(HIT) or {}
+        for m, r0 in a.items():
+            r1 = b.get(m)
+            if r1 is None or r0.get("c_inn", 0.0) < T.CATCHER_MIN_INN or r1.get("c_inn", 0.0) < T.CATCHER_MIN_INN:
+                continue
+            c1 = (r1.get("fg") or {}).get("c_drs")
+            if c1 is None:
+                continue
+            sc, b0 = r0.get("sc"), r0.get("fld_b0")
+            if sc is None or b0 is None:
+                continue
+            sc_y.append(sc / r0["c_inn"])
+            bc_y.append((b0 - float(r0.get("nonc_frp") or 0.0)) / r0["c_inn"])
+            drs_n.append(c1 / r1["c_inn"])
+    out["s3c_per_inning_form"] = {"n_pairs": len(sc_y), "rho_sc_side": _r(spearman(sc_y, drs_n)),
+                                  "rho_bc": _r(spearman(bc_y, drs_n)),
+                                  "note": "SC and BC per inning at C in Y on DRS per inning at C in Y+1"}
+    sizes = {}
+    for name, side, get in (("d_fldt_full", HIT, lambda r: (r.get("d") or {}).get("fldt_FULL")),
+                            ("d_cat", HIT, lambda r: (r.get("d") or {}).get("cat")),
+                            ("d_peh", HIT, lambda r: (r.get("d") or {}).get("peh")),
+                            ("delta_pe", PIT, lambda r: (r.get("d_pe") or {}).get(variant))):
+        per = {}
+        for y in seasons:
+            rs = (rows.get(int(y)) or {}).get(side) or {}
+            v = np.array([get(r) / r["rpw"] for r in rs.values() if get(r) is not None and r.get("rpw")], float)
+            if len(v) < 2:
+                per[str(y)] = None
+                continue
+            top = sorted(((get(r) / r["rpw"], m, r.get("name", "")) for m, r in rs.items()
+                          if get(r) is not None and r.get("rpw")), key=lambda t: -abs(t[0]))[:5]
+            per[str(y)] = {"n": int(len(v)), "sd_war": _r(np.std(v, ddof=1)), "max_abs_war": _r(np.max(np.abs(v))),
+                           "share_ge_0_1": _r(np.mean(np.abs(v) >= 0.1)), "share_ge_0_5": _r(np.mean(np.abs(v) >= 0.5)),
+                           "share_ge_1_0": _r(np.mean(np.abs(v) >= 1.0)),
+                           "top_movers": [{"mlbam": m, "name": nm, "delta_war": _r(d, 3)} for d, m, nm in top]}
+        sizes[name] = per
+    out["delta_sizes"] = sizes
+    return out
+
+
+def _jsonable(o):
+    """numpy scalars to Python, NaN and infinities to None, before the record is written."""
+    if isinstance(o, dict):
+        return {str(k): _jsonable(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_jsonable(v) for v in o]
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (float, np.floating)):
+        f = float(o)
+        return f if math.isfinite(f) else None
+    return o
+
+
+AMENDED_PREVIEW_KEYS = ("bat.wraa", "fld.b0", "war0", "ra9_star")
+
+
+def check_amended_preview(payload: dict) -> None:
+    """The preview carries part 11.2.1's bases (tools/build_swar.py since
+    EWV3_LAB_AMENDED_TARGETS); an older swar/2 preview is refused."""
+    for blk in (payload.get("seasons") or {}).values():
+        h = next(iter(blk.get("hitters") or []), None)
+        q = next(iter(blk.get("pitchers") or []), None)
+        if h is None or q is None:
+            continue
+        parts = h.get("parts") or {}
+        if "wraa" not in (parts.get("bat") or {}) or "b0" not in (parts.get("fld") or {}) \
+                or "war0" not in q or "ra9_star" not in q:
+            raise LabStop("the preview lacks part 11.2.1's bases (bat.wraa, fld.b0, war0, ra9_star): "
+                          "rebuild it with python tools/build_swar.py")
+        return
+
+
+def secondary_tests(rows: dict) -> None:
+    """The secondary estimand's test values of the parts registered after 11.2
+    (fWAR + d / RPW, fWAR + Delta_PE / RPW), beside the preview's own."""
+    for blk in rows.values():
+        for r in blk[HIT].values():
+            fw, rpw, d = r.get("fwar"), r.get("rpw"), r.get("d") or {}
+            for key, dk in (("fldt", "fldt_FULL"), ("cat", "cat"), ("peh", "peh")):
+                r["tests"][key] = (None if fw is None or not rpw or d.get(dk) is None
+                                   else fw + d[dk] / rpw)
+        for r in blk[PIT].values():
+            fw, rpw = r.get("fwar"), r.get("rpw")
+            for v in swar.HR_VARIANTS:
+                dp = (r.get("d_pe") or {}).get(v)
+                r["tests"]["pep_" + v] = None if fw is None or not rpw or dp is None else fw + dp / rpw
+
+
 def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Callable = print,
         today: Optional[_dt.date] = None, fail_after_scoring: bool = False) -> dict:
     """mode 'look' or 'holdout'. Raises LabStop before scoring began (nothing
-    written); after scoring began, any exception writes a VOID record."""
+    written; every input is read and assembled before then); after scoring
+    began, any exception writes a VOID record."""
     today = today or _dt.date.today()
     out_path = Path(out_path)
     _refuse_out(out_path)
@@ -1401,6 +2534,7 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
         if out_path.exists():
             raise LabStop(f"the record exists ({out_path}): a second look is forbidden")
         need = list(range(2016, 2026))
+        block_seasons = PREDICTOR_SEASONS
     elif mode == "holdout":
         if not out_path.exists():
             raise LabStop(f"no look record at {out_path}: the holdout runs after the look")
@@ -1410,61 +2544,100 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
         if existing.get("holdout") is not None:
             raise LabStop("the holdout block exists: a second holdout is forbidden")
         need = list(range(2016, 2020)) + [HOLDOUT_SEASONS[0], HOLDOUT_SEASONS[0] + 1]
+        block_seasons = HOLDOUT_SEASONS
     else:
         raise ValueError(mode)
     payload = inputs.preview()
     check_preview(payload, need, inputs.vintage_id())
+    check_amended_preview(payload)
     rows = season_rows(payload)
     _p(log, f"swar_lab {LAB_VERSION} {mode} on {today.isoformat()}: preview vintage "
             f"{payload.get('fwar_vintage_id')}, generated {payload.get('generated_at')}; "
-            f"B1 k hit {B1_K['hit']:g} PA, pit {B1_K['pit']:g} IP; seed {SEED}, B {boot}")
+            f"B1 (primary) k {json.dumps(B1_K_AMENDED, sort_keys=True)}; B1 (secondary) k hit "
+            f"{B1_K['hit']:g} PA, pit {B1_K['pit']:g} IP; seed {SEED}, B {boot}")
+    # -- every input, read and assembled before scoring begins (a failure here is a STOP)
+    peh_seasons = sorted({int(y) for y in block_seasons} | {int(y) + 1 for y in block_seasons})
+    consts = assemble(rows, inputs, need, peh_seasons, log)
+    secondary_tests(rows)
+    team_exp = inputs.team_exposure()
+    standings = inputs.standings(range(min(block_seasons), max(block_seasons) + 2))
+    bwar = inputs.bwar()
+    ev, ve, standing = inputs.ladder_records()
+    ladder = T.ladder_test(ev, ve, standing)
+    systems = T.system_table(range(min(need), max(need) + 1))
+    s3_target = {str(y): T.fielding_target("fld", y) for y in range(min(need), max(need) + 1)}
+    _p(log, f"inputs (sha256, read only, never fetched): {json.dumps(inputs.input_meta(), sort_keys=True)}")
+    _p(log, "fielding systems by source (11.2.2), every season " + f"{min(need)} to {max(need)}: "
+            + "; ".join(f"{s}: {v[0]}" for s, v in T.FIELDING_SOURCES.items())
+            + f"; S3's target {sorted(set(s3_target.values()))}; S3t's DRS, Statcast and UZR (UZR to {T.UZR_LAST})"
+            + "; S3c's DRS; S3t eligible " + str(S3T_ELIGIBLE) + " (owner decision EW3-37, EBR_GATE.md 11.7)")
     started = {"scoring": False}
     try:
         started["scoring"] = True
-        if mode == "look":
-            blk = score_block(rows, PREDICTOR_SEASONS, boot, log, label="look")
-        else:
-            blk = score_block(rows, HOLDOUT_SEASONS, boot, log, label="holdout",
-                              hr_choice=existing["hr_arm_clause"])
+        hr_given = None if mode == "look" else existing.get("hr_arm_clause")
+        prim = score_primary(rows, consts, block_seasons, boot, log, hr_choice=hr_given, label=mode)
         if fail_after_scoring:
             raise RuntimeError("injected failure after scoring began (dry run)")
-        _p(log, f"[{mode}] ADMISSION (part 9.6; EWV3-Q1 ({ANSWERS['EWV3-Q1']}), EWV3-Q2 ({ANSWERS['EWV3-Q2']}))"
+        _p(log, f"[{mode}] POSITION PART (11.2.3): ladder {ladder.get('standing_ladder')} against FanGraphs' "
+                f"positional adjustment ({ladder.get('comparator')}): dMAE in the ladder's favour "
+                f"{_fmt(ladder.get('dmae_ladder_favour'))} [{_fmt(ladder.get('lo95'))}, {_fmt(ladder.get('hi95'))}]"
+                f"; control fails {ladder.get('control_fails')}; passes {ladder.get('passes')}")
+        which = [k for k in GUARD_SERIES if S3T_ELIGIBLE or k != "fldt"]
+        guards = team_guards(rows, block_seasons, prim["variant"], team_exp, standings, bwar, which, boot,
+                             log, mode)
+        _p(log, f"[{mode}] ADMISSION (part 11.2.6; EWV3-Q1 ({ANSWERS['EWV3-Q1']}), EWV3-Q2 ({ANSWERS['EWV3-Q2']}),"
+                f" PB-Q1 ({PITCHING_ARM_RULE}))"
                 + (" reported only: the holdout changes no admission" if mode == "holdout" else ""))
-        adm, contrast = admissions(blk["cells"], blk["pairs_h"], boot, dict(ANSWERS, void=False), log,
-                                   blk["pairs_p"], blk["variant"])
+        adm = admissions_amended(prim, guards, ladder, boot, dict(ANSWERS, void=False), log)
+        beside = primary_beside(prim, rows, block_seasons)
+        _p(log, f"[{mode}] SECONDARY ESTIMAND (11.2.5): published fWAR(Y+1), B1 at a32ff1bb's constants; "
+                "decides nothing")
+        sec = score_block(rows, block_seasons, boot, log, hr_choice=prim["hr"], label=f"{mode} secondary",
+                          spec=secondary_cells())
         block = {
-            "seasons": list(PREDICTOR_SEASONS if mode == "look" else HOLDOUT_SEASONS),
-            "n_pairs": {"hit": len(blk["pairs_h"]), "pit": len(blk["pairs_p"])},
-            "floors_first": blk["floors"],
-            "hr_arm_clause": _rd(blk["hr"], 5),
-            "cells": {part: {c: _public(r) for c, r in fam.items()} for part, fam in blk["cells"].items()},
-            "batting_contrast": _rd(contrast, 5) if contrast else None,
+            "estimand": "primary: next-season realized runs of each part's own component (EBR_GATE.md 11.2.1)",
+            "seasons": list(block_seasons),
+            "n_pairs": {c: len(v) for c, v in prim["pairs"].items()},
+            "fielding_systems": {"by_season": systems, "s3_target_by_season": s3_target},
+            "s3t_eligible": {"eligible": S3T_ELIGIBLE, "by": "owner decision EW3-37 (EBR_GATE.md 11.7)"},
+            "b1": {"k": dict(B1_K_AMENDED), "fit": B1_AMENDED_FIT_LOG},
+            "floors_first": prim["floors"],
+            "hr_arm_clause": _rd(prim["hr"], 5),
+            "cells": {part: {c: _public(r) for c, r in fam.items()} for part, fam in prim["cells"].items()},
+            "pe_h_sensitivity": _rd(prim["sensitivity"], 5),
+            "position_ladder": ladder,
+            "team_guard": guards,
             "admission": adm,
-            "sentences": {part: _sentence(part, blk["cells"][part], adm[part], mode) for part in PARTS},
+            "sentences": amended_sentences(prim["cells"], adm, ladder, mode),
+            "reported_beside": beside,
+            "secondary": {"label": ("secondary estimand (11.2.5): part 9.5's cells as first registered, "
+                                    "published fWAR(Y+1), B1 at the constants frozen at a32ff1bb; "
+                                    "decides nothing"),
+                          "home_run_term": prim["variant"], "floors_first": sec["floors"],
+                          "cells": {part: {c: _public(r) for c, r in fam.items()}
+                                    for part, fam in sec["cells"].items()}},
         }
-        # -- descriptive legs
         _p(log, f"[{mode}] DESCRIPTIVE LEGS ({DESCRIPTIVE})")
-        dseasons = [y for y in (PREDICTOR_SEASONS if mode == "look" else HOLDOUT_SEASONS)]
+        dseasons = list(block_seasons)
         desc = {
             "label": DESCRIPTIVE,
-            "delta_sizes": leg_delta_sizes(rows, dseasons, blk["variant"]),
-            "agreement": leg_agreement(rows, dseasons, blk["variant"], inputs.bwar()),
-            "self_persistence": leg_self_persistence(blk["pairs_h"], blk["pairs_p"], rows, blk["variant"]),
-            "exposure_band_bias": leg_exposure_bias(rows, dseasons, blk["variant"]),
-            "pitching_subsets": leg_pitching_subsets(blk["pairs_p"], blk["variant"]),
-            "leverage_lb_disclosure": leg_leverage_lb(rows, dseasons, blk["variant"]),
+            "delta_sizes": leg_delta_sizes(rows, dseasons, prim["variant"]),
+            "agreement": leg_agreement(rows, dseasons, prim["variant"], bwar),
+            "self_persistence": leg_self_persistence(sec["pairs_h"], sec["pairs_p"], rows, prim["variant"]),
+            "exposure_band_bias": leg_exposure_bias(rows, dseasons, prim["variant"]),
+            "pitching_subsets": leg_pitching_subsets(sec["pairs_p"], prim["variant"]),
+            "leverage_lb_disclosure": leg_leverage_lb(rows, dseasons, prim["variant"]),
             "coverage_census": leg_census(payload),
         }
         if mode == "look":
-            desc["team_wins"] = leg_team_wins(rows, dseasons, blk["variant"], inputs.team_shares(),
-                                              inputs.standings(range(min(dseasons), max(dseasons) + 2)))
+            desc["team_wins"] = leg_team_wins(rows, dseasons, prim["variant"], inputs.team_shares(), standings)
             cal_seasons = [y for y in range(2016, 2026) if y != EXCLUDED_SEASON]
             desc["split_half_calibration"] = leg_split_half(inputs, cal_seasons)
         block["descriptive"] = desc
         for k in ("agreement", "self_persistence", "pitching_subsets"):
-            _p(log, f"  {k}: {json.dumps(desc[k], sort_keys=True)}")
+            _p(log, f"  {k}: {json.dumps(_jsonable(desc[k]), sort_keys=True)}")
         if "team_wins" in desc:
-            _p(log, f"  team_wins: {json.dumps(desc['team_wins'], sort_keys=True)}")
+            _p(log, f"  team_wins: {json.dumps(_jsonable(desc['team_wins']), sort_keys=True)}")
     except Exception:
         if not started["scoring"]:
             raise
@@ -1472,7 +2645,8 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
         _p(log, "VOID: an exception after scoring began; no rerun; an owner question follows")
         _p(log, tb)
         void = {"schema": LAB_VERSION, "status": "VOID", "mode": mode, "date": today.isoformat(),
-                "registration": REGISTRATION, "admission": {p: admit(p, {}, {"void": True}) for p in PARTS},
+                "registration": REGISTRATION,
+                "admission": {p: admit_amended(p, {}, {}, {"void": True}) for p in PRIMARY_PARTS + (PART_POSITION,)},
                 "traceback": tb}
         if mode == "look":
             write_record(void, out_path)
@@ -1483,12 +2657,17 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
     meta = {"schema": LAB_VERSION, "registration": REGISTRATION, "date": today.isoformat(),
             "preview_generated_at": payload.get("generated_at"),
             "fwar_vintage_id": payload.get("fwar_vintage_id"),
+            "inputs": inputs.input_meta(),
             "params": {"seed": SEED, "boot": boot, "margin": MARGIN, "alpha": ALPHA, "mde_z": MDE_Z,
-                       "floors": {"hit_pa": MIN_PA, "pit_ip": MIN_IP},
+                       "floors": {"hit_pa": MIN_PA, "pit_ip": MIN_IP, "catcher_inn_c": T.CATCHER_MIN_INN},
                        "predictor_seasons": list(PREDICTOR_SEASONS),
                        "transport_early_seasons": list(TRANSPORT_EARLY_SEASONS),
                        "holdout_seasons": list(HOLDOUT_SEASONS),
-                       "b1_k": dict(B1_K), "b1_fit": B1_FIT_LOG, "answers": dict(ANSWERS),
+                       "b1_k_primary": dict(B1_K_AMENDED), "b1_fit_primary": B1_AMENDED_FIT_LOG,
+                       "b1_k_secondary": dict(B1_K), "b1_fit_secondary": B1_FIT_LOG,
+                       "team_guard": {"boot": T.GUARD_BOOT if boot == BOOT else boot, "seed": T.GUARD_SEED,
+                                      "z": T.GUARD_Z, "margin": T.GUARD_MARGIN},
+                       "answers": dict(ANSWERS), "pb_q1": PITCHING_ARM_RULE,
                        "primary_convention": "v2", "intervals": "bootstrap percentile",
                        "p_one_sided": "(1 + #{gap draws <= 0}) / (1 + draws)"}}
     if mode == "look":
@@ -1498,7 +2677,7 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
         record = existing
         record["holdout"] = dict(meta, status="SCORED", mode="holdout", block=block,
                                  note="reported beside the verdict, never merged into it; changes no admission")
-    write_record(record, out_path)
+    write_record(_jsonable(record), out_path)
     _p(log, f"wrote {out_path}")
     return record
 
@@ -1508,60 +2687,98 @@ def run(mode: str, inputs: LabInputs, out_path: Path, boot: int = BOOT, log: Cal
 # --------------------------------------------------------------------------
 
 class FixtureLabInputs(LabInputs):
-    """A synthetic league, 2016 to 2026: random fWAR around a fixed talent,
-    batting and pitching deltas that pull toward that talent, position and
-    fielding deltas of pure noise, and nulls on purpose (a missing test value, a
-    missing fWAR, an xHEM+ arm absent in the holdout season, a season of the
-    play-by-play corpus absent)."""
+    """A synthetic league, 2016 to 2026: each player a fixed talent per
+    component (batting, fielding, pitching), every season's realized values
+    that talent plus noise, the batting and pitching deltas pulling toward the
+    talent, the position and other deltas pure noise, and nulls on purpose (a
+    missing test value, a missing fWAR, an xHEM+ arm absent in the holdout
+    season, a missing Baseball-Reference fielding row, a pitcher with no RA9*,
+    a season of the play-by-play corpus absent, UZR absent after 2024, a
+    club-season with no standings)."""
+
+    CORPUS = (2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026)
 
     def __init__(self, seed: int = 7, n_hit: int = 260, n_pit: int = 180):
         self.rng = np.random.default_rng(seed)
         self.n_hit, self.n_pit = n_hit, n_pit
+        self._fld: dict = {}
+        self._tri: dict = {}
+        self._pe: dict = {}
+        self._peh: dict = {}
         self._payload = self._build()
 
     def _build(self) -> dict:
         rng = self.rng
         seasons = {}
-        th = rng.normal(0.004, 0.006, self.n_hit)
-        tp = rng.normal(0.010, 0.012, self.n_pit)
+        th = rng.normal(0.0, 0.03, self.n_hit)         # batting runs per PA
+        tf = rng.normal(0.0, 0.012, self.n_hit)        # fielding runs per PA
+        tp = rng.normal(0.0, 0.08, self.n_pit)         # runs prevented per IP
         for y in range(2016, 2027):
             hit, pit = [], []
+            rpw = 9.8
+            fy, triy, pey, pehy = {}, {}, {v: {} for v in swar.HR_VARIANTS}, {}
             for i in range(self.n_hit):
                 pa = float(rng.integers(60, 700))
-                fw = float(th[i] * pa + rng.normal(0, 0.8))
+                wraa = float(th[i] * pa + rng.normal(0, 7.0))
+                b0f = float(tf[i] * pa + rng.normal(0, 4.0))
+                fw = float((wraa + b0f) / rpw + 0.02 * pa / 10 + rng.normal(0, 0.3))
                 parts = {}
                 for p in swar.HITTER_PARTS:
-                    # the batting arms carry true talent (so the WIN path, the
-                    # admission rule and the batting contrast all run); the
-                    # other parts are pure noise
-                    pull = {"bat": 0.5, "batx": 0.7}.get(p, 0.0)
-                    d = pull * (float(th[i]) * pa - fw) + float(rng.normal(0, 0.05 if pull else 0.3))
-                    test = fw + d
+                    pull = {"bat": 0.5, "batx": 0.7, "fld": 0.4}.get(p, 0.0)
+                    base = wraa if p in ("bat", "batx") else b0f
+                    true = (th[i] if p in ("bat", "batx") else tf[i]) * pa
+                    d = pull * (float(true) - base) + float(rng.normal(0, 0.3 if pull else 2.0))
+                    test = fw + d / rpw
                     if (p == "batx" and y == 2025 and i % 2 == 0) or (i == 3 and p == "fld"):
-                        test = None
-                    parts[p] = {"g": None, "d": None, "test": test}
+                        test, d = None, None
+                    parts[p] = {"g": None, "d": d, "test": test}
+                parts["bat"]["wraa"] = wraa
+                parts["fld"]["b0"] = b0f
                 hit.append({"mlbam": 1000 + i, "name": f"H{i}", "pa": pa,
                             "fwar": (None if (i == 5 and y == 2022) else fw),
                             "pitcher_batter": i == 7, "parts": parts})
+                catcher = i % 13 == 0
+                rec = {"drs": float(tf[i] * pa + rng.normal(0, 4.0)),
+                       "uzr": (None if y > 2024 else float(tf[i] * pa + rng.normal(0, 4.0))),
+                       "frp": float(tf[i] * pa + rng.normal(0, 4.0)),
+                       "c_inn": float(rng.integers(350, 1100)) if catcher else 0.0,
+                       "nonc_frp": 0.0 if catcher else float(tf[i] * pa + rng.normal(0, 3.0))}
+                rec["sc"] = float(tf[i] * pa + rng.normal(0, 3.0)) if catcher else None
+                rec["c_drs"] = rec["drs"] if catcher else None
+                if not (i == 11 and y == 2023):
+                    rec["runs_field"] = float(tf[i] * pa + rng.normal(0, 4.0))
+                fy[1000 + i] = rec
+                triy[1000 + i] = {c: float(tf[i] * pa * 0.6 + rng.normal(0, 2.0)) for c in S3T_CONFIGS}
+                pehy[1000 + i] = {"n": pa * 0.95, "clres": float(rng.normal(0, 3.0)), "m": pa * 0.5,
+                                  "pres": float(rng.normal(0, 20.0))}
             for i in range(self.n_pit):
                 ip = float(rng.integers(10, 210))
-                fw = float(tp[i] * ip + rng.normal(0, 0.5))
-                sigma = float(min(1.0, max(0.0, rng.normal(0.5, 0.4))))
+                g = float(max(1, int(ip / float(rng.uniform(1.0, 6.0)))))
+                gs = float(min(g, int(rng.integers(0, 33)))) if i % 2 else 0.0
+                war0 = float(tp[i] * ip / rpw + rng.normal(0, 0.4))
+                fw = war0 + float(rng.normal(0, 0.1))
+                ra9 = None if (i == 6 and y == 2022) else float(4.3 - 9.0 * tp[i] + rng.normal(0, 9.0 / math.sqrt(ip)))
+                sigma = float(min(1.0, max(0.0, gs / g if g else 0.0)))
                 parts = {}
                 for v in swar.HR_VARIANTS:
                     pull = 0.6 if v == swar.HR_SHRUNK else 0.2
-                    dl = pull * (float(tp[i]) * ip - fw) + float(rng.normal(0, 0.05))
+                    dl = pull * (float(tp[i]) * ip / rpw - war0) + float(rng.normal(0, 0.05))
                     parts[v] = {"dfip": None, "dwar0": dl, "delta": dl,
                                 "test": (None if (i == 2 and v == swar.HR_SHRUNK) else fw + dl),
                                 "lb_dwar0": dl * float(rng.uniform(0.6, 1.2))}
-                    # the blended arm S2b: a slightly stronger pull, and a null on purpose
-                    db = (pull + 0.1) * (float(tp[i]) * ip - fw) + float(rng.normal(0, 0.05))
+                    db = (pull + 0.1) * (float(tp[i]) * ip / rpw - war0) + float(rng.normal(0, 0.05))
                     parts[pb_key(v)] = {"dwar0": db, "delta": db,
                                         "test": (None if (i == 4 and y == 2022) else fw + db)}
-                pit.append({"mlbam": 5000 + i, "name": f"P{i}", "ip": ip, "fwar": fw,
-                            "sigma": sigma, "nopp": i == 9, "gmli": None, "parts": parts})
-            seasons[str(y)] = {"hitters": hit, "pitchers": pit,
+                    pey[v][5000 + i] = float(rng.normal(0, 1.0))
+                pit.append({"mlbam": 5000 + i, "name": f"P{i}", "ip": ip, "g": g, "gs": gs, "fwar": fw,
+                            "sigma": sigma, "nopp": i == 9, "gmli": None, "parts": parts,
+                            "war0": war0, "ra9_star": ra9})
+            seasons[str(y)] = {"rpw": rpw, "hitters": hit, "pitchers": pit,
                                "census": {"rows_hitters": len(hit), "rows_pitchers": len(pit)}}
+            self._fld[y], self._tri[y] = fy, triy
+            self._pe[y] = {"delta": pey, "w": 0.004, "coverage": {"no_split": 0, "nopp": 1, "no_ip": 0}}
+            self._peh[y] = {"resid": pehy, "pa": {1000 + i: float(r["pa"]) for i, r in enumerate(hit)
+                                                  if not r["pitcher_batter"]}}
         return {"schema": swar.SWAR_VERSION, "fwar_vintage_id": "fixture", "generated_at": "fixture",
                 "seasons": seasons, "census_total": {"rows_hitters": 0, "rows_pitchers": 0}}
 
@@ -1593,9 +2810,28 @@ class FixtureLabInputs(LabInputs):
                 out[(PIT, int(s), r["mlbam"])] = {teams[k % 30]: 0.6, teams[(k + 1) % 30]: 0.4}
         return out
 
+    def team_exposure(self):
+        out = {}
+        sh = self.team_shares()
+        for s, blk in self._payload["seasons"].items():
+            for side, key, n in ((HIT, "hitters", "pa"), (PIT, "pitchers", "ip")):
+                for r in blk[key]:
+                    w = sh.get((side, int(s), r["mlbam"]))
+                    if w:
+                        out[(side, int(s), r["mlbam"])] = {t: f * r[n] for t, f in w.items()}
+        return out
+
     def standings(self, seasons):
-        return {int(y): {f"T{j:02d}": {"w": int(60 + (j * 7 + y) % 40), "l": 162 - int(60 + (j * 7 + y) % 40)}
-                         for j in range(30)} for y in seasons if int(y) != 2023}
+        out = {}
+        for y in seasons:
+            if int(y) == 2023:
+                continue
+            out[int(y)] = {}
+            for j in range(30):
+                w = int(60 + (j * 7 + int(y)) % 40)
+                out[int(y)][f"T{j:02d}"] = {"w": w, "l": 162 - w, "rs": 600 + 3 * w + (j % 5),
+                                            "ra": 900 - 3 * w + (j % 7)}
+        return out
 
     def pbp_plays(self, season):
         if int(season) == 2019:
@@ -1612,6 +2848,33 @@ class FixtureLabInputs(LabInputs):
             "pitcher_id": rng.integers(5000, 5040, n),
             "event_type": rng.choice(np.array(kinds, dtype=object), n, p=probs / probs.sum()),
         })
+
+    def fielding_by_player(self):
+        import copy
+        return copy.deepcopy(self._fld)
+
+    def triangulation_runs(self):
+        return {y: {m: dict(v) for m, v in d.items()} for y, d in self._tri.items()}
+
+    def pe_pitchers(self, season):
+        return self._pe[int(season)]
+
+    def pe_hitters(self, season):
+        return self._peh.get(int(season)) if int(season) in self.CORPUS else None
+
+    def pe_wear(self, season):
+        return self._pe[int(season)]["w"]
+
+    def ladder_records(self):
+        ev = {"gate": "fixture", "seeds": {"bootstrap": 1, "draws": 50},
+              "tests": {"v1_minus_fg_inv_pooled": {"dmae": 0.10, "ci95": [0.07, 0.14], "n_rows": 400,
+                                                    "n_players": 60},
+                        "v1_minus_fg_table_pooled": {"dmae": 0.18, "ci95": [0.14, 0.22]}}}
+        ve = {"zero_ladder": {"tests": {"v1_minus_zero": {"dmae": 0.84, "ci95": [0.66, 1.03]}}}}
+        return ev, ve, "v1"
+
+    def input_meta(self):
+        return {"fixture": True}
 
 
 def preflight_real_inputs(log: Callable = print) -> dict:
@@ -1655,6 +2918,35 @@ def preflight_real_inputs(log: Callable = print) -> dict:
             cols_ok[y] = f.exists() and all(c in pq.read_schema(f).names for c in
                                             ("game_pk", "batter_id", "pitcher_id", "event_type"))
         out["pbp_columns_ok"] = cols_ok
+        # part 11's inputs: present and shaped, no value read
+        import fielding_triangulation_lab as FTL
+        import pitch_economy_lab as pel
+        import sdr_inhouse
+        need_cols = ("xMLBAMID", "Pos", "Inn", "DRS", "UZR", "FRP", "OAA", "CFraming", "bFRP", "tFRP")
+        fg_ok = {}
+        for y in range(2016, 2027):
+            f = sdr_inhouse.RAW / f"fg_field_full_{y}.csv"
+            if f.exists():
+                head = f.read_text(encoding="utf-8", errors="replace").split("\n", 1)[0]
+                fg_ok[y] = all(c in head.replace('"', "").split(",") for c in need_cols)
+            else:
+                fg_ok[y] = False
+        out["fg_fielding_files_ok"] = fg_ok
+        out["triangulation_fit_present"] = FTL.FIT_OUT.exists()
+        out["war_daily_bat_present"] = FTL.WAR_DAILY.exists()
+        out["count_value_present"] = pel.COUNT_VALUE.exists()
+        man = (json.loads((pel.RECORD / "manifest.json").read_text(encoding="utf-8"))
+               if (pel.RECORD / "manifest.json").exists() else {})
+        out["runner_record_seasons"] = sorted(int(s) for s in (man.get("seasons") or {}))
+        out["sprp_lines_present"] = {y: (pel.CACHE / "pitch_rates" / f"pitching_sprp_1_{y}.json").exists()
+                                     for y in range(2016, 2027)}
+        out["ladder_records_present"] = {"eval": T.LADDER_EVAL.exists(), "verify": T.LADDER_VERIFY.exists()}
+        if PREVIEW_PATH.exists():
+            try:
+                check_amended_preview(json.loads(PREVIEW_PATH.read_text(encoding="ascii")))
+                out["preview_amended_bases"] = True
+            except LabStop as exc:
+                out["preview_amended_bases"] = str(exc)
     except Exception as exc:  # noqa: BLE001
         out["error"] = f"{type(exc).__name__}: {exc}"
     _p(log, f"preflight (structure only, no value computed): {json.dumps(out, sort_keys=True)}")

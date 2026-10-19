@@ -147,3 +147,12 @@ def test_no_result_above_part_11():
     for pattern in RESULT_PATTERNS:
         m = re.search(pattern, above, re.I)
         assert m is None, f"a result is recorded above part 11: {m.group(0) if m else ''!r}"
+
+
+def test_amendment_a3_records_the_owner_override_and_reruns_nothing():
+    doc = _doc()
+    tail = _flat(doc.split("## 12. Amendments", 1)[1])
+    assert "### A3, 2026-10-19, owner override EW3-37: S3t is scored in the skill look" in tail
+    assert "This is an owner override of part 5.5 for that one consequence" in tail
+    assert "The read, its verdict, the fit and every constant stand as recorded; nothing is re-run." in tail
+    assert doc.index(RESULTS) < doc.index("### A3, 2026-10-19")

@@ -501,3 +501,13 @@ component whose K the fit could not set at 0, as it carries a missing one, so bl
 weight in T_C; framing and throwing carry the catcher value. Found by the one fit
 (`data/_labs/fielding_triangulation_fit.json`), before the read; no rule, window or constant is
 re-chosen, and the fit is not re-run.
+
+### A3, 2026-10-19, owner override EW3-37: S3t is scored in the skill look (recorded, nothing re-chosen)
+
+The owner answered FT-Q1 with option (b) on 2026-10-16 (`DECISIONS_FOR_OWNER.md` EW3-37): S3t is
+eligible for the eWAR v3 skill look as candidate part 6's second arm beside S3, although part 5.5's
+rule (L1 passes and L2 is NON-INFERIOR) did not hold on the read of part 11. This is an owner
+override of part 5.5 for that one consequence, recorded in `docs/ebr-2026-09-30/EBR_GATE.md` part
+11.7. The read, its verdict, the fit and every constant stand as recorded; nothing is re-run. The
+skill look's own cells (EBR_GATE.md 11.5.2, Holm family k = 6 with the catcher component of 11.6)
+and its team guard decide whether S3t enters eWAR v3.
