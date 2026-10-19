@@ -110,3 +110,5 @@ dvm_difficulty.json
 # tools/efv_surrogate_freeze_2026.py), the surrogate gate's Q5 input, read only by
 # that gate's registered runner; no page fetches it.
 efv_surrogate_frame_2026.json
+# ETOOLS_DVM: the as-of eTool history, a server input (etool_history.py --build); no page reads it.
+etool_asof.json

@@ -282,3 +282,80 @@ the runner; no projections retrain; nothing served moves from the runner.
 ## 8. Results
 
 EMPTY AT REGISTRATION. The read's result is pasted here, dated, by this task's results commit.
+
+### 2026-10-17 (UTC): the read, run once
+
+`python tools/etools_dvm_lab.py --read --gate-sha b4f9d303` at commit 461c5fca (lab, history
+module and fixture tests, committed before the read), started 2026-10-17T00:06:01Z, finished in
+161 s, exit code 0, no exception. Artifact: `data/_labs/etools/etools_dvm_read.json` (role
+development, spent marker); every input's sha256 matched at the start and the end. This
+registration names no look date, so the read is not an early read.
+
+**Decision: no tool group switches. All six are NOT RESOLVABLE (gate 5.3): the planted
+recovery fails on both reads for every group.** Per-tool DvM+ and ToolDvM+ stay on consensus
+grade changes; nothing served moves from this read.
+
+**Inputs (receipts, no statistic).** Pools: 9,795 players (debuts, inactive, active); org
+calendars by VAL_4 (transactions 7,160, trades 269, listed club 500, current club 1,102, none
+764); 9,285 identities resolved; 5,852 players carry an as-of eTool parameter in at least one
+block, 17 blocks (seasons 2010 to 2026). Parity (4.3): 50,615 history sub-driver values equal the
+development frame's candidates, 0 differ. Pairs with an endpoint in 2020 or 2021 dropped: 5,907.
+The development universe rebuilt today differs from the look's by one record (no record 159
+against 158; rows 8,898 in both); the all-rows refit reproduces the look's final fit on all six
+tools (largest weight gap 0 at 6 dp), so the fold refits stand on the look's frame.
+
+**Planted recovery (Part 5).** Rates over 40 replicates.
+
+| group | (a) PLANT: P_E LB above 0 | (a) PLANT: rule (a) passes | (a) NULL: P_E LB above 0 | (b) PLANT_E passes | (b) PLANT_C | (b) NULL | recovery |
+|---|---|---|---|---|---|---|---|
+| hit | 0.975 | 0.000 | 0.050 | 0.025 | 0.000 | 0.000 | fails (a), (b) |
+| pwr | 1.000 | 0.125 | 0.075 | 0.000 | 0.000 | 0.000 | fails (a), (b) |
+| pitch_sel | 0.950 | 0.125 | 0.025 | 0.000 | 0.025 | 0.000 | fails (a), (b) |
+| bat_ctrl | 0.950 | 0.075 | 0.025 | 0.025 | 0.000 | 0.000 | fails (a), (b) |
+| fb | 0.975 | 0.175 | 0.025 | 0.225 | 0.000 | 0.000 | fails (a), (b) |
+| cmd | 1.000 | 0.150 | 0.050 | 0.000 | 0.000 | 0.000 | fails (a), (b) |
+
+What failed: read (a) finds a planted persistent club effect (0.95 to 1.00) and stays quiet
+without one (0.025 to 0.075), but its non-inferiority rule cannot certify two versions that
+carry the SAME planted effect (0.000 to 0.175 against the required 0.80): with 4 to 8 window
+pairs over 30 clubs the paired difference's interval is far wider than the 0.05 margin. Read
+(b) cannot detect the registered planted gain effect (partial correlation about 0.12) on 194 to
+1,113 rows (0.000 to 0.225 against 0.80); the fixture tests show it needs about 4,000 rows.
+Neither read can resolve the question on the data that exists, so neither read decides.
+
+**Real-data figures (reported; they decide nothing because recovery failed).** Read (a):
+mean across-club Spearman of a club's per-tool DvM+ in year W with W + 1 (club-clustered
+bootstrap, B 2000). Read (b): incremental within-window Spearman of the grade gain over the
+start grade against the L_MLB outcome, among debuts only (survivorship: only players who reached
+the majors have an MLB outcome); D = eTool minus consensus; LB = one-sided 95% lower bound.
+
+| group | (a) pairs | P consensus (LB) | P eTool (LB) | Delta (LB) | (b) rows (players) | d consensus (LB) | d eTool (LB) | D (LB) | Holm p |
+|---|---|---|---|---|---|---|---|---|---|
+| hit | 8 | -0.022 (-0.106) | -0.010 (-0.109) | +0.012 (-0.099) | 809 (434) | +0.045 (+0.007) | +0.055 (+0.031) | +0.010 (-0.025) | 0.954 |
+| pwr | 8 | +0.080 (-0.031) | +0.088 (-0.026) | +0.008 (-0.099) | 809 (434) | +0.056 (+0.025) | +0.067 (+0.038) | +0.011 (-0.008) | 0.708 |
+| pitch_sel | 4 | -0.077 (-0.230) | +0.050 (-0.103) | +0.128 (-0.019) | 194 (103) | +0.102 (+0.037) | +0.059 (+0.007) | -0.044 (-0.086) | 1.000 |
+| bat_ctrl | 4 | +0.114 (-0.028) | +0.017 (-0.130) | -0.096 (-0.229) | 198 (104) | -0.021 (-0.099) | +0.028 (-0.041) | +0.049 (-0.007) | 0.377 |
+| fb | 8 | +0.096 (-0.032) | +0.051 (-0.076) | -0.045 (-0.163) | 1,113 (619) | +0.023 (-0.002) | +0.073 (+0.042) | +0.050 (+0.027) | 0.0014 |
+| cmd | 8 | -0.116 (-0.220) | -0.020 (-0.121) | +0.097 (+0.004) | 1,113 (619) | +0.040 (+0.015) | +0.040 (+0.019) | -0.000 (-0.016) | 1.000 |
+
+Two readings, stated with their limits. (1) **No per-tool DvM+ persists from one year to the
+next in either version**: every lower bound of P is below 0, and the seven groups with no eTool
+read the same (speed +0.055, field +0.025, arm -0.074, slider -0.012, curveball -0.015, changeup
+-0.035, each with a lower bound below 0); the consensus ToolDvM+ composite reads +0.063 (LB
+-0.061) and the eToolDvM+ composite +0.083 (LB -0.052). The index does not show a stable club
+development skill at the one-year scale on this frame. (2) **For the fastball, the eTool's grade
+gain predicts later MLB strikeout rate beyond the start grade better than the consensus gain**
+(D +0.050, LB +0.027, Holm p 0.0014; the eTool gain itself +0.073, LB +0.042), the only group
+where (b) clears its rule; the same group's persistence difference is -0.045 (LB -0.163), and
+the recovery check says neither read is trustworthy at this sample size. The expected-WAR-scale
+gain (4.7) reads the same way: fastball D +0.040 (LB +0.020); every other group's lower bound is
+below 0.
+
+### 2026-10-17: what follows
+
+Per gate 6.3: per-tool DvM+ and ToolDvM+ keep consensus grade changes for all thirteen groups,
+and the glossary (`tool_specific_dvm_plus`, `tools_dvm_plus`) and the registry row
+(`dvm_plus_tools`) say so and why. `etool_history.ETOOLS_DVM_GROUPS` stays empty, so storage never
+reads the history. The as-of history is built (`python etool_history.py --build`,
+`data/etool_asof.json`, 1.6 MB, a server input on `deploy/data_exclude.txt`) for a later
+registration. The PowerDvM+ repair of 0.3 (d6efd0d6) is independent of this read and stands.
