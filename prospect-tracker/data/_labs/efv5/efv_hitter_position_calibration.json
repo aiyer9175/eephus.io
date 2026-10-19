@@ -1,0 +1,2122 @@
+{
+ "schema": 1,
+ "item": "EFV_HITTER_POSITION_CALIBRATION",
+ "produced_by": "efv_hitter_position_calibration.py --run",
+ "generated_at": "2026-10-19T21:42:58Z",
+ "role": "development",
+ "adjudicates": false,
+ "doc": "docs/efv-v2/EFV_HITTER_POSITION_CALIBRATION.md",
+ "owner_decision": "EW3-47 and EW3-48 (2026-10-19)",
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "source_fit": "data/_labs/efv5/efv5_refit_fit.json",
+ "served_weights": {
+  "hit": {
+   "w_skill": 0.29653024759696733,
+   "w_time": 0.0
+  },
+  "pit": {
+   "w_skill": 1.0,
+   "w_time": 0.0
+  }
+ },
+ "constants": {
+  "seed": 20261021,
+  "B": 4000,
+  "B_MDE": 1000,
+  "K_NULL": 200,
+  "K_PLANT": 100,
+  "B_PLANT": 500,
+  "LB_Q": 0.05,
+  "SIZE_MAX": 0.1,
+  "POWER_MIN": 0.8,
+  "RECOVER_TOL": 0.5,
+  "R_FLOOR": 0.05,
+  "PLANT_GROUP": "SS/CF",
+  "PLANT_MULT": 1.25,
+  "PLANT_BETA": 0.3,
+  "TERM_FIRST_YEAR": 2021,
+  "MIN_G": 10,
+  "MIN_GS": 5,
+  "GS_INN": 5.0,
+  "GROUPS": [
+   "C",
+   "SS/CF",
+   "2B/3B",
+   "LF/RF",
+   "1B/DH"
+  ]
+ },
+ "checks": {
+  "Q1_fold_receipts": {
+   "lv_dev|hit|2017": 20,
+   "lv_dev|hit|2018": 20,
+   "lv_dev|hit|2019": 24,
+   "lv_dev|pit|2017": 16,
+   "lv_dev|pit|2018": 17,
+   "lv_dev|pit|2019": 16,
+   "vm_dev|hit|2017": 15,
+   "vm_dev|hit|2018": 1,
+   "vm_dev|hit|2019": 3,
+   "vm_dev|hit|2020": 21,
+   "vm_dev|hit|2021": 1,
+   "vm_dev|hit|2022": 1,
+   "vm_dev|hit|2023": 1,
+   "vm_dev|pit|2017": 1,
+   "vm_dev|pit|2018": 19,
+   "vm_dev|pit|2019": 18,
+   "vm_dev|pit|2020": 20,
+   "vm_dev|pit|2021": 20,
+   "vm_dev|pit|2022": 19,
+   "vm_dev|pit|2023": 19
+  },
+  "Q2_published_within": {
+   "lv_dev|hit": {
+    "within": 0.1913,
+    "artifact": 0.1913
+   },
+   "vm_dev|hit": {
+    "within": 0.4021,
+    "artifact": 0.4021
+   },
+   "lv_dev|pit": {
+    "within": 0.1442,
+    "artifact": 0.1442
+   },
+   "vm_dev|pit": {
+    "within": 0.3853,
+    "artifact": 0.3853
+   },
+   "both|pit|served": {
+    "within": 0.2198,
+    "artifact": 0.2198
+   }
+  },
+  "Q3_reserved": "no reserved fold",
+  "Q4_live_board": {
+   "hit": {
+    "rows": 1055,
+    "max_abs_u": 4.976303318304787e-07,
+    "max_abs_grade_vs_served_one_decimal": 0.04999999999999716
+   },
+   "pit": {
+    "rows": 941,
+    "max_abs_u": 4.994686503834167e-07,
+    "max_abs_grade_vs_served_one_decimal": 0.04999999999999716
+   }
+  }
+ },
+ "counts": {
+  "lv_dev": {
+   "rows": 1465,
+   "C": 184,
+   "SS/CF": 496,
+   "2B/3B": 297,
+   "LF/RF": 353,
+   "1B/DH": 105,
+   "UNLISTED": 30,
+   "how:listed": 1162,
+   "how:generic_by_history": 5,
+   "how:generic_default": 268,
+   "how:unlisted": 30,
+   "club_unknown": 0
+  },
+  "vm_dev": {
+   "rows": 406,
+   "C": 57,
+   "SS/CF": 154,
+   "2B/3B": 92,
+   "LF/RF": 65,
+   "1B/DH": 35,
+   "UNLISTED": 3,
+   "how:listed": 376,
+   "how:generic_by_history": 3,
+   "how:generic_default": 24,
+   "how:unlisted": 3,
+   "club_unknown": 0
+  },
+  "players": 986,
+  "clubs": 30,
+  "groups": [
+   "lv_dev|2017",
+   "lv_dev|2018",
+   "lv_dev|2019",
+   "vm_dev|2017",
+   "vm_dev|2018",
+   "vm_dev|2019",
+   "vm_dev|2020",
+   "vm_dev|2021",
+   "vm_dev|2022",
+   "vm_dev|2023"
+  ],
+  "term_frame": {
+   "2021": {
+    "rows": 51,
+    "with_games": 0,
+    "with_mfr_at_listed": 0,
+    "mfr_chances_ge_200": 0,
+    "n_pos_ge_2": 0
+   },
+   "2022": {
+    "rows": 100,
+    "with_games": 99,
+    "with_mfr_at_listed": 94,
+    "mfr_chances_ge_200": 24,
+    "n_pos_ge_2": 69
+   },
+   "2023": {
+    "rows": 76,
+    "with_games": 76,
+    "with_mfr_at_listed": 73,
+    "mfr_chances_ge_200": 51,
+    "n_pos_ge_2": 59
+   }
+  },
+  "term_frame_groups": {
+   "C": 30,
+   "SS/CF": 95,
+   "2B/3B": 51,
+   "LF/RF": 29,
+   "1B/DH": 19
+  }
+ },
+ "term_frame_censoring": {
+  "2021": {
+   "rows": 51,
+   "seasons_observed_through_2026": 6
+  },
+  "2022": {
+   "rows": 100,
+   "seasons_observed_through_2026": 5
+  },
+  "2023": {
+   "rows": 76,
+   "seasons_observed_through_2026": 4
+  }
+ },
+ "mfr_scales": {
+  "2022": {
+   "C": {
+    "chances_per_inning": 0.7135616183103511,
+    "k_chances": 279.6233913672773,
+    "sd": 5.6988775760257475,
+    "n_pop": 304
+   },
+   "1B": {
+    "chances_per_inning": 0.19905521476520194,
+    "k_chances": 61.444363693722536,
+    "sd": 22.51352131957975,
+    "n_pop": 253
+   },
+   "2B": {
+    "chances_per_inning": 0.3429638372364194,
+    "k_chances": 202.681681855444,
+    "sd": 10.134427552847725,
+    "n_pop": 259
+   },
+   "3B": {
+    "chances_per_inning": 0.28936315847594146,
+    "k_chances": 123.95160256475428,
+    "sd": 13.036063730213526,
+    "n_pop": 252
+   },
+   "SS": {
+    "chances_per_inning": 0.35596629870339686,
+    "k_chances": 204.3061452082172,
+    "sd": 10.79693919388778,
+    "n_pop": 273
+   },
+   "LF": {
+    "chances_per_inning": 0.3407174047073842,
+    "k_chances": 123.91892009207564,
+    "sd": 12.371671029413022,
+    "n_pop": 222
+   },
+   "CF": {
+    "chances_per_inning": 0.37755342193002833,
+    "k_chances": 109.38553250841166,
+    "sd": 17.013863724023448,
+    "n_pop": 279
+   },
+   "RF": {
+    "chances_per_inning": 0.3554982233731364,
+    "k_chances": 138.6919438774552,
+    "sd": 11.152890983724605,
+    "n_pop": 244
+   }
+  },
+  "2023": {
+   "C": {
+    "chances_per_inning": 1.0872081425276925,
+    "k_chances": 426.04425481232687,
+    "sd": 3.969215324771867,
+    "n_pop": 541
+   },
+   "1B": {
+    "chances_per_inning": 0.1980930756928893,
+    "k_chances": 61.147370604881075,
+    "sd": 22.073982650133928,
+    "n_pop": 509
+   },
+   "2B": {
+    "chances_per_inning": 0.34637817010223115,
+    "k_chances": 204.69945356348566,
+    "sd": 10.15356973620535,
+    "n_pop": 584
+   },
+   "3B": {
+    "chances_per_inning": 0.2855027349087718,
+    "k_chances": 122.2979515255215,
+    "sd": 14.71315281119758,
+    "n_pop": 527
+   },
+   "SS": {
+    "chances_per_inning": 0.36313057710722985,
+    "k_chances": 208.41806846954034,
+    "sd": 10.438677308971137,
+    "n_pop": 485
+   },
+   "LF": {
+    "chances_per_inning": 0.34208049759590686,
+    "k_chances": 124.41467697563132,
+    "sd": 11.943133751488137,
+    "n_pop": 539
+   },
+   "CF": {
+    "chances_per_inning": 0.38314663492589396,
+    "k_chances": 111.00600936399984,
+    "sd": 15.177936124111513,
+    "n_pop": 538
+   },
+   "RF": {
+    "chances_per_inning": 0.35865065633235377,
+    "k_chances": 139.9218151575665,
+    "sd": 11.007032620172422,
+    "n_pop": 533
+   }
+  }
+ },
+ "instrument": "6 x value_framework.fv_to_6yr_avg_war (served, side-pooled)",
+ "read": {
+  "group_vs_zero": {
+   "both": {
+    "delta": -0.0,
+    "lb95_one_sided": -1e-05,
+    "ci90": [
+     -1e-05,
+     0.0
+    ],
+    "p_le_0": 0.90725,
+    "n": 1871,
+    "B_used": 4000
+   },
+   "lv_dev": {
+    "delta": -0.0,
+    "n": 1465
+   },
+   "vm_dev": {
+    "delta": -1e-05,
+    "n": 406
+   },
+   "term_frame": {
+    "delta": 0.0,
+    "lb95_one_sided": -0.0,
+    "ci90": [
+     -0.0,
+     0.0
+    ],
+    "p_le_0": 0.20775,
+    "n": 227,
+    "B_used": 4000
+   }
+  },
+  "loss": {
+   "zero": 0.85869,
+   "group": 0.85869
+  },
+  "fold_offsets": {
+   "lv_dev|2017": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     97,
+     290,
+     175,
+     127,
+     55
+    ],
+    "theta_bar": 0.00939,
+    "tau2": 0.0,
+    "Q": 3.5113,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.2332,
+     1.0578,
+     0.9101,
+     0.8056,
+     0.5881
+    ],
+    "se_log": [
+     0.2238,
+     0.1236,
+     0.209,
+     0.2909,
+     0.4106
+    ],
+    "mde_log_one_sided": [
+     0.5565,
+     0.3073,
+     0.5197,
+     0.7232,
+     1.021
+    ]
+   },
+   "lv_dev|2018": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     84,
+     229,
+     154,
+     139,
+     41
+    ],
+    "theta_bar": 0.01858,
+    "tau2": 0.0,
+    "Q": 1.5897,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.1575,
+     1.0323,
+     0.945,
+     0.7857,
+     1.1868
+    ],
+    "se_log": [
+     0.2555,
+     0.1335,
+     0.2038,
+     0.2506,
+     0.3809
+    ],
+    "mde_log_one_sided": [
+     0.6354,
+     0.332,
+     0.5067,
+     0.6232,
+     0.9471
+    ]
+   },
+   "lv_dev|2019": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     91,
+     173,
+     132,
+     174,
+     51
+    ],
+    "theta_bar": 0.04668,
+    "tau2": 0.0,
+    "Q": 3.4801,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     0.6088,
+     1.108,
+     0.891,
+     1.0338,
+     0.9781
+    ],
+    "se_log": [
+     0.3077,
+     0.127,
+     0.2569,
+     0.2146,
+     0.5059
+    ],
+    "mde_log_one_sided": [
+     0.7652,
+     0.3159,
+     0.6387,
+     0.5336,
+     1.258
+    ]
+   },
+   "vm_dev|2017": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     235,
+     630,
+     375,
+     404,
+     134
+    ],
+    "theta_bar": 0.02677,
+    "tau2": 1.8e-05,
+    "Q": 4.0023,
+    "shrink": [
+     0.0006,
+     0.0015,
+     0.0005,
+     0.0006,
+     0.0001
+    ],
+    "factor": [
+     1.0001,
+     1.0001,
+     0.9998,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.1112,
+     1.0826,
+     0.7185,
+     0.9895,
+     0.8178
+    ],
+    "se_log": [
+     0.1761,
+     0.1075,
+     0.197,
+     0.1704,
+     0.3806
+    ],
+    "mde_log_one_sided": [
+     0.4378,
+     0.2672,
+     0.4898,
+     0.4238,
+     0.9463
+    ]
+   },
+   "vm_dev|2018": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     226,
+     621,
+     376,
+     377,
+     133
+    ],
+    "theta_bar": -0.02885,
+    "tau2": 0.0,
+    "Q": 1.4707,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.0938,
+     1.0515,
+     0.8683,
+     0.8872,
+     1.1208
+    ],
+    "se_log": [
+     0.1933,
+     0.1184,
+     0.1897,
+     0.1924,
+     0.3116
+    ],
+    "mde_log_one_sided": [
+     0.4807,
+     0.2944,
+     0.4716,
+     0.4785,
+     0.7748
+    ]
+   },
+   "vm_dev|2019": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     214,
+     583,
+     329,
+     381,
+     120
+    ],
+    "theta_bar": -0.04254,
+    "tau2": 0.0,
+    "Q": 2.155,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.0973,
+     1.0684,
+     0.9004,
+     0.867,
+     0.647
+    ],
+    "se_log": [
+     0.1857,
+     0.1089,
+     0.1834,
+     0.2009,
+     0.5187
+    ],
+    "mde_log_one_sided": [
+     0.4616,
+     0.2709,
+     0.4561,
+     0.4995,
+     1.2899
+    ]
+   },
+   "vm_dev|2020": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     207,
+     585,
+     358,
+     386,
+     123
+    ],
+    "theta_bar": 0.00063,
+    "tau2": 0.0,
+    "Q": 2.1314,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     0.9208,
+     1.0423,
+     0.7836,
+     1.044,
+     1.2054
+    ],
+    "se_log": [
+     0.2444,
+     0.1094,
+     0.2063,
+     0.1727,
+     0.2905
+    ],
+    "mde_log_one_sided": [
+     0.6077,
+     0.272,
+     0.5129,
+     0.4294,
+     0.7223
+    ]
+   },
+   "vm_dev|2021": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     223,
+     589,
+     369,
+     386,
+     129
+    ],
+    "theta_bar": 0.00797,
+    "tau2": 0.0,
+    "Q": 1.6192,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     0.9769,
+     1.0461,
+     0.8085,
+     1.059,
+     1.1027
+    ],
+    "se_log": [
+     0.1828,
+     0.1142,
+     0.1916,
+     0.1682,
+     0.3121
+    ],
+    "mde_log_one_sided": [
+     0.4546,
+     0.2839,
+     0.4763,
+     0.4181,
+     0.776
+    ]
+   },
+   "vm_dev|2022": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     216,
+     581,
+     331,
+     390,
+     127
+    ],
+    "theta_bar": 0.00197,
+    "tau2": 0.0,
+    "Q": 0.6771,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.0335,
+     1.028,
+     0.859,
+     0.9993,
+     1.1083
+    ],
+    "se_log": [
+     0.2271,
+     0.1247,
+     0.2131,
+     0.1779,
+     0.3285
+    ],
+    "mde_log_one_sided": [
+     0.5646,
+     0.31,
+     0.5298,
+     0.4423,
+     0.8168
+    ]
+   },
+   "vm_dev|2023": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH"
+    ],
+    "n": [
+     231,
+     596,
+     368,
+     404,
+     132
+    ],
+    "theta_bar": 0.01961,
+    "tau2": 0.0,
+    "Q": 1.1865,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.0387,
+     1.0607,
+     0.832,
+     0.9918,
+     0.9748
+    ],
+    "se_log": [
+     0.1928,
+     0.1171,
+     0.1953,
+     0.1695,
+     0.3455
+    ],
+    "mde_log_one_sided": [
+     0.4795,
+     0.2911,
+     0.4857,
+     0.4214,
+     0.8591
+    ]
+   }
+  },
+  "sensitivity_generic_of_cell": {
+   "rows_in_cell": 259,
+   "vs_zero": {
+    "delta": -0.00101,
+    "lb95_one_sided": -0.00271,
+    "ci90": [
+     -0.00271,
+     9e-05
+    ],
+    "p_le_0": 0.92775,
+    "n": 1871,
+    "B_used": 4000
+   },
+   "production": {
+    "groups": [
+     "C",
+     "SS/CF",
+     "2B/3B",
+     "LF/RF",
+     "1B/DH",
+     "OF (generic listing)"
+    ],
+    "n": [
+     241,
+     650,
+     389,
+     159,
+     140,
+     259
+    ],
+    "theta_bar": 0.00403,
+    "tau2": 0.0,
+    "Q": 3.808,
+    "shrink": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "factor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "raw_ratio_over_pool": [
+     1.0502,
+     1.0615,
+     0.8282,
+     0.8025,
+     1.0212,
+     1.2449
+    ],
+    "se_log": [
+     0.1834,
+     0.1059,
+     0.1837,
+     0.1903,
+     0.3183,
+     0.2165
+    ],
+    "mde_log_one_sided": [
+     0.456,
+     0.2633,
+     0.4569,
+     0.4731,
+     0.7915,
+     0.5384
+    ]
+   }
+  }
+ },
+ "terms": {
+  "mfr": {
+   "term_vs_group": {
+    "delta": -0.00861,
+    "lb95_one_sided": -0.04298,
+    "ci90": [
+     -0.04298,
+     0.02278
+    ],
+    "p_le_0": 0.67475,
+    "n": 227,
+    "B_used": 4000
+   },
+   "fold_betas": {
+    "vm_dev|2021": [
+     0.1682512506646668
+    ],
+    "vm_dev|2022": [
+     0.2886339516402115
+    ],
+    "vm_dev|2023": [
+     0.07557124012957007
+    ]
+   },
+   "beta_production": [
+    0.1683
+   ],
+   "beta_se_twoway": [
+    0.1916
+   ],
+   "beta_mde_one_sided": [
+    0.4765
+   ],
+   "n_term_rows": 227,
+   "delta_2021": 0.0,
+   "delta_2022": -0.02247,
+   "delta_2023": 0.00384
+  },
+  "versatility": {
+   "term_vs_group": {
+    "delta": -0.00308,
+    "lb95_one_sided": -0.04929,
+    "ci90": [
+     -0.04929,
+     0.02956
+    ],
+    "p_le_0": 0.4665,
+    "n": 227,
+    "B_used": 4000
+   },
+   "fold_betas": {
+    "vm_dev|2021": [
+     0.15370737330150844,
+     0.19118851279487437
+    ],
+    "vm_dev|2022": [
+     0.08410396613877745,
+     0.024219505498658946
+    ],
+    "vm_dev|2023": [
+     0.22962714535328307,
+     0.3081097236983836
+    ]
+   },
+   "beta_production": [
+    0.1537,
+    0.1912
+   ],
+   "beta_se_twoway": [
+    0.1502,
+    0.1673
+   ],
+   "beta_mde_one_sided": [
+    0.3734,
+    0.4159
+   ],
+   "n_term_rows": 227,
+   "delta_2021": 0.0,
+   "delta_2022": 0.00744,
+   "delta_2023": -0.01899
+  },
+  "sscf_x_mfr": {
+   "term_vs_group": {
+    "delta": -0.00096,
+    "lb95_one_sided": -0.02496,
+    "ci90": [
+     -0.02496,
+     0.02157
+    ],
+    "p_le_0": 0.5095,
+    "n": 227,
+    "B_used": 4000
+   },
+   "fold_betas": {
+    "vm_dev|2021": [
+     0.16759801468021274
+    ],
+    "vm_dev|2022": [
+     0.2210759438250106
+    ],
+    "vm_dev|2023": [
+     0.10672976788238135
+    ]
+   },
+   "beta_production": [
+    0.1676
+   ],
+   "beta_se_twoway": [
+    0.2948
+   ],
+   "beta_mde_one_sided": [
+    0.7329
+   ],
+   "n_term_rows": 227,
+   "delta_2021": 0.0,
+   "delta_2022": -0.0048,
+   "delta_2023": 0.00345
+  }
+ },
+ "null_comparators": {
+  "group_permuted": {
+   "K": 200,
+   "p95": 0.00291,
+   "mean": -0.00142,
+   "max": 0.00672
+  },
+  "mfr_permuted": {
+   "K": 200,
+   "p95": 0.00813,
+   "mean": -0.02667
+  },
+  "versatility_permuted": {
+   "K": 200,
+   "p95": 0.00865,
+   "mean": -0.01842
+  },
+  "sscf_x_mfr_permuted": {
+   "K": 200,
+   "p95": 0.0042,
+   "mean": -0.06063
+  }
+ },
+ "planted": {
+  "group": {
+   "effect": true,
+   "group": "SS/CF",
+   "multiplier": 1.25,
+   "share_lb_above_0": 0.02,
+   "mean_delta": 0.00065,
+   "recovered_ratio_median": 1.0748,
+   "recovered_ratio_p10_p90": [
+    1.0,
+    1.2798
+   ],
+   "recovered": false,
+   "K": 100,
+   "B": 500,
+   "seed": 20261028
+  },
+  "group_null": {
+   "effect": false,
+   "group": "SS/CF",
+   "multiplier": 1.0,
+   "share_lb_above_0": 0.0,
+   "mean_delta": -0.00074,
+   "recovered_ratio_median": 1.0,
+   "recovered_ratio_p10_p90": [
+    0.9411,
+    1.0257
+   ],
+   "recovered": null,
+   "K": 100,
+   "B": 500,
+   "seed": 20261028
+  }
+ },
+ "planted_terms": {
+  "mfr": {
+   "term": "mfr",
+   "effect": true,
+   "beta_planted": 0.3,
+   "share_lb_above_0": 0.05,
+   "mean_delta": 0.00281,
+   "recovered_beta_median": [
+    0.2771
+   ],
+   "recovered": true,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  },
+  "mfr_null": {
+   "term": "mfr",
+   "effect": false,
+   "beta_planted": 0.0,
+   "share_lb_above_0": 0.0,
+   "mean_delta": -0.0098,
+   "recovered_beta_median": [
+    0.0106
+   ],
+   "recovered": null,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  },
+  "versatility": {
+   "term": "versatility",
+   "effect": true,
+   "beta_planted": 0.3,
+   "share_lb_above_0": 0.04,
+   "mean_delta": 0.01035,
+   "recovered_beta_median": [
+    0.247,
+    0.2421
+   ],
+   "recovered": true,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  },
+  "versatility_null": {
+   "term": "versatility",
+   "effect": false,
+   "beta_planted": 0.0,
+   "share_lb_above_0": 0.0,
+   "mean_delta": -0.01386,
+   "recovered_beta_median": [
+    -0.0257,
+    -0.0014
+   ],
+   "recovered": null,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  },
+  "sscf_x_mfr": {
+   "term": "sscf_x_mfr",
+   "effect": true,
+   "beta_planted": 0.3,
+   "share_lb_above_0": 0.01,
+   "mean_delta": 0.00111,
+   "recovered_beta_median": [
+    0.2748
+   ],
+   "recovered": true,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  },
+  "sscf_x_mfr_null": {
+   "term": "sscf_x_mfr",
+   "effect": false,
+   "beta_planted": 0.0,
+   "share_lb_above_0": 0.0,
+   "mean_delta": -0.00955,
+   "recovered_beta_median": [
+    -0.0015
+   ],
+   "recovered": null,
+   "K": 100,
+   "B": 500,
+   "seed": 20261032
+  }
+ },
+ "descriptives": {
+  "by_group": {
+   "both": {
+    "C": {
+     "over_implied": {
+      "value": 1.0544,
+      "ci95": [
+       0.424,
+       1.7761
+      ],
+      "rows": 241
+     },
+     "over_all_hitters": {
+      "value": 1.0544,
+      "ci95": [
+       0.446,
+       1.7352
+      ],
+      "rows": 241
+     }
+    },
+    "SS/CF": {
+     "over_implied": {
+      "value": 1.0658,
+      "ci95": [
+       0.7215,
+       1.4486
+      ],
+      "rows": 650
+     },
+     "over_all_hitters": {
+      "value": 1.0658,
+      "ci95": [
+       0.7789,
+       1.3919
+      ],
+      "rows": 650
+     }
+    },
+    "2B/3B": {
+     "over_implied": {
+      "value": 0.8315,
+      "ci95": [
+       0.4085,
+       1.3585
+      ],
+      "rows": 389
+     },
+     "over_all_hitters": {
+      "value": 0.8315,
+      "ci95": [
+       0.4373,
+       1.2857
+      ],
+      "rows": 389
+     }
+    },
+    "LF/RF": {
+     "over_implied": {
+      "value": 1.0059,
+      "ci95": [
+       0.5107,
+       1.5662
+      ],
+      "rows": 418
+     },
+     "over_all_hitters": {
+      "value": 1.0059,
+      "ci95": [
+       0.5309,
+       1.5291
+      ],
+      "rows": 418
+     }
+    },
+    "1B/DH": {
+     "over_implied": {
+      "value": 1.0253,
+      "ci95": [
+       0.0936,
+       2.0107
+      ],
+      "rows": 140
+     },
+     "over_all_hitters": {
+      "value": 1.0253,
+      "ci95": [
+       0.0968,
+       1.9007
+      ],
+      "rows": 140
+     }
+    },
+    "UNLISTED": {
+     "rows": 33
+    }
+   },
+   "lv_dev": {
+    "C": {
+     "over_implied": {
+      "value": 0.9365,
+      "ci95": [
+       0.0877,
+       1.7752
+      ],
+      "rows": 184
+     },
+     "over_all_hitters": {
+      "value": 0.9365,
+      "ci95": [
+       0.0924,
+       1.7988
+      ],
+      "rows": 184
+     }
+    },
+    "SS/CF": {
+     "over_implied": {
+      "value": 1.0653,
+      "ci95": [
+       0.4862,
+       1.7878
+      ],
+      "rows": 496
+     },
+     "over_all_hitters": {
+      "value": 1.0653,
+      "ci95": [
+       0.5758,
+       1.6051
+      ],
+      "rows": 496
+     }
+    },
+    "2B/3B": {
+     "over_implied": {
+      "value": 0.8267,
+      "ci95": [
+       0.2425,
+       1.5533
+      ],
+      "rows": 297
+     },
+     "over_all_hitters": {
+      "value": 0.8267,
+      "ci95": [
+       0.2663,
+       1.4839
+      ],
+      "rows": 297
+     }
+    },
+    "LF/RF": {
+     "over_implied": {
+      "value": 1.2,
+      "ci95": [
+       0.4443,
+       2.1481
+      ],
+      "rows": 353
+     },
+     "over_all_hitters": {
+      "value": 1.2,
+      "ci95": [
+       0.4864,
+       2.0335
+      ],
+      "rows": 353
+     }
+    },
+    "1B/DH": {
+     "over_implied": {
+      "value": 0.6794,
+      "ci95": [
+       -0.2618,
+       2.1671
+      ],
+      "rows": 105
+     },
+     "over_all_hitters": {
+      "value": 0.6794,
+      "ci95": [
+       -0.3079,
+       2.0628
+      ],
+      "rows": 105
+     }
+    },
+    "UNLISTED": {
+     "rows": 30
+    }
+   },
+   "vm_dev": {
+    "C": {
+     "over_implied": {
+      "value": 1.1097,
+      "ci95": [
+       0.4901,
+       1.9485
+      ],
+      "rows": 57
+     },
+     "over_all_hitters": {
+      "value": 1.1097,
+      "ci95": [
+       0.5216,
+       1.9358
+      ],
+      "rows": 57
+     }
+    },
+    "SS/CF": {
+     "over_implied": {
+      "value": 1.066,
+      "ci95": [
+       0.7302,
+       1.4511
+      ],
+      "rows": 154
+     },
+     "over_all_hitters": {
+      "value": 1.066,
+      "ci95": [
+       0.7958,
+       1.4078
+      ],
+      "rows": 154
+     }
+    },
+    "2B/3B": {
+     "over_implied": {
+      "value": 0.8335,
+      "ci95": [
+       0.4185,
+       1.384
+      ],
+      "rows": 92
+     },
+     "over_all_hitters": {
+      "value": 0.8335,
+      "ci95": [
+       0.4524,
+       1.3058
+      ],
+      "rows": 92
+     }
+    },
+    "LF/RF": {
+     "over_implied": {
+      "value": 0.8922,
+      "ci95": [
+       0.425,
+       1.4317
+      ],
+      "rows": 65
+     },
+     "over_all_hitters": {
+      "value": 0.8922,
+      "ci95": [
+       0.4401,
+       1.4142
+      ],
+      "rows": 65
+     }
+    },
+    "1B/DH": {
+     "over_implied": {
+      "value": 1.2007,
+      "ci95": [
+       0.2464,
+       2.2661
+      ],
+      "rows": 35
+     },
+     "over_all_hitters": {
+      "value": 1.2007,
+      "ci95": [
+       0.2578,
+       2.2263
+      ],
+      "rows": 35
+     }
+    },
+    "UNLISTED": {
+     "rows": 3
+    }
+   }
+  },
+  "movers": {
+   "both": {
+    "listed_sscf": 650,
+    "eventual_known": 540,
+    "movers_down": 194,
+    "move_rate": 0.3593,
+    "movers_over_implied": {
+     "value": 1.2652,
+     "ci95": [
+      0.6086,
+      2.0549
+     ],
+     "rows": 194
+    },
+    "stayers_over_implied": {
+     "value": 1.0353,
+     "ci95": [
+      0.6294,
+      1.4801
+     ],
+     "rows": 346
+    },
+    "movers_over_stayers": {
+     "value": 1.2221,
+     "ci95": [
+      0.5378,
+      2.365
+     ],
+     "rows": 194
+    },
+    "unknown_over_implied": {
+     "value": 0.0372,
+     "ci95": [
+      -0.4484,
+      1.3222
+     ],
+     "rows": 110
+    }
+   },
+   "lv_dev": {
+    "listed_sscf": 496,
+    "eventual_known": 393,
+    "movers_down": 143,
+    "move_rate": 0.3639,
+    "movers_over_implied": {
+     "value": 1.6675,
+     "ci95": [
+      0.3277,
+      3.311
+     ],
+     "rows": 143
+    },
+    "stayers_over_implied": {
+     "value": 0.9164,
+     "ci95": [
+      0.2821,
+      1.7515
+     ],
+     "rows": 250
+    },
+    "movers_over_stayers": {
+     "value": 1.8195,
+     "ci95": [
+      0.2661,
+      7.2537
+     ],
+     "rows": 143
+    },
+    "unknown_over_implied": {
+     "value": 0.0629,
+     "ci95": [
+      -0.5522,
+      1.4774
+     ],
+     "rows": 103
+    }
+   },
+   "vm_dev": {
+    "listed_sscf": 154,
+    "eventual_known": 147,
+    "movers_down": 51,
+    "move_rate": 0.3469,
+    "movers_over_implied": {
+     "value": 1.1394,
+     "ci95": [
+      0.6135,
+      1.9121
+     ],
+     "rows": 51
+    },
+    "stayers_over_implied": {
+     "value": 1.0782,
+     "ci95": [
+      0.6667,
+      1.5645
+     ],
+     "rows": 96
+    },
+    "movers_over_stayers": {
+     "value": 1.0568,
+     "ci95": [
+      0.5328,
+      2.116
+     ],
+     "rows": 51
+    },
+    "unknown_over_implied": {
+     "value": 0.0011,
+     "ci95": [
+      -0.5256,
+      1.6555
+     ],
+     "rows": 7
+    }
+   }
+  },
+  "eventual_coverage_rows": 1430
+ },
+ "rules": {
+  "group": {
+   "checks": {
+    "G1_lb95_above_0": false,
+    "G2_planted_recovered": false,
+    "G3_size": true
+   },
+   "passes": false,
+   "reading": "UNRESOLVED",
+   "power": 0.02
+  },
+  "mfr": {
+   "checks": {
+    "T1_lb95_above_0": false,
+    "T2_planted_recovered": true,
+    "T3_size": true
+   },
+   "passes": false,
+   "power": 0.05,
+   "reading": "UNDERPOWERED"
+  },
+  "versatility": {
+   "checks": {
+    "T1_lb95_above_0": false,
+    "T2_planted_recovered": true,
+    "T3_size": true
+   },
+   "passes": false,
+   "power": 0.04,
+   "reading": "UNDERPOWERED"
+  },
+  "sscf_x_mfr": {
+   "checks": {
+    "T1_lb95_above_0": false,
+    "T2_planted_recovered": true,
+    "T3_size": true
+   },
+   "passes": false,
+   "power": 0.01,
+   "reading": "UNDERPOWERED"
+  },
+  "prepared": null
+ },
+ "production_offsets": {
+  "groups": [
+   "C",
+   "SS/CF",
+   "2B/3B",
+   "LF/RF",
+   "1B/DH"
+  ],
+  "n": [
+   241,
+   650,
+   389,
+   418,
+   140
+  ],
+  "theta_bar": 0.01159,
+  "tau2": 0.0,
+  "Q": 1.4357,
+  "shrink": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "factor": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "raw_ratio_over_pool": [
+   1.0423,
+   1.0536,
+   0.8219,
+   0.9943,
+   1.0135
+  ],
+  "se_log": [
+   0.1834,
+   0.1059,
+   0.1837,
+   0.1646,
+   0.3183
+  ],
+  "mde_log_one_sided": [
+   0.456,
+   0.2633,
+   0.4569,
+   0.4092,
+   0.7915
+  ]
+ },
+ "board_effect": {
+  "rows": 1055,
+  "by_group": {
+   "C": {
+    "rows": 142,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   },
+   "SS/CF": {
+    "rows": 408,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   },
+   "2B/3B": {
+    "rows": 221,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   },
+   "LF/RF": {
+    "rows": 219,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   },
+   "1B/DH": {
+    "rows": 59,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   },
+   "UNLISTED": {
+    "rows": 6,
+    "value_factor": 1.0,
+    "mean_war6_change": 0.0
+   }
+  },
+  "top50": {
+   "mean_war6_served": 4.666,
+   "mean_war6_calibrated": 4.666,
+   "rows": [
+    {
+     "player_key": "jesus_made",
+     "group": "SS/CF",
+     "efv": 61.5,
+     "war6_served": 9.88,
+     "war6_calibrated": 9.88
+    },
+    {
+     "player_key": "franklin_arias",
+     "group": "SS/CF",
+     "efv": 59.0,
+     "war6_served": 8.38,
+     "war6_calibrated": 8.38
+    },
+    {
+     "player_key": "grady_emerson",
+     "group": "SS/CF",
+     "efv": 58.1,
+     "war6_served": 7.81,
+     "war6_calibrated": 7.81
+    },
+    {
+     "player_key": "caden_bodine",
+     "group": "C",
+     "efv": 56.5,
+     "war6_served": 6.82,
+     "war6_calibrated": 6.82
+    },
+    {
+     "player_key": "eli_willits",
+     "group": "SS/CF",
+     "efv": 56.5,
+     "war6_served": 6.82,
+     "war6_calibrated": 6.82
+    },
+    {
+     "player_key": "leo_de_vries",
+     "group": "SS/CF",
+     "efv": 56.3,
+     "war6_served": 6.69,
+     "war6_calibrated": 6.69
+    },
+    {
+     "player_key": "juneiker_caceres",
+     "group": "LF/RF",
+     "efv": 55.6,
+     "war6_served": 6.25,
+     "war6_calibrated": 6.25
+    },
+    {
+     "player_key": "vahn_lackey",
+     "group": "C",
+     "efv": 55.6,
+     "war6_served": 6.25,
+     "war6_calibrated": 6.25
+    },
+    {
+     "player_key": "luis_pena",
+     "group": "SS/CF",
+     "efv": 54.8,
+     "war6_served": 5.81,
+     "war6_calibrated": 5.81
+    },
+    {
+     "player_key": "derek_curiel",
+     "group": "SS/CF",
+     "efv": 54.8,
+     "war6_served": 5.81,
+     "war6_calibrated": 5.81
+    },
+    {
+     "player_key": "dax_kilby",
+     "group": "SS/CF",
+     "efv": 54.0,
+     "war6_served": 5.52,
+     "war6_calibrated": 5.52
+    },
+    {
+     "player_key": "jojo_parker",
+     "group": "2B/3B",
+     "efv": 54.0,
+     "war6_served": 5.52,
+     "war6_calibrated": 5.52
+    },
+    {
+     "player_key": "rainiel_rodriguez",
+     "group": "C",
+     "efv": 53.1,
+     "war6_served": 5.2,
+     "war6_calibrated": 5.2
+    },
+    {
+     "player_key": "josuar_gonzalez",
+     "group": "SS/CF",
+     "efv": 52.3,
+     "war6_served": 4.91,
+     "war6_calibrated": 4.91
+    },
+    {
+     "player_key": "theo_gillen",
+     "group": "SS/CF",
+     "efv": 52.3,
+     "war6_served": 4.91,
+     "war6_calibrated": 4.91
+    },
+    {
+     "player_key": "kevin_alvarez",
+     "group": "LF/RF",
+     "efv": 51.5,
+     "war6_served": 4.62,
+     "war6_calibrated": 4.62
+    },
+    {
+     "player_key": "demetrio_crisantes",
+     "group": "2B/3B",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "josiah_hartshorn",
+     "group": "1B/DH",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "luis_hernandez",
+     "group": "SS/CF",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "charles_davalan",
+     "group": "LF/RF",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "kane_kepley",
+     "group": "SS/CF",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "kayson_cunningham",
+     "group": "2B/3B",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "roch_cholowsky",
+     "group": "SS/CF",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "jhonny_level",
+     "group": "2B/3B",
+     "efv": 50.6,
+     "war6_served": 4.3,
+     "war6_calibrated": 4.3
+    },
+    {
+     "player_key": "marek_houston",
+     "group": "SS/CF",
+     "efv": 50.2,
+     "war6_served": 4.15,
+     "war6_calibrated": 4.15
+    },
+    {
+     "player_key": "aidan_miller",
+     "group": "SS/CF",
+     "efv": 49.8,
+     "war6_served": 3.99,
+     "war6_calibrated": 3.99
+    },
+    {
+     "player_key": "eric_booth_jr",
+     "group": "SS/CF",
+     "efv": 49.8,
+     "war6_served": 3.99,
+     "war6_calibrated": 3.99
+    },
+    {
+     "player_key": "eduardo_quintero",
+     "group": "SS/CF",
+     "efv": 49.8,
+     "war6_served": 3.99,
+     "war6_calibrated": 3.99
+    },
+    {
+     "player_key": "jefferson_rojas",
+     "group": "SS/CF",
+     "efv": 49.8,
+     "war6_served": 3.99,
+     "war6_calibrated": 3.99
+    },
+    {
+     "player_key": "chris_hacopian",
+     "group": "2B/3B",
+     "efv": 49.6,
+     "war6_served": 3.9,
+     "war6_calibrated": 3.9
+    },
+    {
+     "player_key": "mike_sirota",
+     "group": "SS/CF",
+     "efv": 49.4,
+     "war6_served": 3.81,
+     "war6_calibrated": 3.81
+    },
+    {
+     "player_key": "ralphy_velazquez",
+     "group": "1B/DH",
+     "efv": 49.3,
+     "war6_served": 3.77,
+     "war6_calibrated": 3.77
+    },
+    {
+     "player_key": "sebastian_walcott",
+     "group": "SS/CF",
+     "efv": 49.3,
+     "war6_served": 3.77,
+     "war6_calibrated": 3.77
+    },
+    {
+     "player_key": "trevor_condon",
+     "group": "SS/CF",
+     "efv": 49.3,
+     "war6_served": 3.77,
+     "war6_calibrated": 3.77
+    },
+    {
+     "player_key": "cooper_flemming",
+     "group": "2B/3B",
+     "efv": 49.2,
+     "war6_served": 3.72,
+     "war6_calibrated": 3.72
+    },
+    {
+     "player_key": "roldy_brito",
+     "group": "SS/CF",
+     "efv": 49.2,
+     "war6_served": 3.72,
+     "war6_calibrated": 3.72
+    },
+    {
+     "player_key": "devin_fitzgerald",
+     "group": "SS/CF",
+     "efv": 49.2,
+     "war6_served": 3.72,
+     "war6_calibrated": 3.72
+    },
+    {
+     "player_key": "eric_hartman",
+     "group": "SS/CF",
+     "efv": 49.2,
+     "war6_served": 3.72,
+     "war6_calibrated": 3.72
+    },
+    {
+     "player_key": "jarren_advincula",
+     "group": "2B/3B",
+     "efv": 49.2,
+     "war6_served": 3.72,
+     "war6_calibrated": 3.72
+    },
+    {
+     "player_key": "justin_gonzales",
+     "group": "LF/RF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "felnin_celesten",
+     "group": "SS/CF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "ike_irish",
+     "group": "LF/RF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "josue_briceno",
+     "group": "1B/DH",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "aj_gracia",
+     "group": "LF/RF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "angeibel_gomez",
+     "group": "SS/CF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "brady_ebel",
+     "group": "SS/CF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "hayden_alvarez",
+     "group": "SS/CF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "tyler_bell",
+     "group": "SS/CF",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "franklin_primera",
+     "group": "C",
+     "efv": 49.0,
+     "war6_served": 3.64,
+     "war6_calibrated": 3.64
+    },
+    {
+     "player_key": "drew_burress",
+     "group": "SS/CF",
+     "efv": 48.9,
+     "war6_served": 3.59,
+     "war6_calibrated": 3.59
+    }
+   ]
+  }
+ },
+ "elapsed_s": 70.8,
+ "code": {
+  "tool": "efv_hitter_position_calibration.py",
+  "commit": "5608cc0b",
+  "tool_sha256": "b67e9c3e72ffeec2a2fc32e7cac1cadf2b775e555d08934b6dded01c7e90fd9d"
+ }
+}
