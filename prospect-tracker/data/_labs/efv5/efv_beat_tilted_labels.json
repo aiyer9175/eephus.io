@@ -1,0 +1,5035 @@
+{
+ "schema": 1,
+ "item": "EFV_BEAT_TILTED_LABELS",
+ "produced_by": "tools/efv_beat_tilted_labels.py",
+ "registration": "docs/efv-v2/EFV_BEAT_TILTED_LABELS.md",
+ "generated_at": "2026-10-19T18:32:19Z",
+ "code": {
+  "commit": "3f3d0052",
+  "registration_commit": "b7798fc8",
+  "tool": "tools/efv_beat_tilted_labels.py"
+ },
+ "owner_decision": "EW3-11 (2026-10-15), path 3: tilted labels (arrival)",
+ "role": "development (the served re-fit's weights and penalties were chosen on these frames out of fold); an ARRIVAL read, never the value claim",
+ "label": {
+  "provider": "fwar",
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "raters": {
+  "efv_served_rt": "served eFV: v5 COMBINED re-fit RT, out of fold, guarded cross-fit",
+  "efv_v5_combined_dev": "eFV v5 COMBINED development fit (pre-refit)",
+  "timing_head_rt": "the re-fit RT timing head alone (u_c + e_time)",
+  "timing_head_v5c": "the v5 COMBINED timing head alone (u_c + e_time)",
+  "prospx_consensus": "PROSPX consensus (the comparator)"
+ },
+ "statistic": "within (side, year) Spearman, size-weighted over groups of at least 20 rows with a non-constant label; rater minus PROSPX consensus; AUC on binary labels reported",
+ "bootstrap": {
+  "B": 2000,
+  "seed": 20261017,
+  "estimator": "E_cond, paired",
+  "clusterings": [
+   "player",
+   "club"
+  ]
+ },
+ "pass_rule": "served eFV minus consensus on ARRIVAL (R3 on lv_dev, AD on vm_dev): one-sided 95 percent lower bound above 0 under both clusterings on both frames, observed delta above the permutation null's 95th percentile on both frames, planted rater recovered on both frames",
+ "verdict": {
+  "pass": false,
+  "verdict": "NOT PASS",
+  "words": {
+   "lv_dev": "ties",
+   "vm_dev": "ties"
+  }
+ },
+ "claims": {
+  "ARRIVAL": {
+   "labels": {
+    "lv_dev": "R3",
+    "vm_dev": "AD"
+   },
+   "role": "primary (decides)",
+   "served": {
+    "lv_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": 0.00455,
+     "n": 2862,
+     "lb95_player": -0.0089,
+     "lb95_club": -0.0107,
+     "ub95_player": 0.0181,
+     "ci95_player": [
+      -0.0116,
+      0.0209
+     ],
+     "ci95_club": [
+      -0.0136,
+      0.0519
+     ],
+     "mde95_player": 0.0137,
+     "mde95_club": 0.0313
+    },
+    "vm_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": 0.00784,
+     "n": 814,
+     "lb95_player": -0.0129,
+     "lb95_club": -0.0125,
+     "ub95_player": 0.029,
+     "ci95_player": [
+      -0.0178,
+      0.0337
+     ],
+     "ci95_club": [
+      -0.0155,
+      0.0325
+     ],
+     "mde95_player": 0.0212,
+     "mde95_club": 0.0202
+    }
+   },
+   "reading": {
+    "pass": false,
+    "verdict": "NOT PASS",
+    "words": {
+     "lv_dev": "ties",
+     "vm_dev": "ties"
+    }
+   },
+   "other_raters": {
+    "v5c_dev_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": -0.01069,
+      "n": 2862,
+      "lb95_player": -0.0346,
+      "lb95_club": -0.0341,
+      "ub95_player": 0.0132,
+      "ci95_player": [
+       -0.0388,
+       0.0174
+      ],
+      "ci95_club": [
+       -0.0378,
+       0.0773
+      ],
+      "mde95_player": 0.0242,
+      "mde95_club": 0.056
+     },
+     "vm_dev": {
+      "lb_above_0": true,
+      "word": "beats",
+      "delta": 0.03213,
+      "n": 814,
+      "lb95_player": 0.0009,
+      "lb95_club": 0.0018,
+      "ub95_player": 0.0631,
+      "ci95_player": [
+       -0.0081,
+       0.0691
+      ],
+      "ci95_club": [
+       -0.004,
+       0.0677
+      ],
+      "mde95_player": 0.031,
+      "mde95_club": 0.0305
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_rt_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.06594,
+      "n": 2862,
+      "lb95_player": -0.0829,
+      "lb95_club": -0.0779,
+      "ub95_player": -0.0487,
+      "ci95_player": [
+       -0.0859,
+       -0.0456
+      ],
+      "ci95_club": [
+       -0.0804,
+       0.0483
+      ],
+      "mde95_player": 0.0171,
+      "mde95_club": 0.0794
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": -0.0027,
+      "n": 814,
+      "lb95_player": -0.0262,
+      "lb95_club": -0.0258,
+      "ub95_player": 0.02,
+      "ci95_player": [
+       -0.0296,
+       0.0255
+      ],
+      "ci95_club": [
+       -0.0303,
+       0.0241
+      ],
+      "mde95_player": 0.0234,
+      "mde95_club": 0.0233
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_v5c_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.04334,
+      "n": 2862,
+      "lb95_player": -0.0626,
+      "lb95_club": -0.0609,
+      "ub95_player": -0.0236,
+      "ci95_player": [
+       -0.066,
+       -0.0202
+      ],
+      "ci95_club": [
+       -0.0642,
+       0.1015
+      ],
+      "mde95_player": 0.0196,
+      "mde95_club": 0.1025
+     },
+     "vm_dev": {
+      "lb_above_0": true,
+      "word": "beats",
+      "delta": 0.22441,
+      "n": 814,
+      "lb95_player": 0.1619,
+      "lb95_club": 0.1618,
+      "ub95_player": 0.2805,
+      "ci95_player": [
+       0.1524,
+       0.2914
+      ],
+      "ci95_club": [
+       0.1522,
+       0.292
+      ],
+      "mde95_player": 0.0591,
+      "mde95_club": 0.0594
+     },
+     "both_frames_lb_above_0": false
+    },
+    "served_vs_v5c_dev": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": 0.01524,
+      "n": 2862,
+      "lb95_player": 0.0002,
+      "lb95_club": -0.0243,
+      "ub95_player": 0.0303,
+      "ci95_player": [
+       -0.003,
+       0.0332
+      ],
+      "ci95_club": [
+       -0.0288,
+       0.0279
+      ],
+      "mde95_player": 0.015,
+      "mde95_club": 0.0264
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.02429,
+      "n": 814,
+      "lb95_player": -0.0491,
+      "lb95_club": -0.0429,
+      "ub95_player": -0.0006,
+      "ci95_player": [
+       -0.0537,
+       0.0045
+      ],
+      "ci95_club": [
+       -0.0467,
+       -0.0012
+      ],
+      "mde95_player": 0.0244,
+      "mde95_club": 0.0195
+     },
+     "both_frames_lb_above_0": false
+    }
+   }
+  },
+  "R5": {
+   "labels": {
+    "lv_dev": "R5",
+    "vm_dev": "AD"
+   },
+   "role": "secondary (reported; licenses no copy)",
+   "served": {
+    "lv_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": -0.0027,
+     "n": 2862,
+     "lb95_player": -0.0168,
+     "lb95_club": -0.0157,
+     "ub95_player": 0.0112,
+     "ci95_player": [
+      -0.0194,
+      0.0133
+     ],
+     "ci95_club": [
+      -0.0185,
+      0.0383
+     ],
+     "mde95_player": 0.0141,
+     "mde95_club": 0.0268
+    },
+    "vm_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": 0.00784,
+     "n": 814,
+     "lb95_player": -0.0129,
+     "lb95_club": -0.0125,
+     "ub95_player": 0.029,
+     "ci95_player": [
+      -0.0178,
+      0.0337
+     ],
+     "ci95_club": [
+      -0.0155,
+      0.0325
+     ],
+     "mde95_player": 0.0212,
+     "mde95_club": 0.0202
+    }
+   },
+   "reading": {
+    "pass": false,
+    "verdict": "NOT PASS",
+    "words": {
+     "lv_dev": "ties",
+     "vm_dev": "ties"
+    }
+   },
+   "other_raters": {
+    "v5c_dev_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.02599,
+      "n": 2862,
+      "lb95_player": -0.0503,
+      "lb95_club": -0.0493,
+      "ub95_player": -0.0023,
+      "ci95_player": [
+       -0.0565,
+       0.0034
+      ],
+      "ci95_club": [
+       -0.0541,
+       0.059
+      ],
+      "mde95_player": 0.0249,
+      "mde95_club": 0.0541
+     },
+     "vm_dev": {
+      "lb_above_0": true,
+      "word": "beats",
+      "delta": 0.03213,
+      "n": 814,
+      "lb95_player": 0.0009,
+      "lb95_club": 0.0018,
+      "ub95_player": 0.0631,
+      "ci95_player": [
+       -0.0081,
+       0.0691
+      ],
+      "ci95_club": [
+       -0.004,
+       0.0677
+      ],
+      "mde95_player": 0.031,
+      "mde95_club": 0.0305
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_rt_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.09588,
+      "n": 2862,
+      "lb95_player": -0.1125,
+      "lb95_club": -0.1061,
+      "ub95_player": -0.0788,
+      "ci95_player": [
+       -0.1147,
+       -0.0764
+      ],
+      "ci95_club": [
+       -0.1084,
+       0.0115
+      ],
+      "mde95_player": 0.0164,
+      "mde95_club": 0.0722
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": -0.0027,
+      "n": 814,
+      "lb95_player": -0.0262,
+      "lb95_club": -0.0258,
+      "ub95_player": 0.02,
+      "ci95_player": [
+       -0.0296,
+       0.0255
+      ],
+      "ci95_club": [
+       -0.0303,
+       0.0241
+      ],
+      "mde95_player": 0.0234,
+      "mde95_club": 0.0233
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_v5c_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.08597,
+      "n": 2862,
+      "lb95_player": -0.1055,
+      "lb95_club": -0.1003,
+      "ub95_player": -0.0657,
+      "ci95_player": [
+       -0.1091,
+       -0.0617
+      ],
+      "ci95_club": [
+       -0.1045,
+       0.0457
+      ],
+      "mde95_player": 0.0198,
+      "mde95_club": 0.0879
+     },
+     "vm_dev": {
+      "lb_above_0": true,
+      "word": "beats",
+      "delta": 0.22441,
+      "n": 814,
+      "lb95_player": 0.1619,
+      "lb95_club": 0.1618,
+      "ub95_player": 0.2805,
+      "ci95_player": [
+       0.1524,
+       0.2914
+      ],
+      "ci95_club": [
+       0.1522,
+       0.292
+      ],
+      "mde95_player": 0.0591,
+      "mde95_club": 0.0594
+     },
+     "both_frames_lb_above_0": false
+    },
+    "served_vs_v5c_dev": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": 0.02328,
+      "n": 2862,
+      "lb95_player": 0.0084,
+      "lb95_club": -0.0206,
+      "ub95_player": 0.039,
+      "ci95_player": [
+       0.0052,
+       0.042
+      ],
+      "ci95_club": [
+       -0.0272,
+       0.0379
+      ],
+      "mde95_player": 0.0152,
+      "mde95_club": 0.0295
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.02429,
+      "n": 814,
+      "lb95_player": -0.0491,
+      "lb95_club": -0.0429,
+      "ub95_player": -0.0006,
+      "ci95_player": [
+       -0.0537,
+       0.0045
+      ],
+      "ci95_club": [
+       -0.0467,
+       -0.0012
+      ],
+      "mde95_player": 0.0244,
+      "mde95_club": 0.0195
+     },
+     "both_frames_lb_above_0": false
+    }
+   }
+  },
+  "W2": {
+   "labels": {
+    "lv_dev": "W2",
+    "vm_dev": "W2"
+   },
+   "role": "secondary (reported; licenses no copy)",
+   "served": {
+    "lv_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": -0.00669,
+     "n": 2862,
+     "lb95_player": -0.0216,
+     "lb95_club": -0.0201,
+     "ub95_player": 0.0071,
+     "ci95_player": [
+      -0.0245,
+      0.01
+     ],
+     "ci95_club": [
+      -0.0231,
+      0.0134
+     ],
+     "mde95_player": 0.0145,
+     "mde95_club": 0.0146
+    },
+    "vm_dev": {
+     "lb_above_0": false,
+     "word": "ties",
+     "delta": 0.01672,
+     "n": 814,
+     "lb95_player": -0.0017,
+     "lb95_club": -0.0031,
+     "ub95_player": 0.0354,
+     "ci95_player": [
+      -0.0058,
+      0.0386
+     ],
+     "ci95_club": [
+      -0.0068,
+      0.0389
+     ],
+     "mde95_player": 0.0189,
+     "mde95_club": 0.0189
+    }
+   },
+   "reading": {
+    "pass": false,
+    "verdict": "NOT PASS",
+    "words": {
+     "lv_dev": "ties",
+     "vm_dev": "ties"
+    }
+   },
+   "other_raters": {
+    "v5c_dev_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": -0.0184,
+      "n": 2862,
+      "lb95_player": -0.0436,
+      "lb95_club": -0.0445,
+      "ub95_player": 0.0051,
+      "ci95_player": [
+       -0.0478,
+       0.0115
+      ],
+      "ci95_club": [
+       -0.0511,
+       0.0138
+      ],
+      "mde95_player": 0.025,
+      "mde95_club": 0.0271
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": -0.02721,
+      "n": 814,
+      "lb95_player": -0.0533,
+      "lb95_club": -0.0584,
+      "ub95_player": 0.0001,
+      "ci95_player": [
+       -0.0591,
+       0.0057
+      ],
+      "ci95_club": [
+       -0.0636,
+       0.003
+      ],
+      "mde95_player": 0.0268,
+      "mde95_club": 0.0282
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_rt_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.03951,
+      "n": 2862,
+      "lb95_player": -0.0572,
+      "lb95_club": -0.0638,
+      "ub95_player": -0.0227,
+      "ci95_player": [
+       -0.0612,
+       -0.0189
+      ],
+      "ci95_club": [
+       -0.0687,
+       -0.0169
+      ],
+      "mde95_player": 0.0176,
+      "mde95_club": 0.022
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.02655,
+      "n": 814,
+      "lb95_player": -0.0507,
+      "lb95_club": -0.051,
+      "ub95_player": -0.0034,
+      "ci95_player": [
+       -0.0553,
+       0.0008
+      ],
+      "ci95_club": [
+       -0.0553,
+       0.0012
+      ],
+      "mde95_player": 0.0235,
+      "mde95_club": 0.0242
+     },
+     "both_frames_lb_above_0": false
+    },
+    "timing_v5c_vs_consensus": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.04128,
+      "n": 2862,
+      "lb95_player": -0.0613,
+      "lb95_club": -0.062,
+      "ub95_player": -0.0226,
+      "ci95_player": [
+       -0.0647,
+       -0.0187
+      ],
+      "ci95_club": [
+       -0.0671,
+       -0.0152
+      ],
+      "mde95_player": 0.0194,
+      "mde95_club": 0.0216
+     },
+     "vm_dev": {
+      "lb_above_0": false,
+      "word": "trails",
+      "delta": -0.12011,
+      "n": 814,
+      "lb95_player": -0.1743,
+      "lb95_club": -0.1836,
+      "ub95_player": -0.0629,
+      "ci95_player": [
+       -0.186,
+       -0.0542
+      ],
+      "ci95_club": [
+       -0.1955,
+       -0.0584
+      ],
+      "mde95_player": 0.0558,
+      "mde95_club": 0.0584
+     },
+     "both_frames_lb_above_0": false
+    },
+    "served_vs_v5c_dev": {
+     "lv_dev": {
+      "lb_above_0": false,
+      "word": "ties",
+      "delta": 0.01171,
+      "n": 2862,
+      "lb95_player": -0.0034,
+      "lb95_club": -0.0066,
+      "ub95_player": 0.0267,
+      "ci95_player": [
+       -0.0057,
+       0.0299
+      ],
+      "ci95_club": [
+       -0.0105,
+       0.0377
+      ],
+      "mde95_player": 0.0148,
+      "mde95_club": 0.0195
+     },
+     "vm_dev": {
+      "lb_above_0": true,
+      "word": "beats",
+      "delta": 0.04393,
+      "n": 814,
+      "lb95_player": 0.0199,
+      "lb95_club": 0.024,
+      "ub95_player": 0.066,
+      "ci95_player": [
+       0.016,
+       0.0698
+      ],
+      "ci95_club": [
+       0.0205,
+       0.0715
+      ],
+      "mde95_player": 0.0227,
+      "mde95_club": 0.0214
+     },
+     "both_frames_lb_above_0": false
+    }
+   }
+  }
+ },
+ "reads": {
+  "lv_dev|R3": {
+   "n": 2862,
+   "n_players": 1753,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "n_by_frame": {
+    "lv_dev": 2862
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 472,
+    "lv_dev:hit|2018": 450,
+    "lv_dev:hit|2019": 543,
+    "lv_dev:pit|2017": 469,
+    "lv_dev:pit|2018": 439,
+    "lv_dev:pit|2019": 489
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_served_rt": 0.401,
+     "efv_v5_combined_dev": 0.3396,
+     "prospx_consensus": 0.3919,
+     "timing_head_rt": 0.2625,
+     "timing_head_v5c": 0.2984
+    },
+    "lv_dev:hit|2018": {
+     "efv_served_rt": 0.4496,
+     "efv_v5_combined_dev": 0.4303,
+     "prospx_consensus": 0.4051,
+     "timing_head_rt": 0.4069,
+     "timing_head_v5c": 0.4386
+    },
+    "lv_dev:hit|2019": {
+     "efv_served_rt": 0.4692,
+     "efv_v5_combined_dev": 0.4558,
+     "prospx_consensus": 0.4379,
+     "timing_head_rt": 0.4189,
+     "timing_head_v5c": 0.5
+    },
+    "lv_dev:pit|2017": {
+     "efv_served_rt": 0.1891,
+     "efv_v5_combined_dev": 0.1907,
+     "prospx_consensus": 0.2364,
+     "timing_head_rt": -0.0156,
+     "timing_head_v5c": -0.0481
+    },
+    "lv_dev:pit|2018": {
+     "efv_served_rt": 0.3435,
+     "efv_v5_combined_dev": 0.3407,
+     "prospx_consensus": 0.3557,
+     "timing_head_rt": 0.3557,
+     "timing_head_v5c": 0.3499
+    },
+    "lv_dev:pit|2019": {
+     "efv_served_rt": 0.3669,
+     "efv_v5_combined_dev": 0.3706,
+     "prospx_consensus": 0.3685,
+     "timing_head_rt": 0.3685,
+     "timing_head_v5c": 0.3834
+    }
+   },
+   "legs": {
+    "served_vs_consensus|both": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.37221,
+     "w_b": 0.36766,
+     "delta": 0.00455,
+     "player": {
+      "mde95": 0.0137,
+      "sd": 0.00832,
+      "lb95": -0.0089,
+      "ub95": 0.0181,
+      "ci95": [
+       -0.0116,
+       0.0209
+      ],
+      "p_gt_0": 0.688,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0313,
+      "sd": 0.01903,
+      "lb95": -0.0107,
+      "ub95": 0.0487,
+      "ci95": [
+       -0.0136,
+       0.0519
+      ],
+      "p_gt_0": 0.7245,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|hit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.44119,
+     "w_b": 0.41302,
+     "delta": 0.02817,
+     "player": {
+      "mde95": 0.0166,
+      "sd": 0.01006,
+      "lb95": 0.0119,
+      "ub95": 0.0448,
+      "ci95": [
+       0.0092,
+       0.0474
+      ],
+      "p_gt_0": 0.997,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0208,
+      "sd": 0.01267,
+      "lb95": 0.0113,
+      "ub95": 0.053,
+      "ci95": [
+       0.0084,
+       0.0581
+      ],
+      "p_gt_0": 0.9995,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|pit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.29988,
+     "w_b": 0.3201,
+     "delta": -0.02022,
+     "player": {
+      "mde95": 0.0223,
+      "sd": 0.01355,
+      "lb95": -0.0426,
+      "ub95": 0.0019,
+      "ci95": [
+       -0.0463,
+       0.0066
+      ],
+      "p_gt_0": 0.0695,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0486,
+      "sd": 0.02956,
+      "lb95": -0.0385,
+      "ub95": 0.049,
+      "ci95": [
+       -0.0433,
+       0.0566
+      ],
+      "p_gt_0": 0.3495,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|both": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.35698,
+     "w_b": 0.36766,
+     "delta": -0.01069,
+     "player": {
+      "mde95": 0.0242,
+      "sd": 0.0147,
+      "lb95": -0.0346,
+      "ub95": 0.0132,
+      "ci95": [
+       -0.0388,
+       0.0174
+      ],
+      "p_gt_0": 0.237,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.056,
+      "sd": 0.03402,
+      "lb95": -0.0341,
+      "ub95": 0.0694,
+      "ci95": [
+       -0.0378,
+       0.0773
+      ],
+      "p_gt_0": 0.4645,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|hit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.41053,
+     "w_b": 0.41302,
+     "delta": -0.00249,
+     "player": {
+      "mde95": 0.0423,
+      "sd": 0.0257,
+      "lb95": -0.0449,
+      "ub95": 0.039,
+      "ci95": [
+       -0.0526,
+       0.0488
+      ],
+      "p_gt_0": 0.462,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.071,
+      "sd": 0.04316,
+      "lb95": -0.0371,
+      "ub95": 0.0996,
+      "ci95": [
+       -0.0433,
+       0.1166
+      ],
+      "p_gt_0": 0.615,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|pit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.30082,
+     "w_b": 0.3201,
+     "delta": -0.01928,
+     "player": {
+      "mde95": 0.0228,
+      "sd": 0.01388,
+      "lb95": -0.042,
+      "ub95": 0.004,
+      "ci95": [
+       -0.0465,
+       0.0078
+      ],
+      "p_gt_0": 0.0805,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0462,
+      "sd": 0.02811,
+      "lb95": -0.0371,
+      "ub95": 0.047,
+      "ci95": [
+       -0.0415,
+       0.0545
+      ],
+      "p_gt_0": 0.353,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|both": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.30172,
+     "w_b": 0.36766,
+     "delta": -0.06594,
+     "player": {
+      "mde95": 0.0171,
+      "sd": 0.01038,
+      "lb95": -0.0829,
+      "ub95": -0.0487,
+      "ci95": [
+       -0.0859,
+       -0.0456
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0794,
+      "sd": 0.04829,
+      "lb95": -0.0779,
+      "ub95": 0.0445,
+      "ci95": [
+       -0.0804,
+       0.0483
+      ],
+      "p_gt_0": 0.348,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|hit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.36485,
+     "w_b": 0.41302,
+     "delta": -0.04817,
+     "player": {
+      "mde95": 0.0267,
+      "sd": 0.01621,
+      "lb95": -0.0751,
+      "ub95": -0.0214,
+      "ci95": [
+       -0.0801,
+       -0.0162
+      ],
+      "p_gt_0": 0.001,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0733,
+      "sd": 0.04453,
+      "lb95": -0.066,
+      "ub95": 0.06,
+      "ci95": [
+       -0.0694,
+       0.0659
+      ],
+      "p_gt_0": 0.344,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|pit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.23552,
+     "w_b": 0.3201,
+     "delta": -0.08458,
+     "player": {
+      "mde95": 0.0207,
+      "sd": 0.01257,
+      "lb95": -0.1058,
+      "ub95": -0.0639,
+      "ci95": [
+       -0.1097,
+       -0.0595
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0888,
+      "sd": 0.05397,
+      "lb95": -0.0977,
+      "ub95": 0.0402,
+      "ci95": [
+       -0.1006,
+       0.0451
+      ],
+      "p_gt_0": 0.339,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|both": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.32432,
+     "w_b": 0.36766,
+     "delta": -0.04334,
+     "player": {
+      "mde95": 0.0196,
+      "sd": 0.01193,
+      "lb95": -0.0626,
+      "ub95": -0.0236,
+      "ci95": [
+       -0.066,
+       -0.0202
+      ],
+      "p_gt_0": 0.001,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.1025,
+      "sd": 0.06229,
+      "lb95": -0.0609,
+      "ub95": 0.0965,
+      "ci95": [
+       -0.0642,
+       0.1015
+      ],
+      "p_gt_0": 0.3495,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|hit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.41618,
+     "w_b": 0.41302,
+     "delta": 0.00316,
+     "player": {
+      "mde95": 0.0268,
+      "sd": 0.01629,
+      "lb95": -0.0232,
+      "ub95": 0.0306,
+      "ci95": [
+       -0.0285,
+       0.0361
+      ],
+      "p_gt_0": 0.565,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.085,
+      "sd": 0.05167,
+      "lb95": -0.0206,
+      "ub95": 0.1219,
+      "ci95": [
+       -0.0242,
+       0.1294
+      ],
+      "p_gt_0": 0.634,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|pit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.22799,
+     "w_b": 0.3201,
+     "delta": -0.09211,
+     "player": {
+      "mde95": 0.0284,
+      "sd": 0.01724,
+      "lb95": -0.1215,
+      "ub95": -0.0638,
+      "ci95": [
+       -0.1259,
+       -0.0597
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.1244,
+      "sd": 0.07561,
+      "lb95": -0.1142,
+      "ub95": 0.0836,
+      "ci95": [
+       -0.1189,
+       0.0946
+      ],
+      "p_gt_0": 0.349,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|both": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.37221,
+     "w_b": 0.35698,
+     "delta": 0.01524,
+     "player": {
+      "mde95": 0.015,
+      "sd": 0.00911,
+      "lb95": 0.0002,
+      "ub95": 0.0303,
+      "ci95": [
+       -0.003,
+       0.0332
+      ],
+      "p_gt_0": 0.9535,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0264,
+      "sd": 0.01604,
+      "lb95": -0.0243,
+      "ub95": 0.026,
+      "ci95": [
+       -0.0288,
+       0.0279
+      ],
+      "p_gt_0": 0.6655,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|hit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.44119,
+     "w_b": 0.41053,
+     "delta": 0.03066,
+     "player": {
+      "mde95": 0.0286,
+      "sd": 0.01741,
+      "lb95": 0.0024,
+      "ub95": 0.0588,
+      "ci95": [
+       -0.0041,
+       0.0643
+      ],
+      "p_gt_0": 0.9595,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0539,
+      "sd": 0.03277,
+      "lb95": -0.0496,
+      "ub95": 0.051,
+      "ci95": [
+       -0.0601,
+       0.0551
+      ],
+      "p_gt_0": 0.6675,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|pit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.29988,
+     "w_b": 0.30082,
+     "delta": -0.00094,
+     "player": {
+      "mde95": 0.0059,
+      "sd": 0.00358,
+      "lb95": -0.0067,
+      "ub95": 0.0048,
+      "ci95": [
+       -0.008,
+       0.0058
+      ],
+      "p_gt_0": 0.397,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0065,
+      "sd": 0.00395,
+      "lb95": -0.0057,
+      "ub95": 0.0074,
+      "ci95": [
+       -0.0066,
+       0.0094
+      ],
+      "p_gt_0": 0.4015,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    }
+   },
+   "rows_without_label": 0,
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 1328
+   },
+   "auc": {
+    "raters": {
+     "efv_served_rt": 0.7209,
+     "efv_v5_combined_dev": 0.7116,
+     "prospx_consensus": 0.7162,
+     "timing_head_rt": 0.6765,
+     "timing_head_v5c": 0.6898
+    },
+    "legs": {
+     "served_vs_consensus": {
+      "a": "efv_served_rt",
+      "b": "prospx_consensus",
+      "auc_a": 0.72089,
+      "auc_b": 0.7162,
+      "delta": 0.00469,
+      "player": {
+       "mde95": 0.0082,
+       "sd": 0.00497,
+       "lb95": -0.0034,
+       "ub95": 0.0128,
+       "ci95": [
+        -0.0048,
+        0.0146
+       ],
+       "p_gt_0": 0.824,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0199,
+       "sd": 0.01211,
+       "lb95": -0.0046,
+       "ub95": 0.0329,
+       "ci95": [
+        -0.0065,
+        0.0351
+       ],
+       "p_gt_0": 0.823,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "v5c_dev_vs_consensus": {
+      "a": "efv_v5_combined_dev",
+      "b": "prospx_consensus",
+      "auc_a": 0.71163,
+      "auc_b": 0.7162,
+      "delta": -0.00456,
+      "player": {
+       "mde95": 0.0144,
+       "sd": 0.00874,
+       "lb95": -0.0187,
+       "ub95": 0.0098,
+       "ci95": [
+        -0.0213,
+        0.0124
+       ],
+       "p_gt_0": 0.3045,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.036,
+       "sd": 0.02189,
+       "lb95": -0.02,
+       "ub95": 0.0466,
+       "ci95": [
+        -0.0232,
+        0.0517
+       ],
+       "p_gt_0": 0.4955,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "timing_rt_vs_consensus": {
+      "a": "timing_head_rt",
+      "b": "prospx_consensus",
+      "auc_a": 0.67651,
+      "auc_b": 0.7162,
+      "delta": -0.03969,
+      "player": {
+       "mde95": 0.0104,
+       "sd": 0.00632,
+       "lb95": -0.0501,
+       "ub95": -0.0292,
+       "ci95": [
+        -0.0519,
+        -0.0275
+       ],
+       "p_gt_0": 0.0,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0529,
+       "sd": 0.03213,
+       "lb95": -0.055,
+       "ub95": 0.0291,
+       "ci95": [
+        -0.0573,
+        0.0316
+       ],
+       "p_gt_0": 0.348,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "timing_v5c_vs_consensus": {
+      "a": "timing_head_v5c",
+      "b": "prospx_consensus",
+      "auc_a": 0.68983,
+      "auc_b": 0.7162,
+      "delta": -0.02637,
+      "player": {
+       "mde95": 0.0119,
+       "sd": 0.00726,
+       "lb95": -0.0382,
+       "ub95": -0.0144,
+       "ci95": [
+        -0.0403,
+        -0.0122
+       ],
+       "p_gt_0": 0.001,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0688,
+       "sd": 0.04181,
+       "lb95": -0.0451,
+       "ub95": 0.063,
+       "ci95": [
+        -0.0477,
+        0.0669
+       ],
+       "p_gt_0": 0.3495,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "served_vs_v5c_dev": {
+      "a": "efv_served_rt",
+      "b": "efv_v5_combined_dev",
+      "auc_a": 0.72089,
+      "auc_b": 0.71163,
+      "delta": 0.00926,
+      "player": {
+       "mde95": 0.0089,
+       "sd": 0.00543,
+       "lb95": 0.0004,
+       "ub95": 0.0182,
+       "ci95": [
+        -0.0015,
+        0.0198
+       ],
+       "p_gt_0": 0.957,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0171,
+       "sd": 0.01039,
+       "lb95": -0.0155,
+       "ub95": 0.0168,
+       "ci95": [
+        -0.0184,
+        0.0183
+       ],
+       "p_gt_0": 0.667,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     }
+    }
+   },
+   "base_rate": 0.3987,
+   "elapsed_s": 10.3
+  },
+  "lv_dev|R5": {
+   "n": 2862,
+   "n_players": 1753,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "n_by_frame": {
+    "lv_dev": 2862
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 472,
+    "lv_dev:hit|2018": 450,
+    "lv_dev:hit|2019": 543,
+    "lv_dev:pit|2017": 469,
+    "lv_dev:pit|2018": 439,
+    "lv_dev:pit|2019": 489
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_served_rt": 0.368,
+     "efv_v5_combined_dev": 0.2651,
+     "prospx_consensus": 0.3728,
+     "timing_head_rt": 0.1582,
+     "timing_head_v5c": 0.1988
+    },
+    "lv_dev:hit|2018": {
+     "efv_served_rt": 0.4103,
+     "efv_v5_combined_dev": 0.3651,
+     "prospx_consensus": 0.38,
+     "timing_head_rt": 0.3617,
+     "timing_head_v5c": 0.3654
+    },
+    "lv_dev:hit|2019": {
+     "efv_served_rt": 0.4724,
+     "efv_v5_combined_dev": 0.4741,
+     "prospx_consensus": 0.4308,
+     "timing_head_rt": 0.41,
+     "timing_head_v5c": 0.487
+    },
+    "lv_dev:pit|2017": {
+     "efv_served_rt": 0.1723,
+     "efv_v5_combined_dev": 0.1718,
+     "prospx_consensus": 0.2234,
+     "timing_head_rt": -0.1041,
+     "timing_head_v5c": -0.1542
+    },
+    "lv_dev:pit|2018": {
+     "efv_served_rt": 0.3448,
+     "efv_v5_combined_dev": 0.3475,
+     "prospx_consensus": 0.3823,
+     "timing_head_rt": 0.3823,
+     "timing_head_v5c": 0.3559
+    },
+    "lv_dev:pit|2019": {
+     "efv_served_rt": 0.3768,
+     "efv_v5_combined_dev": 0.3777,
+     "prospx_consensus": 0.3794,
+     "timing_head_rt": 0.3794,
+     "timing_head_v5c": 0.3811
+    }
+   },
+   "legs": {
+    "served_vs_consensus|both": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.36034,
+     "w_b": 0.36305,
+     "delta": -0.0027,
+     "player": {
+      "mde95": 0.0141,
+      "sd": 0.0086,
+      "lb95": -0.0168,
+      "ub95": 0.0112,
+      "ci95": [
+       -0.0194,
+       0.0133
+      ],
+      "p_gt_0": 0.3615,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0268,
+      "sd": 0.01627,
+      "lb95": -0.0157,
+      "ub95": 0.0346,
+      "ci95": [
+       -0.0185,
+       0.0383
+      ],
+      "p_gt_0": 0.5485,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|hit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.41969,
+     "w_b": 0.39651,
+     "delta": 0.02318,
+     "player": {
+      "mde95": 0.0171,
+      "sd": 0.01039,
+      "lb95": 0.0059,
+      "ub95": 0.0406,
+      "ci95": [
+       0.0039,
+       0.0434
+      ],
+      "p_gt_0": 0.9885,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0185,
+      "sd": 0.01127,
+      "lb95": 0.0039,
+      "ub95": 0.0407,
+      "ci95": [
+       0.0009,
+       0.0448
+      ],
+      "p_gt_0": 0.9785,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|pit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.2981,
+     "w_b": 0.32795,
+     "delta": -0.02985,
+     "player": {
+      "mde95": 0.0225,
+      "sd": 0.01368,
+      "lb95": -0.0527,
+      "ub95": -0.008,
+      "ci95": [
+       -0.0565,
+       -0.0037
+      ],
+      "p_gt_0": 0.013,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0492,
+      "sd": 0.02991,
+      "lb95": -0.0453,
+      "ub95": 0.0408,
+      "ci95": [
+       -0.0482,
+       0.0468
+      ],
+      "p_gt_0": 0.3385,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|both": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.33706,
+     "w_b": 0.36305,
+     "delta": -0.02599,
+     "player": {
+      "mde95": 0.0249,
+      "sd": 0.01512,
+      "lb95": -0.0503,
+      "ub95": -0.0023,
+      "ci95": [
+       -0.0565,
+       0.0034
+      ],
+      "p_gt_0": 0.0415,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0541,
+      "sd": 0.03291,
+      "lb95": -0.0493,
+      "ub95": 0.0504,
+      "ci95": [
+       -0.0541,
+       0.059
+      ],
+      "p_gt_0": 0.3735,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|hit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.37327,
+     "w_b": 0.39651,
+     "delta": -0.02324,
+     "player": {
+      "mde95": 0.0433,
+      "sd": 0.0263,
+      "lb95": -0.0665,
+      "ub95": 0.0193,
+      "ci95": [
+       -0.0757,
+       0.0278
+      ],
+      "p_gt_0": 0.1815,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0709,
+      "sd": 0.04312,
+      "lb95": -0.0607,
+      "ub95": 0.0772,
+      "ci95": [
+       -0.0702,
+       0.0912
+      ],
+      "p_gt_0": 0.444,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|pit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.29908,
+     "w_b": 0.32795,
+     "delta": -0.02887,
+     "player": {
+      "mde95": 0.0229,
+      "sd": 0.01393,
+      "lb95": -0.052,
+      "ub95": -0.0066,
+      "ci95": [
+       -0.0564,
+       -0.0026
+      ],
+      "p_gt_0": 0.0155,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0451,
+      "sd": 0.02744,
+      "lb95": -0.0444,
+      "ub95": 0.036,
+      "ci95": [
+       -0.0475,
+       0.0409
+      ],
+      "p_gt_0": 0.3345,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|both": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.26717,
+     "w_b": 0.36305,
+     "delta": -0.09588,
+     "player": {
+      "mde95": 0.0164,
+      "sd": 0.00994,
+      "lb95": -0.1125,
+      "ub95": -0.0788,
+      "ci95": [
+       -0.1147,
+       -0.0764
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0722,
+      "sd": 0.04388,
+      "lb95": -0.1061,
+      "ub95": 0.0075,
+      "ci95": [
+       -0.1084,
+       0.0115
+      ],
+      "p_gt_0": 0.1365,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|hit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.31406,
+     "w_b": 0.39651,
+     "delta": -0.08246,
+     "player": {
+      "mde95": 0.0254,
+      "sd": 0.01544,
+      "lb95": -0.1085,
+      "ub95": -0.0571,
+      "ci95": [
+       -0.1129,
+       -0.0529
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0596,
+      "sd": 0.03625,
+      "lb95": -0.0968,
+      "ub95": 0.0092,
+      "ci95": [
+       -0.1004,
+       0.0165
+      ],
+      "p_gt_0": 0.103,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|pit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.218,
+     "w_b": 0.32795,
+     "delta": -0.10995,
+     "player": {
+      "mde95": 0.0206,
+      "sd": 0.01254,
+      "lb95": -0.1309,
+      "ub95": -0.089,
+      "ci95": [
+       -0.1355,
+       -0.0855
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0889,
+      "sd": 0.05406,
+      "lb95": -0.1245,
+      "ub95": 0.0161,
+      "ci95": [
+       -0.128,
+       0.0209
+      ],
+      "p_gt_0": 0.212,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|both": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.27708,
+     "w_b": 0.36305,
+     "delta": -0.08597,
+     "player": {
+      "mde95": 0.0198,
+      "sd": 0.01202,
+      "lb95": -0.1055,
+      "ub95": -0.0657,
+      "ci95": [
+       -0.1091,
+       -0.0617
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0879,
+      "sd": 0.05341,
+      "lb95": -0.1003,
+      "ub95": 0.0395,
+      "ci95": [
+       -0.1045,
+       0.0457
+      ],
+      "p_gt_0": 0.3365,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|hit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.35679,
+     "w_b": 0.39651,
+     "delta": -0.03972,
+     "player": {
+      "mde95": 0.028,
+      "sd": 0.017,
+      "lb95": -0.0674,
+      "ub95": -0.0116,
+      "ci95": [
+       -0.0731,
+       -0.0057
+      ],
+      "p_gt_0": 0.01,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0674,
+      "sd": 0.04095,
+      "lb95": -0.058,
+      "ub95": 0.0575,
+      "ci95": [
+       -0.0622,
+       0.0627
+      ],
+      "p_gt_0": 0.35,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|pit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.19349,
+     "w_b": 0.32795,
+     "delta": -0.13446,
+     "player": {
+      "mde95": 0.0283,
+      "sd": 0.01721,
+      "lb95": -0.1631,
+      "ub95": -0.1068,
+      "ci95": [
+       -0.1698,
+       -0.1015
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.1134,
+      "sd": 0.06894,
+      "lb95": -0.1558,
+      "ub95": 0.0319,
+      "ci95": [
+       -0.1632,
+       0.0423
+      ],
+      "p_gt_0": 0.223,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|both": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.36034,
+     "w_b": 0.33706,
+     "delta": 0.02328,
+     "player": {
+      "mde95": 0.0152,
+      "sd": 0.00927,
+      "lb95": 0.0084,
+      "ub95": 0.039,
+      "ci95": [
+       0.0052,
+       0.042
+      ],
+      "p_gt_0": 0.9935,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0295,
+      "sd": 0.01794,
+      "lb95": -0.0206,
+      "ub95": 0.0358,
+      "ci95": [
+       -0.0272,
+       0.0379
+      ],
+      "p_gt_0": 0.726,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|hit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.41969,
+     "w_b": 0.37327,
+     "delta": 0.04642,
+     "player": {
+      "mde95": 0.0291,
+      "sd": 0.01768,
+      "lb95": 0.0174,
+      "ub95": 0.0762,
+      "ci95": [
+       0.0126,
+       0.0815
+      ],
+      "p_gt_0": 0.9945,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0609,
+      "sd": 0.03704,
+      "lb95": -0.0441,
+      "ub95": 0.0702,
+      "ci95": [
+       -0.0575,
+       0.0747
+      ],
+      "p_gt_0": 0.713,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|pit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.2981,
+     "w_b": 0.29908,
+     "delta": -0.00098,
+     "player": {
+      "mde95": 0.006,
+      "sd": 0.00362,
+      "lb95": -0.007,
+      "ub95": 0.0048,
+      "ci95": [
+       -0.008,
+       0.0059
+      ],
+      "p_gt_0": 0.386,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0068,
+      "sd": 0.00414,
+      "lb95": -0.0045,
+      "ub95": 0.0092,
+      "ci95": [
+       -0.0051,
+       0.0107
+      ],
+      "p_gt_0": 0.4435,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    }
+   },
+   "rows_without_label": 0,
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 1328
+   },
+   "auc": {
+    "raters": {
+     "efv_served_rt": 0.7099,
+     "efv_v5_combined_dev": 0.6962,
+     "prospx_consensus": 0.7094,
+     "timing_head_rt": 0.654,
+     "timing_head_v5c": 0.6599
+    },
+    "legs": {
+     "served_vs_consensus": {
+      "a": "efv_served_rt",
+      "b": "prospx_consensus",
+      "auc_a": 0.70987,
+      "auc_b": 0.70937,
+      "delta": 0.0005,
+      "player": {
+       "mde95": 0.0082,
+       "sd": 0.00501,
+       "lb95": -0.0077,
+       "ub95": 0.0086,
+       "ci95": [
+        -0.0092,
+        0.0099
+       ],
+       "p_gt_0": 0.5375,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.022,
+       "sd": 0.01339,
+       "lb95": -0.0073,
+       "ub95": 0.0329,
+       "ci95": [
+        -0.0092,
+        0.0365
+       ],
+       "p_gt_0": 0.6405,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "v5c_dev_vs_consensus": {
+      "a": "efv_v5_combined_dev",
+      "b": "prospx_consensus",
+      "auc_a": 0.69623,
+      "auc_b": 0.70937,
+      "delta": -0.01314,
+      "player": {
+       "mde95": 0.0144,
+       "sd": 0.00876,
+       "lb95": -0.0272,
+       "ub95": 0.0007,
+       "ci95": [
+        -0.0306,
+        0.0039
+       ],
+       "p_gt_0": 0.06,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0419,
+       "sd": 0.02548,
+       "lb95": -0.0282,
+       "ub95": 0.0487,
+       "ci95": [
+        -0.0314,
+        0.0569
+       ],
+       "p_gt_0": 0.381,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "timing_rt_vs_consensus": {
+      "a": "timing_head_rt",
+      "b": "prospx_consensus",
+      "auc_a": 0.65397,
+      "auc_b": 0.70937,
+      "delta": -0.0554,
+      "player": {
+       "mde95": 0.0096,
+       "sd": 0.00585,
+       "lb95": -0.0652,
+       "ub95": -0.0456,
+       "ci95": [
+        -0.0664,
+        -0.0439
+       ],
+       "p_gt_0": 0.0,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0449,
+       "sd": 0.02728,
+       "lb95": -0.0666,
+       "ub95": 0.0076,
+       "ci95": [
+        -0.0686,
+        0.0109
+       ],
+       "p_gt_0": 0.1375,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "timing_v5c_vs_consensus": {
+      "a": "timing_head_v5c",
+      "b": "prospx_consensus",
+      "auc_a": 0.65986,
+      "auc_b": 0.70937,
+      "delta": -0.04951,
+      "player": {
+       "mde95": 0.0116,
+       "sd": 0.00705,
+       "lb95": -0.061,
+       "ub95": -0.0378,
+       "ci95": [
+        -0.0633,
+        -0.0351
+       ],
+       "p_gt_0": 0.0,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0611,
+       "sd": 0.03717,
+       "lb95": -0.0628,
+       "ub95": 0.0361,
+       "ci95": [
+        -0.0655,
+        0.041
+       ],
+       "p_gt_0": 0.34,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     },
+     "served_vs_v5c_dev": {
+      "a": "efv_served_rt",
+      "b": "efv_v5_combined_dev",
+      "auc_a": 0.70987,
+      "auc_b": 0.69623,
+      "delta": 0.01363,
+      "player": {
+       "mde95": 0.0089,
+       "sd": 0.00538,
+       "lb95": 0.005,
+       "ub95": 0.0228,
+       "ci95": [
+        0.0031,
+        0.0246
+       ],
+       "p_gt_0": 0.9935,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 1753
+      },
+      "club": {
+       "mde95": 0.0217,
+       "sd": 0.01322,
+       "lb95": -0.0196,
+       "ub95": 0.0219,
+       "ci95": [
+        -0.0251,
+        0.0237
+       ],
+       "p_gt_0": 0.7315,
+       "B_used": 2000,
+       "status": "derived",
+       "B": 2000,
+       "seed": 20261017,
+       "n_clusters": 31
+      }
+     }
+    }
+   },
+   "base_rate": 0.4811,
+   "elapsed_s": 10.2
+  },
+  "lv_dev|W2": {
+   "n": 2862,
+   "n_players": 1753,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "n_by_frame": {
+    "lv_dev": 2862
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 472,
+    "lv_dev:hit|2018": 450,
+    "lv_dev:hit|2019": 543,
+    "lv_dev:pit|2017": 469,
+    "lv_dev:pit|2018": 439,
+    "lv_dev:pit|2019": 489
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_served_rt": 0.1023,
+     "efv_v5_combined_dev": 0.0833,
+     "prospx_consensus": 0.104,
+     "timing_head_rt": 0.0456,
+     "timing_head_v5c": 0.0635
+    },
+    "lv_dev:hit|2018": {
+     "efv_served_rt": 0.1259,
+     "efv_v5_combined_dev": 0.1055,
+     "prospx_consensus": 0.1528,
+     "timing_head_rt": 0.109,
+     "timing_head_v5c": 0.1377
+    },
+    "lv_dev:hit|2019": {
+     "efv_served_rt": 0.0815,
+     "efv_v5_combined_dev": 0.0473,
+     "prospx_consensus": 0.0982,
+     "timing_head_rt": 0.0629,
+     "timing_head_v5c": 0.069
+    },
+    "lv_dev:pit|2017": {
+     "efv_served_rt": 0.1144,
+     "efv_v5_combined_dev": 0.1197,
+     "prospx_consensus": 0.1338,
+     "timing_head_rt": 0.0345,
+     "timing_head_v5c": 0.0034
+    },
+    "lv_dev:pit|2018": {
+     "efv_served_rt": 0.1663,
+     "efv_v5_combined_dev": 0.1615,
+     "prospx_consensus": 0.1572,
+     "timing_head_rt": 0.1572,
+     "timing_head_v5c": 0.1423
+    },
+    "lv_dev:pit|2019": {
+     "efv_served_rt": 0.1714,
+     "efv_v5_combined_dev": 0.1771,
+     "prospx_consensus": 0.1551,
+     "timing_head_rt": 0.1551,
+     "timing_head_v5c": 0.1373
+    }
+   },
+   "legs": {
+    "served_vs_consensus|both": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.12567,
+     "w_b": 0.13236,
+     "delta": -0.00669,
+     "player": {
+      "mde95": 0.0145,
+      "sd": 0.00881,
+      "lb95": -0.0216,
+      "ub95": 0.0071,
+      "ci95": [
+       -0.0245,
+       0.01
+      ],
+      "p_gt_0": 0.203,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0146,
+      "sd": 0.0089,
+      "lb95": -0.0201,
+      "ub95": 0.0098,
+      "ci95": [
+       -0.0231,
+       0.0134
+      ],
+      "p_gt_0": 0.25,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|hit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.10182,
+     "w_b": 0.11686,
+     "delta": -0.01504,
+     "player": {
+      "mde95": 0.0185,
+      "sd": 0.01126,
+      "lb95": -0.0334,
+      "ub95": 0.003,
+      "ci95": [
+       -0.036,
+       0.0071
+      ],
+      "p_gt_0": 0.0835,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0224,
+      "sd": 0.01365,
+      "lb95": -0.04,
+      "ub95": 0.0042,
+      "ci95": [
+       -0.0456,
+       0.0096
+      ],
+      "p_gt_0": 0.0965,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_consensus|pit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.15069,
+     "w_b": 0.14862,
+     "delta": 0.00207,
+     "player": {
+      "mde95": 0.0223,
+      "sd": 0.01354,
+      "lb95": -0.0204,
+      "ub95": 0.0238,
+      "ci95": [
+       -0.0252,
+       0.0286
+      ],
+      "p_gt_0": 0.5435,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0301,
+      "sd": 0.0183,
+      "lb95": -0.0212,
+      "ub95": 0.0389,
+      "ci95": [
+       -0.0263,
+       0.0469
+      ],
+      "p_gt_0": 0.586,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|both": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.11396,
+     "w_b": 0.13236,
+     "delta": -0.0184,
+     "player": {
+      "mde95": 0.025,
+      "sd": 0.01521,
+      "lb95": -0.0436,
+      "ub95": 0.0051,
+      "ci95": [
+       -0.0478,
+       0.0115
+      ],
+      "p_gt_0": 0.1075,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0271,
+      "sd": 0.01647,
+      "lb95": -0.0445,
+      "ub95": 0.0098,
+      "ci95": [
+       -0.0511,
+       0.0138
+      ],
+      "p_gt_0": 0.1385,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|hit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.07676,
+     "w_b": 0.11686,
+     "delta": -0.04009,
+     "player": {
+      "mde95": 0.0434,
+      "sd": 0.0264,
+      "lb95": -0.083,
+      "ub95": 0.0018,
+      "ci95": [
+       -0.0918,
+       0.0103
+      ],
+      "p_gt_0": 0.0625,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0515,
+      "sd": 0.03128,
+      "lb95": -0.0953,
+      "ub95": 0.0079,
+      "ci95": [
+       -0.1106,
+       0.0167
+      ],
+      "p_gt_0": 0.085,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "v5c_dev_vs_consensus|pit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.15296,
+     "w_b": 0.14862,
+     "delta": 0.00435,
+     "player": {
+      "mde95": 0.0229,
+      "sd": 0.01389,
+      "lb95": -0.0186,
+      "ub95": 0.027,
+      "ci95": [
+       -0.0236,
+       0.0306
+      ],
+      "p_gt_0": 0.604,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0285,
+      "sd": 0.0173,
+      "lb95": -0.0183,
+      "ub95": 0.0381,
+      "ci95": [
+       -0.0231,
+       0.0453
+      ],
+      "p_gt_0": 0.6315,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|both": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.09285,
+     "w_b": 0.13236,
+     "delta": -0.03951,
+     "player": {
+      "mde95": 0.0176,
+      "sd": 0.01069,
+      "lb95": -0.0572,
+      "ub95": -0.0227,
+      "ci95": [
+       -0.0612,
+       -0.0189
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.022,
+      "sd": 0.01335,
+      "lb95": -0.0638,
+      "ub95": -0.0197,
+      "ci95": [
+       -0.0687,
+       -0.0169
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|hit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.07148,
+     "w_b": 0.11686,
+     "delta": -0.04538,
+     "player": {
+      "mde95": 0.0281,
+      "sd": 0.01707,
+      "lb95": -0.0731,
+      "ub95": -0.0178,
+      "ci95": [
+       -0.0791,
+       -0.0133
+      ],
+      "p_gt_0": 0.0045,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0439,
+      "sd": 0.02668,
+      "lb95": -0.1017,
+      "ub95": -0.0156,
+      "ci95": [
+       -0.1117,
+       -0.0106
+      ],
+      "p_gt_0": 0.0065,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_rt_vs_consensus|pit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.11526,
+     "w_b": 0.14862,
+     "delta": -0.03336,
+     "player": {
+      "mde95": 0.0214,
+      "sd": 0.01301,
+      "lb95": -0.0543,
+      "ub95": -0.012,
+      "ci95": [
+       -0.0578,
+       -0.0082
+      ],
+      "p_gt_0": 0.005,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.027,
+      "sd": 0.01639,
+      "lb95": -0.0535,
+      "ub95": 0.0015,
+      "ci95": [
+       -0.0584,
+       0.0059
+      ],
+      "p_gt_0": 0.059,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|both": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.09108,
+     "w_b": 0.13236,
+     "delta": -0.04128,
+     "player": {
+      "mde95": 0.0194,
+      "sd": 0.01179,
+      "lb95": -0.0613,
+      "ub95": -0.0226,
+      "ci95": [
+       -0.0647,
+       -0.0187
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0216,
+      "sd": 0.01315,
+      "lb95": -0.062,
+      "ub95": -0.0191,
+      "ci95": [
+       -0.0671,
+       -0.0152
+      ],
+      "p_gt_0": 0.0015,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|hit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.08837,
+     "w_b": 0.11686,
+     "delta": -0.02849,
+     "player": {
+      "mde95": 0.0267,
+      "sd": 0.01622,
+      "lb95": -0.0553,
+      "ub95": -0.002,
+      "ci95": [
+       -0.0612,
+       0.0025
+      ],
+      "p_gt_0": 0.0375,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0392,
+      "sd": 0.02384,
+      "lb95": -0.0775,
+      "ub95": 0.0021,
+      "ci95": [
+       -0.0876,
+       0.0085
+      ],
+      "p_gt_0": 0.061,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "timing_v5c_vs_consensus|pit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.09392,
+     "w_b": 0.14862,
+     "delta": -0.0547,
+     "player": {
+      "mde95": 0.0288,
+      "sd": 0.01751,
+      "lb95": -0.0828,
+      "ub95": -0.0266,
+      "ci95": [
+       -0.0901,
+       -0.021
+      ],
+      "p_gt_0": 0.0015,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0332,
+      "sd": 0.02016,
+      "lb95": -0.08,
+      "ub95": -0.0121,
+      "ci95": [
+       -0.0845,
+       -0.0046
+      ],
+      "p_gt_0": 0.015,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|both": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.12567,
+     "w_b": 0.11396,
+     "delta": 0.01171,
+     "player": {
+      "mde95": 0.0148,
+      "sd": 0.00902,
+      "lb95": -0.0034,
+      "ub95": 0.0267,
+      "ci95": [
+       -0.0057,
+       0.0299
+      ],
+      "p_gt_0": 0.907,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0195,
+      "sd": 0.01187,
+      "lb95": -0.0066,
+      "ub95": 0.0327,
+      "ci95": [
+       -0.0105,
+       0.0377
+      ],
+      "p_gt_0": 0.8545,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|hit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.10182,
+     "w_b": 0.07676,
+     "delta": 0.02505,
+     "player": {
+      "mde95": 0.0284,
+      "sd": 0.01729,
+      "lb95": -0.0035,
+      "ub95": 0.0538,
+      "ci95": [
+       -0.0085,
+       0.0593
+      ],
+      "p_gt_0": 0.9235,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0357,
+      "sd": 0.02171,
+      "lb95": -0.0091,
+      "ub95": 0.0636,
+      "ci95": [
+       -0.0174,
+       0.0736
+      ],
+      "p_gt_0": 0.8885,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    },
+    "served_vs_v5c_dev|pit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.15069,
+     "w_b": 0.15296,
+     "delta": -0.00227,
+     "player": {
+      "mde95": 0.006,
+      "sd": 0.00367,
+      "lb95": -0.0085,
+      "ub95": 0.0037,
+      "ci95": [
+       -0.0094,
+       0.0047
+      ],
+      "p_gt_0": 0.263,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 1753
+     },
+     "club": {
+      "mde95": 0.0069,
+      "sd": 0.00421,
+      "lb95": -0.008,
+      "ub95": 0.0062,
+      "ci95": [
+       -0.0093,
+       0.0082
+      ],
+      "p_gt_0": 0.3075,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 31
+     }
+    }
+   },
+   "rows_without_label": 0,
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 1328
+   },
+   "elapsed_s": 5.6
+  },
+  "vm_dev|AD": {
+   "n": 830,
+   "n_players": 830,
+   "n_by_side": {
+    "hit": 406,
+    "pit": 424
+   },
+   "n_by_frame": {
+    "vm_dev": 830
+   },
+   "groups_kept": [
+    "vm_dev:hit|2017",
+    "vm_dev:hit|2018",
+    "vm_dev:hit|2019",
+    "vm_dev:hit|2020",
+    "vm_dev:hit|2021",
+    "vm_dev:hit|2022",
+    "vm_dev:hit|2023",
+    "vm_dev:pit|2018",
+    "vm_dev:pit|2019",
+    "vm_dev:pit|2020",
+    "vm_dev:pit|2021",
+    "vm_dev:pit|2022",
+    "vm_dev:pit|2023"
+   ],
+   "rows_by_group": {
+    "vm_dev:hit|2017": 30,
+    "vm_dev:hit|2018": 36,
+    "vm_dev:hit|2019": 59,
+    "vm_dev:hit|2020": 54,
+    "vm_dev:hit|2021": 51,
+    "vm_dev:hit|2022": 100,
+    "vm_dev:hit|2023": 76,
+    "vm_dev:pit|2018": 38,
+    "vm_dev:pit|2019": 63,
+    "vm_dev:pit|2020": 77,
+    "vm_dev:pit|2021": 75,
+    "vm_dev:pit|2022": 65,
+    "vm_dev:pit|2023": 90
+   },
+   "rho_by_group": {
+    "vm_dev:hit|2017": {
+     "efv_served_rt": -0.104,
+     "efv_v5_combined_dev": -0.086,
+     "prospx_consensus": -0.0194,
+     "timing_head_rt": -0.1006,
+     "timing_head_v5c": 0.1278
+    },
+    "vm_dev:hit|2018": {
+     "efv_served_rt": 0.1505,
+     "efv_v5_combined_dev": 0.1376,
+     "prospx_consensus": 0.136,
+     "timing_head_rt": 0.1011,
+     "timing_head_v5c": 0.2959
+    },
+    "vm_dev:hit|2019": {
+     "efv_served_rt": 0.1175,
+     "efv_v5_combined_dev": 0.1751,
+     "prospx_consensus": 0.1449,
+     "timing_head_rt": 0.1249,
+     "timing_head_v5c": 0.1801
+    },
+    "vm_dev:hit|2020": {
+     "efv_served_rt": 0.3402,
+     "efv_v5_combined_dev": 0.3611,
+     "prospx_consensus": 0.342,
+     "timing_head_rt": 0.419,
+     "timing_head_v5c": 0.3728
+    },
+    "vm_dev:hit|2021": {
+     "efv_served_rt": -0.046,
+     "efv_v5_combined_dev": -0.0192,
+     "prospx_consensus": -0.0523,
+     "timing_head_rt": -0.0018,
+     "timing_head_v5c": 0.112
+    },
+    "vm_dev:hit|2022": {
+     "efv_served_rt": 0.0186,
+     "efv_v5_combined_dev": 0.1157,
+     "prospx_consensus": -0.0018,
+     "timing_head_rt": -0.0653,
+     "timing_head_v5c": 0.389
+    },
+    "vm_dev:hit|2023": {
+     "efv_served_rt": -0.0868,
+     "efv_v5_combined_dev": 0.0403,
+     "prospx_consensus": -0.119,
+     "timing_head_rt": -0.0888,
+     "timing_head_v5c": 0.3784
+    },
+    "vm_dev:pit|2018": {
+     "efv_served_rt": -0.0948,
+     "efv_v5_combined_dev": -0.1974,
+     "prospx_consensus": -0.1839,
+     "timing_head_rt": -0.1839,
+     "timing_head_v5c": -0.0783
+    },
+    "vm_dev:pit|2019": {
+     "efv_served_rt": -0.0528,
+     "efv_v5_combined_dev": -0.0419,
+     "prospx_consensus": -0.0325,
+     "timing_head_rt": -0.0325,
+     "timing_head_v5c": 0.2502
+    },
+    "vm_dev:pit|2020": {
+     "efv_served_rt": -0.1192,
+     "efv_v5_combined_dev": -0.1162,
+     "prospx_consensus": -0.1472,
+     "timing_head_rt": -0.1472,
+     "timing_head_v5c": -0.0079
+    },
+    "vm_dev:pit|2021": {
+     "efv_served_rt": -0.1422,
+     "efv_v5_combined_dev": -0.1712,
+     "prospx_consensus": -0.2269,
+     "timing_head_rt": -0.2269,
+     "timing_head_v5c": 0.1441
+    },
+    "vm_dev:pit|2022": {
+     "efv_served_rt": -0.1364,
+     "efv_v5_combined_dev": -0.1492,
+     "prospx_consensus": -0.1117,
+     "timing_head_rt": -0.1117,
+     "timing_head_v5c": 0.0763
+    },
+    "vm_dev:pit|2023": {
+     "efv_served_rt": 0.0119,
+     "efv_v5_combined_dev": 0.0164,
+     "prospx_consensus": 0.053,
+     "timing_head_rt": 0.053,
+     "timing_head_v5c": 0.1741
+    }
+   },
+   "legs": {
+    "served_vs_consensus|both": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": -0.01727,
+     "w_b": -0.0251,
+     "delta": 0.00784,
+     "player": {
+      "mde95": 0.0212,
+      "sd": 0.01291,
+      "lb95": -0.0129,
+      "ub95": 0.029,
+      "ci95": [
+       -0.0178,
+       0.0337
+      ],
+      "p_gt_0": 0.713,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0202,
+      "sd": 0.01229,
+      "lb95": -0.0125,
+      "ub95": 0.0279,
+      "ci95": [
+       -0.0155,
+       0.0325
+      ],
+      "p_gt_0": 0.7295,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_consensus|hit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.05053,
+     "w_b": 0.04789,
+     "delta": 0.00264,
+     "player": {
+      "mde95": 0.0233,
+      "sd": 0.01414,
+      "lb95": -0.0211,
+      "ub95": 0.0255,
+      "ci95": [
+       -0.0255,
+       0.0297
+      ],
+      "p_gt_0": 0.5475,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0233,
+      "sd": 0.01414,
+      "lb95": -0.0196,
+      "ub95": 0.0264,
+      "ci95": [
+       -0.0239,
+       0.0309
+      ],
+      "p_gt_0": 0.615,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_consensus|pit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": -0.08473,
+     "w_b": -0.09774,
+     "delta": 0.01301,
+     "player": {
+      "mde95": 0.0351,
+      "sd": 0.02131,
+      "lb95": -0.0218,
+      "ub95": 0.0484,
+      "ci95": [
+       -0.029,
+       0.0541
+      ],
+      "p_gt_0": 0.7225,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.032,
+      "sd": 0.01948,
+      "lb95": -0.02,
+      "ub95": 0.0458,
+      "ci95": [
+       -0.0248,
+       0.051
+      ],
+      "p_gt_0": 0.7215,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|both": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.00702,
+     "w_b": -0.0251,
+     "delta": 0.03213,
+     "player": {
+      "mde95": 0.031,
+      "sd": 0.01886,
+      "lb95": 0.0009,
+      "ub95": 0.0631,
+      "ci95": [
+       -0.0081,
+       0.0691
+      ],
+      "p_gt_0": 0.952,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0305,
+      "sd": 0.01853,
+      "lb95": 0.0018,
+      "ub95": 0.063,
+      "ci95": [
+       -0.004,
+       0.0677
+      ],
+      "p_gt_0": 0.9615,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|hit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.11297,
+     "w_b": 0.04789,
+     "delta": 0.06508,
+     "player": {
+      "mde95": 0.0565,
+      "sd": 0.03433,
+      "lb95": 0.0075,
+      "ub95": 0.1198,
+      "ci95": [
+       -0.0059,
+       0.1309
+      ],
+      "p_gt_0": 0.9635,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0537,
+      "sd": 0.03262,
+      "lb95": 0.0124,
+      "ub95": 0.1199,
+      "ci95": [
+       0.0003,
+       0.13
+      ],
+      "p_gt_0": 0.9755,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|pit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": -0.09841,
+     "w_b": -0.09774,
+     "delta": -0.00067,
+     "player": {
+      "mde95": 0.0246,
+      "sd": 0.01495,
+      "lb95": -0.0248,
+      "ub95": 0.0242,
+      "ci95": [
+       -0.0302,
+       0.0289
+      ],
+      "p_gt_0": 0.485,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0246,
+      "sd": 0.01498,
+      "lb95": -0.0265,
+      "ub95": 0.0224,
+      "ci95": [
+       -0.0319,
+       0.0283
+      ],
+      "p_gt_0": 0.443,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|both": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": -0.02781,
+     "w_b": -0.0251,
+     "delta": -0.0027,
+     "player": {
+      "mde95": 0.0234,
+      "sd": 0.01423,
+      "lb95": -0.0262,
+      "ub95": 0.02,
+      "ci95": [
+       -0.0296,
+       0.0255
+      ],
+      "p_gt_0": 0.438,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0233,
+      "sd": 0.01415,
+      "lb95": -0.0258,
+      "ub95": 0.0196,
+      "ci95": [
+       -0.0303,
+       0.0241
+      ],
+      "p_gt_0": 0.417,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|hit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.04247,
+     "w_b": 0.04789,
+     "delta": -0.00542,
+     "player": {
+      "mde95": 0.0469,
+      "sd": 0.02852,
+      "lb95": -0.052,
+      "ub95": 0.0403,
+      "ci95": [
+       -0.0592,
+       0.0505
+      ],
+      "p_gt_0": 0.438,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0469,
+      "sd": 0.02853,
+      "lb95": -0.0517,
+      "ub95": 0.0395,
+      "ci95": [
+       -0.0619,
+       0.0488
+      ],
+      "p_gt_0": 0.417,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|pit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": -0.09774,
+     "w_b": -0.09774,
+     "delta": 0.0,
+     "player": {
+      "mde95": 0.0,
+      "sd": 0.0,
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0,
+      "sd": 0.0,
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|both": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.1993,
+     "w_b": -0.0251,
+     "delta": 0.22441,
+     "player": {
+      "mde95": 0.0591,
+      "sd": 0.0359,
+      "lb95": 0.1619,
+      "ub95": 0.2805,
+      "ci95": [
+       0.1524,
+       0.2914
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0594,
+      "sd": 0.03611,
+      "lb95": 0.1618,
+      "ub95": 0.2829,
+      "ci95": [
+       0.1522,
+       0.292
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|hit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.29216,
+     "w_b": 0.04789,
+     "delta": 0.24427,
+     "player": {
+      "mde95": 0.0957,
+      "sd": 0.05819,
+      "lb95": 0.1473,
+      "ub95": 0.3363,
+      "ci95": [
+       0.1249,
+       0.3534
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0808,
+      "sd": 0.04912,
+      "lb95": 0.1619,
+      "ub95": 0.3235,
+      "ci95": [
+       0.1452,
+       0.3341
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|pit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.1069,
+     "w_b": -0.09774,
+     "delta": 0.20464,
+     "player": {
+      "mde95": 0.0692,
+      "sd": 0.04206,
+      "lb95": 0.1345,
+      "ub95": 0.271,
+      "ci95": [
+       0.1219,
+       0.2846
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0723,
+      "sd": 0.04393,
+      "lb95": 0.1304,
+      "ub95": 0.2742,
+      "ci95": [
+       0.1147,
+       0.2901
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|both": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "both",
+     "n": 814,
+     "w_a": -0.01727,
+     "w_b": 0.00702,
+     "delta": -0.02429,
+     "player": {
+      "mde95": 0.0244,
+      "sd": 0.01484,
+      "lb95": -0.0491,
+      "ub95": -0.0006,
+      "ci95": [
+       -0.0537,
+       0.0045
+      ],
+      "p_gt_0": 0.046,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0195,
+      "sd": 0.01183,
+      "lb95": -0.0429,
+      "ub95": -0.0045,
+      "ci95": [
+       -0.0467,
+       -0.0012
+      ],
+      "p_gt_0": 0.0195,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|hit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.05053,
+     "w_b": 0.11297,
+     "delta": -0.06244,
+     "player": {
+      "mde95": 0.0439,
+      "sd": 0.02668,
+      "lb95": -0.1047,
+      "ub95": -0.018,
+      "ci95": [
+       -0.113,
+       -0.0091
+      ],
+      "p_gt_0": 0.0115,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0379,
+      "sd": 0.02302,
+      "lb95": -0.0995,
+      "ub95": -0.0237,
+      "ci95": [
+       -0.1072,
+       -0.0172
+      ],
+      "p_gt_0": 0.002,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|pit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "pit",
+     "n": 408,
+     "w_a": -0.08473,
+     "w_b": -0.09841,
+     "delta": 0.01367,
+     "player": {
+      "mde95": 0.021,
+      "sd": 0.01278,
+      "lb95": -0.0079,
+      "ub95": 0.0329,
+      "ci95": [
+       -0.0119,
+       0.0378
+      ],
+      "p_gt_0": 0.851,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0212,
+      "sd": 0.01289,
+      "lb95": -0.007,
+      "ub95": 0.0348,
+      "ci95": [
+       -0.0122,
+       0.0394
+      ],
+      "p_gt_0": 0.859,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    }
+   },
+   "rows_without_label": 0,
+   "clubs": {
+    "n_clubs": 30,
+    "rows_unknown": 0
+   },
+   "elapsed_s": 5.6
+  },
+  "vm_dev|W2": {
+   "n": 830,
+   "n_players": 830,
+   "n_by_side": {
+    "hit": 406,
+    "pit": 424
+   },
+   "n_by_frame": {
+    "vm_dev": 830
+   },
+   "groups_kept": [
+    "vm_dev:hit|2017",
+    "vm_dev:hit|2018",
+    "vm_dev:hit|2019",
+    "vm_dev:hit|2020",
+    "vm_dev:hit|2021",
+    "vm_dev:hit|2022",
+    "vm_dev:hit|2023",
+    "vm_dev:pit|2018",
+    "vm_dev:pit|2019",
+    "vm_dev:pit|2020",
+    "vm_dev:pit|2021",
+    "vm_dev:pit|2022",
+    "vm_dev:pit|2023"
+   ],
+   "rows_by_group": {
+    "vm_dev:hit|2017": 30,
+    "vm_dev:hit|2018": 36,
+    "vm_dev:hit|2019": 59,
+    "vm_dev:hit|2020": 54,
+    "vm_dev:hit|2021": 51,
+    "vm_dev:hit|2022": 100,
+    "vm_dev:hit|2023": 76,
+    "vm_dev:pit|2018": 38,
+    "vm_dev:pit|2019": 63,
+    "vm_dev:pit|2020": 77,
+    "vm_dev:pit|2021": 75,
+    "vm_dev:pit|2022": 65,
+    "vm_dev:pit|2023": 90
+   },
+   "rho_by_group": {
+    "vm_dev:hit|2017": {
+     "efv_served_rt": 0.2814,
+     "efv_v5_combined_dev": 0.1324,
+     "prospx_consensus": 0.3301,
+     "timing_head_rt": 0.4801,
+     "timing_head_v5c": 0.0599
+    },
+    "vm_dev:hit|2018": {
+     "efv_served_rt": 0.3908,
+     "efv_v5_combined_dev": 0.3248,
+     "prospx_consensus": 0.3975,
+     "timing_head_rt": 0.2717,
+     "timing_head_v5c": 0.1422
+    },
+    "vm_dev:hit|2019": {
+     "efv_served_rt": 0.2225,
+     "efv_v5_combined_dev": 0.1612,
+     "prospx_consensus": 0.1823,
+     "timing_head_rt": 0.0671,
+     "timing_head_v5c": 0.0618
+    },
+    "vm_dev:hit|2020": {
+     "efv_served_rt": 0.2364,
+     "efv_v5_combined_dev": 0.1518,
+     "prospx_consensus": 0.2267,
+     "timing_head_rt": 0.1692,
+     "timing_head_v5c": 0.0901
+    },
+    "vm_dev:hit|2021": {
+     "efv_served_rt": 0.0644,
+     "efv_v5_combined_dev": 0.0003,
+     "prospx_consensus": 0.054,
+     "timing_head_rt": 0.091,
+     "timing_head_v5c": -0.0011
+    },
+    "vm_dev:hit|2022": {
+     "efv_served_rt": 0.5291,
+     "efv_v5_combined_dev": 0.4332,
+     "prospx_consensus": 0.5283,
+     "timing_head_rt": 0.4104,
+     "timing_head_v5c": 0.1168
+    },
+    "vm_dev:hit|2023": {
+     "efv_served_rt": 0.181,
+     "efv_v5_combined_dev": 0.1838,
+     "prospx_consensus": 0.1947,
+     "timing_head_rt": 0.1711,
+     "timing_head_v5c": 0.1171
+    },
+    "vm_dev:pit|2018": {
+     "efv_served_rt": 0.1731,
+     "efv_v5_combined_dev": 0.0358,
+     "prospx_consensus": 0.0769,
+     "timing_head_rt": 0.0769,
+     "timing_head_v5c": 0.1824
+    },
+    "vm_dev:pit|2019": {
+     "efv_served_rt": 0.3177,
+     "efv_v5_combined_dev": 0.3055,
+     "prospx_consensus": 0.2964,
+     "timing_head_rt": 0.2964,
+     "timing_head_v5c": 0.288
+    },
+    "vm_dev:pit|2020": {
+     "efv_served_rt": 0.3946,
+     "efv_v5_combined_dev": 0.3839,
+     "prospx_consensus": 0.3271,
+     "timing_head_rt": 0.3271,
+     "timing_head_v5c": 0.1645
+    },
+    "vm_dev:pit|2021": {
+     "efv_served_rt": 0.0649,
+     "efv_v5_combined_dev": 0.0594,
+     "prospx_consensus": 0.0592,
+     "timing_head_rt": 0.0592,
+     "timing_head_v5c": 0.0131
+    },
+    "vm_dev:pit|2022": {
+     "efv_served_rt": 0.4939,
+     "efv_v5_combined_dev": 0.5045,
+     "prospx_consensus": 0.5008,
+     "timing_head_rt": 0.5008,
+     "timing_head_v5c": 0.5198
+    },
+    "vm_dev:pit|2023": {
+     "efv_served_rt": 0.4199,
+     "efv_v5_combined_dev": 0.4028,
+     "prospx_consensus": 0.3904,
+     "timing_head_rt": 0.3904,
+     "timing_head_v5c": 0.3362
+    }
+   },
+   "legs": {
+    "served_vs_consensus|both": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.30725,
+     "w_b": 0.29053,
+     "delta": 0.01672,
+     "player": {
+      "mde95": 0.0189,
+      "sd": 0.01149,
+      "lb95": -0.0017,
+      "ub95": 0.0354,
+      "ci95": [
+       -0.0058,
+       0.0386
+      ],
+      "p_gt_0": 0.9265,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0189,
+      "sd": 0.01147,
+      "lb95": -0.0031,
+      "ub95": 0.0344,
+      "ci95": [
+       -0.0068,
+       0.0389
+      ],
+      "p_gt_0": 0.9185,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_consensus|hit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.29153,
+     "w_b": 0.28962,
+     "delta": 0.00191,
+     "player": {
+      "mde95": 0.0211,
+      "sd": 0.0128,
+      "lb95": -0.019,
+      "ub95": 0.0227,
+      "ci95": [
+       -0.0236,
+       0.0269
+      ],
+      "p_gt_0": 0.559,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0205,
+      "sd": 0.01244,
+      "lb95": -0.0201,
+      "ub95": 0.0195,
+      "ci95": [
+       -0.0255,
+       0.0242
+      ],
+      "p_gt_0": 0.5215,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_consensus|pit": {
+     "comparison": "served_vs_consensus",
+     "a": "efv_served_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.3229,
+     "w_b": 0.29144,
+     "delta": 0.03146,
+     "player": {
+      "mde95": 0.0322,
+      "sd": 0.01956,
+      "lb95": -0.0003,
+      "ub95": 0.0638,
+      "ci95": [
+       -0.0053,
+       0.0701
+      ],
+      "p_gt_0": 0.948,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0306,
+      "sd": 0.0186,
+      "lb95": 0.0017,
+      "ub95": 0.0633,
+      "ci95": [
+       -0.004,
+       0.0694
+      ],
+      "p_gt_0": 0.96,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|both": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.26332,
+     "w_b": 0.29053,
+     "delta": -0.02721,
+     "player": {
+      "mde95": 0.0268,
+      "sd": 0.01631,
+      "lb95": -0.0533,
+      "ub95": 0.0001,
+      "ci95": [
+       -0.0591,
+       0.0057
+      ],
+      "p_gt_0": 0.0525,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0282,
+      "sd": 0.01712,
+      "lb95": -0.0584,
+      "ub95": -0.0022,
+      "ci95": [
+       -0.0636,
+       0.003
+      ],
+      "p_gt_0": 0.0395,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|hit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.22334,
+     "w_b": 0.28962,
+     "delta": -0.06628,
+     "player": {
+      "mde95": 0.0499,
+      "sd": 0.03033,
+      "lb95": -0.1147,
+      "ub95": -0.0131,
+      "ci95": [
+       -0.1228,
+       -0.0055
+      ],
+      "p_gt_0": 0.0135,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0501,
+      "sd": 0.03046,
+      "lb95": -0.1182,
+      "ub95": -0.0201,
+      "ci95": [
+       -0.1283,
+       -0.0067
+      ],
+      "p_gt_0": 0.0135,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "v5c_dev_vs_consensus|pit": {
+     "comparison": "v5c_dev_vs_consensus",
+     "a": "efv_v5_combined_dev",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.30311,
+     "w_b": 0.29144,
+     "delta": 0.01167,
+     "player": {
+      "mde95": 0.0209,
+      "sd": 0.01269,
+      "lb95": -0.0093,
+      "ub95": 0.0324,
+      "ci95": [
+       -0.0124,
+       0.0349
+      ],
+      "p_gt_0": 0.81,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0181,
+      "sd": 0.01103,
+      "lb95": -0.0068,
+      "ub95": 0.0283,
+      "ci95": [
+       -0.0105,
+       0.032
+      ],
+      "p_gt_0": 0.822,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|both": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.26398,
+     "w_b": 0.29053,
+     "delta": -0.02655,
+     "player": {
+      "mde95": 0.0235,
+      "sd": 0.0143,
+      "lb95": -0.0507,
+      "ub95": -0.0034,
+      "ci95": [
+       -0.0553,
+       0.0008
+      ],
+      "p_gt_0": 0.03,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0242,
+      "sd": 0.01472,
+      "lb95": -0.051,
+      "ub95": -0.0028,
+      "ci95": [
+       -0.0553,
+       0.0012
+      ],
+      "p_gt_0": 0.033,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|hit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.23638,
+     "w_b": 0.28962,
+     "delta": -0.05324,
+     "player": {
+      "mde95": 0.047,
+      "sd": 0.02859,
+      "lb95": -0.1024,
+      "ub95": -0.0066,
+      "ci95": [
+       -0.1118,
+       0.0016
+      ],
+      "p_gt_0": 0.03,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0496,
+      "sd": 0.03015,
+      "lb95": -0.1042,
+      "ub95": -0.0057,
+      "ci95": [
+       -0.1142,
+       0.0025
+      ],
+      "p_gt_0": 0.033,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_rt_vs_consensus|pit": {
+     "comparison": "timing_rt_vs_consensus",
+     "a": "timing_head_rt",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.29144,
+     "w_b": 0.29144,
+     "delta": 0.0,
+     "player": {
+      "mde95": 0.0,
+      "sd": 0.0,
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0,
+      "sd": 0.0,
+      "lb95": 0.0,
+      "ub95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|both": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.17042,
+     "w_b": 0.29053,
+     "delta": -0.12011,
+     "player": {
+      "mde95": 0.0558,
+      "sd": 0.03392,
+      "lb95": -0.1743,
+      "ub95": -0.0629,
+      "ci95": [
+       -0.186,
+       -0.0542
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0584,
+      "sd": 0.03549,
+      "lb95": -0.1836,
+      "ub95": -0.0666,
+      "ci95": [
+       -0.1955,
+       -0.0584
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|hit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.08855,
+     "w_b": 0.28962,
+     "delta": -0.20107,
+     "player": {
+      "mde95": 0.0911,
+      "sd": 0.0554,
+      "lb95": -0.2898,
+      "ub95": -0.1059,
+      "ci95": [
+       -0.3072,
+       -0.0862
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0917,
+      "sd": 0.05572,
+      "lb95": -0.2977,
+      "ub95": -0.1182,
+      "ci95": [
+       -0.315,
+       -0.0996
+      ],
+      "p_gt_0": 0.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "timing_v5c_vs_consensus|pit": {
+     "comparison": "timing_v5c_vs_consensus",
+     "a": "timing_head_v5c",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.25188,
+     "w_b": 0.29144,
+     "delta": -0.03955,
+     "player": {
+      "mde95": 0.0655,
+      "sd": 0.0398,
+      "lb95": -0.1058,
+      "ub95": 0.0254,
+      "ci95": [
+       -0.1188,
+       0.0417
+      ],
+      "p_gt_0": 0.1615,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.057,
+      "sd": 0.03463,
+      "lb95": -0.1006,
+      "ub95": 0.015,
+      "ci95": [
+       -0.1109,
+       0.0245
+      ],
+      "p_gt_0": 0.113,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|both": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "both",
+     "n": 814,
+     "w_a": 0.30725,
+     "w_b": 0.26332,
+     "delta": 0.04393,
+     "player": {
+      "mde95": 0.0227,
+      "sd": 0.0138,
+      "lb95": 0.0199,
+      "ub95": 0.066,
+      "ci95": [
+       0.016,
+       0.0698
+      ],
+      "p_gt_0": 0.9995,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0214,
+      "sd": 0.01298,
+      "lb95": 0.024,
+      "ub95": 0.0664,
+      "ci95": [
+       0.0205,
+       0.0715
+      ],
+      "p_gt_0": 1.0,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|hit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "hit",
+     "n": 406,
+     "w_a": 0.29153,
+     "w_b": 0.22334,
+     "delta": 0.06818,
+     "player": {
+      "mde95": 0.0405,
+      "sd": 0.02461,
+      "lb95": 0.0269,
+      "ub95": 0.1074,
+      "ci95": [
+       0.0186,
+       0.1161
+      ],
+      "p_gt_0": 0.9965,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0411,
+      "sd": 0.025,
+      "lb95": 0.0302,
+      "ub95": 0.1103,
+      "ci95": [
+       0.0218,
+       0.1198
+      ],
+      "p_gt_0": 0.997,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    },
+    "served_vs_v5c_dev|pit": {
+     "comparison": "served_vs_v5c_dev",
+     "a": "efv_served_rt",
+     "b": "efv_v5_combined_dev",
+     "scope": "pit",
+     "n": 408,
+     "w_a": 0.3229,
+     "w_b": 0.30311,
+     "delta": 0.01979,
+     "player": {
+      "mde95": 0.0208,
+      "sd": 0.01264,
+      "lb95": -0.0012,
+      "ub95": 0.0405,
+      "ci95": [
+       -0.0047,
+       0.0443
+      ],
+      "p_gt_0": 0.937,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 830
+     },
+     "club": {
+      "mde95": 0.0214,
+      "sd": 0.01299,
+      "lb95": 0.0005,
+      "ub95": 0.0435,
+      "ci95": [
+       -0.0027,
+       0.0474
+      ],
+      "p_gt_0": 0.9545,
+      "B_used": 2000,
+      "status": "derived",
+      "B": 2000,
+      "seed": 20261017,
+      "n_clusters": 30
+     }
+    }
+   },
+   "rows_without_label": 0,
+   "clubs": {
+    "n_clubs": 30,
+    "rows_unknown": 0
+   },
+   "elapsed_s": 5.6
+  }
+ },
+ "null": {
+  "lv_dev": {
+   "label": "R3",
+   "n_perm": 200,
+   "seed": 20261017,
+   "draws": 200,
+   "observed": 0.00455,
+   "null_mean": -0.03266,
+   "null_p95": -0.0205,
+   "p_null_ge_observed": 0.0,
+   "above_null_p95": true
+  },
+  "vm_dev": {
+   "label": "AD",
+   "n_perm": 200,
+   "seed": 20261017,
+   "draws": 200,
+   "observed": 0.00784,
+   "null_mean": 0.00657,
+   "null_p95": 0.03206,
+   "p_null_ge_observed": 0.49,
+   "above_null_p95": false
+  }
+ },
+ "planted": {
+  "lv_dev": {
+   "label": "R3",
+   "a": 0.15,
+   "B": 500,
+   "seed": 20261017,
+   "delta": 0.09051,
+   "lb95_player": 0.085,
+   "ci95": [
+    0.0841,
+    0.0967
+   ],
+   "recovered": true
+  },
+  "vm_dev": {
+   "label": "AD",
+   "a": 0.15,
+   "B": 500,
+   "seed": 20261017,
+   "delta": 0.11553,
+   "lb95_player": 0.1032,
+   "ci95": [
+    0.1009,
+    0.1266
+   ],
+   "recovered": true
+  }
+ },
+ "receipts": {
+  "build_today": "2026-10-15",
+  "parity": {
+   "lv_dev": {
+    "v5c_dev": {
+     "recomputed": 0.1685,
+     "committed": 0.1685
+    },
+    "rt_as_read": {
+     "recomputed": 0.1683,
+     "committed": 0.1683
+    }
+   },
+   "vm_dev": {
+    "v5c_dev": {
+     "recomputed": 0.3611,
+     "committed": 0.3611
+    },
+    "rt_as_read": {
+     "recomputed": 0.3937,
+     "committed": 0.3937
+    }
+   }
+  },
+  "weights_guarded": {
+   "hit": {
+    "lv_dev|hit|2017": {
+     "w_skill": 0.282171,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "lv_dev|hit|2018": {
+     "w_skill": 0.322205,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "lv_dev|hit|2019": {
+     "w_skill": 0.298791,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2017": {
+     "w_skill": 0.305073,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2018": {
+     "w_skill": 0.300956,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2019": {
+     "w_skill": 0.282153,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2020": {
+     "w_skill": 0.286859,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2021": {
+     "w_skill": 0.297223,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2022": {
+     "w_skill": 0.29838,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|hit|2023": {
+     "w_skill": 0.29981,
+     "w_time": 0.0,
+     "held_at_zero": []
+    }
+   },
+   "pit": {
+    "lv_dev|pit|2017": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": [
+      "e_time"
+     ]
+    },
+    "lv_dev|pit|2018": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "lv_dev|pit|2019": {
+     "w_skill": 0.913414,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2017": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2018": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2019": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2020": {
+     "w_skill": 0.984085,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2021": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2022": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    },
+    "vm_dev|pit|2023": {
+     "w_skill": 1.0,
+     "w_time": 0.0,
+     "held_at_zero": []
+    }
+   }
+  },
+  "lv_dev": {
+   "rows": 2862,
+   "w3_mismatch": 0,
+   "ad_none": 0,
+   "ad_before_read": 0,
+   "label_none": {}
+  },
+  "vm_dev": {
+   "rows": 830,
+   "w3_mismatch": 0,
+   "ad_none": 0,
+   "ad_before_read": 0,
+   "label_none": {}
+  },
+  "elapsed_build_s": 7.8
+ },
+ "holdout_2026": {
+  "artifact": "data/efv_2026_holdout.json",
+  "role": "corroboration only (EW3-13; the 2026 frame is spent; the rater there is the pre-refit v5 COMBINED served at the time)",
+  "generated_at": "2026-10-15T19:42:40Z",
+  "legs": {
+   "r2026|auc|pooled|efv_v5_combined-consensus": {
+    "delta": 0.04882,
+    "n": 1208,
+    "lb95_player": 0.0344,
+    "lb95_club": 0.0332,
+    "ci95_player": [
+     0.0322,
+     0.0669
+    ]
+   },
+   "r2026|auc|hit|efv_v5_combined-consensus": {
+    "delta": 0.09545,
+    "n": 590,
+    "lb95_player": 0.0719,
+    "lb95_club": 0.0724,
+    "ci95_player": [
+     0.068,
+     0.1249
+    ]
+   },
+   "r2026|auc|pit|efv_v5_combined-consensus": {
+    "delta": 0.0043,
+    "n": 618,
+    "lb95_player": -0.0118,
+    "lb95_club": -0.0127,
+    "ci95_player": [
+     -0.0147,
+     0.0244
+    ]
+   }
+  }
+ },
+ "spent": "not opened",
+ "elapsed_s": 46.9
+}
