@@ -2071,6 +2071,39 @@ hitter i, season s (2016 on):
 - Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.7 2026-10-19: S3t is scored in the skill look by owner override (clause (i), owner decision EW3-37)
+
+- **Owner answer, as recorded** (2026-10-16, `DECISIONS_FOR_OWNER.md` EW3-37, answering FT-Q1 with
+  option (b), an owner override): "the fielding triangulation (SDR, OAA, DRS, UZR, DEM+; narrow L1
+  fail p 0.030 vs 0.025) is eligible for the eWAR v3 skill look as a second fielding arm beside
+  DEM+ (S3); the skill look's realized-runs cells and team guard decide; the lab gains the S3t arm
+  in EWV3_LAB_AMENDED_TARGETS." Part 1 gains this row, recorded here because part 1 is not edited
+  in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-37 | Whether S3t is scored in the skill look after the triangulation read's forward leg L1 failed | yes: S3t is eligible as candidate part 6's second arm, by owner override of `docs/ewar/FIELDING_TRIANGULATION_GATE.md` part 5.5; the skill look's own cells and team guard decide its admission (11.5.2, 11.5.3) | answered 2026-10-16 (`DECISIONS_FOR_OWNER.md`, EW3-37); recorded by queue task EWV3_LAB_AMENDED_TARGETS |
+
+- **What this amendment departs from, disclosed.** 11.5.2 makes S3t's cells exist only if the
+  triangulation read makes S3t eligible (its part 5.5: L1 passes and L2 is NON-INFERIOR). That read
+  recorded FAIL on L1 (its part 11, 2026-10-16: one-sided p 0.030 against a Holm threshold of
+  0.025, the lower bound just below 0). The owner overrode that one clause before the skill look
+  ran; it is recorded as an owner override of 11.5.2's eligibility sentence and of that document's
+  part 5.5 for this item alone, the case 11.6.2 already names ("or an owner decision that makes S3t
+  eligible").
+- **What follows.** Candidate part 6's Holm family is {H-rate, H-cum, S3t H-rate, S3t H-cum,
+  C-rate, C-cum}, k = 6 (11.6.2). The override makes S3t eligible to be scored; it admits nothing.
+  S3t enters only by 11.5.3's rule: its rate cell WIN (components) on the primary target, its total
+  cell not LOSS, its team guard NON-INFERIOR, and, when S3 also qualifies, the S3t-over-S3 contrast.
+- **Unchanged:** S3t's definition (11.5.1), its targets, configurations, B0, B1 (the fielding k of
+  11.2.1), twin, team guard and secondary estimand (11.5.2), the triangulation fit and read, every
+  other candidate part, the frame, the floors, the margin +0.02, B = 2,000 and seed 20261008, and
+  every clock of part 7.
+- The lab work that 11.2.10, 11.3.8, 11.4.7, 11.5.4 and 11.6.4 require lands in its own commit
+  after this one (task EWV3_LAB_AMENDED_TARGETS), with no number of a candidate part computed.
+- Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**

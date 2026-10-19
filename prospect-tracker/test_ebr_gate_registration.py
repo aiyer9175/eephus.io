@@ -765,6 +765,21 @@ def test_amendment_11_6_statcast_catcher_runs_the_catcher_component():
             "this commit).") in flat
 
 
+def test_amendment_11_7_s3t_is_scored_by_owner_override():
+    flat = _flat(_section(_doc(), "### 11.7 2026-10-19", RESULTS_HEADING))
+    assert ("### 11.7 2026-10-19: S3t is scored in the skill look by owner override (clause (i), owner "
+            "decision EW3-37)") in flat
+    assert "| EW3-37 | Whether S3t is scored in the skill look after the triangulation read's forward leg L1 failed |" in flat
+    assert "it is recorded as an owner override of 11.5.2's eligibility sentence" in flat
+    assert "{H-rate, H-cum, S3t H-rate, S3t H-cum, C-rate, C-cum}, k = 6 (11.6.2)" in flat
+    assert "The override makes S3t eligible to be scored; it admits nothing." in flat
+    assert ("Committed alone, docs and their pin tests only, before the skill look (part 12.2 is empty at "
+            "this commit).") in flat
+    # 11.7 sits after 11.6 and before part 12.
+    doc = _doc()
+    assert doc.index("### 11.6 2026-10-16") < doc.index("### 11.7 2026-10-19") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
