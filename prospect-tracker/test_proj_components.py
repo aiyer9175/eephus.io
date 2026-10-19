@@ -52,7 +52,10 @@ def _hit_vals(mid: int, s: int) -> dict:
 def _pit_vals(mid: int, s: int) -> dict:
     return {"war": 2.0 + (s - 2000) / 100.0, "rar": 20.0, "fip": 3.8, "xfip": 3.9,
             "ra9War": 2.5, "gmli": 1.0, "exli": 1.0, "pli": 1.0, "inli": 1.0,
-            "eraMinus": 95.0, "fipMinus": 96.0, "md": 0.0, "sd": 0.0, "numTeams": 1}
+            "eraMinus": 95.0, "fipMinus": 96.0, "md": 0.0, "sd": 0.0, "numTeams": 1,
+            # the vintage innings columns (2026-10-19), deliberately unlike the raw cache:
+            # the frame reads its exposures from the raw cache (ruling R6), never these
+            "inningsPitched": 333.0, "outs": 999, "gamesPitched": 99, "gamesStarted": 99}
 
 
 def _group(fields, rows: dict, ambiguous=None) -> dict:
@@ -366,7 +369,9 @@ def test_rows_cover_the_veteran_universe_only(rec):
 
 
 def test_pitcher_exposures_come_from_the_raw_cache_never_the_vintage():
-    assert "inningsPitched" not in fwar_vintage.PITCHING_FIELDS
+    # the vintage carries innings since 2026-10-19 (EWAR_P0B_VINTAGE_IP); the frame still
+    # reads none of them (ruling R6: exposures come from the raw StatsAPI cache)
+    assert not set(fwar_vintage.IP_FIELDS) & set(PC.PIT_VINTAGE_FIELDS)
     assert not {"ip", "gs", "g"} & set(PC.PIT_VINTAGE_FIELDS)
 
 

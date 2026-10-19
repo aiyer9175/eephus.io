@@ -5757,9 +5757,17 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
-                           "|label=fwar@2026-10-02-57bf90f7143e"
+                           "|label=fwar@2026-10-02-a020cf64844a"
                            "|injsides=pit|served=efv_v2@bcc9b0dd"
                            "|section=label_graded")
+# label fwar@2026-10-02-57bf90f7143e -> fwar@2026-10-02-a020cf64844a on 2026-10-19: the
+# innings amendment of the frozen vintage (EWAR_P0B_VINTAGE_IP, the EW3-19 precedent "a new
+# vintage id"; FWAR_LABEL_EPOCH_GATE.md part 9, the 2026-10-19 entry). Four columns
+# (inningsPitched, outs, gamesPitched, gamesStarted) were appended to the pitching rows by
+# tools/amend_fwar_vintage_ip.py, which proved every earlier value of every row unchanged and
+# war_source's maps EQUAL before and after. Value-identical label, so, as on 2026-10-15,
+# BOARD_RANK_BASIS_EPOCH is NOT bumped and xfv_history.json's stamp refreshes at the next
+# score_history run.
 # label fwar@2026-10-02-0341299c20ec -> fwar@2026-10-02-57bf90f7143e on 2026-10-15: the
 # plate-appearance amendment of the frozen vintage (EWAR_P0_VINTAGE_PA, owner answer EW3-19
 # "a new vintage id"; FWAR_LABEL_EPOCH_GATE.md part 9, the 2026-10-15 entry). Only the

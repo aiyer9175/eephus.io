@@ -530,7 +530,8 @@ def replica_receipt(blob: dict, seasons=RECEIPT_SEASONS) -> dict:
     FR = _load_replica_tool()
     saber_live = FR.saber
     hit_fields = [f for f in fwar_vintage.HITTING_FIELDS if f not in ("numTeams", "plateAppearances")]
-    pit_fields = [f for f in fwar_vintage.PITCHING_FIELDS if f != "numTeams"]
+    pit_fields = [f for f in fwar_vintage.PITCHING_FIELDS
+                  if f != "numTeams" and f not in fwar_vintage.IP_FIELDS]
     diffs = {"n_rows": 0, "n_rows_differing": 0, "max_abs_diff": 0.0, "n_live_only": 0}
 
     def saber_vintage(kind, season):
