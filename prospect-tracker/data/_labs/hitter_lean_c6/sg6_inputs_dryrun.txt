@@ -1,0 +1,18 @@
+SG_6 C6 hitter-lean probe: DESCRIPTIVE, not a driver, not a ledger row, not a read of the surrogate gate; read once.
+gate REGISTERED at f5dcf500855ed914dca8212b7739b6caa795319b; header OQ2 A, OQ5 A
+look records: ['rvm_look_1']; lv_2026 keys 1207, person ids 1092
+inputs (no outcome read):
+  list_rows_hitters: 602
+  dropped_missing_inputs: 0
+  index_rows: 602
+  ABSENT_IDENTITY: 77
+  ABSENT_IDENTITY_also_lv2026_by_key: 42
+  lv2026_excluded: 275
+  rvm_2026_cohort_left: 6
+  rvm_2025_cohort_kept: 71
+  rvm_2025_cohort_left: 0
+  candidate_rows: 244
+  cons_from_consensus: 202
+  cons_from_fg_fv: 42
+  baseline_iso_missing: 24
+inputs only; elapsed 9.9s
