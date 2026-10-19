@@ -485,6 +485,8 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
 - No O'Brien-Fleming spending across horizons: the three reads are three families (s5 T6),
   not one comparison accruing information.
 
+**Amendment to s6.3, dated 2026-10-19 (task SG_10; made while this file reads REGISTERED; owner answers efv2026 OQ2 = A and OQ6 = A, `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`; committed before any read that uses it, and no long-run read has run).** What changes: the release path this section names now exists. `efv_labels.labels_for` and `labels_for_frame` take a keyword `release_records` (record ids). A row that would read `reserved_vm` (a debut in `R_VM_FIRST_DEBUT_YEAR` or later) whose debut cohort's owning record is among them (`efv_labels.RELEASE_RECORD_BY_COHORT`, equal to `efv_surrogate_guard.COHORT_RELEASE`: `rvm_look_1`, `rvm_look_2` and `rvm_look_3` for the 2025, 2026 and 2027 cohorts; `oq6_release`, look 3's record under OQ6 = A and the Q10 amendment, for the 2028 and 2029 cohorts) gets its W3, W2 and R3 exactly as any other row, with status `released_vm`; L6 is never computed for a released row (2025 is in `efv_dataset.DEBUT_YEARS`, so this is a rule and not an accident). The default None releases nothing: the label build over every (record, list vintage) pair outside R-LV (18,549 pairs on 2026-10-19) is byte-identical before and after, and every non-reserved pair (17,119) is byte-identical with every record id passed. Unknown ids raise. The one caller is `tools/efv_surrogate_look.long_run_labels` with purpose `lv2026_long_run`: it calls `guard_surrogate_read` for each vintage first (which refuses without looks 1, 2 and 3 and the OQ6 release), then passes the records, then `withhold_reserved_vm` refuses if any in-window reserved row is still unreleased. `efv_v2_model._check_years` and every served path are untouched; `test_efv_labels_release.py` pins all of this, including an AST scan (the DS-03 pattern) that no other tracked module passes `release_records`. Nothing in this amendment reads an outcome of a reserved row, moves a served number or changes when the reads of this section may run (each stays deferred whole until every release exists).
+
 ---
 
 ## 7. Hypotheses and decision rules
@@ -779,7 +781,7 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
 | REGISTERED commit, alone, s12 empty | DONE 2026-10-15, this commit (Q1 to Q10 all held at HEAD e9fc3a3c); no calendar date | no |
 | S3 transfer read | after the REGISTERED commit; no calendar day blocks it (EW3-5); never beside another gate's look | old cohorts and V 2022 only |
 | S4 lv_2026 read (OQ2 = B only; void under the recorded OQ2 = A) | only if T1 and T3 pass; after Q1; after R-VM look 2's record, which needs the 2027 season | yes, once |
-| SG_10 the `efv_labels` release path (dated amendment with its test) | after OQ6; before RT 2029 | no |
+| SG_10 the `efv_labels` release path (dated amendment with its test) | DONE 2026-10-19 (the s6.3 amendment of that date) | no |
 | R3 read (tilted) | RT 2029; whole, only after looks 2 and 3 and the OQ6 release | yes, once |
 | W3 read (primary) | RT 2031; whole, only after looks 2 and 3 and the OQ6 release | yes, once |
 
