@@ -797,6 +797,22 @@ def test_amendment_11_8_the_displayed_name_is_plain_ewar():
     assert doc.index("### 11.7 2026-10-19") < doc.index("### 11.8 2026-10-19") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_9_coded_steals_count_in_history_seasons_only():
+    flat = _flat(_section(_doc(), "### 11.9 2026-10-19", RESULTS_HEADING))
+    assert ("### 11.9 2026-10-19: a steal the history feed codes as an advance counts as the steal "
+            "(clauses (i) and (ii), owner decision EBR-Q4B-ID)") in flat
+    assert "| EBR-Q4B-ID | What the history backfill does when I1 and I2 miss by one stolen base" in flat
+    assert "**Fix** (history seasons 2011 to 2017 and 2020 only;" in flat
+    assert "(5) only the first such entry of that runner in the play." in flat
+    assert "On the scan above the rule reads two entries (288830 and 491962) and none of the other three." in flat
+    assert "**Unchanged:** every 2018-and-later season of the record, its files and manifest block" in flat
+    assert ("Committed alone with its pin test, docs only, before the skill look (part 12.2 is empty at "
+            "this commit).") in flat
+    # 11.9 sits after 11.8 and before part 12.
+    doc = _doc()
+    assert doc.index("### 11.8 2026-10-19") < doc.index("### 11.9 2026-10-19") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
