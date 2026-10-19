@@ -30,7 +30,13 @@ payloads on disk, and payloads were zero-filled under ok receipts). A game the
 endpoint answers 404 for (a game the schedule lists
 as final but that was never played: cancelled, or postponed and never made up)
 is recorded as ``no_play`` and the run continues; any other failure is recorded
-as ``error`` and the next run retries it. Nothing aborts the run but a refused
+as ``error`` and the next run retries it. A game that ended TIED (a called
+official game, such as 2016-09-29 Cubs at Pirates, 1-1 after six innings) ends
+its play list at a home win probability of 50, not 0 or 100: a list whose last
+play is complete, in the fifth inning or later, with the score level and the
+probability at 50 is kept as ``ok`` (receipt field ``tie``) only after one paced
+schedule request confirms ``isTie`` on that final game; otherwise it is
+``partial``. Nothing aborts the run but a refused
 output directory.
 
 RECEIPTS. ``receipts.jsonl`` gains one line per request: game_pk, season, the
@@ -108,7 +114,44 @@ def payload_complete(path: Path, sha256: str | None = None) -> bool:
     if sha256 is not None and hashlib.sha256(body).hexdigest() != sha256:
         return False
     plays = data if isinstance(data, list) else ((data or {}).get("winProbability") or [])
-    return bool(plays) and mlb_leverage.plays_end_the_game(plays)
+    if not plays:
+        return False
+    # a tied game's list is kept only under an ok receipt, written after the schedule confirmed the tie
+    return mlb_leverage.plays_end_the_game(plays) or (sha256 is not None and plays_end_tied(plays))
+
+
+def plays_end_tied(plays) -> bool:
+    """Does this play list end the way a called, tied official game ends: the
+    last play complete, in the fifth inning or later, the score level and the
+    home win probability at 50?"""
+    if not plays:
+        return False
+    last = plays[-1] or {}
+    about, result = last.get("about") or {}, last.get("result") or {}
+    try:
+        return (about.get("isComplete") is True and int(about.get("inning") or 0) >= 5
+                and result.get("homeScore") is not None
+                and result.get("homeScore") == result.get("awayScore")
+                and round(float(last.get("homeTeamWinProbability")), 6) == 50.0)
+    except (TypeError, ValueError):
+        return False
+
+
+def confirm_tie(pk: int, *, session, pacer: "Pacer", user_agent: str) -> bool:
+    """One paced schedule request: is game ``pk`` a final game the schedule
+    marks ``isTie``? Fail-soft: any failure reads False."""
+    import mlb_leverage
+    pacer.wait()
+    try:
+        resp = session.get(mlb_leverage.SCHEDULE_API, params={"sportId": 1, "gamePk": int(pk)},
+                           headers={"User-Agent": user_agent}, timeout=TIMEOUT)
+        if resp.status_code != 200:
+            return False
+        games = [g for d in (json.loads(resp.content).get("dates") or []) for g in (d.get("games") or [])]
+    except Exception:  # noqa: BLE001 - fail-soft: the game stays partial
+        return False
+    return any(int(g.get("gamePk") or 0) == int(pk) and g.get("isTie") is True
+               and (g.get("status") or {}).get("abstractGameState") == "Final" for g in games)
 
 
 def heal_receipts(out_dir: Path) -> dict:
@@ -199,15 +242,21 @@ def fetch_one(pk: int, *, session, out_dir: Path, pacer: Pacer, user_agent: str)
         return {"status": "error", "bytes": len(body), "sha256": None, "elapsed_ms": elapsed,
                 "error": "not json"}
     plays = data if isinstance(data, list) else ((data or {}).get("winProbability") or [])
-    if not plays or not mlb_leverage.plays_end_the_game(plays):
+    tie = False
+    if plays and not mlb_leverage.plays_end_the_game(plays):
+        tie = plays_end_tied(plays) and confirm_tie(pk, session=session, pacer=pacer, user_agent=user_agent)
+    if not plays or not (tie or mlb_leverage.plays_end_the_game(plays)):
         return {"status": "partial", "bytes": len(body), "sha256": None, "elapsed_ms": elapsed,
                 "plays": len(plays or ())}
     path = Path(out_dir) / f"{int(pk)}.json"
     tmp = path.with_suffix(".json.tmp")
     tmp.write_bytes(body)
     tmp.replace(path)
-    return {"status": "ok", "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest(),
-            "elapsed_ms": elapsed, "plays": len(plays)}
+    rec = {"status": "ok", "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest(),
+           "elapsed_ms": elapsed, "plays": len(plays)}
+    if tie:
+        rec["tie"] = True
+    return rec
 
 
 def run(seasons=HIST_SEASONS, *, out_dir: Path = HIST_DIR, session=None, pacer: Pacer | None = None,

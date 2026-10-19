@@ -85,6 +85,17 @@ EVAL_NAME = "ebr_eval.json"
 #: live season is the board). 2020 has no play-by-play on disk (EBR-Q4).
 HISTORY_SEASONS = [2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
+#: The backfilled seasons 2011 to 2017 and 2020 (owner answer EBR-Q4 (b); task
+#: EBR_Q4B_HISTORY_BACKFILL) sit in the eBR preview beside the served seasons.
+#: While this flag is False every read of the preview here drops them, so the
+#: served substrate and eval keep the seasons they had; they reach data/ only
+#: by a one-commit re-flip that names the seasons, rows and files it adds.
+EBR_BACKFILL_SEASONS_LIVE = False
+EBR_BACKFILL_SEASONS = (2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020)
+#: The season-keyed blocks of the preview's substrate and eval.
+_SEASON_KEYED = ("fg_basis", "re24", "league", "identity", "league_sums", "coverage", "agreement",
+                 "arms", "ewar_link")
+
 #: Qualified = the hitter board's rule, so the two boards agree.
 QUALIFY_MIN_PA = 200
 #: Display floors (baserunning.md 2.3): below a floor the rate is absent.
@@ -193,8 +204,42 @@ def _sizes(obj, indent=1) -> tuple[int, int]:
 # --------------------------------------------------------------------------- #
 # the eBR substrate and eval (read, never computed here)
 # --------------------------------------------------------------------------- #
+def without_backfill(doc):
+    """The eBR preview's substrate or eval without the backfilled seasons
+    (EBR_BACKFILL_SEASONS) while EBR_BACKFILL_SEASONS_LIVE is False; key order kept."""
+    if EBR_BACKFILL_SEASONS_LIVE or not isinstance(doc, dict):
+        return doc
+    hs = {str(y) for y in EBR_BACKFILL_SEASONS}
+
+    def keyed(d):
+        return {k: v for k, v in d.items() if str(k) not in hs} if isinstance(d, dict) else d
+
+    def listed(v):
+        return [y for y in v if str(y) not in hs] if isinstance(v, list) else v
+    out = dict(doc)
+    for k in _SEASON_KEYED:
+        if k in out:
+            out[k] = keyed(out[k])
+    if "seasons" in out:
+        out["seasons"] = listed(out["seasons"])
+    if isinstance(out.get("stamps"), dict) and "re24_sha256" in out["stamps"]:
+        out["stamps"] = dict(out["stamps"], re24_sha256=keyed(out["stamps"]["re24_sha256"]))
+    if isinstance(out.get("cadence"), dict):
+        cad = dict(out["cadence"])
+        if "frozen_digests" in cad:
+            cad["frozen_digests"] = keyed(cad["frozen_digests"])
+        if "frozen_seasons" in cad:
+            cad["frozen_seasons"] = listed(cad["frozen_seasons"])
+        out["cadence"] = cad
+    F = out.get("fields")
+    if isinstance(out.get("rows"), list) and isinstance(F, list) and "season" in F:
+        i = F.index("season")
+        out["rows"] = [r for r in out["rows"] if str(r[i]) not in hs]
+    return out
+
+
 def load_substrate(path: Path = SUBSTRATE_PREVIEW) -> dict:
-    sub = _read_json(path)
+    sub = without_backfill(_read_json(path))
     if not isinstance(sub, dict) or not sub.get("rows") or sub.get("ebr_version") is None:
         raise BaserunningRefusal(f"the eBR substrate is absent or empty at {path}; run tools/build_ebr.py first")
     return sub
@@ -1139,7 +1184,7 @@ def build_eval(payload: dict, history: Optional[dict] = None) -> dict:
     descriptive eval (identity receipts, league sums, coverage, agreement,
     ewar_link; a look block it carries rides along verbatim) plus this board's
     join and reproduction receipts. Never a year-to-year number."""
-    ev = _read_json(EVAL_PREVIEW) or {}
+    ev = without_backfill(_read_json(EVAL_PREVIEW)) or {}
     if not ev:
         raise BaserunningRefusal(f"the eBR eval is absent at {EVAL_PREVIEW}; run tools/build_ebr.py first")
     for s, cov in (ev.get("coverage") or {}).items():

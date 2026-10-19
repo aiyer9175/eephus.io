@@ -2130,6 +2130,56 @@ hitter i, season s (2016 on):
 - Committed alone, docs and its pin test only, before the outcome look (part 12.1 is empty at this
   commit). No served number moves.
 
+### 11.9 2026-10-19: a steal the history feed codes as an advance counts as the steal (clauses (i) and (ii), owner decision EBR-Q4B-ID)
+
+- **Owner answer, as recorded** (2026-10-19, `DECISIONS_FOR_OWNER.md` EBR-Q4B-ID, "Amend: count coded
+  steals"): for the history seasons only (2011 to 2017 and 2020), a runner movement coded `r_adv_play`
+  that carries a stolen-base action counts as the steal; all eight seasons are rebuilt; 2018 and later
+  stay byte-identical. Part 1 gains this row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EBR-Q4B-ID | What the history backfill does when I1 and I2 miss by one stolen base the feed codes as an advance | count the coded steal, history seasons only (this amendment), and rebuild all eight seasons | answered 2026-10-19 (`DECISIONS_FOR_OWNER.md`, EBR-Q4B-ID) |
+
+- **Defect.** Part 2.2 keys steals on `details.movementReason`. In the history payloads the feed
+  sometimes codes the stealing runner's movement `r_adv_play` while the play itself records the steal,
+  so the record misses an official stolen base and I1 and I2 fail for that season. The defect is in
+  the source coding of those entries, not in the walk.
+- **Evidence** (identity-gate counts only; no eBR value, agreement figure, year-to-year or forward
+  number was read for this amendment). Task EBR_Q4B_HISTORY_BACKFILL's scratch build of the eight
+  seasons (2026-10-19, with part 3's one re-fetch, which returned the same content) passed I1 to I9 in
+  2012 to 2016 and 2020 and missed by one stolen base in two seasons: 2011, league SB 3,278 against
+  3,279 official, one player of 417 off (MLBAM 407861, 18 against 19); 2017, league SB 2,526 against
+  2,527, one player of 392 off (MLBAM 572821, 15 against 16). The two entries: game 288830
+  (2011-08-23), atBatIndex 51, an action event `stolen_base_2b` for runner 407861 at playIndex 3 and
+  his movement 1B to 3B at playIndex 3 coded `r_adv_play` with a throwing-error credit; game 491962
+  (2017), atBatIndex 1, the play description "Brian Dozier steals (12) 2nd base" and his movement 1B
+  to 2B coded `r_adv_play` (no action event carries the steal). A read-only scan of all 17,905
+  history payloads for an `r_adv_play` entry whose runner carries a steal mark in the same play, and
+  no steal-coded entry of his own there, found five entries: these two, the same two runners' later
+  segments (2B to 3B, 3B to home), and one in game 630980 (2020) where the `stolen_base_2b` action is
+  tagged to the runner on third who scored while another runner's steal of second is already coded
+  `r_stolen_base_2b`.
+- **Fix** (history seasons 2011 to 2017 and 2020 only; the walk's state and every other field are
+  unchanged): a runner entry is read as `r_stolen_base_<T>` (T = 2b, 3b or home) when (1) its
+  `movementReason` is `r_adv_play`; (2) its `start` is the base before T; (3) the same play carries a
+  steal of T by that runner: an action event of type `stolen_base_<T>` whose player is the runner, or
+  the play's result description reading "<runner full name> steals (n) <2nd base, 3rd base or home>";
+  (4) no entry of the play for that runner already carries a steal-attempt reason (part 2.5's
+  prefixes); (5) only the first such entry of that runner in the play. The record stores the read
+  reason in `movement_reason`, and the season's manifest block lists every such entry (game_pk,
+  atBatIndex, playIndex, runner, start, the reason as coded, the reason as read, and which mark
+  matched). eSB values the steal to its target as part 2.5 already does for an error that carries the
+  runner past it; the rest stays the fielder's. On the scan above the rule reads two entries (288830
+  and 491962) and none of the other three.
+- **Unchanged:** every 2018-and-later season of the record, its files and manifest block (frozen,
+  byte-identical, tested); part 2.2's key for those seasons; I1 to I9 and the re-fetch rule; the frozen
+  pool P and K; the frames of parts 5.1 and 9.5 (no history season enters either); part 12.1, whose
+  look read none of the history seasons; every look's statistics, thresholds, margins, guards and
+  dates.
+- Committed alone with its pin test, docs only, before the skill look (part 12.2 is empty at this
+  commit). No served number moves.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**

@@ -87,6 +87,19 @@ FG_BASIS_PRE_2016 = "fg_bsr_wsb_ubr_wgdp"
 FG_BASIS_FIRST_SEASON = 2016
 #: wGdp is the double-play comparator through 2024 (part 4); 2025 on it is 0.
 FG_WGDP_LAST_SEASON = 2024
+#: The history seasons of the record (build_runner_moves.HIST_SEASONS, owner
+#: answer EBR-Q4 (b)). A registered season (2018 on) reads arm P's prior seasons
+#: from the registered seasons only, so its arm report stays the one it had
+#: before the history seasons arrived; a history season reads its own priors.
+HIST_SEASONS = (2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020)
+
+
+def arm_prior_seasons(season: int, have) -> list:
+    """The prior seasons arm P (part 2.8) reads for ``season``: the three before
+    it that the build holds, a history season never for a registered one."""
+    s = int(season)
+    return [y for y in (s - 3, s - 2, s - 1)
+            if y in have and (s in HIST_SEASONS or y not in HIST_SEASONS)]
 
 
 def fg_basis(season: int) -> str:
@@ -556,11 +569,12 @@ def build(*, record: Path = RECORD, out_dir: Path = OUT_DIR, frozen_dir: Path = 
         else:
             identity[str(s)]["I7"]["pass"] = bool((identity[str(s)]["I7"]["priced_share"] or 0) >= 0.99)
         bo = ebr.Backoff(opps[s], pool["xb_pool_counts"])
-        prior = [op for y in (s - 3, s - 2, s - 1) for op in opps.get(y, [])]
+        prior_ys = arm_prior_seasons(s, opps)
+        prior = [op for y in prior_ys for op in opps[y]]
         arm_blk = {}
         if prior:
             arm_blk["P"] = ebr.arm_report(rows, opps[s], table, bo, ebr.arm_p_override(opps[s], prior, bo))
-            arm_blk["P"]["prior_seasons"] = [y for y in (s - 3, s - 2, s - 1) if y in opps]
+            arm_blk["P"]["prior_seasons"] = prior_ys
         else:
             arm_blk["P"] = {"note": "no prior season in the record"}
         tf = arm_tercile_fn(s, arm_blob)

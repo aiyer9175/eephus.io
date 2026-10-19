@@ -681,6 +681,51 @@ def test_fetcher_heals_damaged_receipts_and_refetches_unreceipted_or_altered_pay
     assert fwh.heal_receipts(tmp_path / "nowhere") == {}
 
 
+def test_fetcher_keeps_a_tied_official_game_only_when_the_schedule_confirms_the_tie(tmp_path):
+    """2016-09-29 Cubs at Pirates ended 1-1 after six innings: its list ends at 50, not 0 or 100."""
+    hist = tmp_path / "win_prob_hist"
+
+    def tied(inning=6, home=1, away=1, complete=True):
+        plays = _complete_plays()
+        plays[-1]["homeTeamWinProbability"] = 50.0
+        plays[-1]["about"].update({"inning": inning, "isComplete": complete})
+        plays[-1]["result"].update({"homeScore": home, "awayScore": away})
+        return json.dumps(plays).encode("utf-8")
+    body = tied()
+    assert fwh.plays_end_tied(json.loads(body))
+    for bad in (tied(inning=4), tied(home=2), tied(complete=False)):
+        assert not fwh.plays_end_tied(json.loads(bad))
+
+    def sched(pk, is_tie):
+        return _FakeResp(200, json.dumps({"dates": [{"games": [
+            {"gamePk": pk, "isTie": is_tie, "status": {"abstractGameState": "Final"}}]}]}).encode("utf-8"))
+    calls = []
+
+    class _S:
+        def get(self, url, params=None, headers=None, timeout=None):
+            calls.append((url, (params or {}).get("gamePk"), headers))
+            if params:
+                return sched(params["gamePk"], params["gamePk"] == 1)
+            return _FakeResp(200, body)
+    sleeps = []
+    pacer = fwh.Pacer(1.0, clock=lambda: 0.0, sleep=lambda s: sleeps.append(s))
+    summ = fwh.run([2016], out_dir=hist, session=_S(), pacer=pacer, user_agent="ua",
+                   schedules={2016: [[1, "2016-09-29"], [2, "2016-09-29"]]})
+    import mlb_leverage
+    assert [(c[0] == mlb_leverage.SCHEDULE_API, c[1]) for c in calls] == [(False, None), (True, 1),
+                                                                         (False, None), (True, 2)]
+    assert all(c[2] == {"User-Agent": "ua"} for c in calls) and sleeps == [1.0] * 3
+    assert (hist / "1.json").read_bytes() == body and not (hist / "2.json").exists()
+    recs = [json.loads(x) for x in (hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [(r["game_pk"], r["status"], r.get("tie")) for r in recs] == [(1, "ok", True), (2, "partial", None)]
+    assert summ["seasons"]["2016"]["fetched"] == 1 and summ["seasons"]["2016"]["partial"] == 1
+    # resumed: the receipted tie is kept without a request; with no receipt it is not complete
+    assert fwh.payload_complete(hist / "1.json", recs[0]["sha256"]) and not fwh.payload_complete(hist / "1.json")
+    calls.clear()
+    fwh.run([2016], out_dir=hist, session=_S(), pacer=pacer, user_agent="ua", schedules={2016: [[1, "2016-09-29"]]})
+    assert calls == []
+
+
 def test_fetcher_limit_caps_the_requests_of_one_run(tmp_path):
     hist = tmp_path / "win_prob_hist"
     complete = json.dumps(_complete_plays()).encode("utf-8")
@@ -694,3 +739,135 @@ def test_fetcher_limit_caps_the_requests_of_one_run(tmp_path):
     with pytest.raises(SystemExit):
         fwh._parse_seasons("2018")
     assert fwh._parse_seasons("2011-2017,2020") == list(fwh.HIST_SEASONS)
+
+
+
+# ---------------------------------------------------------------------------
+# EBR_GATE.md amendment 11.9: a steal the history feed codes as an advance
+# ---------------------------------------------------------------------------
+def _named(entry, name):
+    entry["details"]["runner"]["fullName"] = name
+    return entry
+
+
+def _coded_steal_play(abi=1, *, mark="action", start="1B", end="3B", runner=A, tagged=None, extra=()):
+    """Runner ``runner`` steals second under an r_adv_play entry (288830 atBatIndex 51's shape:
+    the action event at playIndex 1, the movement 1B to 3B on a throwing error), then C fans."""
+    events = [_pitch(0)]
+    if mark == "action":
+        events.append(_action(1, "stolen_base_2b", player=(tagged or runner)))
+    events.append(_pitch(2))
+    ents = [_named(_entry(runner, start, end, 1, reason="r_adv_play", event_type="error",
+                          credits=[(7, "2", "f_throwing_error")]), "Orlando Hudson"),
+            _entry(C, None, None, 2, event_type="strikeout", is_out=True, origin=None)] + list(extra)
+    play = _play(abi, C, events, ents, outs=1, event_type="strikeout")
+    if mark == "description":
+        play["result"]["description"] = "Joe Mauer strikes out swinging. Orlando Hudson steals (12) 2nd base."
+    return play
+
+
+def test_coded_steal_read_only_under_the_amendment_rule():
+    for mark in ("action", "description"):
+        play = _coded_steal_play(mark=mark)
+        got = brm.read_coded_steals(play)
+        assert [(v, play["runners"].index(next(r for r in play["runners"] if id(r) == k)))
+                for k, v in got.items()] == [(("r_stolen_base_2b", mark), 0)]
+    assert brm.read_coded_steals(_coded_steal_play(mark=None)) == {}              # no mark
+    assert brm.read_coded_steals(_coded_steal_play(start="2B")) == {}             # not the base before 2B
+    assert brm.read_coded_steals(_coded_steal_play(tagged=B)) == {}               # the action names another runner
+    coded_too = _entry(A, "1B", "2B", 1, reason="r_stolen_base_2b", event_type="stolen_base_2b")
+    assert brm.read_coded_steals(_coded_steal_play(extra=[coded_too])) == {}      # his steal is already coded
+    second = _named(_entry(A, "1B", "2B", 1, reason="r_adv_play", event_type="error"), "Orlando Hudson")
+    play = _coded_steal_play(extra=[second])
+    got = brm.read_coded_steals(play)
+    assert len(got) == 1 and id(play["runners"][0]) in got                        # the first entry only
+
+
+def test_coded_steal_counted_by_the_walk_only_when_asked():
+    plays = [_single(0, A), _coded_steal_play()]
+    pa0, rn0, d0 = _rows(plays, season=2011)
+    assert _of(rn0, A, "r_adv_play") and not _of(rn0, A, "r_stolen_base_2b")
+    assert "coded_steals" not in d0 and "coded_steal_entries" not in d0
+    diag = {}
+    pa1, rn1 = brm.walk_game(plays, game_pk=1, season=2011, diag=diag,
+                             info={"away_id": 10, "home_id": 20, "venue_id": 30, "scheduled_innings": 9},
+                             count_coded_steals=True)
+    st = _of(rn1, A, "r_stolen_base_2b")
+    assert len(st) == 1 and (st[0]["start"], st[0]["end"], st[0]["error_credit"]) == ("1B", "3B", True)
+    assert diag["coded_steals"] == 1
+    assert diag["coded_steal_entries"] == [[1, 1, 1, A, "1B", "r_adv_play", "r_stolen_base_2b", "action"]]
+    # the walk's state and every other field are unchanged
+    assert pa1 == pa0
+    assert [{k: v for k, v in r.items() if k != "movement_reason"} for r in rn1] == \
+        [{k: v for k, v in r.items() if k != "movement_reason"} for r in rn0]
+    assert brm.record_counts(_df(pa1), _df(rn1))[A]["sb"] == 1
+    assert brm.record_counts(_df(pa0), _df(rn0))[A]["sb"] == 0
+
+
+def test_coded_steal_counts_in_a_history_season_and_never_in_a_frozen_one(tmp_path):
+    src, hist = tmp_path / "win_prob", tmp_path / "win_prob_hist"
+    game = [_single(0, A), _coded_steal_play()]
+    _write_payloads(src, {11: game})
+    _write_payloads(hist, {21: game})
+    lines = {A: {"sb": 1, "pa": 1}, C: {"pa": 1}}
+    off = _official(tmp_path / "lines.json", lines)
+    off24 = _official(tmp_path / "lines24.json", {A: {"pa": 1}, C: {"pa": 1}})
+    out = tmp_path / "pbp_runners"
+    man = brm.build([2024], out_dir=out, source=src, hist_source=hist, workers=1, today=AFTER_FREEZE,
+                    schedules={2024: _sched([11])}, official_paths={2024: off24}, allow_refetch=False)
+    blk = dict(man["seasons"]["2024"])
+    assert blk["frozen"] and "coded_steals" not in blk and "coded_steals" not in blk["counters"]
+    pa_p, rn_p = out / blk["files"]["pa"], out / blk["files"]["runners"]
+    before = (pa_p.read_bytes(), rn_p.read_bytes())
+    assert set(brm.read_table(rn_p)["movement_reason"].dropna()) == {"r_adv_play"}
+    src_hash, hist_hash = _hash_dir(src), _hash_dir(hist)
+    man2 = brm.build([2024, 2011], out_dir=out, source=src, hist_source=hist, workers=1, today=AFTER_FREEZE,
+                     schedules={2024: _sched([11]), 2011: _sched([21])},
+                     official_paths={2024: off24, 2011: off}, allow_refetch=False)
+    assert man2["seasons"]["2024"] == blk and (pa_p.read_bytes(), rn_p.read_bytes()) == before
+    b11 = man2["seasons"]["2011"]
+    assert b11["coded_steals"] == [[21, 1, 1, A, "1B", "r_adv_play", "r_stolen_base_2b", "action"]]
+    assert b11["counters"]["coded_steals"] == 1
+    assert b11["receipts"]["I1"]["sb"] == [1, 1] and b11["receipts"]["I1"]["pass"]
+    assert b11["receipts"]["I2"]["pass"] and b11["frozen"]
+    assert _hash_dir(src) == src_hash and _hash_dir(hist) == hist_hash
+    # a rerun keeps the frozen history season and its list
+    man3 = brm.build([2011], out_dir=out, source=src, hist_source=hist, workers=1, today=AFTER_FREEZE,
+                     schedules={2011: _sched([21])}, official_paths={2011: off}, allow_refetch=False)
+    assert man3["seasons"]["2011"] == b11
+
+
+def test_coded_steal_history_seasons_agree_across_the_builder_ebr_and_the_export():
+    import build_ebr
+    import baserunning_export as bre
+    assert build_ebr.HIST_SEASONS == brm.HIST_SEASONS == tuple(bre.EBR_BACKFILL_SEASONS)
+    have = {2015, 2016, 2017, 2018, 2019, 2020, 2021}
+    assert build_ebr.arm_prior_seasons(2018, have) == []
+    assert build_ebr.arm_prior_seasons(2021, have) == [2018, 2019]
+    assert build_ebr.arm_prior_seasons(2017, have) == [2015, 2016]
+    assert build_ebr.arm_prior_seasons(2020, have) == [2017, 2018, 2019]
+
+
+def test_the_export_drops_the_backfilled_seasons_while_its_flag_is_off(monkeypatch):
+    import baserunning_export as bre
+    sub = {"schema": 1, "seasons": [2011, 2020, 2024], "fg_basis": {"2011": "a", "2024": "b"},
+           "stamps": {"K": 1.0, "re24_sha256": {"2011": "x", "2024": "y"}},
+           "re24": {"2011": 1, "2020": 2, "2024": 3}, "league": {"2011": 1, "2024": 2},
+           "cadence": {"live_season": None, "frozen_seasons": [2011, 2024],
+                       "frozen_digests": {"2011": "d", "2024": "e"}},
+           "fields": ["mlbam", "season"], "rows": [[1, 2011], [1, 2020], [2, 2024]]}
+    ev = {"identity": {"2016": 1, "2024": 2}, "arms": {"2017": 1, "2024": 2}, "coverage": {"2011": {}},
+          "agreement": {"2015": 1}, "ewar_link": {"2020": 1, "2025": 2}, "league_sums": {"2012": 0},
+          "look": {"pairs": ["2018-2019"]}}
+    assert bre.EBR_BACKFILL_SEASONS_LIVE is False
+    got = bre.without_backfill(sub)
+    assert list(got) == list(sub)
+    assert got["seasons"] == [2024] and got["rows"] == [[2, 2024]] and got["re24"] == {"2024": 3}
+    assert got["fg_basis"] == {"2024": "b"} and got["stamps"] == {"K": 1.0, "re24_sha256": {"2024": "y"}}
+    assert got["cadence"] == {"live_season": None, "frozen_seasons": [2024], "frozen_digests": {"2024": "e"}}
+    gev = bre.without_backfill(ev)
+    assert gev == {"identity": {"2024": 2}, "arms": {"2024": 2}, "coverage": {}, "agreement": {},
+                   "ewar_link": {"2025": 2}, "league_sums": {}, "look": {"pairs": ["2018-2019"]}}
+    assert sub["seasons"] == [2011, 2020, 2024]                                   # the input is not mutated
+    monkeypatch.setattr(bre, "EBR_BACKFILL_SEASONS_LIVE", True)
+    assert bre.without_backfill(sub) is sub
