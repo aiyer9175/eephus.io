@@ -56,6 +56,15 @@ r_caught_stealing_*, r_pickoff_caught_stealing_*), never on
 ``details.eventType``: on the event type 17 to 41 entries a season score a
 caught stealing where the runner was safe.
 
+CODED STEALS (EBR_GATE.md amendment 11.9, owner decision EBR-Q4B-ID). In a
+history season only, an entry the feed codes ``r_adv_play`` is read as
+``r_stolen_base_<T>`` when its start is the base before T, the same play
+carries a steal of T by that runner (an action event ``stolen_base_<T>`` whose
+player is the runner, or the result description "<name> steals (n) <T>"), no
+entry of his in the play already carries a steal-attempt reason, and it is his
+first such entry there (``read_coded_steals``). The season's manifest block
+lists every entry so read. A 2018-and-later season is never read this way.
+
 RECEIPTS (EBR_GATE.md part 3), written into the manifest per season with the
 sha256 of the cached StatsAPI season hitting lines they read
 (``.cache/fa_statsapi_hitting_<Y>.json``, playerPool=All):
@@ -95,6 +104,7 @@ import hashlib
 import io
 import json
 import logging
+import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -223,6 +233,50 @@ def is_stolen_base(reason) -> bool:
     return bool(reason) and str(reason).startswith("r_stolen_base")
 
 
+#: Steal target -> the base the runner starts from (EBR_GATE.md amendment 11.9).
+_STEAL_FROM = {"2b": "1B", "3b": "2B", "home": "3B"}
+_STEAL_WORDS = {"2nd base": "2b", "3rd base": "3b", "home": "home"}
+
+
+def read_coded_steals(play: dict, ents=None) -> dict:
+    """{id(entry): (reason as read, mark)} for the entries of ``play`` that
+    amendment 11.9 reads as a steal: ``r_adv_play``, starting on the base
+    before the target, under the same runner's stolen-base mark in the play
+    (``mark`` is "action" or "description"), with no steal-attempt entry of
+    his own in the play; the first such entry of each runner only."""
+    ents = list(ents if ents is not None else (play.get("runners") or ()))
+    marks: dict = defaultdict(list)
+    for ev in play.get("playEvents") or ():
+        et = str(((ev.get("details") or {}).get("eventType")) or "")
+        pid = (ev.get("player") or {}).get("id")
+        if ev.get("type") == "action" and et.startswith("stolen_base_") and pid is not None:
+            t = et[len("stolen_base_"):]
+            if t in _STEAL_FROM:
+                marks[pid].append((t, "action"))
+    desc = str((play.get("result") or {}).get("description") or "")
+    attempted = {_rid(r) for r in ents
+                 if is_steal_attempt((r.get("details") or {}).get("movementReason"))}
+    out: dict = {}
+    done: set = set()
+    for r in ents:
+        det = r.get("details") or {}
+        x = _rid(r)
+        if det.get("movementReason") != "r_adv_play" or x is None or x in attempted or x in done:
+            continue
+        cands = list(marks.get(x, ()))
+        name = (det.get("runner") or {}).get("fullName")
+        if name:
+            pat = re.escape(str(name)) + r" steals \(\d+\) (2nd base|3rd base|home)"
+            cands += [(_STEAL_WORDS[m.group(1)], "description") for m in re.finditer(pat, desc)]
+        start = (r.get("movement") or {}).get("start")
+        for t, mark in cands:
+            if _STEAL_FROM[t] == start:
+                out[id(r)] = ("r_stolen_base_" + t, mark)
+                done.add(x)
+                break
+    return out
+
+
 # --------------------------------------------------------------------------
 # the walk inside a plate appearance (pure)
 # --------------------------------------------------------------------------
@@ -322,11 +376,14 @@ def _in_play_event(play: dict, in_play_idx):
 
 
 def walk_game(plays, *, game_pk: int, season: int, info: dict | None = None,
-              level: str = "mlb", diag: dict | None = None) -> tuple[list, list]:
+              level: str = "mlb", diag: dict | None = None,
+              count_coded_steals: bool = False) -> tuple[list, list]:
     """(pa_rows, runner_rows) for one game. Pure.
 
     ``info``: {"away_id", "home_id", "venue_id", "scheduled_innings"} from the
-    schedule (MLB) or the feed's gameData (minor leagues)."""
+    schedule (MLB) or the feed's gameData (minor leagues). ``count_coded_steals``
+    (history seasons only) applies amendment 11.9 (``read_coded_steals``) and
+    lists each entry it reads in ``diag["coded_steal_entries"]``."""
     if diag is None:
         diag = {}
     info = info or {}
@@ -343,6 +400,7 @@ def walk_game(plays, *, game_pk: int, season: int, info: dict | None = None,
         first_idx, final_idx, in_play_idx = _pitch_indices(play)
         subs = _sub_swaps(play, first_idx)
         ents = bpc._sorted_runners(play)
+        coded = read_coded_steals(play, ents) if count_coded_steals else {}
         groups: dict = defaultdict(list)
         order: list = []
         for r in ents:
@@ -382,6 +440,13 @@ def walk_game(plays, *, game_pk: int, season: int, info: dict | None = None,
                 det = r.get("details") or {}
                 fid, fpos = _fielders(r)
                 x = _rid(r)
+                reason = det.get("movementReason")
+                if id(r) in coded:
+                    reason, mark = coded[id(r)]
+                    diag["coded_steals"] = diag.get("coded_steals", 0) + 1
+                    diag.setdefault("coded_steal_entries", []).append(
+                        [int(game_pk), play.get("atBatIndex"), idx, x, mv.get("start"),
+                         det.get("movementReason"), reason, mark])
                 runner_rows.append({
                     "game_pk": game_pk, "season": season, "level": level,
                     "at_bat_index": play.get("atBatIndex"), "play_index": idx,
@@ -394,7 +459,7 @@ def walk_game(plays, *, game_pk: int, season: int, info: dict | None = None,
                     "origin_base": mv.get("originBase"), "start": mv.get("start"),
                     "end": mv.get("end"), "out_base": mv.get("outBase"),
                     "is_out": bool(mv.get("isOut")), "out_number": mv.get("outNumber"),
-                    "movement_reason": det.get("movementReason"),
+                    "movement_reason": reason,
                     "event_type": det.get("eventType"),
                     "is_scoring": bool(det.get("isScoringEvent")),
                     "error_credit": _error_credit(r),
@@ -583,8 +648,12 @@ def _game_job(args):
     if plays is None:
         return pk, how, [], [], {}
     diag: dict = {}
-    pa, rn = walk_game(plays, game_pk=pk, season=season, info=info, diag=diag)
-    return pk, how, pa, rn, _int_counters(diag)
+    pa, rn = walk_game(plays, game_pk=pk, season=season, info=info, diag=diag,
+                       count_coded_steals=int(season) in HIST_SEASONS)
+    counters = _int_counters(diag)
+    if diag.get("coded_steal_entries"):
+        counters["coded_steal_entries"] = diag["coded_steal_entries"]
+    return pk, how, pa, rn, counters
 
 
 def _milb_job(path):
@@ -871,9 +940,14 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
     jobs = [(pk, int(season), info_of[pk], str(source), str(refetch_dir)) for pk in todo]
     results = _run_games(jobs, workers)
     diag: Counter = Counter((sblk or {}).get("counters") or {})
+    coded: dict = defaultdict(list)          # game_pk -> amendment 11.9 entries
+    for e in (sblk or {}).get("coded_steals") or ():
+        if int(e[0]) in have:
+            coded[int(e[0])].append(e)
     how_n: Counter = Counter()
     new_pa, new_rn = [], []
     for pk, how, pa, rn, dg in results:
+        coded[int(pk)] = list(dg.pop("coded_steal_entries", None) or ())
         how_n[how] += 1
         new_pa.extend(pa)
         new_rn.extend(rn)
@@ -913,6 +987,7 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
             keep_rn = rn_df[~rn_df["game_pk"].isin(refetched)]
             r_pa, r_rn = [], []
             for pk, how, pa, rn, dg in redo:
+                coded[int(pk)] = list(dg.pop("coded_steal_entries", None) or ())
                 r_pa.extend(pa)
                 r_rn.extend(rn)
             pa_df = pd.concat([keep_pa, _frame(r_pa, PA_INT_COLS, ("game_pk", "at_bat_index"))],
@@ -948,6 +1023,8 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
         "receipts": rec,
         "refetched_games": refetched or (man.get("refetched") or {}).get(str(season), []),
         "filled_games": (man.get("filled") or {}).get(str(season), []),
+        **({"coded_steals": [e for pk in sorted(coded) for e in coded[pk]]}
+           if int(season) in HIST_SEASONS else {}),
         "complete": bool(complete),
         "frozen": bool(complete and rec["I3"]["pass"] and rec["I1"].get("pass") is True
                          and rec["I2"].get("pass") is True),
