@@ -248,3 +248,121 @@ the read writes no row to `data/efv_progress.json`.
   (off the webroot), plain-language results `docs/efv-v2/EFV_BEAT_TILTED_LABELS_RESULTS.md`,
   and sections 14 and 15 appended below. The re-fit's resumable builds are cached in a scratch
   directory outside the repository.
+
+## 14. The read (appended by the run, 2026-10-19; development frames)
+
+Run: `python -u tools/efv_beat_tilted_labels.py --run --cache <scratch>` from commit 3f3d0052
+(the module, committed after this registration b7798fc8), artifact
+`data/_labs/efv5/efv_beat_tilted_labels.json`, generated 2026-10-19T18:32:19Z; label
+`fwar@2026-10-02-0341299c20ec`; B 2000, seed 20261017. The re-fit's builds were made once
+(about 15 minutes) by `--build-only` into the scratch cache, which ran the parity guards and
+computed no statistic; the read then ran once from that cache (46.9 s).
+
+Every guard held before any arrival number: the v5 COMBINED development order reproduces
+`efv5_combined_fit.json` (within 0.1685 on lv_dev, 0.3611 on vm_dev); the RT order with the
+as-read cross-fitted weights reproduces `efv5_refit_fit.json` (0.1683 and 0.3937), and those
+weights equal the artifact's in every fold; the scored rows of both builds are equal; the
+`efv_labels` W3 equals the frame's outcome on all 2,862 lv_dev rows. All 830 vm_dev rows have a
+usable debut day (none a placeholder, none outside the debut year, none before the read date).
+The guarded cross-fitted weights of the served rater: hitters w_skill 0.282 to 0.322 and
+w_time 0 in every fold; pitchers w_skill 0.913 to 1.0 and w_time 0 in every fold (the guard
+held the lv_dev pitcher 2017 arrival term at 0). The served eFV's order on these frames is
+therefore consensus plus the skill head; no arrival term enters it.
+
+### 14.1 The primary label (ARRIVAL: R3 on lv_dev, AD on vm_dev), served eFV minus consensus
+
+Within (side, year) Spearman, size-weighted over groups of 20 or more rows.
+
+| frame (label) | rows in the statistic (players) | served eFV | consensus | delta | CI95 (player) | lb95 player / club | mde95 player |
+|---|---|---|---|---|---|---|---|
+| lv_dev (R3; 39.9 percent reached) | 2,862 in 6 groups (1,753) | 0.3722 | 0.3677 | +0.0046 | -0.0116 to +0.0209 | -0.0089 / -0.0107 | 0.0137 |
+| vm_dev (AD) | 814 of 830 in 13 groups (830) | -0.0173 | -0.0251 | +0.0078 | -0.0178 to +0.0337 | -0.0129 / -0.0125 | 0.0212 |
+
+(vm_dev pitchers 2017 hold 16 rows, under the 20-row floor.)
+
+- **Permutation null.** lv_dev: observed +0.0046 against a null mean of -0.0327 and a null 95th
+  percentile of -0.0205 (above it; no permuted draw reached the observed value). vm_dev:
+  observed +0.0078 against a null mean of +0.0066 and a 95th percentile of +0.0321 (not above
+  it; 49 percent of permuted draws reached the observed value).
+- **Planted recovery.** lv_dev: planted minus consensus +0.0905, lower bound +0.0850,
+  recovered. vm_dev: +0.1155, lower bound +0.1032, recovered. The pipeline sees a rater that
+  carries arrival information on both frames, with the orientation of AD right.
+- **AUC (lv_dev, reported).** R3: served 0.7209, consensus 0.7162, +0.0047 (CI95 -0.0048 to
+  +0.0146; lower bounds -0.0034 / -0.0046).
+
+### 14.2 The secondary labels (same rule; decide nothing)
+
+| claim | lv_dev: delta (CI95 player; lb95 player / club) | vm_dev: delta (CI95 player; lb95 player / club) | reading |
+|---|---|---|---|
+| R5 (R5 on lv_dev, AD on vm_dev) | -0.0027 (-0.0194 to +0.0133; -0.0168 / -0.0157) | +0.0078 (as 14.1) | NOT PASS (ties) |
+| W2 early WAR | -0.0067 (-0.0245 to +0.0100; -0.0216 / -0.0201) | +0.0167 (-0.0058 to +0.0386; -0.0017 / -0.0031) | NOT PASS (ties) |
+
+R5 AUC on lv_dev: served 0.7099, consensus 0.7094, +0.0005 (lower bounds -0.0077 / -0.0073).
+Within Spearman of each rater, R5: served 0.3603, consensus 0.3631; W2 lv_dev 0.1257 against
+0.1324; W2 vm_dev 0.3073 against 0.2905.
+
+### 14.3 The other raters against consensus (reported; decide nothing)
+
+delta (lb95 player / club):
+
+| rater | lv_dev R3 | vm_dev AD | lv_dev R5 | lv_dev W2 | vm_dev W2 |
+|---|---|---|---|---|---|
+| v5 COMBINED development fit (pre-refit) | -0.0107 (-0.0346 / -0.0341) | +0.0321 (+0.0009 / +0.0018) | -0.0260 (-0.0503 / -0.0493) | -0.0184 (-0.0436 / -0.0445) | -0.0272 (-0.0533 / -0.0584) |
+| re-fit RT timing head alone | -0.0659 (-0.0829 / -0.0779) | -0.0027 (-0.0262 / -0.0258) | -0.0959 (-0.1125 / -0.1061) | -0.0395 (-0.0572 / -0.0638) | -0.0266 (-0.0507 / -0.0510) |
+| v5 COMBINED timing head alone | -0.0433 (-0.0626 / -0.0609) | +0.2244 (+0.1619 / +0.1618) | -0.0860 (-0.1055 / -0.1003) | -0.0413 (-0.0613 / -0.0620) | -0.1201 (-0.1743 / -0.1836) |
+| served minus the v5 COMBINED development fit | +0.0152 (+0.0002 / -0.0243) | -0.0243 (-0.0491 / -0.0429) | +0.0233 (+0.0084 / -0.0206) | +0.0117 (-0.0034 / -0.0066) | +0.0439 (+0.0199 / +0.0240) |
+
+Under the rule of section 7 none of them passes the arrival claim: the pre-refit fit clears 0
+on vm_dev AD but trails on lv_dev R3; the v5 COMBINED timing head reads +0.2244 on AD and
+-0.0433 on R3. The re-fit's pitcher timing head is unusable in every fold but lv_dev 2017, so
+there it scores the consensus order (delta exactly 0 on vm_dev pitchers).
+
+### 14.4 Cuts (descriptive; the verdict reads 14.1 only)
+
+- By side, served minus consensus. lv_dev R3: hitters +0.0282 (CI95 +0.0092 to +0.0474; lower
+  bounds +0.0119 / +0.0113; n 1,465), pitchers -0.0202 (-0.0463 to +0.0066; -0.0426 / -0.0385;
+  n 1,397). vm_dev AD: hitters +0.0026 (-0.0255 to +0.0297), pitchers +0.0130 (-0.0290 to
+  +0.0541). lv_dev R5: hitters +0.0232 (lower bounds +0.0059 / +0.0039), pitchers -0.0299
+  (-0.0527 / -0.0453). W2: lv_dev hitters -0.0150, pitchers +0.0021; vm_dev hitters +0.0019,
+  pitchers +0.0315 (lower bounds -0.0003 / +0.0017).
+- By year, lv_dev R3, served against consensus rho: hitters 2017 0.401 / 0.392, 2018 0.450 /
+  0.405, 2019 0.469 / 0.438; pitchers 2017 0.189 / 0.236, 2018 0.344 / 0.356, 2019 0.367 /
+  0.369.
+- Clusters: lv_dev 31 clubs (1,328 rows on UNK, no board point at or before the read window
+  carries an org); vm_dev 30 clubs, none on UNK.
+
+### 14.5 The 2026 holdout (quoted from `data/efv_2026_holdout.json`; corroboration only)
+
+Arrival in 2026, AUC, the then-served PRE-REFIT v5 COMBINED minus consensus: pooled +0.0488
+(lower bounds +0.0344 / +0.0332), hitters +0.0955 (+0.0719 / +0.0724), pitchers +0.0043
+(-0.0118 / -0.0127). A different rater from the served re-fit, a one-season arrival label, and
+spent; it does not enter the verdict.
+
+### 14.6 What the read says, in plain words
+
+On who reaches the majors, the served eFV and PROSPX consensus are level: +0.005 on the list
+years and +0.008 on how early the debut classes arrived, both inside the noise, with the
+read able to see an edge of about 0.014 and 0.021. The served eFV no longer carries an arrival
+term (the re-fit set its weight to 0), so its arrival order is consensus moved by the skill
+head. That move helps hitters on the list years (+0.028, lower bounds above 0) and costs
+pitchers (-0.020), and the two cancel. On vm_dev the served order's small lead is what a
+random reshuffle of the same adjustments also gives. The arrival heads alone do not beat
+consensus at who reaches: both trail it on R3 by 0.04 to 0.07. The v5 COMBINED arrival head is
+much better than consensus at how early in the season an about-to-debut player arrives
+(+0.224), which is a within-season timing signal on players already at the door, not who
+reaches.
+
+## 15. The verdict (the rule of section 7)
+
+| frame | label | lb95 player / club | above 0 | above the null p95 | planted recovered | word |
+|---|---|---|---|---|---|---|
+| lv_dev | R3 | -0.0089 / -0.0107 | no | yes | yes | ties |
+| vm_dev | AD | -0.0129 / -0.0125 | no | no | yes | ties |
+
+**NOT PASS.** The served eFV does not beat PROSPX consensus at predicting who reaches the
+majors on the development frames; both point estimates are small and positive and both
+intervals span zero. The secondary claims (R5, W2) also read NOT PASS (ties). Per sections 10
+and 12: the spent frames are not opened, nothing served moves, no flip question arises, no
+arrival sentence or Source Comparison row is drafted, and every copy keeps 'ties consensus'.
+The exact copy the site may print from this read: none (no new sentence; every existing eFV
+claim stays as it is).
