@@ -27,7 +27,9 @@ It pins:
      and the clocks.
   5. Part 9 (the series, the skill parts' formulas and invariants, the skill
      look and its dispositions, admission, assembly) and part 10's seals.
-  6. That NO RESULT is recorded in parts 12.1, 12.2 or 12.3, or above them.
+  6. That NO RESULT is recorded in parts 12.2 or 12.3, or above part 12. Part
+     12.1 holds the outcome look's result (2026-10-19), pinned by
+     test_ebr_gate_result.py.
 
 It does NOT pin a result. A look's result pin goes in its own file, so that a
 result pin never lives beside a criterion pin.
@@ -780,6 +782,21 @@ def test_amendment_11_7_s3t_is_scored_by_owner_override():
     assert doc.index("### 11.6 2026-10-16") < doc.index("### 11.7 2026-10-19") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_8_the_displayed_name_is_plain_ewar():
+    flat = _flat(_section(_doc(), "### 11.8 2026-10-19", RESULTS_HEADING))
+    assert "### 11.8 2026-10-19: eWAR v3's displayed name (clause (i), owner decision EW3-19)" in flat
+    assert "| EW3-19 (naming) | The displayed name of eWAR v3 (the label clause of EBR-Q0's recorded answer) |" in flat
+    assert ("this replaces \"a column labelled eWAR v3 and never plain eWAR\" in EBR-Q0's row and the "
+            "naming sentences of parts 0 and 9.1") in flat
+    assert "**What it touches: the displayed name only.**" in flat
+    assert "**Unchanged:** part 1's EBR-Q1 to EBR-Q3 rows; every clause either look reads" in flat
+    assert ("Committed alone, docs and its pin test only, before the outcome look (part 12.1 is empty at "
+            "this commit).") in flat
+    # 11.8 sits after 11.7 and before part 12.
+    doc = _doc()
+    assert doc.index("### 11.7 2026-10-19") < doc.index("### 11.8 2026-10-19") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
@@ -798,14 +815,19 @@ def test_no_result_is_recorded_in_part_12():
     doc = _doc()
     assert doc.count(RESULTS_HEADING) == 1
     body = doc.split(RESULTS_HEADING, 1)[1]
-    flat = _flat(body)
-    assert flat.startswith(" **EMPTY AT REGISTRATION.** ### 12.1 The outcome look (parts 5 and 6) EMPTY. "
-                           "### 12.2 The skill look (parts 9.5 and 9.6) EMPTY. "
+    assert _flat(body).startswith(" **EMPTY AT REGISTRATION.** ### 12.1 The outcome look (parts 5 and 6) ")
+    # Part 12.1 holds the outcome look's result (2026-10-19). It is pinned by
+    # test_ebr_gate_result.py, not here: a result pin never lives beside a criterion pin
+    # (the reason test_arb_gate_c2_registration.py gives).
+    assert (ROOT / "test_ebr_gate_result.py").exists()
+    rest = body[body.index("### 12.2 The skill look (parts 9.5 and 9.6)"):]
+    flat = _flat(rest)
+    assert flat.startswith("### 12.2 The skill look (parts 9.5 and 9.6) EMPTY. "
                            "### 12.3 The skill holdout (part 9.5) EMPTY. "), flat[:300]
     assert "None may be written anywhere above this line." in flat
     for pattern in RESULT_PATTERNS:
-        m = re.search(pattern, body, re.I)
-        assert m is None, f"a result is recorded in part 12: {m.group(0) if m else ''!r}"
+        m = re.search(pattern, rest, re.I)
+        assert m is None, f"a result is recorded in part 12.2 or 12.3: {m.group(0) if m else ''!r}"
 
 
 # Registered thresholds that take an interval's shape. Each is stripped, after
