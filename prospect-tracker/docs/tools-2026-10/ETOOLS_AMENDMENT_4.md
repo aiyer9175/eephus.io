@@ -165,3 +165,44 @@ from the runner; no network request.
 
 (Empty at registration. Results go to this section as a dated note and to
 `docs/tools-2026-10/ETOOLS_RESULTS.md`.)
+
+### 2026-10-19: THE READ, once (OWNER-WAIVED EARLY READ, EW3-5)
+
+`python etools_stale.py --run --amend-sha dff62ea9`, run once (41 s, code at d3824ea8) after the
+fixture dry run; no exception; every input's sha256 matched at start and end; stdout and stderr
+kept in the task's output directory. Artifact `data/_labs/etools/etools_stale_reads.json` (spent
+marker). The fresh-row re-centred d of all six tools reproduced amendment 2 F1.6 exactly (12 of
+12). d is the out-of-fold within-board-year Spearman gain of the stale eTool over the stale
+consensus grade; LB the one-sided 95% lower bound (B 2000).
+
+| tool | S12 rows | L_MLB d (LB), players | L_UM consensus to eTool, d (LB), players | L_ANY consensus to eTool, d (LB), players | second label | verdict |
+|---|---|---|---|---|---|---|
+| hit | 2,739 | not computable (63) | 0.352 to 0.769, +0.417 (+0.340), 365 | 0.309 to 0.784, +0.476 (+0.404), 515 | L_ANY | **HOLDS** |
+| game_pwr | 2,738 | not computable (63) | 0.463 to 0.557, +0.094 (+0.067), 364 | 0.395 to 0.548, +0.153 (+0.126), 514 | L_ANY | **HOLDS** |
+| pitch_sel | 119 | not computable (3) | not computable (22) | not covered | none | NOT COMPUTABLE |
+| bat_ctrl | 136 | not computable (3) | not computable (24) | not covered | none | NOT COMPUTABLE |
+| fb | 2,382 | 0.279 to 0.231, -0.047 (-0.179), 125 | 0.133 to 0.384, +0.251 (+0.194), 355 | 0.095 to 0.409, +0.314 (+0.267), 476 | L_MLB | DOES NOT HOLD; UNDERPOWERED |
+| cmd | 2,382 | 0.359 to 0.385, +0.025 (-0.053), 125 | 0.420 to 0.578, +0.159 (+0.117), 355 | 0.390 to 0.616, +0.226 (+0.188), 476 | L_MLB | DOES NOT HOLD; UNDERPOWERED |
+
+Comparators. Zero: d exactly 0 on every computable label of every tool. Null (sub-driver vectors
+permuted within board year): hit -0.234 / -0.203 (L_UM / L_ANY), game power -0.066 / -0.051,
+fastball -0.069 / -0.007 / -0.018 (L_MLB / L_UM / L_ANY), command -0.190 / -0.159 / -0.138; no null
+clears, so no read is void. Planted recovery: recovered for hit (+0.136, LB +0.089 on L_UM; +0.138,
+LB +0.100 on L_ANY) and game power (+0.079, LB +0.054; +0.083, LB +0.061); NOT recovered on the MLB
+label for fastball (+0.077, LB -0.013) and command (+0.039, LB -0.022), so their L_MLB reads cannot
+certify a gain of the planted size: underpowered, not evidence of no gain.
+
+Reported, deciding nothing. The stale consensus grade orders the labels worse than a board-year
+grade (hit on L_UM 0.352 stale against 0.436 fresh), and the eTool's gain is larger on stale rows
+than on fresh ones (hit +0.417 against +0.274). The gain grows with the grade's age: hit on L_UM
++0.377 (LB +0.294) at 12 to 24 months and +0.473 (LB +0.364) at 24 months or more; game power
++0.058 (LB +0.021) and +0.123 (LB +0.083). Under 12 months (U12) only L_ANY is computable for the
+hitters (hit +0.488, LB +0.368, 140 players). The uncentred stale eTool reads within 0.004 of the
+re-centred one. Mean stale eTool minus stale grade on S12: hit -0.73, game power +0.70, fastball
+-0.83, command -0.21 grade points.
+
+**What this does.** eHIT and ePOW are served for the eFV-board hitters whose latest hit and game
+power grades predate the 2026 lists: 287 players (574 eTools; grades from 2019 to 2025, 14.6 to
+86.6 months old), on the look's final fit and the live fresh cohort's re-centring shift, so the
+1,632 fresh players' records are byte-identical. Fastball, command, pitch selection and bat control
+keep the consensus grade for stale-graded players.
