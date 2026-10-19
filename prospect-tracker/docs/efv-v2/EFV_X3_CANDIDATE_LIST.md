@@ -29,3 +29,9 @@ Condition on X3's registration: a marker this task hands over on a distributiona
 on six-season WAR or the bust, middle and star class log loss) is scored by X3 on that same
 distributional score as well as on within Spearman. The pass list is appended below by the
 task's read; until then no marker is flagged.
+
+Pass list, appended 2026-10-19 by the read (`docs/efv-v2/EFV_UPSIDE_VOLATILITY_DRIVERS.md`
+sections 11 and 12, `data/_labs/efv5/efv_upside_volatility.json`): NONE. No upside or
+volatility marker passes on the mean, CRPS or the class log loss; no marker is flagged, and
+every one stays available to X3 unflagged. The distributional-score condition above therefore
+binds no marker from this task.

@@ -1,6 +1,6 @@
 # eFV upside and volatility drivers (EFV_UPSIDE_VOLATILITY_DRIVERS): registration
 
-Registration status: REGISTERED 2026-10-16; not yet read
+Registration status: REGISTERED 2026-10-16; READ 2026-10-19 (sections 11 and 12)
 
 Registered 2026-10-16, committed ALONE (with its dated addendum to the EFV_X3 candidate list,
 `docs/efv-v2/EFV_X3_CANDIDATE_LIST.md`), before the code of this task exists and before any
@@ -236,3 +236,146 @@ a surgery or IL fact on or after C).
 - D-6: EFV_X3_POOLED_MODEL has no registration document yet, so its candidate list starts as
   `docs/efv-v2/EFV_X3_CANDIDATE_LIST.md` with this task's dated addendum; earlier hand-offs
   stay where their own documents record them and are pointed to there.
+
+## 11. The read (2026-10-19; `python efv_upside_volatility.py --run`)
+
+Artifact: `data/_labs/efv5/efv_upside_volatility.json` (role development, descriptive,
+adjudicates false, served false; registration commit 54da7049, module sha256 9f9c2234, label
+fwar resolved through 2026). Elapsed 379 s. Rows: hitters 1,871 (lv_dev 1,465 in 2017 to 2019,
+vm_dev 406 in 2017 to 2023), pitchers 1,821 (1,397 and 424); L6 rows hitters 1,432 (127 STAR,
+945 BUST), pitchers 1,474 (46 STAR, 936 BUST). No reserved fold was built.
+
+Coverage (rows carrying the marker, lv_dev / vm_dev): hitters height and weight 1,216 / 400;
+U03 1,137 / 399; run grade and the athleticism composite 1,400 / 406; stolen-base and triple
+rates 1,324 / 404; ISO and contact peaks 1,320 / 404; age for level 1,356 / 405; IL and surgery
+1,369 / 406; FanGraphs frame, athleticism, levers and max EV 0 on lv_dev (the FanGraphs boards
+in `prospects.db` start after the lv_dev read dates) and 147 to 215 on vm_dev. Pitchers: height
+and weight 1,120 / 422; U03 1,049 / 418; age for level 1,309 / 420; K and BB peaks 1,179 / 406;
+fastball tops and sits 366 / 360; velocity changes 0 / 245; workload spike 1,035 / 378; IL and
+surgery 1,341 / 424; FanGraphs frame, athleticism, levers and delivery 0 / 129 to 219.
+
+Cells: 196 (hitters 19 markers x 7 groups, pitchers 21 x 3). Scored: mean 160, CRPS and log
+loss 115 each; 36 cells are thin on every read (every CF cell, 141 rows; the FanGraphs-scale
+and max EV cells of the C, SS and 1B/DH groups; five RP cells) and 81 are thin on the
+distribution read (also every RP cell, 6 STAR rows, and the cells short of 40 marker rows or 15
+STAR rows).
+
+Planted recovery (K 40, B 500, side "all" rows, full coverage):
+
+| side | score | null95 (P0) | size | power PM | power PT |
+|---|---|---|---|---|---|
+| hit | mean | -0.0015 | 0.00 | 0.93 | 0.00 |
+| hit | CRPS | 0.0029 | 0.00 | 0.43 | 1.00 |
+| hit | log loss | 0.0006 | 0.00 | 0.35 | 1.00 |
+| pit | mean | 0.0021 | 0.00 | 0.95 | 0.00 |
+| pit | CRPS | 0.0009 | 0.00 | 0.40 | 0.30 |
+| pit | log loss | 0.0007 | 0.00 | 0.45 | 0.88 |
+
+As registered: the mean plant is recovered by the mean read and the tail plant by the
+distribution reads on hitters; on pitchers the tail plant reaches 0.88 on the log loss and only
+0.30 on CRPS (46 STAR rows carry the plant).
+
+The side "all" reads (delta, positive helps; CI95 player-clustered, B 2000):
+
+| side | marker | mean | CRPS | log loss |
+|---|---|---|---|---|
+| hit | U01 height | -0.0022 (-0.0107, +0.0059) | -0.0054 (-0.0158, +0.0038) | -0.0011 (-0.0059, +0.0040) |
+| hit | U02 weight | -0.0112 (-0.0191, -0.0036) | -0.0108 (-0.0191, -0.0028) | -0.0024 (-0.0067, +0.0021) |
+| hit | U03 frame residual | -0.0146 (-0.0229, -0.0067) | -0.0001 (-0.0131, +0.0134) | +0.0014 (-0.0053, +0.0082) |
+| hit | U07 run grade | -0.0038 (-0.0111, +0.0034) | -0.0016 (-0.0085, +0.0049) | +0.0004 (-0.0044, +0.0052) |
+| hit | U08 SB rate | -0.0002 (-0.0166, +0.0165) | -0.0039 (-0.0188, +0.0109) | -0.0037 (-0.0102, +0.0026) |
+| hit | U09 triple rate | -0.0037 (-0.0145, +0.0073) | -0.0112 (-0.0215, -0.0019) | -0.0061 (-0.0124, +0.0002) |
+| hit | U10 athleticism composite | +0.0012 (-0.0105, +0.0131) | -0.0066 (-0.0151, +0.0016) | +0.0015 (-0.0052, +0.0080) |
+| hit | U11 age for level | -0.0093 (-0.0190, -0.0001) | +0.0070 (-0.0159, +0.0325) | -0.0002 (-0.0068, +0.0065) |
+| hit | U12 ISO peak | -0.0045 (-0.0171, +0.0077) | -0.0043 (-0.0185, +0.0108) | -0.0017 (-0.0081, +0.0048) |
+| hit | U13 contact peak | +0.0012 (-0.0156, +0.0157) | +0.0059 (-0.0237, +0.0340) | +0.0044 (-0.0076, +0.0157) |
+| hit | V05 surgeries | -0.0028 (-0.0075, +0.0018) | -0.0048 (-0.0218, +0.0060) | -0.0016 (-0.0090, +0.0034) |
+| hit | V06 IL stints | -0.0048 (-0.0104, +0.0006) | -0.0128 (-0.0229, -0.0034) | -0.0016 (-0.0063, +0.0033) |
+| hit | V07 IL days | -0.0087 (-0.0143, -0.0033) | -0.0158 (-0.0248, -0.0076) | -0.0032 (-0.0059, -0.0008) |
+| hit | V08 repeated IL | -0.0044 (-0.0085, -0.0001) | -0.0057 (-0.0166, +0.0036) | +0.0005 (-0.0047, +0.0057) |
+| hit | V09 60-day IL | -0.0012 (-0.0071, +0.0048) | -0.0039 (-0.0119, +0.0020) | -0.0017 (-0.0069, +0.0022) |
+| pit | U01 height | -0.0080 (-0.0162, +0.0002) | +0.0002 (-0.0093, +0.0096) | +0.0047 (-0.0013, +0.0107) |
+| pit | U02 weight | -0.0052 (-0.0141, +0.0034) | -0.0020 (-0.0080, +0.0042) | +0.0027 (-0.0032, +0.0086) |
+| pit | U03 frame residual | -0.0152 (-0.0271, -0.0033) | -0.0057 (-0.0151, +0.0035) | -0.0021 (-0.0073, +0.0029) |
+| pit | U11 age for level | -0.0018 (-0.0128, +0.0091) | +0.0104 (+0.0008, +0.0214) | +0.0008 (-0.0054, +0.0072) |
+| pit | U15 K peak | -0.0034 (-0.0119, +0.0052) | +0.0049 (-0.0047, +0.0159) | -0.0024 (-0.0070, +0.0027) |
+| pit | U16 BB best | +0.0018 (-0.0124, +0.0155) | +0.0020 (-0.0133, +0.0185) | -0.0058 (-0.0130, +0.0017) |
+| pit | U17 FB tops | -0.0045 (-0.0082, -0.0012) | +0.0032 (-0.0097, +0.0161) | +0.0011 (-0.0052, +0.0072) |
+| pit | U18 FB sits | -0.0037 (-0.0072, -0.0001) | +0.0051 (-0.0078, +0.0176) | +0.0008 (-0.0052, +0.0066) |
+| pit | V01 velocity change | -0.0030 (-0.0070, +0.0005) | +0.0035 (-0.0040, +0.0107) | +0.0037 (-0.0015, +0.0091) |
+| pit | V03 workload spike | -0.0021 (-0.0191, +0.0145) | +0.0190 (-0.0011, +0.0402) | +0.0075 (-0.0025, +0.0174) |
+| pit | V04 spike flag | -0.0102 (-0.0257, +0.0053) | +0.0133 (-0.0040, +0.0320) | +0.0037 (-0.0042, +0.0116) |
+| pit | V05 surgeries | -0.0025 (-0.0234, +0.0175) | +0.0112 (-0.0082, +0.0313) | +0.0065 (-0.0041, +0.0174) |
+| pit | V06 IL stints | -0.0052 (-0.0149, +0.0030) | +0.0055 (-0.0073, +0.0186) | +0.0016 (-0.0037, +0.0067) |
+| pit | V07 IL days | -0.0077 (-0.0165, +0.0007) | +0.0041 (-0.0100, +0.0186) | +0.0008 (-0.0045, +0.0058) |
+| pit | V09 60-day IL | -0.0032 (-0.0108, +0.0037) | -0.0028 (-0.0063, +0.0003) | -0.0033 (-0.0091, +0.0010) |
+
+The FanGraphs-scale markers (U04 to U06, U14, V10) and V02 read on vm_dev only, 129 to 244
+rows: every point estimate within 0.0076 of 0 and every CI95 spanning 0 or below it. Over all
+scored cells: the mean read has no CI95 above 0 (27 below); CRPS has 2 above 0 (17 below); log
+loss 1 above 0 (15 below). The mean deltas sit near the null twins' own mean (the cost of a
+fitted slope that carries nothing), as the zero comparator expects.
+
+The three closest cells, each failing one check: hitters SS U12 ISO peak on log loss +0.0747
+(CI95 +0.0178 to +0.1333, BH q 0.320, above its null95, both frames +); hitters COF V05
+surgeries on CRPS +0.0174 (+0.0046 to +0.0342, q 0.022, BELOW its null95 0.0264: the permuted
+twins of a sparse count score as well); pitchers all U11 age for level on CRPS +0.0104
+(+0.0008 to +0.0214, q 1.0). One cell is degenerate: hitters C V09 (no catcher in a kept group
+carries a 60-day stint before the cutoff), delta exactly 0.
+
+Classes: of the 160 scored cells, 160 NONE; no MEAN, no BOTH, no TAILS ONLY; 36 THIN. Of the
+NONE cells, 122 read NULL (every scored hitter cell, where the better plant reaches 0.93 on the
+mean and 1.00 on both distribution scores, and the 20 pitcher cells scored on the mean only)
+and 38 UNRESOLVED (the pitcher cells with a distribution score, whose planted CRPS power is
+0.40). 107 of the NULL cells carry `power_caveat` (a subgroup, or a marker covering under half
+its rows, holds fewer informative rows than the full-coverage plant did).
+
+### 11a. Defect found in the first run and repaired (disclosed)
+
+The first run of the read (2026-10-19, kept outside the repository) built U03's age at A from
+the frame row's `birth_date`. On lv_dev that field is present almost only for players who later
+reached MLB: of 317 hitter rows without it, 312 have an L6 of 0 or below (the BUST class), and
+461 of 472 pitcher rows; with it the BUST share is 59 and 49 percent. The missing indicator of
+U03 therefore carried the outcome, and the first run showed it: hitters U03 CRPS +0.0554 (CI95
++0.0296 to +0.0819) and log loss +0.0420, pitchers +0.0481 and +0.0747, all from lv_dev (vm_dev,
+where every row has a birth date, read -0.0174, -0.0093, -0.0035, -0.0066). The rule's
+frames-not-negative check refused every one of those cells, so no leaked cell passed. The leak
+did, however, put very small p values into the U family's BH, which let one cell (hitters SS U12
+on log loss, its own p unchanged) through at q 0.064 in that first run.
+
+Repair (a defect repair to the registered definition, which says "age at A" and names no
+source; made after the first run and disclosed here): U03's age is the exposure-weighted MiLB
+season age of the newest window season with a line, carried to season T, from the same
+outcome-blind line ages U11 reads. The lab no longer reads the frame row's birth date. After
+the repair the BUST share among rows without U03 is in line with height and weight (lv_dev
+hitters 87 percent among the 264 rows without U03, against 88 among those without height).
+Every number in section 11 is the repaired read; only U03's cells and the U family's q values
+changed. Under the repaired read the SS U12 cell's q is 0.320 and it does not pass. The
+missingness check is a probe kept in the lane's scratchpad.
+
+Also before any run: the hitter position group reads the listing's first token, as
+`efv5_atlas.position_group` does (SS/2B is SS), which the lab's first draft did not (29 hitter
+rows stay ungrouped, against 297); the NONE reading follows section 8 as written (side power),
+with `power_caveat` a separate field; and a cell thin on every read is classed THIN, not NONE.
+
+## 12. Verdict (descriptive; adjudicates nothing)
+
+No upside or volatility marker carries information beyond PROSPX consensus FV on the
+development frames, for the expected outcome or for the shape of the six-season WAR
+distribution. Answer to the owner's question (EW3-35): body frame and projectability, speed,
+the athleticism composite, age for level, the statistical peaks, fastball velocity and its
+change, workload spikes, prior surgeries and the IL history do not move the mean of later WAR
+once consensus is known (hitters: a NULL at planted power 0.93), and none moves the bust or star
+mass (hitters: a NULL at power 1.00 against a tail plant). On pitchers the mean read is a NULL
+(power 0.95) and the distribution read is UNRESOLVED: with 46 STAR pitcher rows the frames
+cannot resolve a tail effect of the planted size on CRPS (power 0.40), though the log loss
+could (0.88) and found none. Where the IL markers lean, they lean against the marker (hitters IL
+days -0.0087 on the mean, -0.0158 on CRPS): consensus already prices injury history. As far as
+these frames can tell, the upside a scout describes (frame, speed, athleticism, statistical
+profile) is already in the consensus grade.
+
+Hand-off to EFV_X3_POOLED_MODEL: no marker passes; none is flagged. Every marker stays
+available to X3 unflagged, as section 8 says. The FanGraphs-scale markers (frame, athleticism,
+levers, delivery, max EV) and the velocity changes were scorable on vm_dev only (129 to 245
+rows); they are the markers later FanGraphs board vintages could still resolve. Nothing served
+moves.
