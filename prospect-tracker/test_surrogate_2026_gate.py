@@ -109,7 +109,8 @@ def test_the_header_records_oq1_to_oq6():
 
 
 def _registered_commit() -> str | None:
-    r = _git("log", "--format=%H", "--", G.SURROGATE_GATE_DOC)
+    # oldest first: the registration commit, not a later dated amendment to the doc
+    r = _git("log", "--reverse", "--format=%H", "--", G.SURROGATE_GATE_DOC)
     for sha in r.stdout.split():
         if G.gate_sha_committed_for(sha, G.SURROGATE_GATE_DOC):
             return sha
