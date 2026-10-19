@@ -335,3 +335,19 @@ The flip question is in `docs/tools-2026-10/OWNER_QUESTION.md`.
 Data note: since the look's preview, the 2026 pitch-event family was lit (baf8b3be), so the
 preview's eSEL and eBAT spreads grew (sd 5.1 and 5.4 grade points against 2.6 to 3.2 before);
 the construction did not change.
+
+## MiLB fielding runs for field and arm (amendment 3, registered e1c13320, run once)
+
+Owner decision EW3-44 (2026-10-19). `docs/tools-2026-10/ETOOLS_AMENDMENT_3.md` tested the
+MILB_FIELDING_RUNS range component as an eFLD sub-driver and its outfield arm component as an
+eARM sub-driver, board years 2022 to 2024, with a new upper-minors analog label (the MFR
+component at Double-A and Triple-A, seasons Y to Y + 2 capped at 2024). **Neither passes;
+field and arm stay on the consensus grade.** The full read is the dated note in the amendment's
+section 10; the verdicts:
+
+- **eFLD: NO SUB-DRIVER.** L_MLB d -0.013 (LB -0.073, 137 players); minors analog d -0.014
+  (LB -0.055, 481 players), where the planted check is recovered (a powered null). The MLB
+  label is underpowered (planted not recovered).
+- **eARM: NO SUB-DRIVER; UNDERPOWERED.** The MLB-label test is not computable (62 players);
+  minors analog d +0.061 (LB -0.0004, q 0.13), short of admission, and the planted check fails.
+- Null comparators do not clear; zero comparators read exactly 0. Nothing served moved.

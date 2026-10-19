@@ -1,0 +1,1542 @@
+{
+ "item": "ETOOLS_FIELD_ARM_MFR",
+ "tool": "etools_mfr.py",
+ "spent": true,
+ "spent_at": "2026-10-19T18:22:14Z",
+ "started": "2026-10-19T18:22:05Z",
+ "amend_doc": "docs/tools-2026-10/ETOOLS_AMENDMENT_3.md",
+ "amend_sha": "e1c13320",
+ "head": "2c3593bd41b04919c0c61bf58815a69ba62207ae",
+ "survivorship": "L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to Y + 2 capped at 2024) does not require a debut, but it does require reaching Double-A or Triple-A for 300 PA (150 BF), itself a promotion outcome: among hitter rows with no debut by 2024 only about 37% carry it, and non-debuts who stalled below Double-A are on neither label. L_UM is accuracy AMONG PROMOTED players (amendment 1, A1).",
+ "constants": {
+  "years": [
+   2022,
+   2023,
+   2024
+  ],
+  "B": 2000,
+  "seed": 20261023,
+  "perm": 200,
+  "perm_seed": 20261024,
+  "null_seed": 20261025,
+  "plant_seed": 20261026,
+  "plant_rho": 0.25,
+  "cand_min_inn": 50.0,
+  "ref_min_inn": 200.0,
+  "um_min_inn": 200.0,
+  "last_k_season": 2023,
+  "last_um_season": 2024,
+  "max_debut_year": 2024,
+  "q_admit": 0.1
+ },
+ "k": {
+  "field_mfr": {
+   "6": {
+    "k": 485.275,
+    "r_half": 0.2928,
+    "r": 0.4529,
+    "n_rows": 871,
+    "n_bar": 401.79
+   },
+   "4": {
+    "k": 574.501,
+    "r_half": 0.2315,
+    "r": 0.3759,
+    "n_rows": 764,
+    "n_bar": 346.1
+   },
+   "5": {
+    "k": 458.371,
+    "r_half": 0.2731,
+    "r": 0.429,
+    "n_rows": 741,
+    "n_bar": 344.35
+   },
+   "8": {
+    "k": 259.766,
+    "r_half": 0.4206,
+    "r": 0.5922,
+    "n_rows": 859,
+    "n_bar": 377.2
+   },
+   "7": {
+    "k": 288.593,
+    "r_half": 0.3564,
+    "r": 0.5255,
+    "n_rows": 661,
+    "n_bar": 319.66
+   },
+   "9": {
+    "k": 321.528,
+    "r_half": 0.3452,
+    "r": 0.5133,
+    "n_rows": 745,
+    "n_bar": 339.08
+   },
+   "3": {
+    "k": 260.688,
+    "r_half": 0.4224,
+    "r": 0.5939,
+    "n_rows": 810,
+    "n_bar": 381.25
+   }
+  },
+  "throw_mfr": {
+   "8": {
+    "k": 1497.347,
+    "r_half": 0.1119,
+    "r": 0.2012,
+    "n_rows": 859,
+    "n_bar": 377.2
+   },
+   "7": {
+    "k": 2218.388,
+    "r_half": 0.0672,
+    "r": 0.1259,
+    "n_rows": 661,
+    "n_bar": 319.66
+   },
+   "9": {
+    "k": 1746.096,
+    "r_half": 0.0885,
+    "r": 0.1626,
+    "n_rows": 745,
+    "n_bar": 339.08
+   }
+  }
+ },
+ "factors": {
+  "AAA": 1.0,
+  "AA": 0.3663,
+  "A+": 0.1719,
+  "A": 0.0501,
+  "ROK": 0.0222
+ },
+ "universe": {
+  "mlb_line_before_board_year": 403,
+  "identity_no_candidate": 160,
+  "no_record": 86,
+  "identity_ambiguous": 95,
+  "identity_disagrees_with_record": 35,
+  "duplicate_player": 2,
+  "rows": 3485
+ },
+ "coverage": {
+  "field_mfr": {
+   "candidate": 1408,
+   "mlb": 226,
+   "um": 836
+  },
+  "throw_mfr": {
+   "candidate": 568,
+   "mlb": 270,
+   "um": 369
+  }
+ },
+ "tools": {
+  "field_mfr": {
+   "tool": "field_mfr",
+   "key": "eFLD",
+   "candidate": "mfr_range",
+   "tests": {
+    "mlb": {
+     "computable": true,
+     "n": 220,
+     "players": 137,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.3771,
+     "rho_candidate_alone": 0.1195,
+     "rho_augmented": 0.3644,
+     "corr_with_consensus": 0.0302,
+     "d": -0.0127,
+     "lb95": -0.0726,
+     "ci95": [
+      -0.0847,
+      0.0577
+     ],
+     "sd": 0.03613,
+     "p": 0.637494,
+     "draws": 2000,
+     "perm_floor95": 0.0087,
+     "perm_draws": 200,
+     "q": 0.710544
+    },
+    "um": {
+     "computable": true,
+     "n": 808,
+     "players": 481,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.1072,
+     "rho_candidate_alone": 0.1505,
+     "rho_augmented": 0.0933,
+     "corr_with_consensus": 0.0959,
+     "d": -0.0139,
+     "lb95": -0.0553,
+     "ci95": [
+      -0.064,
+      0.0345
+     ],
+     "sd": 0.02507,
+     "p": 0.710544,
+     "draws": 2000,
+     "perm_floor95": 0.0074,
+     "perm_draws": 200,
+     "q": 0.710544
+    }
+   },
+   "frame": {
+    "rows": 1713,
+    "players": 1065,
+    "by_year": {
+     "2022": 578,
+     "2023": 564,
+     "2024": 571
+    },
+    "candidate_rows": 1407,
+    "labels": {
+     "mlb": 226,
+     "um": 835
+    },
+    "candidate_and_label": {
+     "mlb": 220,
+     "um": 808
+    },
+    "promotion_counts": {
+     "rows": 1713,
+     "um_and_debut": 365,
+     "um_no_debut": 470,
+     "no_um_no_debut": 795,
+     "no_um_debut": 83,
+     "share_of_non_debuts_with_um": 0.3715,
+     "share_of_um_that_debuted": 0.4371
+    }
+   },
+   "zero_comparator": {
+    "mlb": {
+     "d": 0.0,
+     "lb95": 0.0,
+     "n": 226
+    },
+    "um": {
+     "d": 0.0,
+     "lb95": 0.0,
+     "n": 835
+    }
+   },
+   "null_comparator": {
+    "tests": {
+     "mlb": {
+      "computable": true,
+      "n": 220,
+      "players": 137,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.3771,
+      "rho_candidate_alone": -0.1034,
+      "rho_augmented": 0.3479,
+      "corr_with_consensus": -0.0622,
+      "d": -0.0292,
+      "lb95": -0.0655,
+      "ci95": [
+       -0.0724,
+       0.0105
+      ],
+      "sd": 0.02073,
+      "p": 0.920406,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 808,
+      "players": 481,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.1072,
+      "rho_candidate_alone": -0.0074,
+      "rho_augmented": 0.0949,
+      "corr_with_consensus": -0.0498,
+      "d": -0.0124,
+      "lb95": -0.0336,
+      "ci95": [
+       -0.0378,
+       0.0118
+      ],
+      "sd": 0.01244,
+      "p": 0.839708,
+      "draws": 2000
+     }
+    },
+    "etool": {
+     "verdict": "NOT PASS",
+     "labels": {
+      "mlb": {
+       "computable": true,
+       "n": 226,
+       "players": 141,
+       "rows_with_a_subdriver": 220,
+       "rho_consensus": 0.3881,
+       "rho_etool": 0.3762,
+       "d": -0.0119,
+       "lb95": -0.0289,
+       "ci95": [
+        -0.0325,
+        0.0072
+       ],
+       "sd": 0.01005,
+       "p": 0.881293,
+       "draws": 2000
+      },
+      "um": {
+       "computable": true,
+       "n": 835,
+       "players": 486,
+       "rows_with_a_subdriver": 808,
+       "rho_consensus": 0.1151,
+       "rho_etool": 0.1096,
+       "d": -0.0055,
+       "lb95": -0.014,
+       "ci95": [
+        -0.0157,
+        0.0047
+       ],
+       "sd": 0.00518,
+       "p": 0.854647,
+       "draws": 2000
+      }
+     },
+     "final_fit": {
+      "lines": [
+       [
+        0.03479,
+        -0.000795,
+        true
+       ]
+      ],
+      "c": [
+       -0.216148
+      ],
+      "sigma": 9.3033,
+      "n_fit": 1061,
+      "tips": {
+       "mlb": {
+        "grade": [
+         40.8947,
+         45.2069,
+         50.3542,
+         54.9167,
+         59.7
+        ],
+        "stat": [
+         -2.118265,
+         -2.118265,
+         -1.493179,
+         2.661289,
+         3.709612
+        ]
+       },
+       "um": {
+        "grade": [
+         40.6957,
+         45.0761,
+         50.1056,
+         54.9138,
+         59.3662
+        ],
+        "stat": [
+         -1.114813,
+         -1.114813,
+         0.40136,
+         0.40136,
+         1.878965
+        ]
+       }
+      }
+     }
+    }
+   },
+   "planted": {
+    "tests": {
+     "mlb": {
+      "computable": true,
+      "n": 220,
+      "players": 137,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.3771,
+      "rho_candidate_alone": 0.236,
+      "rho_augmented": 0.3885,
+      "corr_with_consensus": 0.2556,
+      "d": 0.0114,
+      "lb95": -0.0498,
+      "ci95": [
+       -0.0615,
+       0.0875
+      ],
+      "sd": 0.03756,
+      "p": 0.380474,
+      "draws": 2000,
+      "perm_floor95": 0.0145,
+      "perm_draws": 200,
+      "recovered": false
+     },
+     "um": {
+      "computable": true,
+      "n": 808,
+      "players": 481,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.1072,
+      "rho_candidate_alone": 0.1967,
+      "rho_augmented": 0.2301,
+      "corr_with_consensus": 0.0281,
+      "d": 0.1229,
+      "lb95": 0.0589,
+      "ci95": [
+       0.0448,
+       0.1985
+      ],
+      "sd": 0.03869,
+      "p": 0.000746,
+      "draws": 2000,
+      "perm_floor95": 0.0165,
+      "perm_draws": 200,
+      "recovered": true
+     }
+    },
+    "etool": {
+     "verdict": "NOT PASS",
+     "labels": {
+      "mlb": {
+       "computable": true,
+       "n": 226,
+       "players": 141,
+       "rows_with_a_subdriver": 220,
+       "rho_consensus": 0.3881,
+       "rho_etool": 0.4019,
+       "d": 0.0138,
+       "lb95": -0.0081,
+       "ci95": [
+        -0.0127,
+        0.0396
+       ],
+       "sd": 0.01343,
+       "p": 0.152227,
+       "draws": 2000
+      },
+      "um": {
+       "computable": true,
+       "n": 835,
+       "players": 486,
+       "rows_with_a_subdriver": 808,
+       "rho_consensus": 0.1151,
+       "rho_etool": 0.148,
+       "d": 0.0329,
+       "lb95": 0.0218,
+       "ci95": [
+        0.02,
+        0.0466
+       ],
+       "sd": 0.00696,
+       "p": 1e-06,
+       "draws": 2000
+      }
+     },
+     "final_fit": {
+      "lines": [
+       [
+        -0.528466,
+        0.009501,
+        true
+       ]
+      ],
+      "c": [
+       1.161087
+      ],
+      "sigma": 9.2339,
+      "n_fit": 1061,
+      "tips": {
+       "mlb": {
+        "grade": [
+         40.8947,
+         45.2069,
+         50.3542,
+         54.9167,
+         59.7
+        ],
+        "stat": [
+         -2.118265,
+         -2.118265,
+         -1.493179,
+         2.661289,
+         3.709612
+        ]
+       },
+       "um": {
+        "grade": [
+         40.6957,
+         45.0761,
+         50.1056,
+         54.9138,
+         59.3662
+        ],
+        "stat": [
+         -1.114813,
+         -1.114813,
+         0.40136,
+         0.40136,
+         1.878965
+        ]
+       }
+      }
+     }
+    },
+    "etool_recovered": false
+   },
+   "forced_etool": {
+    "verdict": "NOT PASS",
+    "labels": {
+     "mlb": {
+      "computable": true,
+      "n": 226,
+      "players": 141,
+      "rows_with_a_subdriver": 220,
+      "rho_consensus": 0.3881,
+      "rho_etool": 0.3856,
+      "d": -0.0024,
+      "lb95": -0.0288,
+      "ci95": [
+       -0.0356,
+       0.0257
+      ],
+      "sd": 0.01521,
+      "p": 0.563574,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 835,
+      "players": 486,
+      "rows_with_a_subdriver": 808,
+      "rho_consensus": 0.1151,
+      "rho_etool": 0.107,
+      "d": -0.0081,
+      "lb95": -0.0225,
+      "ci95": [
+       -0.0249,
+       0.0088
+      ],
+      "sd": 0.00862,
+      "p": 0.827176,
+      "draws": 2000
+     }
+    },
+    "final_fit": {
+     "lines": [
+      [
+       -0.280025,
+       0.005435,
+       true
+      ]
+     ],
+     "c": [
+      1.168692
+     ],
+     "sigma": 9.2774,
+     "n_fit": 1061,
+     "tips": {
+      "mlb": {
+       "grade": [
+        40.8947,
+        45.2069,
+        50.3542,
+        54.9167,
+        59.7
+       ],
+       "stat": [
+        -2.118265,
+        -2.118265,
+        -1.493179,
+        2.661289,
+        3.709612
+       ]
+      },
+      "um": {
+       "grade": [
+        40.6957,
+        45.0761,
+        50.1056,
+        54.9138,
+        59.3662
+       ],
+       "stat": [
+        -1.114813,
+        -1.114813,
+        0.40136,
+        0.40136,
+        1.878965
+       ]
+      }
+     }
+    }
+   },
+   "cells": [
+    {
+     "group": "1B",
+     "label": "mlb",
+     "n": 17,
+     "players": 13,
+     "computable": false
+    },
+    {
+     "group": "1B",
+     "label": "um",
+     "n": 57,
+     "players": 42,
+     "computable": true,
+     "rho_consensus": 0.4511,
+     "rho_augmented": 0.4699,
+     "d": 0.0188,
+     "lb95": -0.2143,
+     "ci95": [
+      -0.25,
+      0.2955
+     ],
+     "sd": 0.13976,
+     "p": 0.446515,
+     "draws": 2000
+    },
+    {
+     "group": "2B/3B",
+     "label": "mlb",
+     "n": 67,
+     "players": 41,
+     "computable": true,
+     "rho_consensus": 0.4086,
+     "rho_augmented": 0.3721,
+     "d": -0.0365,
+     "lb95": -0.3373,
+     "ci95": [
+      -0.4008,
+      0.3121
+     ],
+     "sd": 0.18438,
+     "p": 0.578425,
+     "draws": 2000
+    },
+    {
+     "group": "2B/3B",
+     "label": "um",
+     "n": 235,
+     "players": 146,
+     "computable": true,
+     "rho_consensus": 0.0711,
+     "rho_augmented": 0.0283,
+     "d": -0.0429,
+     "lb95": -0.2502,
+     "ci95": [
+      -0.2832,
+      0.2196
+     ],
+     "sd": 0.12851,
+     "p": 0.630704,
+     "draws": 2000
+    },
+    {
+     "group": "CF",
+     "label": "mlb",
+     "n": 45,
+     "players": 32,
+     "computable": true,
+     "rho_consensus": 0.7618,
+     "rho_augmented": 0.7971,
+     "d": 0.0353,
+     "lb95": -0.035,
+     "ci95": [
+      -0.0546,
+      0.1275
+     ],
+     "sd": 0.04339,
+     "p": 0.208142,
+     "draws": 2000
+    },
+    {
+     "group": "CF",
+     "label": "um",
+     "n": 166,
+     "players": 108,
+     "computable": true,
+     "rho_consensus": 0.1,
+     "rho_augmented": 0.0783,
+     "d": -0.0217,
+     "lb95": -0.1275,
+     "ci95": [
+      -0.147,
+      0.1033
+     ],
+     "sd": 0.06478,
+     "p": 0.631056,
+     "draws": 2000
+    },
+    {
+     "group": "COF",
+     "label": "mlb",
+     "n": 22,
+     "players": 18,
+     "computable": false
+    },
+    {
+     "group": "COF",
+     "label": "um",
+     "n": 156,
+     "players": 105,
+     "computable": true,
+     "rho_consensus": 0.0416,
+     "rho_augmented": 0.1103,
+     "d": 0.0686,
+     "lb95": -0.0638,
+     "ci95": [
+      -0.0946,
+      0.227
+     ],
+     "sd": 0.08141,
+     "p": 0.19959,
+     "draws": 2000
+    },
+    {
+     "group": "SS",
+     "label": "mlb",
+     "n": 69,
+     "players": 41,
+     "computable": true,
+     "rho_consensus": 0.4454,
+     "rho_augmented": 0.1336,
+     "d": -0.3119,
+     "lb95": -0.5729,
+     "ci95": [
+      -0.6308,
+      -0.0168
+     ],
+     "sd": 0.15595,
+     "p": 0.977236,
+     "draws": 2000
+    },
+    {
+     "group": "SS",
+     "label": "um",
+     "n": 194,
+     "players": 114,
+     "computable": true,
+     "rho_consensus": 0.0438,
+     "rho_augmented": 0.0901,
+     "d": 0.0463,
+     "lb95": -0.1637,
+     "ci95": [
+      -0.2002,
+      0.3103
+     ],
+     "sd": 0.1315,
+     "p": 0.362385,
+     "draws": 2000
+    }
+   ],
+   "admitted": [],
+   "etool": {
+    "tool": "field_mfr",
+    "key": "eFLD",
+    "admitted": [],
+    "labels": {},
+    "verdict": "NO SUB-DRIVER",
+    "basis": "consensus",
+    "qualifying": []
+   },
+   "verdict": "NO SUB-DRIVER; UNDERPOWERED (mlb, etool)",
+   "basis": "consensus",
+   "sensitivity": {
+    "label": "OAA per 1,000 innings centred within the MLB primary position",
+    "n": 226,
+    "incremental": {
+     "computable": true,
+     "n": 220,
+     "players": 137,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.2672,
+     "rho_candidate_alone": 0.1127,
+     "rho_augmented": 0.2129,
+     "corr_with_consensus": 0.0302,
+     "d": -0.0543,
+     "lb95": -0.1537,
+     "ci95": [
+      -0.1695,
+      0.062
+     ],
+     "sd": 0.05871,
+     "p": 0.822495,
+     "draws": 2000
+    },
+    "etool": {
+     "computable": true,
+     "n": 226,
+     "players": 141,
+     "rho_a": 0.2703,
+     "rho_b": 0.2697,
+     "d": 0.0005,
+     "lb95": -0.0205,
+     "ci95": [
+      -0.024,
+      0.0248
+     ],
+     "sd": 0.01233,
+     "p": 0.483481,
+     "draws": 2000
+    }
+   }
+  },
+  "throw_mfr": {
+   "tool": "throw_mfr",
+   "key": "eARM",
+   "candidate": "mfr_arm",
+   "tests": {
+    "mlb": {
+     "computable": false,
+     "n": 93,
+     "players": 62,
+     "q": null
+    },
+    "um": {
+     "computable": true,
+     "n": 306,
+     "players": 191,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.1872,
+     "rho_candidate_alone": 0.2024,
+     "rho_augmented": 0.2479,
+     "corr_with_consensus": 0.2955,
+     "d": 0.0607,
+     "lb95": -0.0004,
+     "ci95": [
+      -0.0093,
+      0.1282
+     ],
+     "sd": 0.03551,
+     "p": 0.043679,
+     "draws": 2000,
+     "perm_floor95": 0.0174,
+     "perm_draws": 200,
+     "q": 0.131037
+    }
+   },
+   "frame": {
+    "rows": 1702,
+    "players": 1057,
+    "by_year": {
+     "2022": 566,
+     "2023": 565,
+     "2024": 571
+    },
+    "candidate_rows": 563,
+    "labels": {
+     "mlb": 267,
+     "um": 365
+    },
+    "candidate_and_label": {
+     "mlb": 93,
+     "um": 306
+    },
+    "promotion_counts": {
+     "rows": 1702,
+     "um_and_debut": 131,
+     "um_no_debut": 234,
+     "no_um_no_debut": 1026,
+     "no_um_debut": 311,
+     "share_of_non_debuts_with_um": 0.1857,
+     "share_of_um_that_debuted": 0.3589
+    }
+   },
+   "zero_comparator": {
+    "mlb": {
+     "d": 0.0,
+     "lb95": 0.0,
+     "n": 267
+    },
+    "um": {
+     "d": 0.0,
+     "lb95": 0.0,
+     "n": 365
+    }
+   },
+   "null_comparator": {
+    "tests": {
+     "mlb": {
+      "computable": false,
+      "n": 93,
+      "players": 62
+     },
+     "um": {
+      "computable": true,
+      "n": 306,
+      "players": 191,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.1872,
+      "rho_candidate_alone": 0.0097,
+      "rho_augmented": 0.1798,
+      "corr_with_consensus": 0.0117,
+      "d": -0.0074,
+      "lb95": -0.037,
+      "ci95": [
+       -0.042,
+       0.0276
+      ],
+      "sd": 0.01815,
+      "p": 0.658858,
+      "draws": 2000
+     }
+    },
+    "etool": {
+     "verdict": "NOT PASS",
+     "labels": {
+      "mlb": {
+       "computable": true,
+       "n": 267,
+       "players": 161,
+       "rows_with_a_subdriver": 93,
+       "rho_consensus": 0.6508,
+       "rho_etool": 0.6402,
+       "d": -0.0107,
+       "lb95": -0.0228,
+       "ci95": [
+        -0.0247,
+        0.0016
+       ],
+       "sd": 0.00691,
+       "p": 0.938724,
+       "draws": 2000
+      },
+      "um": {
+       "computable": true,
+       "n": 365,
+       "players": 217,
+       "rows_with_a_subdriver": 306,
+       "rho_consensus": 0.1946,
+       "rho_etool": 0.1903,
+       "d": -0.0043,
+       "lb95": -0.0159,
+       "ci95": [
+        -0.0179,
+        0.0085
+       ],
+       "sd": 0.0067,
+       "p": 0.741056,
+       "draws": 2000
+      }
+     },
+     "final_fit": {
+      "lines": [
+       [
+        0.123264,
+        -0.001414,
+        true
+       ]
+      ],
+      "c": [
+       0.906334
+      ],
+      "sigma": 8.6028,
+      "n_fit": 632,
+      "tips": {
+       "mlb": {
+        "grade": [
+         40.4062,
+         45.0,
+         49.9937,
+         55.0492,
+         58.9222
+        ],
+        "stat": [
+         -0.817657,
+         -0.674476,
+         -0.092437,
+         0.462716,
+         1.023256
+        ]
+       },
+       "um": {
+        "grade": [
+         40.7368,
+         45.1,
+         49.9402,
+         54.8193,
+         59.0246
+        ],
+        "stat": [
+         -0.84892,
+         -0.094443,
+         -0.011256,
+         0.304039,
+         0.304039
+        ]
+       }
+      }
+     }
+    }
+   },
+   "planted": {
+    "tests": {
+     "mlb": {
+      "computable": false,
+      "n": 93,
+      "players": 62,
+      "recovered": false
+     },
+     "um": {
+      "computable": true,
+      "n": 306,
+      "players": 191,
+      "years": [
+       2022,
+       2023,
+       2024
+      ],
+      "rho_consensus": 0.1872,
+      "rho_candidate_alone": 0.1941,
+      "rho_augmented": 0.2428,
+      "corr_with_consensus": 0.0748,
+      "d": 0.0555,
+      "lb95": -0.0135,
+      "ci95": [
+       -0.0275,
+       0.1357
+      ],
+      "sd": 0.04239,
+      "p": 0.095056,
+      "draws": 2000,
+      "perm_floor95": 0.0273,
+      "perm_draws": 200,
+      "recovered": false
+     }
+    },
+    "etool": {
+     "verdict": "NOT PASS",
+     "labels": {
+      "mlb": {
+       "computable": true,
+       "n": 267,
+       "players": 161,
+       "rows_with_a_subdriver": 93,
+       "rho_consensus": 0.6508,
+       "rho_etool": 0.6391,
+       "d": -0.0117,
+       "lb95": -0.0206,
+       "ci95": [
+        -0.0226,
+        -0.0028
+       ],
+       "sd": 0.00514,
+       "p": 0.988328,
+       "draws": 2000
+      },
+      "um": {
+       "computable": true,
+       "n": 365,
+       "players": 217,
+       "rows_with_a_subdriver": 306,
+       "rho_consensus": 0.1946,
+       "rho_etool": 0.1893,
+       "d": -0.0054,
+       "lb95": -0.0173,
+       "ci95": [
+        -0.0197,
+        0.0084
+       ],
+       "sd": 0.00709,
+       "p": 0.775139,
+       "draws": 2000
+      }
+     },
+     "final_fit": {
+      "lines": [
+       [
+        -0.101902,
+        0.001122,
+        true
+       ]
+      ],
+      "c": [
+       0.578427
+      ],
+      "sigma": 8.5974,
+      "n_fit": 632,
+      "tips": {
+       "mlb": {
+        "grade": [
+         40.4062,
+         45.0,
+         49.9937,
+         55.0492,
+         58.9222
+        ],
+        "stat": [
+         -0.817657,
+         -0.674476,
+         -0.092437,
+         0.462716,
+         1.023256
+        ]
+       },
+       "um": {
+        "grade": [
+         40.7368,
+         45.1,
+         49.9402,
+         54.8193,
+         59.0246
+        ],
+        "stat": [
+         -0.84892,
+         -0.094443,
+         -0.011256,
+         0.304039,
+         0.304039
+        ]
+       }
+      }
+     }
+    },
+    "etool_recovered": false
+   },
+   "forced_etool": {
+    "verdict": "NOT PASS",
+    "labels": {
+     "mlb": {
+      "computable": true,
+      "n": 267,
+      "players": 161,
+      "rows_with_a_subdriver": 93,
+      "rho_consensus": 0.6508,
+      "rho_etool": 0.6558,
+      "d": 0.005,
+      "lb95": -0.0062,
+      "ci95": [
+       -0.0078,
+       0.0189
+      ],
+      "sd": 0.00684,
+      "p": 0.233452,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 365,
+      "players": 217,
+      "rows_with_a_subdriver": 306,
+      "rho_consensus": 0.1946,
+      "rho_etool": 0.1973,
+      "d": 0.0027,
+      "lb95": -0.0094,
+      "ci95": [
+       -0.0118,
+       0.0169
+      ],
+      "sd": 0.00727,
+      "p": 0.354851,
+      "draws": 2000
+     }
+    },
+    "final_fit": {
+     "lines": [
+      [
+       -0.679148,
+       0.013931,
+       true
+      ]
+     ],
+     "c": [
+      0.844067
+     ],
+     "sigma": 8.5896,
+     "n_fit": 632,
+     "tips": {
+      "mlb": {
+       "grade": [
+        40.4062,
+        45.0,
+        49.9937,
+        55.0492,
+        58.9222
+       ],
+       "stat": [
+        -0.817657,
+        -0.674476,
+        -0.092437,
+        0.462716,
+        1.023256
+       ]
+      },
+      "um": {
+       "grade": [
+        40.7368,
+        45.1,
+        49.9402,
+        54.8193,
+        59.0246
+       ],
+       "stat": [
+        -0.84892,
+        -0.094443,
+        -0.011256,
+        0.304039,
+        0.304039
+       ]
+      }
+     }
+    }
+   },
+   "cells": [
+    {
+     "group": "CF",
+     "label": "mlb",
+     "n": 65,
+     "players": 43,
+     "computable": true,
+     "rho_consensus": 0.5231,
+     "rho_augmented": 0.4819,
+     "d": -0.0412,
+     "lb95": -0.1039,
+     "ci95": [
+      -0.1154,
+      0.0279
+     ],
+     "sd": 0.0363,
+     "p": 0.871582,
+     "draws": 2000
+    },
+    {
+     "group": "CF",
+     "label": "um",
+     "n": 159,
+     "players": 101,
+     "computable": true,
+     "rho_consensus": 0.1797,
+     "rho_augmented": 0.2218,
+     "d": 0.0421,
+     "lb95": -0.0343,
+     "ci95": [
+      -0.0458,
+      0.1283
+     ],
+     "sd": 0.04627,
+     "p": 0.181212,
+     "draws": 2000
+    },
+    {
+     "group": "COF",
+     "label": "mlb",
+     "n": 28,
+     "players": 24,
+     "computable": false
+    },
+    {
+     "group": "COF",
+     "label": "um",
+     "n": 147,
+     "players": 100,
+     "computable": true,
+     "rho_consensus": 0.2079,
+     "rho_augmented": 0.253,
+     "d": 0.0451,
+     "lb95": -0.0383,
+     "ci95": [
+      -0.0515,
+      0.1389
+     ],
+     "sd": 0.04914,
+     "p": 0.179382,
+     "draws": 2000
+    }
+   ],
+   "admitted": [],
+   "etool": {
+    "tool": "throw_mfr",
+    "key": "eARM",
+    "admitted": [],
+    "labels": {},
+    "verdict": "NO SUB-DRIVER",
+    "basis": "consensus",
+    "qualifying": []
+   },
+   "verdict": "NO SUB-DRIVER; UNDERPOWERED (mlb, um, etool)",
+   "basis": "consensus",
+   "sensitivity": {
+    "label": "FanGraphs FRP arm runs per 1,000 outfield innings",
+    "n": 143,
+    "incremental": {
+     "computable": false,
+     "n": 93,
+     "players": 62
+    }
+   }
+  }
+ },
+ "inputs_sha256_start": {
+  "prospects.db": "178ed3f537202fd0f359d6f6786f34123cb751005f1cc4e56c563cf77862bebf",
+  "data/debuts.json": "448bdd95c36f8109c2a1c7d2d39e9ffe0caf7e78539124c711d50576fb66edea",
+  "data/inactive.json": "ba432a31275f7472a6eb3721ff7f21997072ba24b5bdca6bb5029bbb538f426c",
+  "data/fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  ".cache/milb_fielding/tables/season_table.parquet": "defa725c4f20b9dcf00f11d49a0f61a46730079847ac9cfdbc1ad28bb0fe244b",
+  ".cache/milb_fielding/tables/game_rows.parquet": "681106cbed0bb7446c7eaae3db3e618f8c18286ebc9bc199156c46093e5766bb",
+  ".cache/milb_fielding/tables/build_meta.json": "77781434aa4c0b3699ad028930626b94aeb86142a7bf5d4aea8b44691028cad1",
+  ".cache/savant_oaa/oaa_2016_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2016_pos3.csv": "6d59c4f1989f8cfaeafa4dccca4278468c450208bd7bf51bf97f2bca65895112",
+  ".cache/savant_oaa/oaa_2016_pos4.csv": "666a8edd96579996c0a376458c398193ad0125036d4454539587c016a6d59b91",
+  ".cache/savant_oaa/oaa_2016_pos5.csv": "7d0fba97f1b37109096603409a3299b24b9419509a882b8c7e14efe387aa6054",
+  ".cache/savant_oaa/oaa_2016_pos6.csv": "2ecf5db8aa4629814f62f0f6614b45d500118277e3ff17cadb5c76871b47c7a5",
+  ".cache/savant_oaa/oaa_2016_pos7.csv": "39e66eb5286e68e9ea947c67fea734fa6ba99b05ee28351cdd0afff408c7adac",
+  ".cache/savant_oaa/oaa_2016_pos8.csv": "b599669e919e2ca98ac126c5499f405230625723b7e57296ba0280b06907c531",
+  ".cache/savant_oaa/oaa_2016_pos9.csv": "c01f55fda809fe6cb40c827bfc10b1144a3ab0575ea2b6ccbaebbce941321c94",
+  ".cache/savant_oaa/oaa_2017_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2017_pos3.csv": "6d3e90a25452d2cd41dee9ad7eada7752ab929c30edc355a26f89003fdf7929d",
+  ".cache/savant_oaa/oaa_2017_pos4.csv": "8d357dad7bbf5f5ac0ba799f602894c5e7d3b8ec3032465afe87e90e9f3a182f",
+  ".cache/savant_oaa/oaa_2017_pos5.csv": "a2d162349984903f63c139177c27dd266b550dc12d72cc8294b816a5e3da3571",
+  ".cache/savant_oaa/oaa_2017_pos6.csv": "a5ba976c5dfe65fb86e692c39127b681db545f07b9ab3a1c25e1d7342d3c31d3",
+  ".cache/savant_oaa/oaa_2017_pos7.csv": "770ef67802cb77864ed8cfed29b07a7d117a49d28a2d7e3ee77aa0e7859c271f",
+  ".cache/savant_oaa/oaa_2017_pos8.csv": "9b1e1addf0a1fbcb6fdf153c7522f5369c4803b21df458c0df2a87d553ad8704",
+  ".cache/savant_oaa/oaa_2017_pos9.csv": "2f6fc904ce68cb9584e3466aeab7f62670cc148292e661033db1658e28d586c7",
+  ".cache/savant_oaa/oaa_2018_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2018_pos3.csv": "182e7401dd504a5e09409226ae59ee1bd0f366cbb7fd1751e7f1922808cb93e2",
+  ".cache/savant_oaa/oaa_2018_pos4.csv": "d91cc8972409ba0fdaa7932bf4b36f4fe9144c3f7879d1588590166c9a49375c",
+  ".cache/savant_oaa/oaa_2018_pos5.csv": "a2868d47b9d4973430fcd2045c4c06e7378c8960f48e70c96266b195d30c3aae",
+  ".cache/savant_oaa/oaa_2018_pos6.csv": "89dc6b82bda9ec2d8f814d0cc472059d3e7f9f570e9541cd70df4bbadf6099d2",
+  ".cache/savant_oaa/oaa_2018_pos7.csv": "aad6f45b00f0b5d9e8079c9835c9d9dabb90b9b5e2765b98d782f197be29948d",
+  ".cache/savant_oaa/oaa_2018_pos8.csv": "612110fc196f79a6cf680fcd2b093eb7a61f469c6b246117067abda99d804517",
+  ".cache/savant_oaa/oaa_2018_pos9.csv": "d84cfa2a341463e8eb2b3caa6beff002d32d295a56df036fb2f942beef853e5b",
+  ".cache/savant_oaa/oaa_2019_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2019_pos3.csv": "cd13b57abf58d5c5365e9d5f2b351c98f18d0f6d978fcdc6e7708e9db67cff92",
+  ".cache/savant_oaa/oaa_2019_pos4.csv": "80b5bd1230f17bd04ac8df8a163217df943821728be61df92c41a69a1dea9c41",
+  ".cache/savant_oaa/oaa_2019_pos5.csv": "5f93164f2e2022857e1eaa4329c6259052f439a1d97b42d3ac3d6a4fc8a7b7d6",
+  ".cache/savant_oaa/oaa_2019_pos6.csv": "0951f38b47dd5074901e1900cd286fc78e2149ae3e15157685dd5f066e9968f2",
+  ".cache/savant_oaa/oaa_2019_pos7.csv": "8422c3ea379875f492c5f2d0c0e5227270f3cb27f7d3dbb5fdb7759b1979570c",
+  ".cache/savant_oaa/oaa_2019_pos8.csv": "4c324a0acd59762790aee0ca1befbea23b92e656a4ab89217fad8dabefdec9c6",
+  ".cache/savant_oaa/oaa_2019_pos9.csv": "cc849eaf8e836457c4451b8e15832fb48ea1bee07b38faa4c86bed71fb178f9b",
+  ".cache/savant_oaa/oaa_2020_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2020_pos3.csv": "a471f403e84de24b717b59018ef169f8412c9b664cfc074041f0121dd9cdeaa7",
+  ".cache/savant_oaa/oaa_2020_pos4.csv": "120c737716ece0250cb56ae10d0d1f8a2f53b5d617e0400593700ab8a419f31e",
+  ".cache/savant_oaa/oaa_2020_pos5.csv": "d8d6d08e52ccc0ef0a330ea85973e1b95f1e1fcb26687bae0c98582160e579b4",
+  ".cache/savant_oaa/oaa_2020_pos6.csv": "9d37d91ab625eae052f710c487f826da8af9227b3bed75c927d2e26c706a4ae2",
+  ".cache/savant_oaa/oaa_2020_pos7.csv": "b02efff9e50ce4fc7aac95089147e9ecd540f907d8c53f67b98b8b62fbb84730",
+  ".cache/savant_oaa/oaa_2020_pos8.csv": "03b3383fde307d82bd247b2e03aa8b977258c7decf176b1bcec59d7d958ca1f5",
+  ".cache/savant_oaa/oaa_2020_pos9.csv": "4623fbbbbf940d9c4a2a1f26c784b4babf15da410440899773febf6191a8883f",
+  ".cache/savant_oaa/oaa_2021_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2021_pos3.csv": "be14fc926e0e1ca0f9060271f6fb14ab209c03c7d9f5602bdbee6f8a4ca1875e",
+  ".cache/savant_oaa/oaa_2021_pos4.csv": "c0ab654b6190aa6e4e713fb636dc5ffaf78fe0b02efeb9d9765482557959529a",
+  ".cache/savant_oaa/oaa_2021_pos5.csv": "71dd1a422c71f71116adcfd069e65184a2fd3e44d1f84f28b55f151e8d7b1c30",
+  ".cache/savant_oaa/oaa_2021_pos6.csv": "ee77470962a600c4966faecb0ad90cb72d6ee52bbadd2ff7a6d797ec91cd5f44",
+  ".cache/savant_oaa/oaa_2021_pos7.csv": "13d14d48597445c1b1a74df943597734e072600c22bb0b7d4820b61becad2946",
+  ".cache/savant_oaa/oaa_2021_pos8.csv": "50b6c8d34230218905ee2a26a6e119f539212b9dafadab398850f8a0b6697b90",
+  ".cache/savant_oaa/oaa_2021_pos9.csv": "8129e785d2ca207f501c256bb2cb276cbf73198b74062123709711163211f5dc",
+  ".cache/savant_oaa/oaa_2022_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2022_pos3.csv": "b5a5a651ec0e6318c5a48c352fc5a53d4666499dd031dcd4b25528e880972a51",
+  ".cache/savant_oaa/oaa_2022_pos4.csv": "c95bbb6249a9378fdcfa64a708b2db1cc68390888be4e7fc597c0285a6b02f37",
+  ".cache/savant_oaa/oaa_2022_pos5.csv": "aa0a88d50fff7f5f5d099efd0b5581f871543c6903d83ec23d84ea9ce589c2c8",
+  ".cache/savant_oaa/oaa_2022_pos6.csv": "4af70c8eba06c96be099e2ab375c424f872b53f5202806fdb8ab17acc8c564e2",
+  ".cache/savant_oaa/oaa_2022_pos7.csv": "f043edd951455d2589a6809edcae1893f914e536e9bbaeea63876200c242e134",
+  ".cache/savant_oaa/oaa_2022_pos8.csv": "a50ef657d1ddf6402f46653f1c567a4ca39608b5487f2cc47bcc0b9f8ffd11ce",
+  ".cache/savant_oaa/oaa_2022_pos9.csv": "2ae419adaac9378d181ead0a33758a26d4ba609cfefd07bcb863225c3a263fd4",
+  ".cache/savant_oaa/oaa_2023_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2023_pos3.csv": "9b80e13248c01b063a489cee43c36ef4918459790018ffb51c1b25aa5eb959c9",
+  ".cache/savant_oaa/oaa_2023_pos4.csv": "2c130858969cb794b672d74fce8021c026d42aeb101313fdbdb812dc4f3dd159",
+  ".cache/savant_oaa/oaa_2023_pos5.csv": "f0d7cbbaa8ef86ec59838afb56a54372518cceb80400a6ce56520787bab206ff",
+  ".cache/savant_oaa/oaa_2023_pos6.csv": "46a238cff2ffa941db6b5603becf1b9e728745c3bf707eb6b176fb7f10485b63",
+  ".cache/savant_oaa/oaa_2023_pos7.csv": "713e0fb475ff180026464783014c9c0067acec2e3d1852e97a6a57a7809f3830",
+  ".cache/savant_oaa/oaa_2023_pos8.csv": "792e344c53045adfac41010675396148b8028fca5c11a6da212d563caa81e2cb",
+  ".cache/savant_oaa/oaa_2023_pos9.csv": "3ac1b88795303fb390d66ab42479f50abfdd8028050eb2f5d8f1c61755482aa9",
+  ".cache/savant_oaa/oaa_2024_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2024_pos3.csv": "4b9a5db10f150263b7b352a65d92a3efc77a6766f0546577db4a1db73a57105f",
+  ".cache/savant_oaa/oaa_2024_pos4.csv": "daa92003833282e585145a15af6b0e319a1fb4d81f48281372dae96e125520a2",
+  ".cache/savant_oaa/oaa_2024_pos5.csv": "31862e56ea3daf266118f0123e600b1386c94bcd224ae4070e2f902eacfa6cd4",
+  ".cache/savant_oaa/oaa_2024_pos6.csv": "57dc18d0ce11d71bec185a025eaaffa609a57be639a9276c7865836b8b91ea8e",
+  ".cache/savant_oaa/oaa_2024_pos7.csv": "6c8eda61f20b4b4a9184d66297b59aa695d61798e09ca843fb799041345e7322",
+  ".cache/savant_oaa/oaa_2024_pos8.csv": "734a5312ab067c2620b304c12559a8fee863a20d354cb9e2b5d3f4a5cfe83841",
+  ".cache/savant_oaa/oaa_2024_pos9.csv": "7824cd4881822a49ae4f7543a9faaa08f14402f31848dd15f9340b4a888a89e4",
+  ".cache/savant_oaa/oaa_2025_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2025_pos3.csv": "0a264ad0d333cabe2bf2cf27fbb810529e17a46967a33cc813d7573f2ac355cf",
+  ".cache/savant_oaa/oaa_2025_pos4.csv": "025210108218970b8556323b212d2c40e942af7c50ce9e5f45dc91d6739598aa",
+  ".cache/savant_oaa/oaa_2025_pos5.csv": "b26d6c417616b170f2a657aa63a5b737c73790f2cc8d1eb7d49303855f27ade1",
+  ".cache/savant_oaa/oaa_2025_pos6.csv": "61cd171dc8be3c3e059dbd40ecb36a866b6193da511ed3e454344a8164c8ba1e",
+  ".cache/savant_oaa/oaa_2025_pos7.csv": "09d6d0b5ed92f2ef8972973985dba7199e939c472b77ab3b74901101858041c3",
+  ".cache/savant_oaa/oaa_2025_pos8.csv": "3a070c75934662a401de407c45b7081992885ee2cc5b3c821f9cbc75b5c4ace8",
+  ".cache/savant_oaa/oaa_2025_pos9.csv": "97d4d6d2bf5c5d9963e89595f24d226bd00601d323b6a7197fea8a2bb90e27ec",
+  ".cache/savant_oaa/oaa_2026_pos2.csv": "147fc0db7185023760606513800391ed0be7d450797811624265a4a9ae9ad3d7",
+  ".cache/savant_oaa/oaa_2026_pos3.csv": "f7edc187e74bc90d9a697491fa5c55fcb60227d059ed327e96c60b61b847f47e",
+  ".cache/savant_oaa/oaa_2026_pos4.csv": "de060a316f3ca9d0600bfbc60e3557598394a4e219dfcba0544dc6fc5cc31b2f",
+  ".cache/savant_oaa/oaa_2026_pos5.csv": "146552458f04af3c7e59095274b86623ef22bcc5c675a795ecdf7c2d126a9136",
+  ".cache/savant_oaa/oaa_2026_pos6.csv": "6c52eb9cc3d7db4f570a35b15dc4abd04e9846f281759e72b1c5b77faf736220",
+  ".cache/savant_oaa/oaa_2026_pos7.csv": "8931222c4b05e53fcb0a7949320e1d55ed33fdeb3c9d41d472cdd19c671b41a4",
+  ".cache/savant_oaa/oaa_2026_pos8.csv": "36ec83cc55cd98362b92bad118c0b9d3c01a86750e75121bc7bcd51afdf6d828",
+  ".cache/savant_oaa/oaa_2026_pos9.csv": "c7a6dcd53941d5e93a343ce11c02a6803e11bd94e17f8793776a164f2ba22a37",
+  ".cache/savant_arm/arm_2020.csv": "05cd36b211236825b56bbc42d61090679db47a0d2ce9ca4ba34960e11b19fbe5",
+  ".cache/savant_arm/arm_2021.csv": "16bb297fa631349ec94f7e663ad9e88cd1dd90b3961c023a0aa9535fe7017a60",
+  ".cache/savant_arm/arm_2022.csv": "06115a3f6b6c6c43f19407d2ed2508097f33dbbbfbe4b0498bdcad8969ad5093",
+  ".cache/savant_arm/arm_2023.csv": "23aa59669768c3e7408da22021bde717c2a43d6768f892f8259e41a77b7f4263",
+  ".cache/savant_arm/arm_2024.csv": "c6b96226c5c6b9cd5b4eae5d2b68093860f0a41b33570bd55c9fba4ae7a3fbf1",
+  ".cache/savant_arm/arm_2025.csv": "c959b2533a7e0c4e6b6436a33c770010e76688ad922e2ff51a13707d2fd5caf8",
+  ".cache/savant_arm/arm_2026.csv": "3913cbdba6a21fb590138c5945aceb202b101b116161a68afb81207e6799ebe8",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2016.csv": "115491cd47651c3c77c534ca22b1ce7ee937249842934bc4bd20b7903dc06d5a",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2017.csv": "4f8661ded724eed0e291604e918400f599a5f9d7885cd5d54f5dcd20679c299f",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2018.csv": "a900238e8c459ba3452c2b0bb04a55e5a35ddb07570f73cf92ee4ce80e237608",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2019.csv": "7ad1552ec9719d78546566c64e0060b191fee38d1183b1bf67671839d1d70347",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2020.csv": "8be0a647ead4c9c7b9c06769ef0018b3fbeed54b1bae21e8277b849301ec7a91",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2021.csv": "a28ad2e6780d0fc977e1fdd1ebd4abdbb8faf45df2146178a031a8ad3cb7b238",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2022.csv": "435a35d0fe701b8f34fd2b717edd7bfd1aabfe381a62f25efd7d56f44d32d2e7",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2023.csv": "ac0bf48666d991b32d56f67cf3d836eefe18ef379df79a2392e1926db729fe73",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2024.csv": "c8d1c9311692dc2e0ab67b990523d6d997b2ec6c687838a3c4cc79c596458a2a",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2025.csv": "9bbd2fc9c7b8fa38021c38d1a0dd05adad5945805ad514adc2c306712f22ffc9",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2026.csv": "58e53c3a5ca76befeae87a5d5d32035da9fb7073f88275c69914b3263fe671cc"
+ },
+ "inputs_sha256_end": {
+  "prospects.db": "178ed3f537202fd0f359d6f6786f34123cb751005f1cc4e56c563cf77862bebf",
+  "data/debuts.json": "448bdd95c36f8109c2a1c7d2d39e9ffe0caf7e78539124c711d50576fb66edea",
+  "data/inactive.json": "ba432a31275f7472a6eb3721ff7f21997072ba24b5bdca6bb5029bbb538f426c",
+  "data/fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  ".cache/milb_fielding/tables/season_table.parquet": "defa725c4f20b9dcf00f11d49a0f61a46730079847ac9cfdbc1ad28bb0fe244b",
+  ".cache/milb_fielding/tables/game_rows.parquet": "681106cbed0bb7446c7eaae3db3e618f8c18286ebc9bc199156c46093e5766bb",
+  ".cache/milb_fielding/tables/build_meta.json": "77781434aa4c0b3699ad028930626b94aeb86142a7bf5d4aea8b44691028cad1",
+  ".cache/savant_oaa/oaa_2016_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2016_pos3.csv": "6d59c4f1989f8cfaeafa4dccca4278468c450208bd7bf51bf97f2bca65895112",
+  ".cache/savant_oaa/oaa_2016_pos4.csv": "666a8edd96579996c0a376458c398193ad0125036d4454539587c016a6d59b91",
+  ".cache/savant_oaa/oaa_2016_pos5.csv": "7d0fba97f1b37109096603409a3299b24b9419509a882b8c7e14efe387aa6054",
+  ".cache/savant_oaa/oaa_2016_pos6.csv": "2ecf5db8aa4629814f62f0f6614b45d500118277e3ff17cadb5c76871b47c7a5",
+  ".cache/savant_oaa/oaa_2016_pos7.csv": "39e66eb5286e68e9ea947c67fea734fa6ba99b05ee28351cdd0afff408c7adac",
+  ".cache/savant_oaa/oaa_2016_pos8.csv": "b599669e919e2ca98ac126c5499f405230625723b7e57296ba0280b06907c531",
+  ".cache/savant_oaa/oaa_2016_pos9.csv": "c01f55fda809fe6cb40c827bfc10b1144a3ab0575ea2b6ccbaebbce941321c94",
+  ".cache/savant_oaa/oaa_2017_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2017_pos3.csv": "6d3e90a25452d2cd41dee9ad7eada7752ab929c30edc355a26f89003fdf7929d",
+  ".cache/savant_oaa/oaa_2017_pos4.csv": "8d357dad7bbf5f5ac0ba799f602894c5e7d3b8ec3032465afe87e90e9f3a182f",
+  ".cache/savant_oaa/oaa_2017_pos5.csv": "a2d162349984903f63c139177c27dd266b550dc12d72cc8294b816a5e3da3571",
+  ".cache/savant_oaa/oaa_2017_pos6.csv": "a5ba976c5dfe65fb86e692c39127b681db545f07b9ab3a1c25e1d7342d3c31d3",
+  ".cache/savant_oaa/oaa_2017_pos7.csv": "770ef67802cb77864ed8cfed29b07a7d117a49d28a2d7e3ee77aa0e7859c271f",
+  ".cache/savant_oaa/oaa_2017_pos8.csv": "9b1e1addf0a1fbcb6fdf153c7522f5369c4803b21df458c0df2a87d553ad8704",
+  ".cache/savant_oaa/oaa_2017_pos9.csv": "2f6fc904ce68cb9584e3466aeab7f62670cc148292e661033db1658e28d586c7",
+  ".cache/savant_oaa/oaa_2018_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2018_pos3.csv": "182e7401dd504a5e09409226ae59ee1bd0f366cbb7fd1751e7f1922808cb93e2",
+  ".cache/savant_oaa/oaa_2018_pos4.csv": "d91cc8972409ba0fdaa7932bf4b36f4fe9144c3f7879d1588590166c9a49375c",
+  ".cache/savant_oaa/oaa_2018_pos5.csv": "a2868d47b9d4973430fcd2045c4c06e7378c8960f48e70c96266b195d30c3aae",
+  ".cache/savant_oaa/oaa_2018_pos6.csv": "89dc6b82bda9ec2d8f814d0cc472059d3e7f9f570e9541cd70df4bbadf6099d2",
+  ".cache/savant_oaa/oaa_2018_pos7.csv": "aad6f45b00f0b5d9e8079c9835c9d9dabb90b9b5e2765b98d782f197be29948d",
+  ".cache/savant_oaa/oaa_2018_pos8.csv": "612110fc196f79a6cf680fcd2b093eb7a61f469c6b246117067abda99d804517",
+  ".cache/savant_oaa/oaa_2018_pos9.csv": "d84cfa2a341463e8eb2b3caa6beff002d32d295a56df036fb2f942beef853e5b",
+  ".cache/savant_oaa/oaa_2019_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2019_pos3.csv": "cd13b57abf58d5c5365e9d5f2b351c98f18d0f6d978fcdc6e7708e9db67cff92",
+  ".cache/savant_oaa/oaa_2019_pos4.csv": "80b5bd1230f17bd04ac8df8a163217df943821728be61df92c41a69a1dea9c41",
+  ".cache/savant_oaa/oaa_2019_pos5.csv": "5f93164f2e2022857e1eaa4329c6259052f439a1d97b42d3ac3d6a4fc8a7b7d6",
+  ".cache/savant_oaa/oaa_2019_pos6.csv": "0951f38b47dd5074901e1900cd286fc78e2149ae3e15157685dd5f066e9968f2",
+  ".cache/savant_oaa/oaa_2019_pos7.csv": "8422c3ea379875f492c5f2d0c0e5227270f3cb27f7d3dbb5fdb7759b1979570c",
+  ".cache/savant_oaa/oaa_2019_pos8.csv": "4c324a0acd59762790aee0ca1befbea23b92e656a4ab89217fad8dabefdec9c6",
+  ".cache/savant_oaa/oaa_2019_pos9.csv": "cc849eaf8e836457c4451b8e15832fb48ea1bee07b38faa4c86bed71fb178f9b",
+  ".cache/savant_oaa/oaa_2020_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2020_pos3.csv": "a471f403e84de24b717b59018ef169f8412c9b664cfc074041f0121dd9cdeaa7",
+  ".cache/savant_oaa/oaa_2020_pos4.csv": "120c737716ece0250cb56ae10d0d1f8a2f53b5d617e0400593700ab8a419f31e",
+  ".cache/savant_oaa/oaa_2020_pos5.csv": "d8d6d08e52ccc0ef0a330ea85973e1b95f1e1fcb26687bae0c98582160e579b4",
+  ".cache/savant_oaa/oaa_2020_pos6.csv": "9d37d91ab625eae052f710c487f826da8af9227b3bed75c927d2e26c706a4ae2",
+  ".cache/savant_oaa/oaa_2020_pos7.csv": "b02efff9e50ce4fc7aac95089147e9ecd540f907d8c53f67b98b8b62fbb84730",
+  ".cache/savant_oaa/oaa_2020_pos8.csv": "03b3383fde307d82bd247b2e03aa8b977258c7decf176b1bcec59d7d958ca1f5",
+  ".cache/savant_oaa/oaa_2020_pos9.csv": "4623fbbbbf940d9c4a2a1f26c784b4babf15da410440899773febf6191a8883f",
+  ".cache/savant_oaa/oaa_2021_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2021_pos3.csv": "be14fc926e0e1ca0f9060271f6fb14ab209c03c7d9f5602bdbee6f8a4ca1875e",
+  ".cache/savant_oaa/oaa_2021_pos4.csv": "c0ab654b6190aa6e4e713fb636dc5ffaf78fe0b02efeb9d9765482557959529a",
+  ".cache/savant_oaa/oaa_2021_pos5.csv": "71dd1a422c71f71116adcfd069e65184a2fd3e44d1f84f28b55f151e8d7b1c30",
+  ".cache/savant_oaa/oaa_2021_pos6.csv": "ee77470962a600c4966faecb0ad90cb72d6ee52bbadd2ff7a6d797ec91cd5f44",
+  ".cache/savant_oaa/oaa_2021_pos7.csv": "13d14d48597445c1b1a74df943597734e072600c22bb0b7d4820b61becad2946",
+  ".cache/savant_oaa/oaa_2021_pos8.csv": "50b6c8d34230218905ee2a26a6e119f539212b9dafadab398850f8a0b6697b90",
+  ".cache/savant_oaa/oaa_2021_pos9.csv": "8129e785d2ca207f501c256bb2cb276cbf73198b74062123709711163211f5dc",
+  ".cache/savant_oaa/oaa_2022_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2022_pos3.csv": "b5a5a651ec0e6318c5a48c352fc5a53d4666499dd031dcd4b25528e880972a51",
+  ".cache/savant_oaa/oaa_2022_pos4.csv": "c95bbb6249a9378fdcfa64a708b2db1cc68390888be4e7fc597c0285a6b02f37",
+  ".cache/savant_oaa/oaa_2022_pos5.csv": "aa0a88d50fff7f5f5d099efd0b5581f871543c6903d83ec23d84ea9ce589c2c8",
+  ".cache/savant_oaa/oaa_2022_pos6.csv": "4af70c8eba06c96be099e2ab375c424f872b53f5202806fdb8ab17acc8c564e2",
+  ".cache/savant_oaa/oaa_2022_pos7.csv": "f043edd951455d2589a6809edcae1893f914e536e9bbaeea63876200c242e134",
+  ".cache/savant_oaa/oaa_2022_pos8.csv": "a50ef657d1ddf6402f46653f1c567a4ca39608b5487f2cc47bcc0b9f8ffd11ce",
+  ".cache/savant_oaa/oaa_2022_pos9.csv": "2ae419adaac9378d181ead0a33758a26d4ba609cfefd07bcb863225c3a263fd4",
+  ".cache/savant_oaa/oaa_2023_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2023_pos3.csv": "9b80e13248c01b063a489cee43c36ef4918459790018ffb51c1b25aa5eb959c9",
+  ".cache/savant_oaa/oaa_2023_pos4.csv": "2c130858969cb794b672d74fce8021c026d42aeb101313fdbdb812dc4f3dd159",
+  ".cache/savant_oaa/oaa_2023_pos5.csv": "f0d7cbbaa8ef86ec59838afb56a54372518cceb80400a6ce56520787bab206ff",
+  ".cache/savant_oaa/oaa_2023_pos6.csv": "46a238cff2ffa941db6b5603becf1b9e728745c3bf707eb6b176fb7f10485b63",
+  ".cache/savant_oaa/oaa_2023_pos7.csv": "713e0fb475ff180026464783014c9c0067acec2e3d1852e97a6a57a7809f3830",
+  ".cache/savant_oaa/oaa_2023_pos8.csv": "792e344c53045adfac41010675396148b8028fca5c11a6da212d563caa81e2cb",
+  ".cache/savant_oaa/oaa_2023_pos9.csv": "3ac1b88795303fb390d66ab42479f50abfdd8028050eb2f5d8f1c61755482aa9",
+  ".cache/savant_oaa/oaa_2024_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2024_pos3.csv": "4b9a5db10f150263b7b352a65d92a3efc77a6766f0546577db4a1db73a57105f",
+  ".cache/savant_oaa/oaa_2024_pos4.csv": "daa92003833282e585145a15af6b0e319a1fb4d81f48281372dae96e125520a2",
+  ".cache/savant_oaa/oaa_2024_pos5.csv": "31862e56ea3daf266118f0123e600b1386c94bcd224ae4070e2f902eacfa6cd4",
+  ".cache/savant_oaa/oaa_2024_pos6.csv": "57dc18d0ce11d71bec185a025eaaffa609a57be639a9276c7865836b8b91ea8e",
+  ".cache/savant_oaa/oaa_2024_pos7.csv": "6c8eda61f20b4b4a9184d66297b59aa695d61798e09ca843fb799041345e7322",
+  ".cache/savant_oaa/oaa_2024_pos8.csv": "734a5312ab067c2620b304c12559a8fee863a20d354cb9e2b5d3f4a5cfe83841",
+  ".cache/savant_oaa/oaa_2024_pos9.csv": "7824cd4881822a49ae4f7543a9faaa08f14402f31848dd15f9340b4a888a89e4",
+  ".cache/savant_oaa/oaa_2025_pos2.csv": "75a3d36d16c56a5d0b10e6469259c1dfdd74104d74ea91f98e7a54cb36e11b69",
+  ".cache/savant_oaa/oaa_2025_pos3.csv": "0a264ad0d333cabe2bf2cf27fbb810529e17a46967a33cc813d7573f2ac355cf",
+  ".cache/savant_oaa/oaa_2025_pos4.csv": "025210108218970b8556323b212d2c40e942af7c50ce9e5f45dc91d6739598aa",
+  ".cache/savant_oaa/oaa_2025_pos5.csv": "b26d6c417616b170f2a657aa63a5b737c73790f2cc8d1eb7d49303855f27ade1",
+  ".cache/savant_oaa/oaa_2025_pos6.csv": "61cd171dc8be3c3e059dbd40ecb36a866b6193da511ed3e454344a8164c8ba1e",
+  ".cache/savant_oaa/oaa_2025_pos7.csv": "09d6d0b5ed92f2ef8972973985dba7199e939c472b77ab3b74901101858041c3",
+  ".cache/savant_oaa/oaa_2025_pos8.csv": "3a070c75934662a401de407c45b7081992885ee2cc5b3c821f9cbc75b5c4ace8",
+  ".cache/savant_oaa/oaa_2025_pos9.csv": "97d4d6d2bf5c5d9963e89595f24d226bd00601d323b6a7197fea8a2bb90e27ec",
+  ".cache/savant_oaa/oaa_2026_pos2.csv": "147fc0db7185023760606513800391ed0be7d450797811624265a4a9ae9ad3d7",
+  ".cache/savant_oaa/oaa_2026_pos3.csv": "f7edc187e74bc90d9a697491fa5c55fcb60227d059ed327e96c60b61b847f47e",
+  ".cache/savant_oaa/oaa_2026_pos4.csv": "de060a316f3ca9d0600bfbc60e3557598394a4e219dfcba0544dc6fc5cc31b2f",
+  ".cache/savant_oaa/oaa_2026_pos5.csv": "146552458f04af3c7e59095274b86623ef22bcc5c675a795ecdf7c2d126a9136",
+  ".cache/savant_oaa/oaa_2026_pos6.csv": "6c52eb9cc3d7db4f570a35b15dc4abd04e9846f281759e72b1c5b77faf736220",
+  ".cache/savant_oaa/oaa_2026_pos7.csv": "8931222c4b05e53fcb0a7949320e1d55ed33fdeb3c9d41d472cdd19c671b41a4",
+  ".cache/savant_oaa/oaa_2026_pos8.csv": "36ec83cc55cd98362b92bad118c0b9d3c01a86750e75121bc7bcd51afdf6d828",
+  ".cache/savant_oaa/oaa_2026_pos9.csv": "c7a6dcd53941d5e93a343ce11c02a6803e11bd94e17f8793776a164f2ba22a37",
+  ".cache/savant_arm/arm_2020.csv": "05cd36b211236825b56bbc42d61090679db47a0d2ce9ca4ba34960e11b19fbe5",
+  ".cache/savant_arm/arm_2021.csv": "16bb297fa631349ec94f7e663ad9e88cd1dd90b3961c023a0aa9535fe7017a60",
+  ".cache/savant_arm/arm_2022.csv": "06115a3f6b6c6c43f19407d2ed2508097f33dbbbfbe4b0498bdcad8969ad5093",
+  ".cache/savant_arm/arm_2023.csv": "23aa59669768c3e7408da22021bde717c2a43d6768f892f8259e41a77b7f4263",
+  ".cache/savant_arm/arm_2024.csv": "c6b96226c5c6b9cd5b4eae5d2b68093860f0a41b33570bd55c9fba4ae7a3fbf1",
+  ".cache/savant_arm/arm_2025.csv": "c959b2533a7e0c4e6b6436a33c770010e76688ad922e2ff51a13707d2fd5caf8",
+  ".cache/savant_arm/arm_2026.csv": "3913cbdba6a21fb590138c5945aceb202b101b116161a68afb81207e6799ebe8",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2016.csv": "115491cd47651c3c77c534ca22b1ce7ee937249842934bc4bd20b7903dc06d5a",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2017.csv": "4f8661ded724eed0e291604e918400f599a5f9d7885cd5d54f5dcd20679c299f",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2018.csv": "a900238e8c459ba3452c2b0bb04a55e5a35ddb07570f73cf92ee4ce80e237608",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2019.csv": "7ad1552ec9719d78546566c64e0060b191fee38d1183b1bf67671839d1d70347",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2020.csv": "8be0a647ead4c9c7b9c06769ef0018b3fbeed54b1bae21e8277b849301ec7a91",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2021.csv": "a28ad2e6780d0fc977e1fdd1ebd4abdbb8faf45df2146178a031a8ad3cb7b238",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2022.csv": "435a35d0fe701b8f34fd2b717edd7bfd1aabfe381a62f25efd7d56f44d32d2e7",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2023.csv": "ac0bf48666d991b32d56f67cf3d836eefe18ef379df79a2392e1926db729fe73",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2024.csv": "c8d1c9311692dc2e0ab67b990523d6d997b2ec6c687838a3c4cc79c596458a2a",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2025.csv": "9bbd2fc9c7b8fa38021c38d1a0dd05adad5945805ad514adc2c306712f22ffc9",
+  ".cache/sdr/home/defense_plus/data/raw/fg_field_full_2026.csv": "58e53c3a5ca76befeae87a5d5d32035da9fb7073f88275c69914b3263fe671cc"
+ },
+ "seconds": 20.7
+}

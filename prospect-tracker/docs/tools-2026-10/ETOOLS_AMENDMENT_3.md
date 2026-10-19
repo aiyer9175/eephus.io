@@ -189,3 +189,67 @@ after that point: no rerun, the read is recorded as spent, and the question goes
 
 (Empty at registration. Results go to this section as a dated note and to
 `docs/tools-2026-10/ETOOLS_RESULTS.md`.)
+
+### 2026-10-19: THE READ, once (OWNER-WAIVED EARLY READ, EW3-5)
+
+`python etools_mfr.py --run --amend-sha e1c13320`, run once (2026-10-19T18:22:05Z to 18:22:14Z,
+head 2c3593bd) after the fixture dry run; no exception; every input's sha256 matched at start and
+end; stdout and stderr kept in the task's output directory. Artifact
+`data/_labs/etools/etools_mfr_reads.json` (spent marker). d is the out-of-fold within-board-year
+Spearman gain over the consensus grade; LB the one-sided 95% lower bound (B 2000).
+
+**eFLD (MFR range component): NO SUB-DRIVER.** 1,713 frame rows (1,065 players), 1,407 carrying
+the candidate.
+
+| label | rows (players) | consensus | with MFR | d (LB) | q |
+|---|---|---|---|---|---|
+| L_MLB, OAA per 1,000 | 220 (137) | 0.377 | 0.364 | -0.013 (-0.073) | 0.71 |
+| L_UM analog, MFR range at AA/AAA | 808 (481) | 0.107 | 0.093 | -0.014 (-0.055) | 0.71 |
+
+The candidate alone orders the labels at 0.120 (MLB) and 0.151 (minors) and is nearly unrelated
+to the consensus field grade (0.03 and 0.10), yet it adds nothing out of fold. The forced eTool:
+d -0.002 (LB -0.029, 226 rows) on L_MLB and -0.008 (LB -0.023, 835 rows) on L_UM. Comparators: the
+zero comparator gives d exactly 0 on both labels; the null (permuted within board year and position
+group) reads d -0.029 and -0.012 (forced eTool LB -0.029 and -0.014) and does not clear, so the read
+is not void; planted recovery succeeds on L_UM (d +0.123, LB +0.059, above its floor 0.017) and
+fails on L_MLB (d +0.011, LB -0.050) and on the eTool's MLB label (d +0.014, LB -0.008). So on the
+minors analog, where a planted gain of the registered size is recovered, the real candidate shows
+none (CI95 upper end +0.035): a powered null. On the MLB label (137 players) the design could not
+certify a planted gain: that label is UNDERPOWERED.
+
+Descriptive cells (never admitting): shortstops on L_MLB d -0.312 (41 players, LB -0.573); center
+fielders on L_MLB +0.035 (32 players, LB -0.035); every other cell within plus or minus 0.07 with its
+LB below 0; first base and corner outfield on L_MLB under 30 players. Reported: OAA centred within
+the MLB primary position, incremental d -0.054 (LB -0.154), forced eTool +0.0005 (LB -0.021).
+
+Post-hoc, computed after the read and deciding nothing: the fold OLS weight on the candidate for
+L_UM is -0.83 when board year 2022 is held out and +2.1 and +2.0 in the other two folds; within
+2022, 2023 and 2024 the candidate's Spearman with L_UM is 0.20, 0.09 and 0.15 (the grade's 0.14,
+0.14 and 0.00). The as-of candidate rests on one MFR season at board year 2022 and on three at
+2024, and its relation to the label moves with that, so a weight fit on two board years does not
+carry to the third.
+
+**eARM (MFR outfield arm component): NO SUB-DRIVER; UNDERPOWERED (L_MLB, L_UM, eTool).** 1,702
+frame rows, 563 carrying the candidate (outfielders).
+
+| label | rows (players) | consensus | with MFR | d (LB) | q |
+|---|---|---|---|---|---|
+| L_MLB, arm z | 93 (62) | NOT COMPUTABLE (2024 has 14 rows) | | | |
+| L_UM analog, MFR arm at AA/AAA | 306 (191) | 0.187 | 0.248 | +0.061 (-0.0004) | 0.13 |
+
+On the minors analog the gain is above its permuted floor (0.017) but its lower bound is not above
+0 (CI95 -0.009 to +0.128, p 0.044) and q is above 0.10: not admitted. The forced eTool: d +0.005
+(LB -0.006, 267 rows, 93 with the candidate) on L_MLB and +0.003 (LB -0.009, 365 rows) on L_UM.
+Comparators: zero exactly 0; the null reads d -0.007 on L_UM (LB -0.037) and its forced eTool LB
+-0.023 and -0.016, so it does not clear; planted recovery fails on L_UM (d +0.056, LB -0.014), is
+not computable on L_MLB and fails on the eTool. Cells: center field L_MLB -0.041 (43 players, LB
+-0.104), L_UM +0.042 (101, LB -0.034); corner outfield L_UM +0.045 (100, LB -0.038). Reported:
+FanGraphs FRP arm runs, not computable (62 players). The arm component leans positive on the
+minors analog, but these rows cannot certify even a planted gain of that size and there is no MLB
+read at all: a lean, not a sub-driver.
+
+**What this does.** Nothing served moves. Field and arm keep the consensus grade (rounded up) as
+the shown grade on every surface; neither enters `data/etools.json`, the eTool composite or
+eTools+. Inside the development frame these pools cannot grow (board years and debuts end at
+2024), so a stronger read of eARM would need frames this program keeps reserved: an owner call,
+not a re-run.
