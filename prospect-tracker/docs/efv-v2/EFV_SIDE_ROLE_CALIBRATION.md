@@ -1,6 +1,6 @@
 # eFV side and role calibration (EFV_SIDE_ROLE_CALIBRATION): registration
 
-Registration status: REGISTERED
+Registration status: REGISTERED; READ ONCE 2026-10-19 (sections 11 and 12)
 
 Registered 2026-10-19, committed ALONE, before any number of its read is computed. Owner
 decision EW3-42 (`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, 2026-10-19), verbatim: "I feel like
@@ -254,3 +254,99 @@ read and the result is the refusal. The artifact is written once; a second `--ru
 
 Run: `python -u efv_side_role_calibration.py --run --cache <EFV_FIX_B_REFIT cache> --x3-cache
 <EFV_X3_POOLED_MODEL cache> --work <scratch>` after this registration and the module's commit.
+
+## 11. The read (2026-10-19, once; `python -u efv_side_role_calibration.py --run`)
+
+Artifact: `data/_labs/efv5/efv_side_role_calibration.json` (role development, adjudicates false;
+tool sha256 81749414, module commit 48fc666d, registration commit 3f60b82d, label
+fwar@2026-10-02). Elapsed 87 s.
+
+Checks, all held before any outcome was read: Q1 the 20 cached fold models match the fit
+artifact's receipts; Q2 the cross-fitted RT within reproduces the fit artifact (lv_dev hit
+0.1913, vm_dev hit 0.4021, lv_dev pit 0.1442, vm_dev pit 0.3853) and the served-weight pitcher
+within reproduces the re-read (0.2198); Q3 no reserved fold; Q4 the live board reproduces (u_c to
+5e-7, map A to the served one-decimal grade within 0.05 on all 1,055 hitters and 941 pitchers).
+Rows as section 3; every pitcher row has a usage role and an X3 role path.
+
+PRIMARY, delta MSE against the incumbent a (frame-standardized; positive: the candidate is
+closer), pooled over both frames and sides, player-clustered CI95, B 2000:
+
+| candidate | delta MSE | CI95 | lv_dev | vm_dev | hitters | pitchers | delta ECE (CI95) |
+|---|---|---|---|---|---|---|---|
+| b (side) | -0.0239 | -0.0386 to -0.0097 | -0.0117 | -0.0658 | -0.0361 | -0.0113 | -0.0086 (-0.0284 to +0.0149) |
+| c (side x usage role) | -0.0231 | -0.0385 to -0.0087 | -0.0105 | -0.0667 | -0.0361 | -0.0098 | -0.0072 (-0.0289 to +0.0137) |
+| c_x3 (X3 role path, sensitivity) | -0.0300 | -0.0450 to -0.0162 | -0.0214 | -0.0596 | -0.0361 | -0.0238 | -0.0178 (-0.0381 to +0.0063) |
+
+The role over the side, on the pitcher rows: c minus b +0.0015 (CI95 -0.0053 to +0.0082;
+lv_dev +0.0026, vm_dev -0.0018); c_x3 minus b -0.0124 (-0.0254 to +0.0019).
+
+Comparators: the side-permuted b's delta MSE against a has mean -0.0142 and 95th percentile
++0.0003 over 200 draws, so the real side labels make the map worse than random side labels do
+(-0.0239 against -0.0142); the role-permuted c's delta against b on pitchers has 95th percentile
++0.0097 (c reads +0.0015). Pooled-curve instrument: b -0.0300 (CI95 -0.0488 to -0.0122), c
+-0.0282 (-0.0460 to -0.0112), c minus b +0.0017. Rank guard: b moves no within statistic (0 on
+every side and frame, as built); c lowers the pitcher within by 0.0043 pooled (CI95 -0.0159 to
++0.0072; lv_dev -0.0054, vm_dev -0.0007), past the -0.002 guard. Calibration slope of the label on
+the implied value (1 is calibrated): a hitters 0.81 (CI95 0.64 to 1.00), pitchers 0.79 (0.60 to
+1.05); b hitters 0.69 (0.55 to 0.84), pitchers 0.80. The side map spreads the hitters' implied
+value further when it is already wider than the label supports.
+
+Planted recovery (K 100, B 500): SIDE (hitters x1.15, pitchers x0.85) POWER_b 0.02, SIZE_b 0.00;
+ROLE (relievers x0.75) POWER_c 0.02, SIZE_c 0.00. On these frames a side or role effect of the
+planted size moves the frame-standardized squared error by about 0.004, less than what fitting
+two isotonic curves out of fold costs (about 0.005 to 0.014), so the registered statistic cannot
+resolve an effect of this size.
+
+Reported, deciding nothing (section 6): realized over implied value under the incumbent,
+player-clustered CI95, B 2000.
+
+| rows | pooled | lv_dev | vm_dev |
+|---|---|---|---|
+| hitters | 1.03 (0.88 to 1.19) | 1.11 (0.86 to 1.39) | 1.00 (0.85 to 1.14) |
+| pitchers | 0.96 (0.81 to 1.13) | 0.85 (0.66 to 1.06) | 1.01 (0.84 to 1.20) |
+| pitchers over hitters | 0.93 (0.74 to 1.17) | 0.77 (0.54 to 1.07) | 1.01 (0.80 to 1.27) |
+| top tenth: hitters | 0.95 (0.72 to 1.19) | 1.27 (0.90 to 1.68) | 0.80 (0.59 to 1.03) |
+| top tenth: pitchers | 0.80 (0.64 to 1.00) | 0.72 (0.50 to 0.97) | 0.85 (0.65 to 1.09) |
+| top tenth: pitchers over hitters | 0.84 (0.61 to 1.20) | 0.57 (0.35 to 0.88) | 1.06 (0.73 to 1.60) |
+| below the top tenth: pitchers over hitters | 0.98 (0.76 to 1.28) | 0.94 (0.63 to 1.46) | 1.01 (0.77 to 1.34) |
+| STARTER over hitters (1,168 rows) | 0.88 (0.69 to 1.11) | 0.78 (0.54 to 1.10) | 0.93 (0.74 to 1.17) |
+| SHORT-START over STARTER (119) | 1.08 (0.57 to 1.88) | 0.90 (0.37 to 1.59) | 1.41 (0.43 to 5.03) |
+| RELIEF over STARTER (395) | 0.84 (0.43 to 1.37) | 0.53 (0.20 to 0.97) | 1.40 (0.59 to 2.67) |
+| OTHER (FEW, NO-LINE) over STARTER (139) | 2.41 (1.28 to 3.42) | 1.95 (1.00 to 3.08) | 3.08 (1.00 to 4.67) |
+| X3 STARTER path over hitters (635) | 0.86 (0.66 to 1.11) | 0.79 (0.54 to 1.12) | 0.89 (0.67 to 1.18) |
+| X3 RELIEF path over hitters (1,186) | 1.04 (0.78 to 1.36) | 0.73 (0.46 to 1.09) | 1.22 (0.90 to 1.64) |
+
+The live-board effect of the production maps (decides nothing): under b the joint top 100 by
+grade would hold 13 pitchers instead of 31; the top 50 hitters would rise 1.78 grades on average
+and the top 50 pitchers fall 1.25; under c relievers would fall 0.91 and short starters 1.16 on
+average, 30 pitchers moving 3 grades or more. The top of each map rests on a few rows: the
+highest pitcher block lifts Seth Hernandez from 59.0 to 67.2 and the highest hitter block lifts
+Jesus Made from 61.5 to 67.5, while the pitcher at the side's 98th percentile (49.0) maps to
+46.9. Those end blocks are why the maps lose out of fold.
+
+## 12. The verdict
+
+Nothing passes; nothing is built, no flag is added and no served number moves.
+`SIDE_ROLE_CALIBRATION_ON` stays False and is read by nothing.
+
+- b FAILS (B1, B2, B3, B5 and B6 fail; B4 and B7 hold) and c FAILS (C1 to C7 fail; C8 holds).
+  The registered wording is UNRESOLVED for both (planted power 0.02): on these frames squared
+  error cannot resolve a side or role effect of the planted size. The point estimates go further
+  than a tie: both isotonic maps are worse than no mapping, with the whole CI95 below 0, on both
+  instruments, and the side map is worse than its own side-permuted twin on average.
+- Q-SIDE, reported: pooled over both frames pitchers realize 0.93 of what hitters realize at the
+  same implied value (CI95 0.74 to 1.17), not resolved. The gap sits in the top tenth of each
+  side's grades on the bust-inclusive list-vintage frame: there pitchers realize 0.57 of the
+  hitters' share (CI95 0.35 to 0.88), and pooled over both frames the top tenth of pitchers
+  realize 0.80 of their implied value (0.64 to 0.997). Among debuted players (vm_dev) the sides
+  match (1.01). So the inflation the owner sees is real at the top of the pitcher board and runs
+  through reaching the majors, not through value after a debut.
+- Q-ROLE, reported: pitchers used in relief at the read realize 0.53 of what starters do on the
+  list-vintage frame (CI95 0.20 to 0.97) and 0.84 pooled (0.43 to 1.37); among debuted pitchers
+  the 73 relief rows point the other way (1.40, 0.59 to 2.67). Short starters match starters.
+  Pitchers with no usage reading (FEW, NO-LINE) out-realize starters (2.41, 1.28 to 3.42).
+- Why the calibration fails while the ratios show a gap: the isotonic map moves every grade by a
+  curve fitted on a few hundred rows per side, and its end blocks rest on a handful of players, so
+  out of fold it adds more error than the side effect removes. A smaller object (one scalar per
+  side and role, or a tilt above a within-side quantile) is not tested here; it would need its
+  own registration with a power read on the ratio statistic first.
