@@ -34,6 +34,14 @@ frozen into ``schedule/<Y>.json`` with its sha256 in the manifest. A payload
 carries no game type, so any other cached payload of that season (a postseason
 game, a spring game) is counted and skipped: no postseason play enters a table.
 
+THE HISTORY DIRECTORY (owner answer EBR-Q4 (b)). The seasons 2011 to 2017 and
+2020 (``HIST_SEASONS``) are read from ``.cache/win_prob_hist/`` (the output of
+tools/fetch_win_prob_hist.py) and from nowhere else; every other season reads
+``.cache/win_prob``. The history directory is never read for a 2018-and-later
+season, so the frozen seasons stay byte-identical when it fills, and nothing
+here writes either source. The one-time re-fetch of a history season paces
+its requests a second apart with the house User-Agent.
+
 THE STATE WALK. The state at plate-appearance start is
 ``build_pbp_corpus.reconstruct_plays`` (imported with tools/ on sys.path, as
 test_pbp_corpus.py does), so the repo keeps one walk. Inside the plate
@@ -104,12 +112,17 @@ if str(REPO_ROOT) not in sys.path:
 import build_pbp_corpus as bpc  # noqa: E402  the one state walk
 
 DEFAULT_SOURCE = REPO_ROOT / ".cache" / "win_prob"
+DEFAULT_HIST_SOURCE = REPO_ROOT / ".cache" / "win_prob_hist"
 DEFAULT_FEEDS = REPO_ROOT / ".cache" / "game_feeds"
 DEFAULT_OUT = REPO_ROOT / ".cache" / "pbp_runners"
 STATSAPI_LINES = REPO_ROOT / ".cache" / "fa_statsapi_hitting_{season}.json"
 
 SCHEMA_VERSION = 1
 DEFAULT_SEASONS = (2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026)
+#: The seasons read from the history directory, and only these.
+HIST_SEASONS = (2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020)
+#: Seconds between requests of a history season's re-fetch (one a second).
+HIST_FETCH_INTERVAL = 1.0
 MILB_SEASONS = (2023, 2024, 2025, 2026)
 #: sportId -> partition name of the minor-league copy.
 MILB_LEVELS = {11: "aaa", 12: "aa", 13: "high_a", 14: "single_a", 16: "rookie"}
@@ -151,6 +164,13 @@ def season_complete(season: int, today: _dt.date | None = None) -> bool:
     t = today or _dt.date.today()
     m, d = FREEZE_MONTH_DAY
     return t >= _dt.date(int(season), m, d)
+
+
+def source_for_season(season: int, source: Path = DEFAULT_SOURCE,
+                      hist_source: Path = DEFAULT_HIST_SOURCE) -> Path:
+    """The payload directory of one season: the history directory for
+    HIST_SEASONS, ``source`` (the live winProbability cache) for every other."""
+    return Path(hist_source) if int(season) in HIST_SEASONS else Path(source)
 
 
 def _rid(r: dict):
@@ -773,18 +793,22 @@ def _count_skipped(source: Path, season: int, listed: set) -> int:
     return n
 
 
-def refetch_games(pks, refetch_dir: Path, fetcher=None) -> list:
-    """One re-fetch of each game into refetch_dir (never .cache/win_prob)."""
+def refetch_games(pks, refetch_dir: Path, fetcher=None, *, interval: float = 0.25) -> list:
+    """One re-fetch of each game into refetch_dir (never .cache/win_prob), the
+    requests ``interval`` seconds apart with the house User-Agent."""
     refetch_dir = Path(refetch_dir)
     refetch_dir.mkdir(parents=True, exist_ok=True)
     got = []
     if fetcher is None:
         import feed_cache
         import mlb_leverage
+        from fetch_win_prob_hist import house_user_agent
+        headers = {"User-Agent": house_user_agent()}
 
         def fetcher(pk):
-            time.sleep(0.25)
-            r = feed_cache.SESSION.get(f"{mlb_leverage.WP_API}/{int(pk)}/winProbability", timeout=30)
+            time.sleep(interval)
+            r = feed_cache.SESSION.get(f"{mlb_leverage.WP_API}/{int(pk)}/winProbability",
+                                      headers=headers, timeout=30)
             r.raise_for_status()
             return r.content
     for pk in sorted(set(int(p) for p in pks)):
@@ -803,9 +827,13 @@ def refetch_games(pks, refetch_dir: Path, fetcher=None) -> list:
 def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEFAULT_SOURCE,
                  schedule=None, workers: int = 8, today: _dt.date | None = None,
                  official_path: Path | None = None, allow_refetch: bool = True,
-                 fetcher=None, man: dict | None = None) -> dict:
-    """Build (or extend) one MLB season. Returns its manifest block."""
+                 fetcher=None, man: dict | None = None,
+                 hist_source: Path = DEFAULT_HIST_SOURCE) -> dict:
+    """Build (or extend) one MLB season. Returns its manifest block. A history
+    season (HIST_SEASONS) reads ``hist_source``; every other reads ``source``."""
     out_dir = Path(out_dir)
+    source = source_for_season(season, source, hist_source)
+    interval = HIST_FETCH_INTERVAL if int(season) in HIST_SEASONS else 0.25
     refetch_dir = out_dir / "refetch"
     own_man = man is None
     man = man if man is not None else load_manifest(out_dir)
@@ -837,7 +865,7 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
               and not (refetch_dir / f"{pk}.json").exists()]
     filled = []
     if absent and allow_refetch:
-        filled = refetch_games(absent, refetch_dir, fetcher)
+        filled = refetch_games(absent, refetch_dir, fetcher, interval=interval)
         man.setdefault("filled", {})[str(season)] = sorted(
             set((man.get("filled") or {}).get(str(season), [])) | set(filled))
     jobs = [(pk, int(season), info_of[pk], str(source), str(refetch_dir)) for pk in todo]
@@ -876,7 +904,7 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
         else:
             g2 = set()
         games = sorted((g1 | g2) & set(info_of))
-        refetched = refetch_games(games, refetch_dir, fetcher)
+        refetched = refetch_games(games, refetch_dir, fetcher, interval=interval)
         man.setdefault("refetched", {})[str(season)] = refetched
         if refetched:
             jobs = [(pk, int(season), info_of[pk], str(source), str(refetch_dir)) for pk in refetched]
@@ -905,7 +933,8 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
         rn_sha = write_table(rn_df, rn_p)
     skipped = _count_skipped(source, season, set(info_of)) if Path(source).exists() else None
     blk = {
-        "season": int(season), "games_scheduled": len(info_of), "games_present": len(present),
+        "season": int(season), "source": Path(source).name,
+        "games_scheduled": len(info_of), "games_present": len(present),
         "games_added_this_run": int(sum(v for k, v in how_n.items() if k in ("cache", "refetch"))),
         "payloads_missing": int(how_n.get("missing", 0) + how_n.get("empty", 0)
                                 + how_n.get("unreadable", 0)),
@@ -1028,7 +1057,7 @@ def build(seasons=DEFAULT_SEASONS, *, out_dir: Path = DEFAULT_OUT, source: Path 
           workers: int = 8, milb: bool = False, feeds: Path = DEFAULT_FEEDS,
           allow_refetch: bool = True, today: _dt.date | None = None,
           schedules: dict | None = None, official_paths: dict | None = None,
-          fetcher=None) -> dict:
+          fetcher=None, hist_source: Path = DEFAULT_HIST_SOURCE) -> dict:
     out_dir = Path(out_dir)
     man = load_manifest(out_dir)
     for s in seasons:
@@ -1037,7 +1066,8 @@ def build(seasons=DEFAULT_SEASONS, *, out_dir: Path = DEFAULT_OUT, source: Path 
             continue
         blk = build_season(int(s), out_dir=out_dir, source=source, schedule=sch, workers=workers,
                            today=today, official_path=(official_paths or {}).get(int(s)),
-                           allow_refetch=allow_refetch, fetcher=fetcher, man=man)
+                           allow_refetch=allow_refetch, fetcher=fetcher, man=man,
+                           hist_source=hist_source)
         rc = blk.get("receipts") or {}
         print(f"  {s}: games {blk.get('games_present')}/{blk.get('games_scheduled')}  "
               f"I1 {rc.get('I1', {}).get('pass')}  I2 {rc.get('I2', {}).get('pass')}  "
@@ -1048,20 +1078,23 @@ def build(seasons=DEFAULT_SEASONS, *, out_dir: Path = DEFAULT_OUT, source: Path 
     man["schema_version"] = SCHEMA_VERSION
     man["built_at"] = man["generated_at"] = now
     man["source_cache"] = str(Path(source))
+    man["hist_source_cache"] = str(Path(hist_source))
+    man["hist_seasons"] = list(HIST_SEASONS)
     write_manifest(out_dir, man)
     return man
 
 
 def _parse_seasons(s: str) -> list:
+    """A range skips 2020 (the 60-game season); the explicit token 2020 keeps it."""
     out = []
     for part in s.split(","):
         part = part.strip()
         if "-" in part:
             a, b = part.split("-")
-            out.extend(range(int(a), int(b) + 1))
+            out.extend(x for x in range(int(a), int(b) + 1) if x != 2020)
         elif part:
             out.append(int(part))
-    return [x for x in out if x != 2020]
+    return out
 
 
 def main(argv=None) -> int:

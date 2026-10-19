@@ -2,9 +2,11 @@
 
 Fixture payloads only (baserunning.md 4.5's eight plays, plus the EBR_2A extras): rows
 as expected, steals keyed on movementReason, the plate appearance's own state walk,
-the postseason skip, the incremental and frozen rules, the re-fetch directory, and the
-caches the record must never write. Nothing here reads the real winProbability cache
-beyond listing it, and nothing touches the network.
+the postseason skip, the incremental and frozen rules, the re-fetch directory, the
+history directory (2011 to 2017 and 2020, read for those seasons only; EBR-Q4 (b)),
+its fetcher's receipts, pacing and refusals, and the caches the record must never
+write. Nothing here reads the real winProbability cache beyond listing it, and
+nothing touches the network.
 """
 import hashlib
 import json
@@ -419,3 +421,276 @@ def test_milb_copy_from_a_feed(tmp_path):
     blk = m["single_a|2025"]
     assert blk["games"] == 1 and blk["counts"]["sb"] == 1 and blk["counts"]["pa"] == 3
     assert blk["frozen"] and (tmp_path / "pbp_runners" / blk["files"]["runners"]).exists()
+
+
+# ---------------------------------------------------------------------------
+# EBR_Q4B: the history directory (2011 to 2017 and 2020) and its fetcher
+# ---------------------------------------------------------------------------
+import fetch_win_prob_hist as fwh  # noqa: E402
+
+
+def _hist_setup(tmp_path):
+    src = tmp_path / "win_prob"
+    hist = tmp_path / "win_prob_hist"
+    _write_payloads(src, {11: _game(), 12: _game(), 23: _game(year=2011)})
+    _write_payloads(hist, {21: _game(year=2011), 22: _game(year=2011), 13: _game(),
+                           31: _game(year=2020), 32: _game(year=2020)})
+    off = _official(tmp_path / "lines.json", {A: {"pa": 2}, B: {"sb": 2, "pa": 2}, C: {"pa": 2}})
+    return src, hist, off
+
+
+def test_source_for_season_names_the_history_directory_for_its_seasons_only():
+    assert brm.HIST_SEASONS == (2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020)
+    assert brm.DEFAULT_HIST_SOURCE.name == "win_prob_hist"
+    assert brm.DEFAULT_HIST_SOURCE != brm.DEFAULT_SOURCE
+    for s in brm.HIST_SEASONS:
+        assert brm.source_for_season(s, Path("a"), Path("h")) == Path("h")
+    for s in brm.DEFAULT_SEASONS:
+        assert brm.source_for_season(s, Path("a"), Path("h")) == Path("a")
+    assert not (set(brm.HIST_SEASONS) & set(brm.DEFAULT_SEASONS))
+
+
+def test_history_directory_is_read_only_for_its_seasons(tmp_path):
+    src, hist, off = _hist_setup(tmp_path)
+    out = tmp_path / "pbp_runners"
+    b24 = brm.build_season(2024, out_dir=out, source=src, hist_source=hist,
+                           schedule=_sched([11, 12, 13]), workers=1, today=AFTER_FREEZE,
+                           official_path=off, allow_refetch=False)
+    assert b24["source"] == "win_prob"
+    assert b24["games_present"] == 2 and b24["payloads_missing"] == 1     # 13 sits in hist only
+    assert not b24["receipts"]["I3"]["pass"] and b24["receipts"]["I3"]["missing"] == [13]
+    b11 = brm.build_season(2011, out_dir=out, source=src, hist_source=hist,
+                           schedule=_sched([21, 22, 23]), workers=1, today=AFTER_FREEZE,
+                           official_path=off, allow_refetch=False)
+    assert b11["source"] == "win_prob_hist"
+    assert b11["games_present"] == 2 and b11["payloads_missing"] == 1     # 23 sits in win_prob only
+    assert set(brm.read_table(out / b11["files"]["pa"])["game_pk"]) == {21, 22}
+    b20 = brm.build_season(2020, out_dir=out, source=src, hist_source=hist,
+                           schedule=_sched([31, 32]), workers=1, today=AFTER_FREEZE,
+                           official_path=off, allow_refetch=False)
+    assert b20["source"] == "win_prob_hist" and b20["games_present"] == 2
+    # the 2024-season payload parked in the history directory is counted and skipped
+    assert b11["other_cached_payloads_skipped"] == 0 and b20["other_cached_payloads_skipped"] == 0
+
+
+def test_history_season_leaves_frozen_seasons_and_both_sources_byte_identical(tmp_path):
+    src, hist, off = _hist_setup(tmp_path)
+    out = tmp_path / "pbp_runners"
+    man = brm.build([2024], out_dir=out, source=src, hist_source=hist, workers=1, today=AFTER_FREEZE,
+                    schedules={2024: _sched([11, 12])}, official_paths={2024: off},
+                    allow_refetch=False)
+    blk = dict(man["seasons"]["2024"])
+    assert blk["frozen"]
+    pa_p, rn_p = out / blk["files"]["pa"], out / blk["files"]["runners"]
+    before = (pa_p.read_bytes(), rn_p.read_bytes(), pa_p.stat().st_mtime_ns, rn_p.stat().st_mtime_ns)
+    src_hash, hist_hash = _hash_dir(src), _hash_dir(hist)
+    man2 = brm.build([2024, 2011, 2020], out_dir=out, source=src, hist_source=hist, workers=1,
+                     today=AFTER_FREEZE,
+                     schedules={2024: _sched([11, 12]), 2011: _sched([21, 22]), 2020: _sched([31, 32])},
+                     official_paths={2024: off, 2011: off, 2020: off}, allow_refetch=False)
+    assert man2["seasons"]["2024"] == blk
+    assert (pa_p.read_bytes(), rn_p.read_bytes(), pa_p.stat().st_mtime_ns, rn_p.stat().st_mtime_ns) == before
+    assert man2["seasons"]["2011"]["frozen"] and man2["seasons"]["2011"]["receipts"]["I3"]["pass"]
+    assert man2["seasons"]["2020"]["frozen"]
+    assert man2["hist_seasons"] == list(brm.HIST_SEASONS)
+    assert man2["hist_source_cache"] == str(hist) and man2["source_cache"] == str(src)
+    assert _hash_dir(src) == src_hash and _hash_dir(hist) == hist_hash
+
+
+def test_parse_seasons_keeps_2020_only_when_named():
+    assert brm._parse_seasons("2011-2017,2020") == [2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020]
+    assert brm._parse_seasons("2018-2026") == [2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]
+    assert brm._parse_seasons("2018,2019,2021-2026") == list(brm.DEFAULT_SEASONS)
+    import build_ebr
+    assert build_ebr._parse_seasons("2011-2017,2020") == brm._parse_seasons("2011-2017,2020")
+    assert 2020 not in build_ebr._parse_seasons("2018-2026")
+
+
+def test_history_refetch_paces_a_second_apart_with_the_house_user_agent(tmp_path, monkeypatch):
+    src, hist, off = _hist_setup(tmp_path)
+    out = tmp_path / "pbp_runners"
+    bad = _official(tmp_path / "bad.json", {A: {"pa": 2}, B: {"sb": 3, "pa": 2}, C: {"pa": 2}})
+    seen = {"sleeps": [], "headers": []}
+
+    class _Resp:
+        content = json.dumps(_game(year=2011)).encode("utf-8")
+
+        def raise_for_status(self):
+            return None
+
+    class _Session:
+        def get(self, url, headers=None, timeout=None):
+            seen["headers"].append(headers)
+            return _Resp()
+    import feed_cache
+    monkeypatch.setattr(feed_cache, "SESSION", _Session())
+    monkeypatch.setattr(brm.time, "sleep", lambda s: seen["sleeps"].append(s))
+    blk = brm.build_season(2011, out_dir=out, source=src, hist_source=hist, schedule=_sched([21, 22]),
+                           workers=1, today=AFTER_FREEZE, official_path=bad)
+    assert blk["refetched_games"] == [21, 22]
+    assert seen["sleeps"] == [brm.HIST_FETCH_INTERVAL] * 2 and brm.HIST_FETCH_INTERVAL == 1.0
+    assert all(h == {"User-Agent": fwh.house_user_agent()} for h in seen["headers"])
+    assert sorted(p.name for p in (out / "refetch").iterdir()) == ["21.json", "22.json"]
+    assert not (hist / "refetch").exists()
+
+
+def test_win_prob_hist_is_excluded_from_the_pruner():
+    assert "win_prob_hist" in prune_cache.EXCLUDED
+    assert "win_prob_hist" not in prune_cache.SAFE_CACHES
+    assert "win_prob" in prune_cache.SAFE_CACHES          # the live cache is still pruned
+
+
+# --- the fetcher -----------------------------------------------------------
+def test_fetcher_refuses_the_live_cache_the_corpus_and_the_record(tmp_path):
+    import mlb_leverage
+    for bad in (tmp_path / "win_prob", tmp_path / "pbp_corpus" / "x", tmp_path / "pbp_runners",
+                Path(mlb_leverage.CACHE_DIR)):
+        with pytest.raises(RuntimeError):
+            fwh.check_out_dir(bad)
+    assert fwh.check_out_dir(tmp_path / "win_prob_hist") == tmp_path / "win_prob_hist"
+    assert fwh.HIST_DIR.name == "win_prob_hist" and fwh.HIST_DIR != Path(mlb_leverage.CACHE_DIR)
+    assert fwh.HIST_SEASONS == brm.HIST_SEASONS
+    assert fwh.MIN_INTERVAL >= 1.0
+    import pipeline_vintage
+    assert fwh.house_user_agent() == pipeline_vintage.USER_AGENT and "eephus" in fwh.house_user_agent()
+
+
+class _FakeResp:
+    def __init__(self, status, body=b""):
+        self.status_code = status
+        self.content = body
+
+
+def _complete_plays(n=3):
+    plays = _game(year=2011)[:n]
+    for p in plays:
+        p["homeTeamWinProbability"] = 50.0
+    plays[-1]["homeTeamWinProbability"] = 100.0
+    return plays
+
+
+def _fake_session(answers: dict, calls: list):
+    class _S:
+        def get(self, url, headers=None, timeout=None):
+            pk = int(url.rstrip("/").split("/")[-2])
+            calls.append((pk, headers, timeout))
+            a = answers[pk]
+            if isinstance(a, Exception):
+                raise a
+            return a
+    return _S()
+
+
+def test_fetcher_writes_only_the_history_directory_with_receipts_and_pacing(tmp_path):
+    hist = tmp_path / "win_prob_hist"
+    complete = json.dumps(_complete_plays()).encode("utf-8")
+    partial = json.dumps(_complete_plays()[:-1]).encode("utf-8")
+    hist.mkdir()
+    (hist / "5.json").write_bytes(complete)                      # already on disk, complete, receipted
+    (hist / "6.json").write_bytes(partial)                       # on disk, partial: fetched again
+    (hist / "receipts.jsonl").write_text(json.dumps(
+        {"game_pk": 5, "season": 2011, "date": "2011-04-03", "status": "ok", "bytes": len(complete),
+         "sha256": hashlib.sha256(complete).hexdigest(), "fetched_at": "x", "elapsed_ms": 1}) + "\n",
+        encoding="utf-8")
+    calls, sleeps = [], []
+    answers = {1: _FakeResp(200, complete), 2: _FakeResp(404), 3: _FakeResp(200, partial),
+               4: _FakeResp(200, complete), 6: _FakeResp(200, complete),
+               7: ConnectionError("boom")}
+    sched = {2011: [[1, "2011-04-01"], [2, "2011-04-01"], [3, "2011-04-02"], [4, "2011-04-02"],
+                    [5, "2011-04-03"], [6, "2011-04-03"], [7, "2011-04-04"]]}
+    clock = {"t": 0.0}
+    pacer = fwh.Pacer(1.0, clock=lambda: clock["t"], sleep=lambda s: sleeps.append(s))
+    summ = fwh.run([2011], out_dir=hist, session=_fake_session(answers, calls), pacer=pacer,
+                   user_agent="ua-test", schedules=sched)
+    assert [c[0] for c in calls] == [1, 2, 3, 4, 6, 7]
+    assert all(c[1] == {"User-Agent": "ua-test"} for c in calls)
+    assert sleeps == [1.0] * 5                                   # one second between requests
+    assert sorted(p.name for p in hist.glob("*.json")) == ["1.json", "4.json", "5.json", "6.json",
+                                                            "summary.json"]
+    assert (hist / "6.json").read_bytes() == complete
+    lines = [json.loads(x) for x in (hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [(r["game_pk"], r["status"]) for r in lines][1:] == [(1, "ok"), (2, "no_play"), (3, "partial"),
+                                                                (4, "ok"), (6, "ok"), (7, "error")]
+    assert summ["ok_receipts_before"] == 1 and not list(hist.glob("receipts.jsonl.damaged-*"))
+    ok = [r for r in lines if r["status"] == "ok"]
+    assert all(r["bytes"] == len(complete) and r["sha256"] == hashlib.sha256(complete).hexdigest()
+               and r["fetched_at"] and r["season"] == 2011 and r["date"] for r in ok)
+    blk = summ["seasons"]["2011"]
+    assert blk == {"scheduled": 7, "present_before": 1, "fetched": 3, "no_play": 1, "partial": 1,
+                   "error": 1, "bytes": 3 * len(complete) + len(partial), "present_after": 4,
+                   "complete": False}
+    assert summ["requests"] == 6 and summ["user_agent"] == "ua-test" and summ["min_interval_s"] == 1.0
+    assert not (tmp_path / "win_prob").exists()
+    # the second run resumes: complete payloads are skipped, the rest are asked again
+    calls2 = []
+    answers2 = {2: _FakeResp(404), 3: _FakeResp(200, complete), 7: _FakeResp(200, complete)}
+    summ2 = fwh.run([2011], out_dir=hist, session=_fake_session(answers2, calls2), pacer=pacer,
+                    user_agent="ua-test", schedules=sched)
+    assert [c[0] for c in calls2] == [2, 3, 7]
+    blk2 = summ2["seasons"]["2011"]
+    assert blk2["present_before"] == 4 and blk2["fetched"] == 2 and blk2["no_play"] == 1
+    assert blk2["present_after"] == 6 and blk2["complete"] is True
+    assert len((hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()) == 10
+
+
+def test_fetcher_heals_damaged_receipts_and_refetches_unreceipted_or_altered_payloads(tmp_path):
+    """The 2026-10-14 blue screens: receipts lost for payloads on disk, a receipts
+    file with NUL runs and a cut line, a payload zero-filled under an ok receipt."""
+    hist = tmp_path / "win_prob_hist"
+    hist.mkdir()
+    complete = json.dumps(_complete_plays()).encode("utf-8")
+    other = json.dumps(_complete_plays(2)).encode("utf-8")
+    sha = hashlib.sha256(complete).hexdigest()
+
+    def receipt(pk, **kw):
+        r = {"game_pk": pk, "season": 2011, "date": "2011-04-01", "status": "ok", "bytes": len(complete),
+             "sha256": sha, "fetched_at": "x", "elapsed_ms": 1}
+        r.update(kw)
+        return json.dumps(r, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    (hist / "1.json").write_bytes(complete)                      # complete, receipted: skipped
+    (hist / "2.json").write_bytes(complete)                      # complete, NO receipt: fetched again
+    (hist / "3.json").write_bytes(b"\0" * len(complete))         # zero-filled under an ok receipt
+    (hist / "4.json").write_bytes(other)                         # complete, bytes differ from the receipt
+    (hist / "receipts.jsonl").write_bytes(
+        receipt(1) + b"\n" + receipt(3) + b"\n" + receipt(4) + b"\n" + b"\0" * 40 + b"\n"
+        + receipt(9)[:30] + b"\n" + receipt(8, status="no_play", sha256=None, bytes=0) + b"\n")
+    calls = []
+    answers = {pk: _FakeResp(200, complete) for pk in (2, 3, 4)}
+    answers[8] = _FakeResp(404)
+    pacer = fwh.Pacer(1.0, clock=lambda: 0.0, sleep=lambda s: None)
+    sched = {2011: [[pk, "2011-04-01"] for pk in (1, 2, 3, 4, 8)]}
+    summ = fwh.run([2011], out_dir=hist, session=_fake_session(answers, calls), pacer=pacer,
+                   user_agent="ua", schedules=sched)
+    assert [c[0] for c in calls] == [2, 3, 4, 8]
+    assert summ["ok_receipts_before"] == 3
+    parked = list(hist.glob("receipts.jsonl.damaged-*"))
+    assert len(parked) == 1 and b"\0" in parked[0].read_bytes()
+    lines = (hist / "receipts.jsonl").read_bytes().split(b"\n")
+    assert b"\0" not in (hist / "receipts.jsonl").read_bytes()
+    recs = [json.loads(x) for x in lines if x.strip()]
+    assert [(r["game_pk"], r["status"]) for r in recs] == [(1, "ok"), (3, "ok"), (4, "ok"), (8, "no_play"),
+                                                           (2, "ok"), (3, "ok"), (4, "ok"), (8, "no_play")]
+    assert all((hist / f"{pk}.json").read_bytes() == complete for pk in (1, 2, 3, 4))
+    blk = summ["seasons"]["2011"]
+    assert blk["present_before"] == 1 and blk["fetched"] == 3 and blk["no_play"] == 1 and blk["complete"]
+    # a clean file is left alone: the third run heals nothing and fetches nothing but the 404
+    calls2 = []
+    fwh.run([2011], out_dir=hist, session=_fake_session({8: _FakeResp(404)}, calls2), pacer=pacer,
+            user_agent="ua", schedules=sched)
+    assert [c[0] for c in calls2] == [8] and len(list(hist.glob("receipts.jsonl.damaged-*"))) == 1
+    assert fwh.heal_receipts(tmp_path / "nowhere") == {}
+
+
+def test_fetcher_limit_caps_the_requests_of_one_run(tmp_path):
+    hist = tmp_path / "win_prob_hist"
+    complete = json.dumps(_complete_plays()).encode("utf-8")
+    calls = []
+    answers = {pk: _FakeResp(200, complete) for pk in (1, 2, 3)}
+    pacer = fwh.Pacer(1.0, clock=lambda: 0.0, sleep=lambda s: None)
+    summ = fwh.run([2020], out_dir=hist, session=_fake_session(answers, calls), pacer=pacer,
+                   user_agent="ua", limit=2, schedules={2020: [[1, "d"], [2, "d"], [3, "d"]]})
+    assert [c[0] for c in calls] == [1, 2] and summ["requests"] == 2
+    assert summ["seasons"]["2020"]["present_after"] == 2 and not summ["seasons"]["2020"]["complete"]
+    with pytest.raises(SystemExit):
+        fwh._parse_seasons("2018")
+    assert fwh._parse_seasons("2011-2017,2020") == list(fwh.HIST_SEASONS)

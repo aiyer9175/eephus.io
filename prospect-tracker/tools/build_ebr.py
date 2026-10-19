@@ -77,6 +77,35 @@ BUG_BANDS = {
 
 ISOLATED_PREFIXES = ("efv_", "proj_", "fa_", "arb_", "betting_")
 
+#: The FanGraphs basis of each season's counterparts (EBR_GATE.md parts 4 and 9.2).
+#: From 2016 the served BsR is wSB plus Savant's runner XB runs and carries no
+#: double-play part; through 2015 it is wSB + UBR + wGDP, so eBR's extra-base
+#: part is read against UBR and its double-play part against wGDP there: a
+#: different construct from the tested one, marked per season.
+FG_BASIS_FROM_2016 = "fg_bsr_wsb_plus_savant_xb"
+FG_BASIS_PRE_2016 = "fg_bsr_wsb_ubr_wgdp"
+FG_BASIS_FIRST_SEASON = 2016
+#: wGdp is the double-play comparator through 2024 (part 4); 2025 on it is 0.
+FG_WGDP_LAST_SEASON = 2024
+
+
+def fg_basis(season: int) -> str:
+    return FG_BASIS_FROM_2016 if int(season) >= FG_BASIS_FIRST_SEASON else FG_BASIS_PRE_2016
+
+
+def fg_counterparts(season: int, fg: dict | None) -> dict:
+    """{sb, xb, dp} of one FanGraphs row on the season's basis, None where the
+    feed value is missing: sb wSb; xb baseRunning - wSb (2016 on) or ubr (through
+    2015); dp 0 (2016 on) or wGdp (through 2015)."""
+    fg = fg or {}
+    wsb, bsr = fg.get("wSb"), fg.get("baseRunning")
+    if int(season) >= FG_BASIS_FIRST_SEASON:
+        xb = (bsr - wsb) if (bsr is not None and wsb is not None) else None
+        dp = 0.0 if bsr is not None else None
+    else:
+        xb, dp = fg.get("ubr"), fg.get("wGdp")
+    return {"sb": wsb, "xb": xb, "dp": dp}
+
 
 def _now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
@@ -254,6 +283,9 @@ def agreement_block(season: int, rows: list, comp: dict) -> dict:
             dp = r[ix["dp"]]
             e = r[ix["ebr"]]
             fg = comp["fg"].get(mid) or {}
+            fgc = fg_counterparts(season, fg)
+            fg_sb_xb = ((fgc["sb"] + fgc["xb"]) if (fgc["sb"] is not None and fgc["xb"] is not None)
+                        else None)
             br = comp["bref"].get(mid) or {}
             sv = comp["savant"].get(mid) or {}
 
@@ -262,7 +294,11 @@ def agreement_block(season: int, rows: list, comp: dict) -> dict:
                     return
                 pairs[name][0].append(a)
                 pairs[name][1].append(b)
-            add("sb_xb_vs_fg_bsr", sb + xb, fg.get("baseRunning"))
+            # On the 2016-on basis fg_sb_xb is baseRunning itself; through 2015 it is
+            # wSb + ubr (BsR without its wGdp part), the like-for-like counterpart.
+            add("sb_xb_vs_fg_bsr", sb + xb, fg_sb_xb)
+            if season < FG_BASIS_FIRST_SEASON:
+                add("ebr_vs_fg_bsr_full", e, fg.get("baseRunning"))
             if br:
                 add("ebr_vs_bref_br_dp", e, br["runs_br"] + br["runs_dp"])
                 add("dp_vs_bref_dp", dp, br["runs_dp"])
@@ -271,7 +307,7 @@ def agreement_block(season: int, rows: list, comp: dict) -> dict:
             add("sb_runs_vs_fg_wsb", sb, fg.get("wSb"))
             add("epk_vs_fg_wsb", r[ix["pk"]], fg.get("wSb"))
             add("xb_vs_savant_xb", xb, sv.get("xb"))
-            if 2018 <= season <= 2024:
+            if season <= FG_WGDP_LAST_SEASON:
                 add("dp_vs_fg_wgdp", dp, fg.get("wGdp"))
             add("xb_opps_vs_savant_n_moved_xb", r[ix["opp_xb"]], sv.get("n_xb"))
             if floor == 300 and r[ix["pa"]] > 0:
@@ -302,7 +338,7 @@ def agreement_block(season: int, rows: list, comp: dict) -> dict:
         stat = blk.get(f"pa{floor}", {}).get(comp_name)
         bands[name] = {"value": (stat or {}).get(kind), "bound": [op, bound],
                        "pass": band_check(stat, kind, op, bound)}
-    return {"by_floor": blk, "bug_bands": bands}
+    return {"by_floor": blk, "bug_bands": bands, "fg_basis": fg_basis(season)}
 
 
 def ewar_link_block(season: int, rows: list, comp: dict) -> dict:
@@ -315,18 +351,23 @@ def ewar_link_block(season: int, rows: list, comp: dict) -> dict:
     s_dp = sum(r[ix["dp"]] for r in rows)
     fg = comp.get("fg") or {}
     br = comp.get("bref") or {}
-    f_wsb = sum((v.get("wSb") or 0.0) for v in fg.values())
-    f_xb = sum(((v.get("baseRunning") or 0.0) - (v.get("wSb") or 0.0)) for v in fg.values())
+    cps = [fg_counterparts(season, v) for v in fg.values()]
+    f_wsb = sum((c["sb"] or 0.0) for c in cps)
+    f_xb = sum((c["xb"] or 0.0) for c in cps)
+    f_dp = sum((c["dp"] or 0.0) for c in cps)
     f_gdp = sum((v.get("wGdp") or 0.0) for v in fg.values())
+    pre = season < FG_BASIS_FIRST_SEASON
     b_br = sum(v["runs_br"] for v in br.values())
     b_dp = sum(v["runs_dp"] for v in br.values())
     r4 = lambda v: round(v, 3)  # noqa: E731
     return {"ebr_sums": {"sb": r4(s_sb), "xb": r4(s_xb), "dp": r4(s_dp)},
-            "fangraphs": {"counterparts": {"sb": "wSb", "xb": "baseRunning - wSb",
-                                           "dp": ("0 (no double-play part in the served BsR since 2016)"
-                                                  if season >= 2016 else "wGdp")},
+            "fg_basis": fg_basis(season),
+            "fangraphs": {"counterparts": {"sb": "wSb",
+                                           "xb": ("ubr" if pre else "baseRunning - wSb"),
+                                           "dp": ("wGdp" if pre else
+                                                  "0 (no double-play part in the served BsR since 2016)")},
                           "sb_minus": r4(s_sb - f_wsb), "xb_minus": r4(s_xb - f_xb),
-                          "dp_minus": r4(s_dp - (0.0 if season >= 2016 else f_gdp)),
+                          "dp_minus": r4(s_dp - f_dp),
                           "published_wgdp_sum_reference": r4(f_gdp), "n_rows": len(fg)},
             "baseball_reference": {"counterparts": {"sb_xb": "runs_br", "dp": "runs_dp"},
                                    "sb_xb_minus": r4(s_sb + s_xb - b_br), "dp_minus": r4(s_dp - b_dp),
@@ -486,7 +527,8 @@ def build(*, record: Path = RECORD, out_dir: Path = OUT_DIR, frozen_dir: Path = 
                           "dp": lg["dp"]}
         rec = (mrec.get(str(s)) or {}).get("receipts") or {}
         identity[str(s)] = {
-            "complete": complete,
+            "complete": complete, "fg_basis": fg_basis(s),
+            "record_source": (mrec.get(str(s)) or {}).get("source"),
             "I1": rec.get("I1"), "I2": rec.get("I2"), "I3": rec.get("I3"),
             "I4": {"sums": i4, "pass": all(abs(v) <= I4_TOL for v in i4.values())},
             "I5": {"cells": len(table), "monotone": True, "K": K, "sha256": tsha,
@@ -534,6 +576,7 @@ def build(*, record: Path = RECORD, out_dir: Path = OUT_DIR, frozen_dir: Path = 
         "schema": 1, "model": "ebr", "ebr_version": ebr.EBR_VERSION, "generated_at": gen,
         "live_built_at": (man or {}).get("built_at"), "gate": GATE_DOC,
         "seasons": sorted(data),
+        "fg_basis": {str(s): fg_basis(s) for s in sorted(data)},
         "stamps": {"K": K, "kappa": ebr.KAPPA, "pool_seasons": list(ebr.POOL_SEASONS),
                    "pool_sha256": pool["sha256"], "record_built_at": (man or {}).get("built_at"),
                    "re24_sha256": {s: re24[s]["sha256"] for s in re24}},
@@ -573,15 +616,16 @@ def write(substrate: dict, ev: dict, out_dir: Path = OUT_DIR) -> None:
 
 
 def _parse_seasons(s: str):
+    """A range skips 2020 (the 60-game season); the explicit token 2020 keeps it."""
     out = []
     for part in s.split(","):
         part = part.strip()
         if "-" in part:
             a, b = part.split("-")
-            out.extend(range(int(a), int(b) + 1))
+            out.extend(x for x in range(int(a), int(b) + 1) if x != 2020)
         elif part:
             out.append(int(part))
-    return [x for x in out if x != 2020]
+    return out
 
 
 def main(argv=None) -> int:

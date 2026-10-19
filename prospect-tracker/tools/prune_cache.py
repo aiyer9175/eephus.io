@@ -95,7 +95,8 @@ VERSIONED_CACHES: tuple[str, ...] = ("statcast_metrics", "zone_metrics")
 # case: derived from ``win_prob`` and ``game_feeds``, both of which are in
 # SAFE_CACHES, and its minor-league copy is the only one left once feed_cache's
 # monthly prune reaches the 2023 to 2026 feeds (EBR_GATE.md part 2.2).
-EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus", "pbp_runners")
+EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus", "pbp_runners",
+            "win_prob_hist")
 
 
 def free_gb(path: Path | None = None) -> float:
