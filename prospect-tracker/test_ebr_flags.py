@@ -3,8 +3,8 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""The two Baserunning flags stay False until the flip (task EBR_2_BUILD_DARK;
-integration.md 5; plan Part 8 8.A, class 2).
+"""The two Baserunning flags are True after the flip (task EBR_2F_FLIP; built
+dark by EBR_2_BUILD_DARK; integration.md 5; plan Part 8 8.A, class 2).
 
 MLBSTATS_BASERUNNING_LIVE gates the /mlbstats/ tab and the exporter's output
 path (data/ only while on, else .cache/baserunning/preview/); CARD_BASERUNNING_LIVE
@@ -21,9 +21,9 @@ import baserunning_export as bre
 ROOT = Path(__file__).parent
 
 
-def test_both_flags_are_false_until_the_flip():
-    assert bre.MLBSTATS_BASERUNNING_LIVE is False
-    assert bre.CARD_BASERUNNING_LIVE is False
+def test_both_flags_are_true_after_the_flip():
+    assert bre.MLBSTATS_BASERUNNING_LIVE is True
+    assert bre.CARD_BASERUNNING_LIVE is True
 
 
 def test_the_flags_flip_together():
@@ -32,17 +32,16 @@ def test_the_flags_flip_together():
     assert bre.MLBSTATS_BASERUNNING_LIVE == bre.CARD_BASERUNNING_LIVE
 
 
-def test_the_dark_exporter_writes_previews_only():
-    assert bre.out_dir() == bre.PREVIEW_DIR
-    assert ".cache" in str(bre.out_dir()).replace("\\", "/")
+def test_the_live_exporter_writes_data_and_the_four_files_exist():
+    assert bre.out_dir() == bre.DATA_DIR
     for name in (bre.OUT_NAME, bre.HISTORY_NAME, bre.SUBSTRATE_NAME, bre.EVAL_NAME):
-        assert not (ROOT / "data" / name).exists(), f"data/{name} exists while the flag is False"
+        assert (ROOT / "data" / name).exists(), f"data/{name} is missing after the flip"
 
 
-def test_the_served_shell_carries_no_baserunning_tab_while_dark():
+def test_the_served_shell_carries_the_baserunning_tab_after_the_flip():
     shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
-    assert 'data-mlbsection="baserunning"' not in shell
-    assert "mlbstats-section-baserunning" not in shell
+    assert 'data-mlbsection="baserunning"' in shell
+    assert "mlbstats-section-baserunning" in shell
     assert 'data-mlbsection="defense"' in shell and 'data-mlbsection="leverage"' in shell
 
 

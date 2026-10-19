@@ -6191,7 +6191,7 @@
     // BEM+ is wired here and offered only once the payload's bem_plus block
     // says the gate (EBR_GATE.md part 5.8) recorded a PASS; brCols() drops it
     // otherwise, so no header, cell or view ever shows it before then.
-    { key: "bem_plus", label: "BEM+", term: "bem_plus", fmt: remCell, num: true, desc: true, isRem: true,
+    { key: "bem_plus", label: "BEM+", fmt: remCell, num: true, desc: true, isRem: true,
       title: "100 = pool average; 10 points = 1 SD. A sample-shrunk baserunning rate on the z ruler, served only on its registered gate's PASS." },
   ];
   function brBemServed(d) { return !!(d && d.bem_plus && d.bem_plus.served === true); }
@@ -6345,6 +6345,15 @@
       + "</div>";
   }
 
+  // The one comparative sentence the registered look licenses (the payload's
+  // repeat_copy, derived from the look's dispositions); absent when none is.
+  function brRepeatLine() {
+    var c = (brData && brData.repeat_copy) || {};
+    var bits = [];
+    if (c.eBR) bits.push("The steal and extra-base part of eBR " + esc(c.eBR) + ".");
+    if (c.DP) bits.push("The double-play part of eBR " + esc(c.DP) + ".");
+    return bits.length ? " " + bits.join(" ") : "";
+  }
   function brExplainer() {
     var v = (brData && brData.values) || {};
     var be = num(v.breakeven_sb2);
@@ -6357,7 +6366,8 @@
       + "Descriptive: what happened this season, not a forecast."
       + (be != null ? " This season's run-expectancy " + gloss("break-even", "steal_break_even") + " for a steal of second is "
           + (be * 100).toFixed(1) + " percent." : "")
-      + ' Whether sending a runner paid in a given game state is priced on <a href="' + BR_MGMT_HREF + '">In-Game Management</a>.';
+      + ' Whether sending a runner paid in a given game state is priced on <a href="' + BR_MGMT_HREF + '">In-Game Management</a>.'
+      + brRepeatLine();
     return explainer("ebr", html);
   }
   // The source dates line, read from the payload's source blocks, and the

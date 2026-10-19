@@ -191,7 +191,7 @@ def registry_rows(bem_plus: str | None, look_notes: str) -> list[dict]:
             "model_id": "bem_plus",
             "summary": ("Validated on its registered gate (EBR_GATE.md 5.8): see the eval for the forward gaps against sprint speed, stolen bases, starts on base and the raw rate."
                         if passed else
-                        "Measured on its registered gate (EBR_GATE.md 5.8) and NOT adopted: a PASS clause failed, so BEM+ is not served and the board stays descriptive."),
+                        "Measured on its registered gate (EBR_GATE.md 5.8) and not adopted: a PASS clause failed, so BEM+ is not served and the board stays descriptive."),
             "surface": "/mlbstats/ Baserunning tab, BEM+ column" if passed else "not served (the column is wired and withheld)",
             "predicts": "baserunning-rate skill: a sample-shrunk rate of the site's eBR per chance, 100 + 10z over runners with 100+ starts on base",
             "champion": "bem_plus per EBR_GATE.md 5.8 and baserunning.md 2.6: per-part rates shrunk toward zero by constants fitted on the 2018-2019 and 2021-2022 pairs, mixed at league chances per 100 starts on base, 100 + 10z over the 100-starts pool",
@@ -201,8 +201,10 @@ def registry_rows(bem_plus: str | None, look_notes: str) -> list[dict]:
             "verdict": "validated" if passed else "provisional",
             **({} if passed else {"provisional_kind": "measured_not_adopted"}),
             "notes": ("Read once in the outcome look (EBR_LOOK, " + GATE + " part 12.1). " + look_notes
-                      + " May claim only: a steadier read of a runner's baserunning than one season's runs, and a better guide to next "
-                        "season's eBR rate than his sprint speed or his steal count. Never a WAR input, never an eFV feature, never read by "
+                      + (" May claim only: a steadier read of a runner's baserunning than one season's runs, and a better guide to next "
+                         "season's eBR rate than his sprint speed or his steal count. " if passed else
+                         " Measured, not adopted: no claim of skill or of a forward guide is made for it. ")
+                      + "Never a WAR input, never an eFV feature, never read by "
                         "betting or projections (EBR-Q3 (a)).")})
     return rows
 
@@ -213,6 +215,7 @@ MODEL_GLOSSARY_LINES = [
     '    "team_ebr": ["team_ebr"],',
 ]
 MODEL_GLOSSARY_BEM = '    "bem_plus": ["bem_plus"],'
+MODEL_GLOSSARY_BEM_FAIL = '    "bem_plus": "internal",'
 
 
 def _read(path: Path):
@@ -279,7 +282,7 @@ def apply_model_glossary(path: Path, bem_plus: str | None) -> list[str]:
     lf = text.replace("\r\n", "\n")
     anchor = '    "pbp_corpus_base_state": "internal",\n'
     assert lf.count(anchor) == 1, "MODEL_GLOSSARY anchor moved"
-    lines = list(MODEL_GLOSSARY_LINES) + ([MODEL_GLOSSARY_BEM] if bem_plus else [])
+    lines = list(MODEL_GLOSSARY_LINES) + ([MODEL_GLOSSARY_BEM if bem_plus.upper() == "PASS" else MODEL_GLOSSARY_BEM_FAIL] if bem_plus else [])
     add = [ln for ln in lines if (ln + "\n") not in lf]
     if not add:
         return []

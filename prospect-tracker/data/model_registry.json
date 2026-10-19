@@ -6781,6 +6781,58 @@
    "last_checked": "2026-10-16",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "pbp_runner_moves",
+   "summary": "Measured: the 2026 runner record's SB 3,289 and CS 984 equal MLB's official counts exactly on every player; GIDP 3,138 against 3,145 (0.2 percent). Provisional, measurement only.",
+   "surface": "Runner record in the local cache (.cache/pbp_runners); the substrate eBR, the Baserunning board and the eBR eval read",
+   "predicts": "Nothing forward. One row per runner movement per play from MLB's win-probability payloads, with the pre-play base-out state from the corpus walk (reconstruct_plays), steals keyed on movementReason",
+   "champion": "tools/build_runner_moves.py: one state walk shared with the play corpus, movements applied net per runner and play index, incremental by game_pk, completed seasons frozen, final regular-season games only",
+   "baseline": "MLB StatsAPI official season hitting lines (playerPool=All): SB, CS and GIDP per player and league, which the record is scored against and never seeded from",
+   "metric": "EBR_GATE.md I1 to I3: league and per-player SB and CS exact; GIDP within 0.5 percent of the league total and exact for 97 percent or more of players with any; every final regular-season game of the schedule in the record",
+   "eval_artifact": ".cache/pbp_runners/manifest.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "2026-10-09 (EBR_2A_CORE_DARK) and the 2026-10-14 preview build (EBR_2_BUILD_DARK): seasons 2018, 2019 and 2021 to 2026 (2,429 of 2,430 games of 2026 at the build). I1 on 2026: SB 3,289 = 3,289 and CS 984 = 984 keyed on movementReason; GIDP 3,138 against the official 3,145 (0.2 percent). I2: SB and CS exact for every player with any; GIDP exact for 98.66 percent of players with any. the form of pbp_corpus_base_state: a reconstruction scored against official counts. Lives in .cache/pbp_runners, never .cache/pbp_corpus, whose manifest is a registered artifact with exactly three tables; pbp_runners is in tools/prune_cache.EXCLUDED. Display only: no fitted consumer and no betting module reads it (EBR_GATE.md I9)."
+  },
+  {
+   "model_id": "ebr",
+   "summary": "Descriptive: runs above average on the bases from MLB's play-by-play on per-season RE24, SB plus XB plus DP runs, each zero-sum across the league. Measurement only.",
+   "surface": "/mlbstats/ Baserunning tab (eBR, SB runs, XB runs, DP runs; the history board); the MLB player card's Baserunning section (Hitting tab)",
+   "predicts": "nothing forward; DESCRIPTIVE runs above average on the bases from MLB's per-runner play-by-play on per-season RE24: SB runs + XB runs + DP runs",
+   "champion": "ebr_v1 (docs/ebr-2026-09-30/EBR_GATE.md part 2): per-season RE24 shrunk toward the frozen 2018 to 2026 pool (K by the method of moments, clipped to [500, 5000]); steals, caught stealing and pickoffs priced at their own state on movementReason; four advancement classes with batted-ball context and hierarchical backoff (kappa 20); double plays priced by base-out state; every part centred to zero per season over every runner",
+   "baseline": "n/a, descriptive; same-season agreement with FanGraphs BsR (via MLB's feed), Baseball-Reference runs_br + runs_dp and Savant's baserunning run value is measured and published in the eval as aggregate r only, never a gate on validity (part 4 bug bands)",
+   "metric": "descriptive: official-count reproduction (I1, I2), zero league sums (I4), monotone RE24 (I5), row identity (I6), coverage (I7), determinism (I8), isolation (I9); concurrent agreement r at PA 300+ and 502+",
+   "eval_artifact": "data/ebr_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Registered 2026-10-08 in docs/ebr-2026-09-30/EBR_GATE.md before any year-to-year, split-half or forward number of eBR existed; built dark by EBR_2A_CORE_DARK (core, previews) and EBR_2_BUILD_DARK (the section and card, previews); served by EBR_2F_FLIP. The displayed WAR stays eWAR v2 (EPOCH-Q4): eBR enters no training label, fitted artifact, priced number, board rank or betting input, and eWAR v3 (its own row, EBR_3_EWAR_V3) is a display column beside eWAR v2. Never a forecast: no copy calls it accurate, better than BsR or a skill. Outcome look 2026-10-19 (owner-waived early read, EW3-5): Leg E RESOLVED_LOSS (twin RESOLVED_LOSS) against FanGraphs' BsR and E-DP RESOLVED_LOSS (twin RESOLVED_LOSS) against Baseball-Reference's double-play runs; guards pass; no part flagged NOISE; BEM+ FAIL, not served; neither outcome part enters eWAR v3. Dispositions in data/ebr_eval.json; the persistence numbers stay in docs/ebr-2026-09-30/EBR_GATE.md part 12.1."
+  },
+  {
+   "model_id": "team_ebr",
+   "summary": "Descriptive: the sum of a club's runners' eBR, club today on the tab and earned basis in the payload, where it sums to zero across the league. Provisional, measurement only.",
+   "surface": "/mlbstats/ Baserunning tab, Team Baserunning sub-tab (Team eBR and its three parts); the Teams tab's team_ebr join after the flip",
+   "predicts": "nothing forward; DESCRIPTIVE sum of a club's runners' eBR on two club bases (roster today shown, earned in the payload)",
+   "champion": "the sum of the season values of the club's runners (bullpen_export.TEAM_BASIS current_roster), with the earned basis credited to the club he ran for through the runner record's batting club and the substrate's stints",
+   "baseline": "n/a, descriptive; realized runs, not a rank of how a club chose to run (the /management/ gate found club decision value a bounded null)",
+   "metric": "descriptive: the earned basis sums to zero across the league every season (the contract test); every club resolved",
+   "eval_artifact": "data/ebr_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "A roll-up of the ebr row, docs/ebr-2026-09-30/EBR_GATE.md 6.4. No eWAR column on the sub-tab (the Team Defense rule). Never summed with, combined with or shown as one number with the /management/ decision value (part 0, Not the Management number)."
+  },
+  {
+   "model_id": "bem_plus",
+   "summary": "Measured on its registered gate (EBR_GATE.md 5.8) and not adopted: a PASS clause failed, so BEM+ is not served and the board stays descriptive.",
+   "surface": "not served (the column is wired and withheld)",
+   "predicts": "baserunning-rate skill: a sample-shrunk rate of the site's eBR per chance, 100 + 10z over runners with 100+ starts on base",
+   "champion": "bem_plus per EBR_GATE.md 5.8 and baserunning.md 2.6: per-part rates shrunk toward zero by constants fitted on the 2018-2019 and 2021-2022 pairs, mixed at league chances per 100 starts on base, 100 + 10z over the 100-starts pool",
+   "baseline": "sprint speed, stolen bases, starts on base (playing time) and the raw unshrunk eBR rate (its parent), each in the predictor season",
+   "metric": "forward Spearman Y to Y+1 eBR rate per 100 starts on base, predictor seasons 2022 to 2024, 2,000 player-clustered season-stratified bootstrap replicates (DEM+ convention v2), PASS only with lo95 above 0 against the three baselines and at least -0.01 against the parent, the permuted twin failing the stolen-base clause",
+   "eval_artifact": "data/ebr_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "notes": "Read once in the outcome look (EBR_LOOK, docs/ebr-2026-09-30/EBR_GATE.md part 12.1). Outcome look 2026-10-19 (owner-waived early read, EW3-5): Leg E RESOLVED_LOSS (twin RESOLVED_LOSS) against FanGraphs' BsR and E-DP RESOLVED_LOSS (twin RESOLVED_LOSS) against Baseball-Reference's double-play runs; guards pass; no part flagged NOISE; BEM+ FAIL, not served; neither outcome part enters eWAR v3. Dispositions in data/ebr_eval.json; the persistence numbers stay in docs/ebr-2026-09-30/EBR_GATE.md part 12.1. Measured, not adopted: no claim of skill or of a forward guide is made for it. Never a WAR input, never an eFV feature, never read by betting or projections (EBR-Q3 (a))."
   }
  ],
  "problems": []
