@@ -2269,6 +2269,41 @@ def weights_report(main: dict) -> dict:
     return out
 
 
+def frames_full(cache_dir: Path, *, B_: int = B, log=print) -> dict:
+    """Each development frame whole (no keep_lv de-duplication: vm_dev's 830 rows, not the 234
+    the pooled estimand keeps), X3 against consensus, the served eFV, v5 COMBINED and V2,
+    player- and club-clustered; added to the artifact after the read (the read's own per-frame
+    block sits on the de-duplicated pool). Selects nothing and decides nothing."""
+    import efv_v3_backtest as BT
+    if not OUT_PATH.exists():
+        raise RuntimeError("the read has not run")
+    doc = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+    if doc.get("per_frame_full"):
+        raise RuntimeError("the whole-frame block exists")
+    R = Run(cache_dir, log=log)
+    comp, _built, T, inp, folds, _ets, _g = R.prep()
+    runs = {"x3": R.pipeline("main", T, folds, _ets, **RUN_SPECS["main"])}
+    rows_all = pool_rows(T, comp, inp, runs)
+    comps = (("x3_vs_consensus", "x3", CONS), ("x3_vs_served", "x3", SERVED),
+             ("x3_vs_v5c", "x3", V5C_KEY), ("x3_vs_v2", "x3", V2_KEY),
+             ("served_vs_consensus", SERVED, CONS))
+    out = {}
+    for fid in FRAMES:
+        fr = [r for r in rows_all if r["frame"] == fid]
+        res = read_legs(fr, comps, B_=B_, seed=SEED, log=log)
+        out[fid] = {"n": res["n"], "n_by_side": res["n_by_side"],
+                    "window": [min(r["year"] for r in fr), max(r["year"] for r in fr)],
+                    "frame_version": BT.FRAME_VERSION[fid],
+                    "legs": {k: _leg(v) for k, v in res["legs"].items()}}
+    doc["per_frame_full"] = dict(out, note=(
+        "computed after the read (2026-10-19): the read's per-frame block reads each frame on the "
+        "keep_lv pool, where vm_dev keeps 234 rows; this block reads each development frame whole "
+        "(lv_dev 2,862 rows, vm_dev 830), the frames the progress ledger rows describe; it decides "
+        "nothing"))
+    BT.write_doc(doc, OUT_PATH)
+    return doc
+
+
 def _leg(leg: dict) -> dict:
     out = {k: leg.get(k) for k in ("a", "b", "scope", "n", "w_a", "w_b", "delta")}
     for cl in ("player", "club"):
@@ -2468,24 +2503,32 @@ def ledger_rows(doc: dict, *, artifact: Path, date_: str, now_iso: str) -> list[
         meta = P.FRAMES[fid]
         if meta["role"] != "development":
             raise ValueError(f"{fid} is registered as {meta['role']}, not development")
-        legs = doc["per_frame"][fid]
+        blk = (doc.get("per_frame_full") or {}).get(fid)
+        legs = blk["legs"] if blk else doc["per_frame"][fid]
         est = legs["x3_vs_consensus|both"]
         srv = legs["x3_vs_served|both"]
         raters = {"efv_x3_pooled": {"spearman": est.get("w_a"), "auc": None, "n": est.get("n")},
                   "prospx_consensus": {"spearman": est.get("w_b"), "auc": None, "n": est.get("n")},
                   "efv": {"spearman": srv.get("w_b"), "auc": None, "n": srv.get("n")}}
         deltas = {}
-        for name, leg in (("vs_prospx_consensus", est), ("vs_efv_served", srv)):
+        for name, comp_, leg in (("vs_prospx_consensus", "x3_vs_consensus", est),
+                                 ("vs_efv_served", "x3_vs_served", srv)):
             pl = leg.get("player") or {}
-            deltas[name] = {"spearman": {"delta": leg.get("delta"), "ci95": pl.get("ci95"),
+            ci = pl.get("ci95")
+            reading = ("development only; CI95 spans zero" if ci and ci[0] <= 0 <= ci[1]
+                       else "development only; CI95 " + ("above" if ci and ci[0] > 0 else "below")
+                       + " zero")
+            deltas[name] = {"spearman": {"delta": leg.get("delta"), "ci95": ci,
                                          "mde95": pl.get("mde95"), "mde95_estimator": "E_cond",
-                                         "ci95_estimator": "E_cond", "resolvable": None,
-                                         "reading": None,
-                                         "key": f"per_frame.{fid}.{leg.get('a')}_vs_{leg.get('b')}"}}
-        nbs = None
+                                         "ci95_estimator": "E_cond, paired, player-clustered",
+                                         "resolvable": None, "reading": reading,
+                                         "key": (f"per_frame_full.{fid}.legs.{comp_}|both" if blk
+                                                 else f"per_frame.{fid}.{comp_}|both")}}
+        nbs = (blk or {}).get("n_by_side")
         row = {"run_id": None, "date": date_, "trigger": "efv_change", "model_id": LEDGER_MODEL_ID,
-               "model_version": dict(mv), "frame": fid, "frame_version": None,
-               "role": meta["role"], "tilted": bool(meta["tilted"]), "window": None,
+               "model_version": dict(mv), "frame": fid,
+               "frame_version": (blk or {}).get("frame_version"),
+               "role": meta["role"], "tilted": bool(meta["tilted"]), "window": (blk or {}).get("window"),
                "n": est.get("n"), "n_by_side": nbs, "raters": raters, "deltas": deltas,
                "resolvable": None,
                "verdict": (f"DEVELOPMENT ONLY (the pooled model X3): within vs PROSPX consensus "
@@ -2530,6 +2573,8 @@ def main(argv=None) -> int:
     ap.add_argument("--cache", default=None, help="the scratch directory of the cached builds")
     ap.add_argument("--B", type=int, default=B)
     ap.add_argument("--ledger", action="store_true", help="append the two development rows")
+    ap.add_argument("--frames-full", action="store_true",
+                    help="after the read: each development frame whole, into the artifact")
     ap.add_argument("--ledger-path", default=None)
     a = ap.parse_args(argv)
 
@@ -2553,6 +2598,13 @@ def main(argv=None) -> int:
         return 2
     if a.prep:
         Run(Path(a.cache), log=log).prep()
+        return 0
+    if a.frames_full:
+        doc = frames_full(Path(a.cache), B_=int(a.B), log=log)
+        for fid in FRAMES:
+            leg = doc["per_frame_full"][fid]["legs"]["x3_vs_consensus|both"]
+            log(f"{fid} whole: n {leg['n']} X3 minus consensus {leg['delta']} "
+                f"ci95 {(leg.get('player') or {}).get('ci95')}")
         return 0
     if a.runs:
         run_named(Path(a.cache), [n for n in a.runs.split(",") if n], log=log)

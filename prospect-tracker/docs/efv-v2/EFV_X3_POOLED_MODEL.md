@@ -517,4 +517,155 @@ question; the flip question states that the forward clause is still open.
 
 ## 13. The numbers (appended by the run)
 
+Run 2026-10-19: `python efv_x3_pooled.py --run --cache <scratch>` once at a362cf29 (the module
+committed before the read), artifact `data/_labs/efv_x3/efv_x3_pooled.json` (role development,
+adjudicates nothing), label fwar@2026-10-02-0341299c20ec resolved through 2026. Every pipeline
+run (X3, the five component nulls, the planted rerun, the sensitivity and the 20 permuted reruns)
+was fitted and cached before the statistic; the statistic was computed once.
+
+### 13.1 Receipts
+
+- Comparator parity (7.2) holds: v5 COMBINED 0.1685 lv_dev and 0.3611 vm_dev, RT 0.1683 and
+  0.3937, each equal to its committed read.
+- Instances (2.1): LV 5,962 (the re-fit's pool, hitters 3,053, pitchers 2,909; 183 pool rows
+  without a re-weight context were given one, their sub-drivers read by
+  `etools.attach_candidates`), MTX 2,887, PIN 1,025, LIVE 1,996. Guards (11): no LV instance
+  outside 2011 to 2019 or at 2020 or 2021, no PIN or MTX instance at 2025 or later.
+- No look-ahead (11): 37,373 input-date checks pass; the latest input read by an instance kind is
+  2019-02-12 (LV), 2022-08-01 (MTX), 2023-04-26 (PIN), 2026-10-01 (LIVE).
+- The coverage rule (3.1) dropped eSEL and eBAT in every fold (their consensus grades begin on
+  the 2022 boards), the hitter draft pick in the folds through vm_dev 2018, the hitter raw power
+  grade in the same folds, the pitcher draft pick in the folds through vm_dev 2019, and P/PA in
+  vm_dev 2017 only. Hitters kept 18 to 22 features, pitchers 24 to 25.
+- Nested selection (5) chose LightGBM in the six folds through vm_dev 2019 (lv_dev 2017 50
+  trees, 2018 200, 2019 50; vm_dev 2017 to 2019 200) and the ridge at lambda 100 (the largest)
+  in vm_dev 2020 to 2023.
+
+### 13.2 The estimand (7, 8)
+
+The pool: 3,096 rows after keep_lv (3,692 before; 1,987 players), 3,062 in the ten groups of 20
+or more rows (lv_dev hitters and pitchers 2017 to 2019, vm_dev hitters and pitchers 2022 and
+2023). Within Spearman W: X3 0.1810, PROSPX consensus 0.2011, served eFV 0.2041, v5 COMBINED
+0.1908, V2 0.1892.
+
+| Comparison (pooled, both sides) | Delta | CI95 player | Lower bound player / club | mde95 |
+|---|---|---|---|---|
+| X3 minus consensus (D) | -0.0201 | -0.047 to +0.0077 | -0.043 / -0.042 | 0.0231 |
+| X3 minus served eFV | -0.0231 | -0.0505 to +0.0051 | -0.046 / -0.053 | 0.0234 |
+| X3 minus v5 COMBINED | -0.0098 | -0.0442 to +0.0246 | -0.039 / -0.048 | 0.029 |
+| X3 minus V2 | -0.0082 | -0.038 to +0.0227 | -0.033 / -0.035 | 0.0254 |
+| served eFV minus consensus | +0.0030 | -0.013 to +0.0193 | -0.011 / -0.009 | 0.0136 |
+| X3-ridge minus consensus | -0.0270 | -0.0654 to +0.0105 | | |
+| X3-gbm minus consensus | -0.0164 | -0.0433 to +0.0117 | | |
+| W3 ridge / boosted minus consensus | -0.0243 / -0.0330 | -0.0604 to +0.0113 / -0.0563 to -0.0096 | | |
+| L6 ridge / boosted minus consensus | -0.0213 / -0.0098 | -0.0572 to +0.0137 / -0.030 to +0.0106 | | |
+
+By side, X3 minus consensus: hitters -0.0181 (CI95 -0.0441 to +0.0076), pitchers -0.0222
+(-0.0711 to +0.0272); X3 minus served: hitters -0.0151, pitchers -0.0314.
+
+Each frame whole (computed after the read with `--frames-full`, disclosed in the artifact: the
+read's own per-frame block sits on the keep_lv pool, where vm_dev keeps 234 rows):
+lv_dev (n 2,862) X3 0.1617 against consensus 0.1792, -0.0176 (CI95 -0.0471 to +0.0115), against
+served -0.0198; vm_dev (n 830, 814 in groups) X3 0.3265 against consensus 0.3814, -0.0549
+(-0.1122 to +0.0019), against served -0.0672 (-0.1251 to -0.0093).
+
+### 13.3 Clauses (C) and (D)
+
+- (C) The 20 reruns with every feature permuted within (side, instance kind, year), seeds
+  20261021 to 20261040, read D from -0.0557 to -0.0069; their 95th percentile is -0.0093. The
+  observed D, -0.0201, sits inside the null (rank 14 of 21).
+- (D) The planted feature (rho 0.20 with the instance's own label percentile, seed 20261041)
+  lifted X3 to +0.0073 against consensus (CI95 -0.023 to +0.0386, lower bound -0.0183): not
+  recovered.
+
+### 13.4 The components (6), each against its null rerun (X3 minus null, player-clustered)
+
+| Component | X3 minus null | CI95 | Synthetic planted check |
+|---|---|---|---|
+| 6.1 censoring-aware panel (null: open seasons zero-filled) | -0.0002 | -0.0008 to +0.0003 | aware 3.549 vs truth 3.55, zero-fill 2.734: pass |
+| 6.2 control function (null: ratio permuted within side and year) | +0.0060 | -0.0007 to +0.0130 | two-step closer in 100 of 100: pass |
+| 6.3 consensus reliability (null: lambda permuted) | -0.0014 | -0.0221 to +0.0190 | slope 0.212, lower 0.152: pass |
+| 6.4 covariate-shift weights (null: uniform) | -0.0103 | -0.0364 to +0.0172 | log-weight correlation 0.997: pass |
+| 6.5 role path (null: prediction permuted within year) | -0.0097 | -0.0245 to +0.0050 | held-out AUC 0.903: pass |
+| 6.6 conformal (exchangeable synthetic) | | | coverage 0.786: pass |
+
+Shift diagnostics (6.4): the classifier separates training from the live board with AUC 0.94 to
+0.997 in every fold and side; every fold was tempered once; ESS over n after tempering 0.20 to
+0.36 (still under 0.30 in 13 of the 20 fold-sides; the registration tempers once); the largest gaps are the
+college-draftee share (live higher by 0.8 to 5.8 training SD) and the consensus grade (live lower
+by 0.65 to 0.92 SD). The role sub-model (6.5) reads in-sample AUC 0.766 to 0.782 on 756 to 1,787
+reached pitchers (reliever share 0.54 to 0.60). Consensus reliability (6.3): sigma_e^2 2.7 to 4.1
+grade points squared; in lv_dev 2017 and vm_dev 2017 no training instance had two graders, so
+sigma_e^2 took its fallback of 1 and lambda was constant on those folds' training rows. The
+control-function ratio's ridge slope (the folds where the ridge was chosen): stage T hitters
+-0.10 to -0.02, pitchers +0.004 to +0.05; stage Q hitters -0.40 to -0.003, pitchers -0.08 to +0.10.
+
+### 13.5 Uncertainty and the full distribution (6.6, 7.4)
+
+- Conformal coverage (nominal 0.80, band 0.75 to 0.85), pooled over the folds: the order
+  interval 0.773 (n 3,692, mean width 0.83 of the percentile scale), covers; the six-season WAR
+  interval 0.790 (n 3,037 rows with a fully observed L6, mean width 6.0 WAR), covers. The
+  anchor-only null: 0.771 (width 0.85) and 0.761 (width 5.5).
+- PIT deciles of X3's predictive distribution (n 3,037): 0.119, 0.123, 0.089, 0.076, 0.081,
+  0.069, 0.068, 0.073, 0.101, 0.201: not calibrated (the top decile holds twice its share: careers
+  above the predicted range occur twice as often as the distribution says).
+- Distributional scores on 2,440 rows with a fully observed L6 (lower is better): CRPS X3 1.2613,
+  consensus 1.2411, served 1.2421; X3 minus consensus +0.0202 (CI95 +0.0053 to +0.0354), minus
+  served +0.0192 (+0.0012 to +0.0378). Bust, middle and star log loss X3 0.6875, consensus
+  0.6687: +0.0188 (+0.0084 to +0.0296). REACH log loss (lv_dev, n 2,862) X3 0.6345, consensus
+  0.6188: +0.0157 (+0.0047 to +0.0273). X3's own predictive distribution: CRPS 1.3565, class log
+  loss 0.7924.
+
+### 13.6 Weights (EW3-41 and the eTools arm)
+
+X3-ridge side slopes per training SD, mean over the ten folds (none is exactly 0; a ridge never
+zeroes a slope):
+
+| Feature | Stage R (log odds of reaching) | Stage T (seasons of play) | Stage Q (WAR per season) |
+|---|---|---|---|
+| P/PA (hitters) | -0.049 | +0.050 | +0.309 |
+| P/PA PAR (hitters) | -0.080 | -0.025 | -0.158 |
+| P/BF | -0.042 | +0.015 | +0.070 |
+| P/BF PAR | -0.043 | +0.026 | +0.183 |
+| P/IP | -0.017 | -0.028 | -0.120 |
+| P/IP PAR | +0.021 | -0.007 | +0.067 |
+| eHIT | +0.290 | +0.060 | +0.183 |
+| ePOW | +0.023 | +0.037 | +0.143 |
+| eFB | +0.243 | +0.023 | +0.192 |
+| eCMD | +0.225 | +0.018 | +0.077 |
+
+The boosted class's gain shares of the pitch rates are 0.010 to 0.064 per stage (P/PA highest
+in stage Q). For comparison, EFV_ETOOLS_REWEIGHT's production weights (version E, percentile-point
+equivalents): ePOW 0.009, eFB 0.066, eCMD 0.056 (RT's hit tool 0.051). Fold-level slopes and
+gains are in the artifact (`x3_weights`, `folds`).
+
+### 13.7 Sensitivity (eRAW and eSPD in place of the raw power and run grades)
+
+Against consensus -0.0196 (CI95 -0.0455 to +0.0068); against X3 +0.0005 (-0.0099 to +0.0109),
+hitters +0.0152 (+0.0003 to +0.0308), pitchers -0.0148 (-0.0296 to -0.0006). The pitcher change
+comes from the joint fit's nested selection choosing other configurations, not from a pitcher
+input.
+
+### 13.8 Pitchers by usage role at the read (6.7; groups of 20 or more rows)
+
+| Role | Rows | X3 minus consensus | CI95 | X3 minus served |
+|---|---|---|---|---|
+| STARTER | 922 | -0.0473 | -0.1157 to +0.0224 | -0.0481 |
+| SHORT-START | 106 | +0.0732 | -0.0819 to +0.2292 | -0.0327 |
+| RELIEF | 322 | +0.0447 | -0.0906 to +0.1801 | +0.0172 |
+
+Every interval spans zero; the relief and short-start rows are too few to resolve an edge
+(mde95 0.11 and 0.13).
+
 ## 14. The verdict (appended by the run)
+
+FAIL, worded "ties" (D -0.0201, player-clustered CI95 -0.047 to +0.0077, upper bound +0.0032
+above 0), and UNRESOLVED (clause D failed). Clause A fails (lower bounds -0.043 player, -0.042
+club), clause B fails (X3 trails served eFV by 0.0231, more than 0.005), clause C fails (D under
+the null's 95th percentile, -0.0093), clause D fails (the planted feature not recovered). Under
+section 10: nothing served moves; no flag, no dark build, no flip question. The two development
+rows (model efv_x3_pooled) are in `data/efv_progress.json`. The registered sentence: "Pooled over
+every development frame (3,062 rows), the pooled model X3 minus PROSPX consensus reads -0.0201
+(one-sided 95 percent lower bound -0.043); the read could detect an edge of 0.023 or larger." The
+planted check says more: this pipeline, on this pool, did not recover a feature correlated 0.20
+with the outcome, so its tie is not evidence that such a feature is absent.
