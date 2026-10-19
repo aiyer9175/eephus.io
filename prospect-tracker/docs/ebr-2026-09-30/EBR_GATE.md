@@ -2136,7 +2136,86 @@ hitter i, season s (2016 on):
 
 ### 12.1 The outcome look (parts 5 and 6)
 
-EMPTY.
+**2026-10-19, `python -u tools/ebr_gate.py` at `4924a5eb`, OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14).**
+
+What part 6 licenses under part 1's recorded answers (EBR-Q1 (a), EBR-Q2 (a), EBR-Q3 (a)):
+
+- candidate part 1: not admitted (Leg E RESOLVED_LOSS, Leg T pass True, d frame U -0.1746, d club changers -0.2089); eWAR v3 keeps FanGraphs' BsR
+- candidate part 2: not admitted (E-DP RESOLVED_LOSS, DP-1 True, DP-2 True); eWAR v3 carries no double-play part from 2016 on
+- copy: repeats less from one season to the next than FanGraphs' BsR on the same runners
+- dp copy: repeats less from one season to the next than Baseball-Reference's double-play runs on the same runners
+- dp repeatable word: allowed (DP-1 passes)
+- bem_plus: not served (FAIL)
+- noise flags: none
+
+The output of `tools/ebr_gate.py`, verbatim:
+
+```text
+eBR OUTCOME LOOK 2026-10-19 at 4924a5eb  [OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14)]
+fWAR vintage 2026-10-02-57bf90f7143e sha256 c4de5ca2e4a1492167f2a47666503112c916a67dcfd38389de39f910187550fa
+Baseball-Reference frame (cached, never fetched) sha256 e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55 fetched_at 2026-10-19T18:44:35+00:00
+club season lines fetched_at {'2018': '2026-10-03T21:06:10+00:00', '2019': '2026-10-03T21:06:12+00:00', '2021': '2026-10-03T21:06:15+00:00', '2022': '2026-10-03T21:06:16+00:00', '2023': '2026-10-03T21:06:18+00:00', '2024': '2026-10-03T21:06:19+00:00', '2025': '2026-10-03T21:06:21+00:00', '2026': '2026-10-03T21:06:22+00:00'}
+substrate rows the record no longer reproduces, per season: {'2018': 0, '2019': 0, '2021': 0, '2022': 0, '2023': 0, '2024': 0, '2025': 0, '2026': 0}
+FRAME (5.1): 1181 runner-pairs, 475 players; per pair {'2018-2019': 187, '2021-2022': 192, '2022-2023': 202, '2023-2024': 207, '2024-2025': 199, '2025-2026': 194}
+  rows dropped for a missing series: none; vintage PA differing from the official line on 0 player-seasons
+  club changers (primary club by Baseball-Reference stint PA differs): per pair {'2018-2019': 51, '2021-2022': 49, '2022-2023': 52, '2023-2024': 38, '2024-2025': 41, '2025-2026': 37}, 268 in all
+BEM+ CONSTANTS (5.8, fit before any gate statistic, frozen here): SB k 5889.6 (r 0.0754, n 577); XB k 228.4 (r 0.4347, n 577); DP k 182.1 (r 0.3089, n 577)
+LEG E (5.2): E = (eSB + ePK + eXB) / PA against B = BsR / PA
+  floors Leg E: bootstrap sd 0.0244, half-width 0.0402; reachable: SHIP if d > +0.0602, RESOLVED_LOSS if d < -0.0602, RULED OUT NOT reachable (half-width >= 0.02), UNDECIDED always
+  Leg E: mean rho E +0.4449, mean rho B +0.6499, d -0.2050, interval [-0.2452, -0.1648], disposition RESOLVED_LOSS
+TWIN (5.3): E permuted within each season
+  floors Leg E twin: bootstrap sd 0.0400, half-width 0.0658; reachable: SHIP if d > +0.0858, RESOLVED_LOSS if d < -0.0858, RULED OUT NOT reachable (half-width >= 0.02), UNDECIDED always
+  Leg E twin: mean rho E -0.0234, mean rho B +0.6499, d -0.6734, interval [-0.7391, -0.6076], disposition RESOLVED_LOSS
+  frame U d -0.1746; club changers d -0.2089 (per pair {'2018-2019': [0.4716, 0.7003, -0.2287], '2021-2022': [0.4462, 0.5371, -0.0909], '2022-2023': [0.4567, 0.6656, -0.2089], '2023-2024': [0.2122, 0.4498, -0.2377], '2024-2025': [0.2329, 0.3911, -0.1582], '2025-2026': [0.3004, 0.6297, -0.3293]})
+LEG T (5.3): 240 club-seasons; r(off_B, runs) +0.7832, r(off_E, runs) +0.7900; passes True
+DP LEG (5.4): E-DP, eGDP per PA against Baseball-Reference runs_dp per PA
+  floors E-DP: bootstrap sd 0.0285, half-width 0.0469; reachable: SHIP if d > +0.0669, RESOLVED_LOSS if d < -0.0669, RULED OUT NOT reachable (half-width >= 0.02), UNDECIDED always
+  E-DP: mean rho G +0.4182, mean rho R +0.4909, d -0.0727, interval [-0.1196, -0.0258], disposition RESOLVED_LOSS
+  floors E-DP twin: bootstrap sd 0.0386, half-width 0.0636; reachable: SHIP if d > +0.0836, RESOLVED_LOSS if d < -0.0836, RULED OUT NOT reachable (half-width >= 0.02), UNDECIDED always
+  E-DP twin: mean rho G -0.0461, mean rho R +0.4909, d -0.5369, interval [-0.6005, -0.4734], disposition RESOLVED_LOSS
+  E-DP frame U d_DP -0.0730; club changers d_DP -0.0359
+  floors DP-1: bootstrap sd 0.0283, half-width 0.0466; the floor clears when the estimate exceeds +0.0466
+  DP-1: mean rho of eGDP per opportunity +0.4211; estimate - 1.645 sd +0.3745; floor clears True
+  floors DP-1 permuted: bootstrap sd 0.0293, half-width 0.0482; the floor clears when the estimate exceeds +0.0482
+  DP-1 permuted: mean rho of eGDP per opportunity -0.0473; estimate - 1.645 sd -0.0955; floor clears False
+  DP-1 passes True (the permuted eGDP must fail it: it fails)
+  DP-2: r(off_B + eGDP, runs) +0.7918 against r(off_B, runs) +0.7832; passes True
+  reported: feed wGdp per PA persistence +0.4478 against eGDP's +0.3954 on 4 pairs inside 2016 to 2024
+RELIABILITY (5.5): split-half (odd against even game_pk), Spearman-Brown, PA 300+
+  SB runs: [0.1287, 0.1595, 0.3993, -0.0908, 0.2818, 0.1924, 0.3347, 0.3308]; NOISE False
+  XB runs: [0.4436, 0.4704, 0.5293, 0.6053, 0.3527, 0.3623, 0.4504, 0.4842]; NOISE False
+  DP runs: [0.3719, 0.4517, 0.1806, 0.3089, 0.4769, 0.4784, 0.3863, 0.4661]; NOISE False
+  eBR: [0.4164, 0.5895, 0.4988, 0.6058, 0.5873, 0.5695, 0.6027, 0.5323]; NOISE False
+  sb: [0.1417, 0.1638, 0.3775, 0.0355, 0.3766, 0.3013, 0.3774, 0.2756]; NOISE False
+  pk: [0.3355, 0.0446, 0.2871, 0.1858, 0.3274, 0.2002, 0.3133, 0.3863]; NOISE False
+  xb_adv: [0.6359, 0.6385, 0.6436, 0.6264, 0.4851, 0.5211, 0.6182, 0.6128]; NOISE False
+  xb_oob: [-0.1683, 0.1691, 0.0074, 0.4275, 0.0862, -0.0361, 0.1677, 0.1051]; NOISE False
+  dp: [0.3719, 0.4517, 0.1806, 0.3089, 0.4769, 0.4784, 0.3863, 0.4661]; NOISE False
+REPORTED BESIDE (5.6)
+  d_frame_u: -0.1746
+  d_frame_x: -0.2657
+  per_pair_signs: {"2018-2019": "-", "2021-2022": "-", "2022-2023": "-", "2023-2024": "-", "2024-2025": "-", "2025-2026": "-"}
+  d_pearson: -0.2195
+  d_pa502: -0.2033
+  balanced_forecast: {"bootstrap_sd": 0.0174, "dX": -0.1049, "interval": [-0.1336, -0.0762]}
+  cross_forecasts: {"B_to_B": 0.6499, "B_to_E": 0.5108, "E_to_B": 0.5192, "E_to_E": 0.4449}
+  third_party: {"bref_runs_br_per_pa_next": {"rho_B": 0.5176, "rho_E": 0.4565}, "savant_runner_total_per_opportunity_next": {"rho_B": 0.6336, "rho_E": 0.5, "rows": 1181}}
+  club_changers_per_pair: {"2018-2019": [0.4716, 0.7003, -0.2287], "2021-2022": [0.4462, 0.5371, -0.0909], "2022-2023": [0.4567, 0.6656, -0.2089], "2023-2024": [0.2122, 0.4498, -0.2377], "2024-2025": [0.2329, 0.3911, -0.1582], "2025-2026": [0.3004, 0.6297, -0.3293]}
+  per_part: {"sb_runs_vs_wsb": {"persistence_d": -0.1992, "same_season_mean_rho": 0.7554}, "xb_runs_vs_bsr_minus_wsb": {"persistence_d": -0.1775, "same_season_mean_rho": 0.727}}
+  arms: {"F": {"d": -0.2139, "pairs": ["2021-2022", "2022-2023", "2023-2024", "2024-2025", "2025-2026"]}, "P": {"d": -0.2336, "pairs": ["2021-2022", "2022-2023", "2023-2024", "2024-2025", "2025-2026"]}}
+BEM+ (5.8): gate X-B1, predictor seasons 2022 to 2024
+  rows 753; dropped none
+  {"clauses": {"beats_sb": false, "beats_sprint": false, "beats_starts": true, "not_worse_than_raw": false}, "gaps": {"vs_raw": {"hi95": 0.0124, "lo95": -0.026, "mean": -0.0072}, "vs_sb": {"hi95": 0.1004, "lo95": -0.0331, "mean": 0.033}, "vs_sprint": {"hi95": 0.0533, "lo95": -0.0739, "mean": -0.012}, "vs_starts": {"hi95": 0.4899, "lo95": 0.2908, "mean": 0.3899}}, "n": 753, "pass": false, "players": 372, "rho": {"bem_plus": 0.485, "vs_raw": 0.4924, "vs_sb": 0.4515, "vs_sprint": 0.4978, "vs_starts": 0.093}, "twin_fails": true, "twin_gap_vs_sb": {"hi95": -0.3231, "lo95": -0.518, "mean": -0.4232}}
+  holdout 2025-2026 (reported beside, never merged): {"clauses": {"beats_sb": false, "beats_sprint": false, "beats_starts": true, "not_worse_than_raw": false}, "dropped": {}, "gaps": {"vs_raw": {"hi95": 0.0197, "lo95": -0.0606, "mean": -0.0222}, "vs_sb": {"hi95": 0.2009, "lo95": -0.0458, "mean": 0.0711}, "vs_sprint": {"hi95": 0.0502, "lo95": -0.1687, "mean": -0.0648}, "vs_starts": {"hi95": 0.6785, "lo95": 0.3825, "mean": 0.5307}}, "n": 244, "pass": false, "players": 244, "rho": {"bem_plus": 0.4851, "vs_raw": 0.5076, "vs_sb": 0.4128, "vs_sprint": 0.55, "vs_starts": -0.0454}, "twin_fails": true, "twin_gap_vs_sb": {"hi95": -0.3134, "lo95": -0.6525, "mean": -0.489}}
+WHAT PART 6 LICENSES under part 1's answers (EBR-Q1 (a), EBR-Q2 (a), EBR-Q3 (a))
+  candidate part 1: not admitted (Leg E RESOLVED_LOSS, Leg T pass True, d frame U -0.1746, d club changers -0.2089); eWAR v3 keeps FanGraphs' BsR
+  candidate part 2: not admitted (E-DP RESOLVED_LOSS, DP-1 True, DP-2 True); eWAR v3 carries no double-play part from 2016 on
+  copy: repeats less from one season to the next than FanGraphs' BsR on the same runners
+  dp copy: repeats less from one season to the next than Baseball-Reference's double-play runs on the same runners
+  dp repeatable word: allowed (DP-1 passes)
+  bem_plus: not served (FAIL)
+  noise flags: none
+```
 
 ### 12.2 The skill look (parts 9.5 and 9.6)
 
@@ -2153,3 +2232,26 @@ block below holds an entry, nothing above this line changes except a dated amend
 still allows for the look not yet run. Each entry is dated, names the commit that produced it and the
 output of `tools/ebr_gate.py` or `tools/swar_lab.py` verbatim, and states what part 6 or part 9.6
 licenses under part 1's recorded answers.
+
+**Dated note, 2026-10-19: the outcome look of part 12.1 is an OWNER-WAIVED EARLY READ.** It ran on
+2026-10-19 by `python -u tools/ebr_gate.py --owner-waived-early-read`, which lifts only part 7.2's
+date clauses, under owner decision EW3-5 (2026-10-14, `DECISIONS_FOR_OWNER.md`: registered look
+days and registered dates are waived; a look waits only for data that does not exist yet). The
+clauses it lifted:
+item 3 (on or after 2026-11-17); item 4's no-other-look-that-day rule (other registered reads were
+committed on 2026-10-19); and item 1's date rule for 2026 (the 2026 substrate was built on
+2026-10-19 from the completed regular season and is not frozen; 2018, 2019 and 2021 to 2025 are
+frozen with their digests unchanged). Every other precondition held at launch: the step Z entry of
+`FWAR_LABEL_EPOCH_GATE.md` part 9; the frozen fWAR vintage `2026-10-02-57bf90f7143e` (task
+EWAR_P0_VINTAGE_PA, owner answer EW3-19) carrying baseRunning, wSb, ubr, wGdp, batting,
+plateAppearances and numTeams on every hitting row of the eight frame seasons; I1 to I9 passing on
+all eight seasons in that day's preview build; part 12.1 EMPTY and no look block before the run;
+part 1 matching `DECISIONS_FOR_OWNER.md` for EBR-Q0 to EBR-Q3 after amendment 11.8; no pipeline,
+suite, test session or lab in the tool's process listing. The dry run on fixtures with nulls ran
+first. Disclosed: the same day's preview build (task EBR_LOOK's precondition 3, `tools/build_ebr.py`)
+reads `war_source.stint_frame("bat", provider="bwar")`, which fetched Baseball-Reference's war_daily
+frame and rewrote the cached copy `.cache/war_daily/bat.parquet` about two minutes before the look
+started; the look itself fetched nothing and read that cached copy as it stood, its sha256 and
+`fetched_at` printed in part 12.1 before any statistic. The 2026-10-14 attempt (stopped at
+precondition 2, nothing computed) ran the same build. The look ran once and is not rerun whatever
+it printed (part 5.9).
