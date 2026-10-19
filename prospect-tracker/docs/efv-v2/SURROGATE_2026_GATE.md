@@ -745,6 +745,18 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   vintages scored leave-one-out), about 0.06 under the s2.1 fallback; T3 difference SE about
   0.035 in z, so its CI rule passes only when the point difference is below about 0.03.
   Replaced by measured floors by dated amendment after S3 (s4).
+- The fresh hitter-lean probe C6 (task SG_6, run once on 2026-10-19 under efv2026 OQ5 = A
+  with OQ2 = A, after the REGISTERED commit baffcff7; not an early read, since its one
+  precondition held). A DESCRIPTIVE probe, not a driver, not a ledger row and not a read of
+  this gate, pre-declared at 9c4902ac (`data/_labs/hitter_lean_c6/PREDECLARED.md`, its row
+  policy first in `PROBES.jsonl`). It is a SPENT read of the production component (forward
+  MiLB ISO_rel over 2025 and 2026 on the pure norms) on the 244 rows whose lines it read
+  (220 scored, 24 under 150 PA): FanGraphs 2025report hitters after 77 ABSENT_IDENTITY rows
+  (42 of them lv_2026 by key), 275 lv_2026 players and 6 R-VM 2026 debutants left the rows,
+  counted; 60 of the scored rows are 2025 debutants released by rvm_look_1 (no MLB stat
+  read); 168 of the 220 sat on the 2024 list. No lv_2026 row was read. Primary LEAN
+  coefficient (controls + TALL + LEAN) -0.087, CI95 -0.193 to +0.025: the predicted sign, not
+  resolved, on a selected subset. Output `data/_labs/hitter_lean_c6/sg6_result.json`.
 
 ---
 

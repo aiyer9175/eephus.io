@@ -1,0 +1,45 @@
+SG_6 C6 hitter-lean probe: DESCRIPTIVE, not a driver, not a ledger row, not a read of the surrogate gate; read once.
+gate REGISTERED at f5dcf500855ed914dca8212b7739b6caa795319b; header OQ2 A, OQ5 A
+look records: ['rvm_look_1']; lv_2026 keys 1207, person ids 1092
+inputs (no outcome read):
+  list_rows_hitters: 602
+  dropped_missing_inputs: 0
+  index_rows: 602
+  ABSENT_IDENTITY: 77
+  ABSENT_IDENTITY_also_lv2026_by_key: 42
+  lv2026_excluded: 275
+  rvm_2026_cohort_left: 6
+  rvm_2025_cohort_kept: 71
+  rvm_2025_cohort_left: 0
+  candidate_rows: 244
+  cons_from_consensus: 202
+  cons_from_fg_fv: 42
+  baseline_iso_missing: 24
+SCORING BEGINS
+analysis rows:
+  O1_under_150_pa: 24
+  analysis_rows: 220
+  analysis_players: 220
+  analysis_also_on_2024_list: 168
+  analysis_rvm_2025_cohort: 60
+primary_LEAN_given_TALL: coef -0.0870 CI95 -0.1925 to +0.0250 ols_t -1.46 n 220 players 220
+secondary_PROJ: coef +0.0164 CI95 -0.0915 to +0.1316 ols_t +0.29 n 220 players 220
+secondary_LEAN_alone: coef -0.0627 CI95 -0.1676 to +0.0505 ols_t -1.07 n 220 players 220
+descriptive strata (no CI, no verdict):
+  side=hit: n 220 rho(LEAN, resid) -0.067
+  age_band=20_or_under: n 63 rho(LEAN, resid) +0.063
+  age_band=21_to_22: n 64 rho(LEAN, resid) -0.115
+  age_band=23_or_over: n 93 rho(LEAN, resid) -0.090
+  last_level=AA_AAA: n 125 rho(LEAN, resid) +0.004
+  last_level=A_Aplus: n 58 rho(LEAN, resid) -0.378
+  last_level=DSL_CPX: n 34 rho(LEAN, resid) +0.208
+  last_level=none: n 3 rho(LEAN, resid) NA
+  route=college_draft: n 79 rho(LEAN, resid) -0.224
+  route=hs_draft: n 41 rho(LEAN, resid) -0.123
+  route=international_fa: n 100 rho(LEAN, resid) +0.125
+  bonus_band=1M_or_over: n 71 rho(LEAN, resid) -0.244
+  bonus_band=250k_to_1M: n 61 rho(LEAN, resid) -0.225
+  bonus_band=under_250k: n 38 rho(LEAN, resid) +0.156
+  bonus_band=unknown: n 50 rho(LEAN, resid) +0.147
+PRIMARY READING (predicted sign negative): SAME SIGN, NOT RESOLVED
+elapsed 12.7s
