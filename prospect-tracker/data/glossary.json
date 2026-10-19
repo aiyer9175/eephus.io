@@ -4405,7 +4405,8 @@
    "category": "statcast",
    "section": "Players & Stats",
    "module": [
-    "foundations"
+    "foundations",
+    "mlbstats"
    ],
    "aliases": [
     "Sprint",
@@ -11890,6 +11891,377 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io (MILB_FIELDING_RUNS gate, tools/milb_fielding_runs.py), built on MLB StatsAPI play-by-play."
+  },
+  {
+   "id": "ebr",
+   "term": "eBR (eephus Baserunning Runs)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "eBR",
+    "eephus baserunning runs",
+    "baserunning runs"
+   ],
+   "priority": 23,
+   "definition": "Runs a player added or cost on the bases this season against an average runner with the same chances: stealing, taking the extra base, and staying out of double plays. Counted from MLB's play-by-play on this season's run expectancy. Descriptive: what happened, not a forecast.",
+   "methodology": "Each chance is valued on this season's run-expectancy table (RE24), shrunk toward the pooled 2018 to 2026 table so a thin cell never swings it: what the inning was worth after what the runner did, minus what it was worth had he held. An average runner scores zero, so each part sums to zero across the league every season. SB runs cover steals, caught stealing and pickoffs, keyed on MLB's movement reason, against what an average runner made of the same times on base with the next base open. XB runs cover taking or not taking the extra base, and outs on the bases, on singles, doubles, caught air balls and ground balls, each against the league's outcomes in the same spot, out count and batted-ball context. DP runs compare double plays grounded into with the league rate for the same base-out state, priced by state. Blocked chances, advances credited to an error, wild pitches, passed balls and balks are left out. No park or fielder-arm term, which is where Baseball Savant's run value differs. Same-season agreement with FanGraphs' BsR, Baseball-Reference's baserunning runs and Savant's run value is measured and published in the eval, never a gate.",
+   "formula": "eBR = SB runs + XB runs + DP runs",
+   "seeAlso": [
+    "ebr_sb",
+    "ebr_xb",
+    "ebr_dp",
+    "team_ebr",
+    "run_expectancy",
+    "bsr",
+    "savant_brv",
+    "xbt_pct",
+    "steal_break_even"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "ebr_sb",
+   "term": "SB runs (eBR)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "SB runs",
+    "eBR SB runs",
+    "steal runs"
+   ],
+   "priority": 24,
+   "definition": "The stolen-base part of eBR: steals, caught stealing and pickoffs, valued on this season's run expectancy, minus what an average runner made of the same times on base with the next base open.",
+   "methodology": "Every attempt is priced at its own base-out state (the state after this runner's move only, so a double steal gives each runner his own value), keyed on MLB's movement reason and never on the event type. Pickoffs of a runner who was not attempting are priced the same way against the league's pickoff rate from that base. A two-out caught stealing is priced: run expectancy ends the inning at zero exactly. The league sums to zero every season.",
+   "formula": "SB runs = sum of attempt values minus the league value per chance times the runner's chances, by origin base",
+   "seeAlso": [
+    "ebr",
+    "wsb",
+    "steal_attempt_rate",
+    "steal_break_even"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "ebr_xb",
+   "term": "XB runs (eBR)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "XB runs",
+    "eBR XB runs",
+    "extra-base runs",
+    "advancement runs"
+   ],
+   "priority": 25,
+   "definition": "The advancement part of eBR: taking or not taking the extra base, and outs made on the bases, on singles, doubles, caught air balls and ground balls, against an average runner in the same spot and out count.",
+   "methodology": "Each chance is a runner at contact in one of four classes (a runner on a single or double, the batter-runner on a hit, a runner on a caught air ball with fewer than two out, an unforced runner on a ground-ball out). His outcome is valued on a fixed reference, so a teammate's extra base is never credited to him, against the league's outcome mix for the same class, base, outs, what the runners ahead did and the batted ball (field, trajectory and depth), with thin cells backed off to broader ones. Outs on the bases are split out and published beside it. Chances blocked by the runner ahead are no chance; an advance credited to an error stops before the error.",
+   "formula": "XB runs = sum over chances of (value of his outcome minus the league's expected value of the chance), centred to zero by class and season",
+   "seeAlso": [
+    "ebr",
+    "xbt_pct",
+    "outs_on_bases",
+    "tag_up_rate",
+    "savant_brv"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "ebr_dp",
+   "term": "DP runs (eBR)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "DP runs",
+    "eBR DP runs",
+    "double-play runs"
+   ],
+   "priority": 26,
+   "definition": "The double-play part of eBR, the batter's: double plays grounded into against the league rate for the same chances (a runner on first, fewer than two out), priced by base-out state.",
+   "methodology": "A chance is a plate appearance whose state at its final pitch has a runner on first and fewer than two out. The cost of a double play in each of the eight states is the run-expectancy gap between the ground-ball outs that were not double plays and those that were, so a loaded-base, one-out double play costs more than a runner-on-first one. FanGraphs' served BsR has carried no double-play part since 2016; Baseball-Reference's double-play runs are the nearest published counterpart.",
+   "formula": "DP runs = minus the sum over chances of (double play minus the league rate for the state) times the state's cost",
+   "seeAlso": [
+    "ebr",
+    "gidp_rate"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "team_ebr",
+   "term": "Team eBR",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Team eBR",
+    "team baserunning runs"
+   ],
+   "priority": 61,
+   "definition": "The sum of a club's runners' eBR this season, club today as on every team tab here. Realized runs, not a grade of how a club chose to run.",
+   "methodology": "The roster basis (the club MLB lists today) is shown, so a traded player's whole season counts for his new club; the earned basis (every chance credited to the club he ran for) rides in the payload and sums to zero across the league every season. Club running style, the decision rather than the runner, is on In-Game Management.",
+   "formula": "Team eBR = sum of eBR over the club's runners",
+   "seeAlso": [
+    "ebr",
+    "team_dem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "xbt_pct",
+   "term": "XBT% (Extra bases taken)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "XBT%",
+    "extra bases taken",
+    "extra-base taken rate"
+   ],
+   "priority": 40,
+   "definition": "How often a runner takes more than the minimum on a hit: first to third or home on a single, second to home on a single, first to home on a double.",
+   "methodology": "A chance counts only when the base ahead was open; an advance credited to a fielding error counts on neither side; an out made trying is a chance not taken. Counted here from MLB's play-by-play, so no parity with any published XBT% is claimed.",
+   "formula": "XBT% = extra bases taken / chances",
+   "seeAlso": [
+    "ebr_xb",
+    "tag_up_rate",
+    "outs_on_bases"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic; counted here from MLB's play-by-play."
+  },
+  {
+   "id": "steal_attempt_rate",
+   "term": "Att% (Steal attempt rate)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Att%",
+    "steal attempt rate",
+    "attempt rate"
+   ],
+   "priority": 41,
+   "definition": "Steal attempts per chance: plate appearances that began with him on first and second open, or on second and third open.",
+   "methodology": "A chance is counted at the start of a plate appearance from the pre-play state, so a runner on first with second open during a four-pitch plate appearance is one chance. Attempts of second and third from MLB's play-by-play, keyed on the movement reason.",
+   "formula": "Att% = (SB + CS of second and third) / chances",
+   "seeAlso": [
+    "ebr_sb",
+    "steal_break_even"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic; counted here from MLB's play-by-play."
+  },
+  {
+   "id": "outs_on_bases",
+   "term": "OOB (Outs on the bases)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "OOB",
+    "outs on the bases",
+    "outs on base"
+   ],
+   "priority": 42,
+   "definition": "Outs made while advancing, stretching a hit, returning to a base or in a rundown. Caught stealing, pickoffs and force outs are not included.",
+   "methodology": "Counted from MLB's play-by-play movement reasons (thrown out, out stretching, out returning, doubled off, rundown, runner out); the batter-runner counts once he is a runner.",
+   "seeAlso": [
+    "ebr_xb",
+    "xbt_pct"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic; counted here from MLB's play-by-play."
+  },
+  {
+   "id": "tag_up_rate",
+   "term": "Tag% (Tag-up rate)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Tag%",
+    "tag-up rate",
+    "tag up"
+   ],
+   "priority": 43,
+   "definition": "Advances on a caught fly ball with fewer than two out, third to home and second to third, over the chances.",
+   "methodology": "Second to third is blocked, and no chance, when the runner on third held. Counted from MLB's play-by-play.",
+   "formula": "Tag% = advances / chances over both classes",
+   "seeAlso": [
+    "ebr_xb",
+    "xbt_pct"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic; counted here from MLB's play-by-play."
+  },
+  {
+   "id": "gidp_rate",
+   "term": "GIDP% (Double-play rate)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "GIDP%",
+    "double-play rate",
+    "GIDP rate"
+   ],
+   "priority": 44,
+   "definition": "Double plays grounded into per chance: plate appearances with a runner on first and fewer than two out.",
+   "methodology": "Chances from the play-by-play state at the plate appearance; double plays from the play's event type. The count on the row is the official GIDP; the rate's numerator is the play-by-play count, so no rate mixes sources.",
+   "formula": "GIDP% = GIDP / chances",
+   "seeAlso": [
+    "ebr_dp"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic; counted here from MLB's play-by-play."
+  },
+  {
+   "id": "bsr",
+   "term": "BsR (FanGraphs baserunning runs)",
+   "category": "general-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "BsR",
+    "baserunning runs (FanGraphs)",
+    "FanGraphs BsR"
+   ],
+   "priority": 45,
+   "definition": "FanGraphs' baserunning runs above average as MLB's feed publishes them. Since 2016 they are stolen-base runs (wSB) plus Statcast's extra-base runner runs; before 2016 they also included FanGraphs' UBR and double-play runs (wGDP). Displayed here, never computed.",
+   "methodology": "Read verbatim from MLB's bulk sabermetrics feed, joined by player id; a traded player reads one season line. The feed's separate UBR and wGDP fields are not shown: they read zero for 2025 and 2026, and from 2016 BsR is not their sum with wSB, so the board shows BsR and wSB and labels the difference as BsR minus wSB.",
+   "seeAlso": [
+    "wsb",
+    "ebr",
+    "savant_brv"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric, FanGraphs' baserunning runs as published by MLB. We display it and compute no version of it."
+  },
+  {
+   "id": "wsb",
+   "term": "wSB (FanGraphs stolen-base runs)",
+   "category": "general-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "wSB",
+    "stolen-base runs",
+    "weighted stolen base runs"
+   ],
+   "priority": 46,
+   "definition": "FanGraphs' stolen-base runs above average, from steals and caught stealing on linear weights, as MLB's feed publishes them. Displayed here, never computed.",
+   "methodology": "Read verbatim from MLB's bulk sabermetrics feed, joined by player id; a traded player reads one season line.",
+   "seeAlso": [
+    "bsr",
+    "ebr_sb"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric, FanGraphs' stolen-base runs as published by MLB. We display it and compute no version of it."
+  },
+  {
+   "id": "savant_brv",
+   "term": "Baserunning run value (Baseball Savant)",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "projections"
+   ],
+   "aliases": [
+    "BRV",
+    "baserunning run value",
+    "Savant BRV",
+    "runner runs"
+   ],
+   "priority": 47,
+   "definition": "Baseball Savant's runs above average on the bases from extra bases taken and steal attempts, from Statcast tracking. Displayed here, never computed.",
+   "methodology": "The runner total, its extra-base part and its steal part are read from Savant's baserunning and basestealing run-value leaderboards for the season shown. Savant's model carries fielder-arm and batted-ball context that eBR leaves out, so the two differ by design.",
+   "seeAlso": [
+    "ebr",
+    "bsr",
+    "sprint_speed"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) baserunning run value."
+  },
+  {
+   "id": "bolts",
+   "term": "Bolts",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "bolts",
+    "30 ft/s runs"
+   ],
+   "priority": 48,
+   "definition": "Runs at 30 feet per second or faster this season, as Baseball Savant counts them.",
+   "seeAlso": [
+    "sprint_speed"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): competitive runs at 30 ft/s or faster."
+  },
+  {
+   "id": "hp_to_1b",
+   "term": "HP-1B (Home to first)",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "HP-1B",
+    "home to first",
+    "home-to-first time"
+   ],
+   "priority": 49,
+   "definition": "Home to first in seconds on competitive runs, as Baseball Savant measures it. Lower is faster.",
+   "seeAlso": [
+    "sprint_speed",
+    "bolts"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): home-to-first time."
   }
  ]
 }

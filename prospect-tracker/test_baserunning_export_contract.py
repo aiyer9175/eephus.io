@@ -476,3 +476,24 @@ def test_the_nightly_helper_writes_previews_only_and_never_the_corpus():
     assert "_record_ingest(\"baserunning_export\"" in body
     for part in ("build_runner_moves", "savant_running", "build_ebr", "baserunning_export"):
         assert part in body, part
+
+
+# --------------------------------------------------------------------------- #
+# the flipped artifacts (EBR_2F_FLIP)
+# --------------------------------------------------------------------------- #
+def test_the_flipped_files_are_served_from_data_and_within_budget():
+    """data/baserunning_leaderboards.json and data/baserunning_history.json
+    exist once MLBSTATS_BASERUNNING_LIVE is on, inside baserunning.md 4.3's
+    payload budgets, and the board carries the look's licensed sentence."""
+    assert BE.MLBSTATS_BASERUNNING_LIVE and BE.out_dir() == ROOT / "data"
+    board = ROOT / "data" / "baserunning_leaderboards.json"
+    hist = ROOT / "data" / "baserunning_history.json"
+    for path, budget in ((board, BE.BUDGET_LIVE), (hist, BE.BUDGET_HISTORY)):
+        raw = path.read_bytes()
+        assert len(raw) <= budget[0] and len(gzip.compress(raw, 9)) <= budget[1], path.name
+    doc = json.loads(board.read_text(encoding="utf-8"))
+    assert set(doc["repeat_copy"]) == {"eBR", "DP"}
+    for sentence in doc["repeat_copy"].values():
+        assert sentence == "" or "repeats" in sentence
+        assert not re.search(r"better|accurate|closer to the truth", sentence)
+

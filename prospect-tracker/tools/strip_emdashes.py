@@ -148,6 +148,7 @@ TARGETS: list[str] = [
     "trade_realized_export.py",
     "trade_audit_export.py",
     "bullpen_export.py",
+    "baserunning_export.py",
     "pal_export.py",
     "source_backtest.py",
     # MLB Scores (2026-10-02, SCORES_1_CORE_RULES): the pure core whose play

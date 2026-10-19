@@ -323,6 +323,44 @@ ARTIFACTS = (
                  "ratio scale."),
     },
     {
+        "file": "baserunning_leaderboards.json", "group": "mlb",
+        "title": "Baserunning leaderboards",
+        "what": ("Season runner board with eBR and its steal, extra-base and double-play "
+                 "parts, official counts, published BsR and Savant values, and the team eBR "
+                 "rollup."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_baserunning_export_contract.py",
+        "note": ("eBR is descriptive runs above average on the bases from MLB's "
+                 "play-by-play; BsR, wSB and Savant's run values are published values "
+                 "read, not computed here."),
+    },
+    {
+        "file": "baserunning_history.json", "group": "mlb",
+        "title": "Baserunning history",
+        "what": "The Baserunning runner board for each completed season with a runner record.",
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_baserunning_export_contract.py",
+        "note": "Seasons 2018, 2019 and 2021 to 2025; 2020 has no play-by-play on disk.",
+    },
+    {
+        "file": "ebr.json", "group": "mlb",
+        "title": "eBR substrate",
+        "what": ("One row per player-season with the five eBR parts, per-club stints, "
+                 "league blocks and each season's RE24 cells."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ebr_substrate.py",
+        "note": "The numbers the Baserunning board and the MLB player card read; descriptive.",
+    },
+    {
+        "file": "ebr_eval.json", "group": "mlb",
+        "title": "eBR evaluation",
+        "what": ("Identity receipts, coverage, same-season agreement bands, join rates and "
+                 "the registered look's dispositions, guard flags and floors."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ebr_served_eval.py",
+        "note": "Carries no correlation against runs or wins.",
+    },
+    {
         "file": "war_leaderboards.json", "group": "mlb",
         "title": "eWAR leaderboard",
         "what": ("Every player with a season eWAR cell, batting and pitching summed "

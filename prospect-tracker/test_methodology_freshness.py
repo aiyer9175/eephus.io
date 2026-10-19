@@ -943,6 +943,10 @@ MODEL_GLOSSARY = {
     # poison every In-Game Management number built on top of it, so its agreement
     # rate against the payload's own offense block belongs in the ledger.
     "pbp_corpus_base_state": "internal",
+    "pbp_runner_moves": "internal",
+    "ebr": ["ebr", "ebr_sb", "ebr_xb", "ebr_dp"],
+    "team_ebr": ["team_ebr"],
+    "bem_plus": "internal",
     # xfv_driver_auc_leg is the AUC half of the driver gate. It is a FLOOR
     # derivation and a veto, not a feature: it shipped nothing and, on the record,
     # its whole purpose is to stop arms that clear rho while failing discrimination.

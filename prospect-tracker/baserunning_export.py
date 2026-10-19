@@ -69,12 +69,12 @@ SUBSTRATE_PREVIEW = CACHE_DIR / "ebr" / "preview" / "ebr.json"
 EVAL_PREVIEW = CACHE_DIR / "ebr" / "preview" / "ebr_eval.json"
 GATE_DOC = ROOT / "docs" / "ebr-2026-09-30" / "EBR_GATE.md"
 
-#: The section's flag (plan Part 8 8.A, class 2). False until EBR_2F_FLIP.
-MLBSTATS_BASERUNNING_LIVE = False
+#: The section's flag (plan Part 8 8.A, class 2). Flipped by EBR_2F_FLIP.
+MLBSTATS_BASERUNNING_LIVE = True
 #: The MLB player card's skills.br block (integration.md 3.1), read by
 #: mlb_player_export._skill_index off the served board. False until
-#: EBR_2F_FLIP, which flips both flags in one commit (test_ebr_flags.py).
-CARD_BASERUNNING_LIVE = False
+#: EBR_2F_FLIP, which flipped both flags in one commit (test_ebr_flags.py).
+CARD_BASERUNNING_LIVE = True
 
 OUT_NAME = "baserunning_leaderboards.json"
 HISTORY_NAME = "baserunning_history.json"
@@ -1162,10 +1162,71 @@ def build_eval(payload: dict, history: Optional[dict] = None) -> dict:
                     "reproduction": (src.get("runner_moves") or {}).get("receipts"),
                     "ebr_sum": (blk.get("league") or {}).get("ebr_sum")}
     out = dict(ev)
+    if "look" in out:
+        sl = _served_look(out["look"])
+        if sl is None:
+            out.pop("look")
+        else:
+            out["look"] = sl
     out["baserunning_board"] = {"note": "Join rates and official-count reproduction per season on the "
                                         "Baserunning section's payloads; descriptive.",
                                 "flag": {"MLBSTATS_BASERUNNING_LIVE": MLBSTATS_BASERUNNING_LIVE},
                                 "by_season": board}
+    return out
+
+
+#: The comparative sentence the gate document's part 6.3 licenses, by the Leg E
+#: and E-DP dispositions. UNDECIDED carries none. A twin that is not
+#: RESOLVED_LOSS makes the look VOID (part 6.5): no sentence.
+_REPEAT_VERB = {"SHIP": "repeats more from one season to the next than",
+                "RULED OUT": "repeats about as much from one season to the next as",
+                "RESOLVED_LOSS": "repeats less from one season to the next than"}
+
+
+def _served_look(look: Optional[dict]) -> Optional[dict]:
+    """The look block as served: dispositions, guard pass flags, floors, NOISE
+    flags and the identity receipts, and nothing else (plan Part 8 8.A). No
+    year-to-year difference, correlation or rho is carried; those stay in the
+    gate document's part 12.1 and .cache/ebr/preview/."""
+    if not isinstance(look, dict) or not isinstance(look.get("result"), dict):
+        return None
+    r = look["result"]
+
+    def disp(k):
+        return (r.get(k) or {}).get("disposition")
+
+    def floors(k):
+        f = (r.get(k) or {}).get("floors") or {}
+        return {x: f.get(x) for x in ("half_width", "ship_needs_d_above", "resolved_loss_needs_d_below",
+                                      "ruled_out_reachable")}
+
+    bem = r.get("bem_plus") or {}
+    return {
+        "status": look.get("status"), "commit": look.get("commit"),
+        "waived_early_read": look.get("waived_early_read"),
+        "finished_at": look.get("finished_at"),
+        "dispositions": {k: disp(k) for k in ("leg_e", "leg_e_twin", "e_dp", "e_dp_twin")},
+        "floors": {k: floors(k) for k in ("leg_e", "leg_e_twin", "e_dp", "e_dp_twin")},
+        "guards": {"twin_guard_pass": (r.get("leg_t") or {}).get("leg_t_pass"),
+                   "double_play_guard_pass": (r.get("leg_t") or {}).get("dp2_pass"),
+                   "dp_plumbing_floor_pass": (r.get("dp1") or {}).get("pass"),
+                   "dp_plumbing_floor_permuted_clears": (r.get("dp1_permuted") or {}).get("floor_clear")},
+        "noise_flags": dict((r.get("reliability") or {}).get("noise") or {}),
+        "bem_plus": {"pass": bem.get("pass"), "clauses": dict(bem.get("clauses") or {})},
+        "identity_receipts": dict(look.get("stamps") or {}),
+    }
+
+
+def repeat_copy(served_look: Optional[dict]) -> dict:
+    """The one comparative sentence per leg, derived from the served look's
+    dispositions (EBR_GATE.md 6.3); an empty string when none is licensed."""
+    out = {"eBR": "", "DP": ""}
+    d = (served_look or {}).get("dispositions") or {}
+    for key, leg, twin, other in (("eBR", "leg_e", "leg_e_twin", "FanGraphs' BsR"),
+                                  ("DP", "e_dp", "e_dp_twin", "Baseball-Reference's double-play runs")):
+        verb = _REPEAT_VERB.get(d.get(leg))
+        if verb and d.get(twin) == "RESOLVED_LOSS":
+            out[key] = f"{verb} {other} on the same runners"
     return out
 
 
@@ -1199,6 +1260,7 @@ def export(season: Optional[int] = None, *, out: Optional[Path] = None, write: b
         if hraw > BUDGET_HISTORY[0] or hgz > BUDGET_HISTORY[1]:
             raise BaserunningRefusal(f"history payload {hraw} B raw / {hgz} B gzip is over its budget {BUDGET_HISTORY}")
     ev = build_eval(payload, history)
+    payload["repeat_copy"] = repeat_copy(ev.get("look"))
     if write:
         n = _write_json(d / OUT_NAME, payload, indent=None)
         log(f"  baserunning: wrote {d / OUT_NAME} ({n} B raw, {gz} B gzip, {len(payload['runners'])} runners)")
