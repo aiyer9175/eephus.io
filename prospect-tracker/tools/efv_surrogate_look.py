@@ -73,6 +73,8 @@ CACHE_DIR = ROOT / ".cache" / G.OWN_CACHE_DIR
 ARTIFACT = "efv_surrogate_gate.json"
 READ_KEY = "transfer"
 PURPOSE = "transfer"
+#: The long-run label reads of s6.3 (the only purpose that passes release_records).
+LONG_RUN_PURPOSE = "lv2026_long_run"
 
 #: s4: paired bootstrap B 2000, seed 20260930; permutation seed 20260931.
 BOOT_B = 2000
@@ -833,6 +835,28 @@ def assemble_outcomes(ctx: dict, drv: dict) -> dict:
         # T4: the S-only regime emulated against the incumbent timing head
         data["t4"][side] = _t4_arms(side, ctx, frames[side], labs, comp, cons, war, M, S)
     return data
+
+
+def long_run_labels(rows: list[dict], *, gate_sha: str | None, look_records,
+                    universe: dict | None = None, war: dict | None = None) -> list[dict]:
+    """The label path of the long-run reads (s6.3; amendment dated 2026-10-19, SG_10):
+    R3 at RT 2029 and W3 at RT 2031 on lv_2026. The surrogate guard refuses first,
+    before any label is built, unless looks 1, 2 and 3 and the OQ6 release all have
+    their record; the labels then carry those records as `release_records`, so a
+    reserved in-window row reads "released_vm" with its W3, W2 and R3 (never an L6).
+    withhold_reserved_vm refuses, never drops, if any in-window reserved row is left
+    without its record. Built only: no long-run read runs from this file yet, and
+    nothing served calls it."""
+    import efv_labels as L  # noqa: PLC0415
+    for V in sorted({int(r["vintage"]) for r in rows}):
+        G.guard_surrogate_read(V, gate_sha=gate_sha, look_records=look_records,
+                               purpose=LONG_RUN_PURPOSE)
+    recs = frozenset(look_records)
+    labs = L.labels_for_frame(rows, universe=universe, war=war, gate_sha=gate_sha,
+                              release_records=recs)
+    G.withhold_reserved_vm([lb for lb in labs if lb.get("status") == "reserved_vm"],
+                           look_records=recs, purpose=LONG_RUN_PURPOSE)
+    return labs
 
 
 def _exit_reason(lab: dict) -> str:

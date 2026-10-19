@@ -47,6 +47,15 @@ unless the committed gate sha is passed. A WAR label on a debut in
 R_VM_FIRST_DEBUT_YEAR or later is withheld (None, status "reserved_vm"): those cohorts
 are the prospective vintage-matched looks.
 
+RELEASE (docs/efv-v2/SURROGATE_2026_GATE.md s6.3, amendment dated 2026-10-19, task
+SG_10). `labels_for(..., release_records=...)` takes the record ids the caller holds.
+A reserved row whose debut cohort's owning record (RELEASE_RECORD_BY_COHORT: R-VM looks
+1, 2 and 3 for the 2025, 2026 and 2027 cohorts; the OQ6 release, look 3's record under
+efv2026 OQ6 = A, for 2028 and 2029) is among them gets its W3, W2 and R3 as any other
+row, with status "released_vm"; L6 is never computed for it. The default None releases
+nothing and leaves every label byte-identical. Only tools/efv_surrogate_look.py, with
+purpose lv2026_long_run, passes the argument (an AST test pins that); no served path does.
+
 GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md): no grade is read here at all.
 """
 from __future__ import annotations
@@ -60,6 +69,13 @@ W3_SEASONS = 3
 W2_SEASONS = 2
 NEVER_AGE = 27              # BUST2 age rule, on July 1 of RESOLVED_THROUGH
 NEVER_LIST_LAG = 5          # BUST2 no-id rule: last list year <= RT - 5
+
+#: The R-VM debut cohort -> the record that releases its labels (equal to
+#: efv_surrogate_guard.COHORT_RELEASE, asserted by the tests). A cohort missing here
+#: has no release.
+RELEASE_RECORD_BY_COHORT = {2025: "rvm_look_1", 2026: "rvm_look_2", 2027: "rvm_look_3",
+                            2028: "oq6_release", 2029: "oq6_release"}
+RELEASED_VM = "released_vm"
 
 
 def resolved_through() -> int:
@@ -209,11 +225,17 @@ def window_war(seasons: dict[int, float] | None, debut_year: int | None, vintage
 
 
 def labels_for(rec: dict, vintage: int, seasons: dict[int, float] | None, *,
-               gate_sha: str | None = None) -> dict:
+               gate_sha: str | None = None, release_records=None) -> dict:
     """Every F-LV label for one (player, V). None marks a label that is not resolved
-    or not admissible; `status` says why."""
+    or not admissible; `status` says why. `release_records` (record ids) releases a
+    reserved row whose cohort's owning record is among them (module docstring)."""
     V = int(vintage)
     F.guard_score_request(V, gate_sha=gate_sha, purpose="label")
+    if release_records is not None:
+        release_records = frozenset(release_records)
+        unknown = release_records - set(RELEASE_RECORD_BY_COHORT.values())
+        if unknown:
+            raise ValueError(f"unknown release record ids {sorted(unknown)}")
     rt = resolved_through()
     rc = reached_class(rec, seasons)
     dy, label_date, status = effective_debut(rec, seasons)
@@ -227,6 +249,12 @@ def labels_for(rec: dict, vintage: int, seasons: dict[int, float] | None, *,
     if status == "identity_conflict":
         return out
     reserved = dy is not None and dy >= F.R_VM_FIRST_DEBUT_YEAR
+    released = (reserved and release_records is not None
+                and RELEASE_RECORD_BY_COHORT.get(dy) in release_records)
+    if released:
+        # s6.3 amendment: the row's W3, W2 and R3 as any other row; never an L6
+        out["status"] = RELEASED_VM
+        reserved = False
     in_window = dy is not None and V <= dy <= V + W_DEBUT_WINDOW
     if V + W_DEBUT_WINDOW <= rt:
         out["r3"] = 1.0 if (rc == "reached" and in_window) else 0.0
@@ -241,7 +269,7 @@ def labels_for(rec: dict, vintage: int, seasons: dict[int, float] | None, *,
                                dy if rc == "reached" else None, V, n)
         out[key], out[f"{key}_debut"] = val, flag
     if rc == "reached":
-        if dy is None:
+        if dy is None or released:
             pass
         elif reserved:
             out["status"] = "reserved_vm"
@@ -249,7 +277,7 @@ def labels_for(rec: dict, vintage: int, seasons: dict[int, float] | None, *,
             t_res, t_cens, cflag, w, _n = D._label_6yr(seasons or {}, dy, label_date)
             out.update({"l6": t_res, "l6_censored_target": t_cens,
                         "l6_censored": bool(cflag), "l6_weight": w})
-    elif rc == "never":
+    elif rc == "never" and not released:
         out.update({"l6": 0.0, "l6_censored_target": 0.0, "l6_censored": False,
                     "l6_weight": 1.0})
     return out
@@ -257,9 +285,10 @@ def labels_for(rec: dict, vintage: int, seasons: dict[int, float] | None, *,
 
 def labels_for_frame(rows: list[dict], *, universe: dict[str, dict] | None = None,
                      war: dict[str, dict[int, float]] | None = None,
-                     gate_sha: str | None = None) -> list[dict]:
+                     gate_sha: str | None = None, release_records=None) -> list[dict]:
     """labels_for over efv_vintage_frame rows (keyed by player_key and vintage)."""
     universe = universe if universe is not None else F.load_universe()
     war = war if war is not None else war_seasons_table()
     return [labels_for(universe[r["player_key"]], r["vintage"], war.get(r["player_key"]),
-                       gate_sha=gate_sha) for r in rows]
+                       gate_sha=gate_sha, release_records=release_records)
+            for r in rows]
