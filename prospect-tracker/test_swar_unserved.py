@@ -41,7 +41,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 import build_swar as B  # noqa: E402
 from test_swar import SEASON, FixtureInputs  # noqa: E402
 
-SKILL_MODULES = ("swar", "build_swar", "swar_lab", "pitch_basis", "pitch_basis_build", "pitch_basis_fit")
+SKILL_MODULES = ("swar", "build_swar", "swar_lab", "swar_targets", "pitch_basis", "pitch_basis_build",
+                 "pitch_basis_fit")
 #: `swar` bounded by non-letters, so Swartz and swartz_pool (the arbitration
 #: module's namesake) never match while swar.json, build_swar, swar_lab and
 #: .cache/swar/ do.

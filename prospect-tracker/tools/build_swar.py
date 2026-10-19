@@ -32,7 +32,11 @@ pitcher-season, the blended basis S2b on both home-run variants (pb_hr_shrunk,
 pb_hr_fwar: its three raw terms, dwar0, Delta and test value), the realized
 basis R2 (realized: dwar0, Delta, value), RA* and RA9* (part 11.2.1's pitching
 target construction, same season only) and the runner terms (pitch_basis.py,
-tools/pitch_basis_build.py). It relates no delta to any
+tools/pitch_basis_build.py). Part 11.2.1 adds each component's base B0 in
+season Y, same season only: per hitter-season the batting runs wRAA on the
+season's solved weights (bat.wraa, fwar_frame.wraa's form) and the fielding
+base Fld + Frm (fld.b0, dem_plus.fld_total); per pitcher-season war0, the
+replica chain's actual arm on its feed-only arm. It relates no delta to any
 next-season quantity: no year-to-year, split-half or forward statistic is
 computed here, and tools/swar_lab.py (EWV3_SKILL_BUILD_LAB) is the only code
 path that may.
@@ -421,9 +425,14 @@ def build_season(season: int, inp: Inputs, k_consts=None) -> dict:
         for p in swar.HITTER_PARTS:
             parts[p] = {"g": _r(g[p][r.mlbam]), "d": _r(d[p][r.mlbam]),
                         "test": _r(swar.hitter_test_value(r.fwar, d[p][r.mlbam], rpw))}
-        parts["bat"].update({"woba": _r(dt["woba"], 4), "woba_skill": _r(dt["woba_skill"], 4)})
+        parts["bat"].update({"woba": _r(dt["woba"], 4), "woba_skill": _r(dt["woba_skill"], 4),
+                             # part 11.2.1's batting B0: wRAA = (wOBA - lgwOBA) / scale x PA
+                             "wraa": (None if dt["woba"] is None
+                                      else _r((dt["woba"] - lgw) / scale * r.pa))})
         parts["batx"].update({"xwoba": _r(dt["xwoba"], 4), "arm": "xhem" if dt["xhem_arm"] else "hem"})
         parts["fld"]["rel"] = _r(dt["rel"], 4)
+        # part 11.2.1's fielding B0: Fld + Frm, framing only on a fielder who caught
+        parts["fld"]["b0"] = _r(dem_plus.fld_total(swar.dem_fielder(r)))
         parts["pos"].update({"pos_ours": _r(dt["pos_ours"], 4), "pos_fg": _r(r.pos_fg, 4)})
         h_out.append({"mlbam": r.mlbam, "name": r.name, "pa": r.pa, "fwar": r.fwar,
                       "pitcher_batter": pb, "parts": parts})
@@ -453,6 +462,8 @@ def build_season(season: int, inp: Inputs, k_consts=None) -> dict:
                       "tbf": r.tbf, "sigma": _r(sigma, 4), "swingman": swar.is_swingman(r.gs, r.g),
                       "nopp": r.mlbam in nopp, "gmli": r.gmli, "fwar": r.fwar,
                       "in_chain": r.mlbam in chain, "parts": parts,
+                      # part 11.2.1's pitching B0: war0 of the actual arm on the feed-only chain
+                      "war0": (_r(a["war0"]) if "war0" in a else None),
                       "ra_star": _r(q["ra_star"]), "ra9_star": _r(q["ra9_star"]),
                       "runner_terms": ({k: _r(v) for k, v in q["runner_terms"].items()}
                                        if q["runner_terms"] is not None else None)})
