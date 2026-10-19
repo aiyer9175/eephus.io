@@ -142,6 +142,33 @@
    "origin": "Arkmetric, original to eephus.io."
   },
   {
+   "id": "etools_plus",
+   "term": "eTools+",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "eT+",
+    "eTools plus",
+    "eTool plus"
+   ],
+   "priority": 39,
+   "definition": "One tools number per prospect: his eTools weighted the way eFV's re-weight read weighted them, on a plus scale where 100 is the average hitter or pitcher prospect with an eTool and 10 points is one standard deviation.",
+   "methodology": "Each weighted eTool is put on a common scale (how many standard deviations it sits from the average prospect of his side), the scores are averaged with the weights, and the average is rescaled so the side's average is 100 and one standard deviation is 10, rounded to the nearest whole number. The weights are the tool weights of the eFV re-weight read (the fit with the eTools in eFV's tool slots), scaled to sum to 1: hitters ePOW 100%; pitchers eFB 54%, eCMD 46%. The hit eTool did not keep one sign across years in that fit, so it carries no weight, and hitter eTools+ is game power alone. Tools with no eFV weight (pitch selection, bat control, raw power, speed, field, arm and the secondary pitches) contribute nothing. A prospect missing a weighted eTool takes the weighted mean of the ones he has, with the coverage shown. The card tooltip lists each tool's weight, grade and push in points.\n\nIt is descriptive. On the development frames, read once: list years 2017 to 2019, hitters (n 1397): 0.075 with the eFV outcome label, 0.319 with consensus FV; list years 2017 to 2019, pitchers (n 1350): 0.071 with the eFV outcome label, 0.310 with consensus FV; debut classes 2017 to 2023, hitters (n 403): 0.122 with the eFV outcome label, 0.380 with consensus FV; debut classes 2017 to 2023, pitchers (n 408): 0.267 with the eFV outcome label, 0.503 with consensus FV. It is a summary of the stat-moved tool grades, not a forecast, and no claim is made that it beats any other number.",
+   "formula": "eTools+ = 100 + 10 x (S - mean S) / sd S, S = sum of w_t z_t over the available tools / sum of their w_t",
+   "seeAlso": [
+    "etools",
+    "etool_composite",
+    "epow",
+    "efb",
+    "ecmd"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
    "id": "breakout_indicator",
    "term": "Breakout Indicator",
    "category": "custom-index",
