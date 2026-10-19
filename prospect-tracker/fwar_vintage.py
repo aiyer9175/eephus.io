@@ -33,10 +33,10 @@ the split's numTeams; then the rest of what the hitting group publishes (woba,
 wRaa, wRc, wRcPlus, spd), because a frozen season is never refetched.
 Pitching (orchestrator note of 2026-10-01, for the Part 9
 component projections): war, rar, fip, xfip, ra9War, gmli, exli, pli, inli,
-eraMinus, fipMinus, md and sd, plus numTeams. A field the feed does not carry
-on a row is stored as null and never invented: the pitching group carries no
-innings, starts or games. `field_presence` reports the share of rows carrying
-each field.
+eraMinus, fipMinus, md and sd, plus numTeams, then IP_FIELDS (innings, outs,
+games and starts, from the season pitching line; see INNINGS below). A field
+the feed does not carry on a row is stored as null and never invented.
+`field_presence` reports the share of rows carrying each field.
 
 PLATE APPEARANCES (amendment 2026-10-15, task EWAR_P0_VINTAGE_PA, owner answer
 EW3-19: a new vintage id). The sabermetrics feed carries no plateAppearances
@@ -56,6 +56,22 @@ carried it. The 2026-10-02 vintage was amended once, in place, by
 tools/amend_fwar_vintage_pa.py, which records the step under the file's
 `amendments` key with the previous vintage id (`war_lineage` reads that
 chain).
+
+INNINGS (amendment 2026-10-19, task EWAR_P0B_VINTAGE_IP, the EW3-19 precedent:
+a new vintage id). The sabermetrics feed carries no innings, games or starts
+on any pitching row, which blocked the eWAR v3 skill look's precondition (2)
+(EBR_GATE.md 7.3 item 2). The pitching group now carries four more columns,
+IP_FIELDS, filled from StatsAPI's official season pitching line (IP_LINE_URL,
+stats=season, one row per player-season, a traded pitcher's row being his
+numTeams > 1 total) joined by MLBAM id (`ip_from_lines`, the same resolution
+as `pa_from_lines`): `outs` (an integer, the exact count), `inningsPitched`
+(TRUE innings, outs / 3, a number; NOT the feed's baseball-notation string
+'190.1', so never pass it through a notation parser), `gamesPitched` and
+`gamesStarted`. The builder makes that call once per frozen pitching group,
+right after the group (rule 4 applies), and the group keeps an `ip_join`
+receipt. Only those four columns move; every published value stays as the
+feed carried it. The 2026-10-02 vintage, already amended for PA, was amended
+once more, in place, by tools/amend_fwar_vintage_ip.py.
 
 THE RULES (builder):
   1. A season once frozen is NEVER overwritten. A run that names a frozen
@@ -77,9 +93,10 @@ THE RULES (builder):
      calls, no credits)"). The builder accepts 2000 to 2010 beside the feed's
      known era (FEED_FIRST_SEASON 2011): 11 seasons x 2 groups = the 22 calls
      of O4, plus one PA line call per frozen hitting group (the 2026-10-15
-     amendment). Before 2011 each season calls PITCHING FIRST, so on a run that
-     starts at 2000 the very first call is the pre-2011 pitching probe. A
-     pre-2011 group whose answer is HTTP 200 with no rows is not a failure: it
+     amendment) and one IP line call per frozen pitching group (2026-10-19).
+     Before 2011 each season calls PITCHING FIRST, so on a run that starts at
+     2000 the very first call is the pre-2011 pitching probe. A pre-2011
+     group whose answer is HTTP 200 with no rows is not a failure: it
      is RECORDED AS ABSENT, with the response it got (the HTTP status, the
      body's sha256 and the body itself up to ABSENT_BODY_MAX characters), and
      it is frozen like any other block (never refetched, never overwritten).
@@ -143,7 +160,11 @@ CALL_PAUSE_SECONDS = 1.0
 HITTING_FIELDS: tuple[str, ...] = (("war", "rar") + tuple(saber_feed.RUN_PARTS)
                                    + ("wSb", "ubr", "wGdp", "plateAppearances", "numTeams")
                                    + ("woba", "wRaa", "wRc", "wRcPlus", "spd"))
-PITCHING_FIELDS: tuple[str, ...] = tuple(saber_feed.PITCHING_FIELDS) + ("numTeams",)
+#: The pitching columns the sabermetrics feed does not carry, filled from
+#: StatsAPI's season pitching line (amendment 2026-10-19). inningsPitched is
+#: true innings (outs / 3), never baseball notation.
+IP_FIELDS: tuple[str, ...] = ("inningsPitched", "outs", "gamesPitched", "gamesStarted")
+PITCHING_FIELDS: tuple[str, ...] = tuple(saber_feed.PITCHING_FIELDS) + ("numTeams",) + IP_FIELDS
 FIELDS = {"hitting": HITTING_FIELDS, "pitching": PITCHING_FIELDS}
 
 #: Fields read off the split rather than off its `stat` block.
@@ -158,6 +179,11 @@ PA_LINE_URL = ("https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting
                "&season={season}&sportId=1&limit=5000&playerPool=All")
 #: A PA line answer at this many rows may be truncated and is refused.
 PA_LINE_LIMIT = 5000
+#: Where IP_FIELDS come from: StatsAPI's official season pitching line.
+IP_LINE_URL = ("https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching"
+               "&season={season}&sportId=1&limit=5000&playerPool=All")
+#: The integer line counts behind IP_FIELDS (inningsPitched is derived from outs).
+IP_COUNTS: tuple[str, ...] = ("outs", "gamesPitched", "gamesStarted")
 
 
 class FreezeError(RuntimeError):
@@ -430,6 +456,129 @@ def freeze_pa(block: dict, season: int, fetch: Callable[[str], FetchResponse],
     return apply_pa(block, pa, receipt)
 
 
+def _int_count(v) -> int | None:
+    return None if isinstance(v, bool) or not isinstance(v, int) else v
+
+
+def ip_from_lines(splits: list) -> tuple[dict[int, dict], dict]:
+    """({mlbam: {outs, gamesPitched, gamesStarted}}, receipt) from StatsAPI
+    season pitching splits, resolved as `pa_from_lines` resolves PA: a repeated
+    id goes to its unique numTeams > 1 total, else is summed over its one-team
+    stint rows (`n_summed`), else is refused and listed. A row whose count is
+    not an integer is refused."""
+    by_id: dict[int, list] = {}
+    for s in splits or []:
+        pid = (s.get("player") or {}).get("id")
+        if pid is not None:
+            by_id.setdefault(int(pid), []).append(s)
+    resolved, ambiguous, n_multi = saber_feed.resolve_groups(splits)
+    out: dict[int, dict] = {}
+    refused: list[int] = []
+    n_summed = 0
+
+    def _counts(row) -> dict | None:
+        st = row.get("stat") or {}
+        vals = {k: _int_count(st.get(k)) for k in IP_COUNTS}
+        return None if any(v is None for v in vals.values()) else vals
+
+    for pid, row in resolved.items():
+        v = _counts(row)
+        if v is None:
+            refused.append(pid)
+        else:
+            out[pid] = v
+    for pid in ambiguous:
+        stints = [r for r in by_id.get(pid, []) if (r.get("numTeams") or 1) <= 1]
+        vals = [_counts(r) for r in stints]
+        if not stints or any(v is None for v in vals):
+            refused.append(pid)
+            continue
+        out[pid] = {k: sum(v[k] for v in vals) for k in IP_COUNTS}
+        n_summed += 1
+    receipt = {"n_line_rows": len(splits or []), "n_line_players": len(by_id),
+               "n_line_multi_team": n_multi, "n_summed": n_summed,
+               "refused_ids": sorted(refused),
+               "outs_sum_lines": sum(v["outs"] for v in out.values()),
+               "gs_sum_lines": sum(v["gamesStarted"] for v in out.values()),
+               "g_sum_lines": sum(v["gamesPitched"] for v in out.values())}
+    return out, receipt
+
+
+def ip_values(counts: dict | None) -> list:
+    """The IP_FIELDS values for one row's line counts (all null with no line)."""
+    if counts is None:
+        return [None] * len(IP_FIELDS)
+    return [counts["outs"] / 3.0, counts["outs"], counts["gamesPitched"], counts["gamesStarted"]]
+
+
+def apply_ip(block: dict, ip: dict[int, dict], receipt: dict) -> dict:
+    """A copy of a frozen pitching block with its IP_FIELDS columns set from `ip`
+    (appended to `fields` when the block predates them; an id with no line stays
+    null and is listed), its `ip_join` receipt and its content hash recomputed.
+    No other value of any row moves."""
+    out = json.loads(json.dumps(block))
+    if out.get("status") != "frozen":
+        return out
+    fields = list(out.get("fields") or [])
+    add = [f for f in IP_FIELDS if f not in fields]
+    fields += add
+    idx = [fields.index(f) for f in IP_FIELDS]
+    unjoined: list[int] = []
+    rows = {}
+    for mid, vals in (out.get("rows") or {}).items():
+        v = list(vals) + [None] * len(add)
+        got = ip.get(int(mid))
+        for i, x in zip(idx, ip_values(got)):
+            v[i] = x
+        if got is None:
+            unjoined.append(int(mid))
+        rows[mid] = v
+    out["fields"] = fields
+    out["rows"] = rows
+    in_rows = {int(m) for m in rows}
+    io, ig, igs = (fields.index("outs"), fields.index("gamesPitched"),
+                   fields.index("gamesStarted"))
+    joined = dict(receipt)
+    joined.update({
+        "fields": list(IP_FIELDS), "n_rows": len(rows), "n_joined": len(rows) - len(unjoined),
+        "unjoined_ids": sorted(unjoined),
+        "n_lines_not_in_rows": sum(1 for m in ip if m not in in_rows),
+        "outs_sum_rows": sum(v[io] for v in rows.values() if v[io] is not None),
+        "gs_sum_rows": sum(v[igs] for v in rows.values() if v[igs] is not None),
+        "g_sum_rows": sum(v[ig] for v in rows.values() if v[ig] is not None),
+    })
+    out["ip_join"] = joined
+    out["content_sha256"] = group_content_sha(out)
+    return out
+
+
+def freeze_ip(block: dict, season: int, fetch: Callable[[str], FetchResponse],
+              now: Callable[[], str]) -> dict:
+    """Fetch the season's pitching line and join it into a frozen pitching block.
+    Rule 4 applies to the call. An absent block is returned unchanged, no call."""
+    if block.get("status") != "frozen":
+        return block
+    url = IP_LINE_URL.format(season=int(season))
+    resp = fetch(url)
+    at = now()
+    if resp.status != 200:
+        raise FreezeError(f"{season} pitching IP line: HTTP {resp.status} from {url}")
+    try:
+        splits = saber_feed.parse_splits(resp.body)
+    except (ValueError, AttributeError, TypeError, IndexError) as exc:
+        raise FreezeError(f"{season} pitching IP line: unparseable body "
+                          f"({type(exc).__name__})") from exc
+    if not splits:
+        raise FreezeError(f"{season} pitching IP line: the feed returned no rows")
+    if len(splits) >= PA_LINE_LIMIT:
+        raise FreezeError(f"{season} pitching IP line: {len(splits)} rows reaches the cap "
+                          f"{PA_LINE_LIMIT}; the response may be truncated")
+    ip, receipt = ip_from_lines(splits)
+    receipt = {"url": url, "fetched_at": at, "http_status": resp.status,
+               "raw_sha256": hashlib.sha256(resp.body).hexdigest(), **receipt}
+    return apply_ip(block, ip, receipt)
+
+
 def _call_order(season: int) -> tuple[str, ...]:
     """Pitching first before 2011, so the first pre-2011 call is the probe."""
     if int(season) < FEED_FIRST_SEASON:
@@ -484,6 +633,9 @@ def freeze_seasons(existing: dict | None, seasons, *,
             if g == "hitting" and sb[g].get("status") == "frozen":
                 pause(CALL_PAUSE_SECONDS)
                 sb[g] = freeze_pa(sb[g], s, fetch, now)
+            if g == "pitching" and sb[g].get("status") == "frozen":
+                pause(CALL_PAUSE_SECONDS)
+                sb[g] = freeze_ip(sb[g], s, fetch, now)
         sb["fetched_at"] = max(sb[g]["fetched_at"] for g in GROUPS)
         sb["basis"] = season_basis(sb)
         sb["content_sha256"] = season_content_sha(sb)
@@ -621,7 +773,8 @@ def war_lineage(blob: dict | None = None) -> list[str]:
     `amendments` record as WAR-identical predecessors (newest first). An
     amendment enters the chain only when it states `war_identical: true`, which
     tools/amend_fwar_vintage_pa.py writes only after it proved every published
-    value of every row unchanged. A frozen read registered against an earlier id
+    value of every row unchanged (tools/amend_fwar_vintage_ip.py likewise). A
+    frozen read registered against an earlier id
     may accept a later id on this chain; nothing else is inferred from it."""
     blob = load() if blob is None else blob
     out = [str(blob.get("vintage_id") or "")]

@@ -56,6 +56,12 @@ def _line(pid, pa, n=1):
             "numTeams": n, "stat": {"plateAppearances": pa, "atBats": max(pa - 5, 0)}}
 
 
+def _ipline(pid, outs, g, gs, n=1):
+    return {"player": {"id": pid, "fullName": f"p{pid}"}, "team": {"id": 116},
+            "numTeams": n, "stat": {"outs": outs, "inningsPitched": f"{outs // 3}.{outs % 3}",
+                                    "gamesPitched": g, "gamesStarted": gs}}
+
+
 def _season_payloads(season: int):
     hit = [_hit(1000 + i, round(0.1 * i, 3)) for i in range(12)]
     hit += [_hit(7, 1.25, n=1), _hit(7, 2.5, n=2)]        # a traded hitter: season total wins
@@ -65,7 +71,11 @@ def _season_payloads(season: int):
     lines = [_line(1000 + i, 10 * i) for i in range(12)]   # 1000 has 0 PA: zero, not null
     lines += [_line(7, 400, n=2), _line(8, 33)]            # the traded hitter's season total
     lines += [_line(9, 4)]                                 # a line with no sabermetrics row
-    return {"hitting": _body(hit), "pitching": _body(pit), "pa_line": _body(lines)}
+    ips = [_ipline(2000 + i, 30 * i + 1, 10 + i, i) for i in range(10)]   # 2000 has 1 out
+    ips += [_ipline(7, 40, 12, 0, n=2), _ipline(7, 25, 7, 0), _ipline(7, 15, 5, 0)]  # traded: total
+    ips += [_ipline(9, 3, 1, 0)]                           # a line with no sabermetrics row
+    return {"hitting": _body(hit), "pitching": _body(pit), "pa_line": _body(lines),
+            "ip_line": _body(ips)}
 
 
 class FakeFetch:
@@ -75,7 +85,8 @@ class FakeFetch:
 
     def __call__(self, url):
         self.calls.append(url)
-        group = ("pa_line" if "stats=season&" in url
+        group = ("ip_line" if "stats=season&group=pitching" in url
+                 else "pa_line" if "stats=season&" in url
                  else "pitching" if "group=pitching" in url else "hitting")
         season = int(url.split("season=")[1].split("&")[0])
         if (season, group) in self.overrides:
@@ -150,7 +161,7 @@ def test_the_builder_fetches_both_groups_from_statsapi_and_never_the_cache():
     _freeze(None, [2024, 2025], fetch=fetch)   # the autouse trap guards scrapers._fetch
     assert fetch.calls == [u.format(season=s) for s in (2024, 2025)
                            for u in (saber_feed.SABER_URLS["hitting"], FV.PA_LINE_URL,
-                                     saber_feed.SABER_URLS["pitching"])]
+                                     saber_feed.SABER_URLS["pitching"], FV.IP_LINE_URL)]
     assert all(u.startswith("https://statsapi.mlb.com/api/v1/stats?stats=")
                for u in fetch.calls)
 
@@ -199,7 +210,7 @@ def test_rows_keep_the_feed_values_the_eb4_fields_and_the_pitching_fields():
                                  "positional", "wLeague", "replacement"]
     for f in ("wSb", "ubr", "wGdp", "plateAppearances", "numTeams"):
         assert f in hit["fields"]
-    assert pit["fields"] == list(saber_feed.PITCHING_FIELDS) + ["numTeams"]
+    assert pit["fields"] == list(saber_feed.PITCHING_FIELDS) + ["numTeams"] + list(FV.IP_FIELDS)
     row = dict(zip(hit["fields"], hit["rows"]["7"]))
     assert row["war"] == 2.5 and row["numTeams"] == 2          # the season total, not a stint
     assert row["wSb"] == 0.3 and row["ubr"] == -0.4 and row["wGdp"] == 0.2
@@ -217,9 +228,21 @@ def test_rows_keep_the_feed_values_the_eb4_fields_and_the_pitching_fields():
     assert pj["pa_sum_lines"] == pj["pa_sum_rows"] + 4
     prow = dict(zip(pit["fields"], pit["rows"]["2003"]))
     assert prow["fip"] == 3.9 and prow["gmli"] == 0.9 and prow["eraMinus"] == 95.0
+    assert prow["outs"] == 91 and prow["inningsPitched"] == 91 / 3.0      # true innings
+    assert prow["gamesPitched"] == 13 and prow["gamesStarted"] == 3
+    trow = dict(zip(pit["fields"], pit["rows"]["7"]))
+    assert trow["outs"] == 40 and trow["gamesPitched"] == 12            # the season total
+    ij = pit["ip_join"]
+    assert ij["url"] == FV.IP_LINE_URL.format(season=2025) and ij["http_status"] == 200
+    assert ij["n_rows"] == 11 and ij["n_joined"] == 11 and ij["unjoined_ids"] == []
+    assert ij["n_lines_not_in_rows"] == 1                       # id 9 has a line, no row
+    assert ij["outs_sum_rows"] == sum(30 * i + 1 for i in range(10)) + 40
+    assert ij["outs_sum_lines"] == ij["outs_sum_rows"] + 3
+    assert ij["gs_sum_rows"] == sum(range(10)) and pit["n_string_refused"] == 0
     pres = FV.field_presence(blob)["2025"]
     assert pres["hitting"]["share"]["plateAppearances"] == 1.0
     assert pres["pitching"]["share"]["fip"] == 1.0
+    assert all(pres["pitching"]["share"][f] == 1.0 for f in FV.IP_FIELDS)
 
 
 def test_write_is_atomic_and_load_reads_it_back(tmp_path):
@@ -256,8 +279,9 @@ def test_the_cli_plans_without_network_or_write(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr(FV, "http_fetch", lambda url: pytest.fail("network in a plan"))
     assert BUILD.main(["--freeze", "2024-2025", "--out", str(out)]) == 0
     text = capsys.readouterr().out
-    assert "calls 6 (at most)" in text and "PLAN ONLY" in text
+    assert "calls 8 (at most)" in text and "PLAN ONLY" in text
     assert FV.PA_LINE_URL.format(season=2025) in text
+    assert FV.IP_LINE_URL.format(season=2025) in text
     assert not out.exists()
     assert BUILD.parse_seasons("2011,2013-2014") == [2011, 2013, 2014]
 
@@ -276,9 +300,10 @@ _EMPTY = FV.FetchResponse(200, b'{"copyright": "x", "stats": []}')
 def test_the_pre_2011_path_accepts_2000_to_2010_in_22_calls_pitching_first():
     fetch = FakeFetch()
     blob = _freeze(None, range(2000, 2011), fetch=fetch)
-    assert len(fetch.calls) == 33                     # O4's 22 plus one PA line per hitting group
+    assert len(fetch.calls) == 44   # O4's 22 plus one PA line per hitting group and one IP line per pitching group
     assert "group=pitching" in fetch.calls[0] and "season=2000" in fetch.calls[0]   # the probe
-    assert [("pitching" in u) for u in fetch.calls[:2]] == [True, False]
+    assert [("pitching" in u) for u in fetch.calls[:3]] == [True, True, False]   # its IP line next
+    assert "stats=season&group=pitching" in fetch.calls[1]
     assert sorted(blob["seasons"], key=int) == [str(s) for s in range(2000, 2011)]
     with pytest.raises(FV.FreezeError, match="before the first accepted season 2000"):
         _freeze(None, [1999])
@@ -383,9 +408,85 @@ def test_the_committed_vintage_carries_pa_on_every_hitting_row():
     pres = FV.field_presence(blob)
     assert all(pres[str(s)]["hitting"]["share"]["plateAppearances"] == 1.0
                for s in range(2011, 2027))
-    am = blob["amendments"][-1]
+    am = blob["amendments"][-2]
     assert am["task"] == "EWAR_P0_VINTAGE_PA" and am["war_identical"] is True
     assert am["previous_vintage_id"] == "2026-10-02-0341299c20ec"
-    assert FV.war_lineage(blob) == [blob["vintage_id"], "2026-10-02-0341299c20ec"]
+    assert am["vintage_id"] == "2026-10-02-57bf90f7143e"
+    assert FV.war_lineage(blob) == [blob["vintage_id"], "2026-10-02-57bf90f7143e",
+                                    "2026-10-02-0341299c20ec"]
     for s, lg in am["league_pa"].items():
         assert lg["pa_rows"] == lg["pa_lines"] == lg["pa_teams"] and lg["n_teams"] == 30, s
+
+
+def test_the_committed_vintage_carries_innings_on_every_pitching_row():
+    """EWAR_P0B_VINTAGE_IP (2026-10-19): innings, outs, games and starts on every
+    pitching row 2000 to 2026, league outs and starts equal to StatsAPI's thirty
+    club totals, under a new vintage id on the WAR-identical lineage."""
+    if not FV.VINTAGE_PATH.exists():
+        pytest.skip("needs data/fwar_vintage.json")
+    blob = json.loads(FV.VINTAGE_PATH.read_text(encoding="utf-8"))
+    assert blob["vintage_id"] == "2026-10-02-a020cf64844a"
+    assert blob["fields"]["pitching"][-4:] == list(FV.IP_FIELDS)
+    pres = FV.field_presence(blob)
+    for s in range(2000, 2027):
+        for f in FV.IP_FIELDS:
+            assert pres[str(s)]["pitching"]["share"][f] == 1.0, (s, f)
+    am = blob["amendments"][-1]
+    assert am["task"] == "EWAR_P0B_VINTAGE_IP" and am["war_identical"] is True
+    assert am["previous_vintage_id"] == "2026-10-02-57bf90f7143e"
+    assert am["vintage_id"] == blob["vintage_id"]
+    assert sorted(am["league_ip"], key=int) == [str(s) for s in range(2000, 2027)]
+    for s, lg in am["league_ip"].items():
+        assert lg["outs_rows"] == lg["outs_lines"] == lg["outs_teams"] and lg["n_teams"] == 30, s
+        assert lg["gs_rows"] == lg["gs_lines"] == lg["gs_teams"], s
+    assert am["league_ip"]["2025"]["outs_rows"] == 129225
+    assert am["league_ip"]["2020"]["outs_rows"] == 46406
+    gb = blob["seasons"]["2025"]["pitching"]
+    f = gb["fields"]
+    for v in gb["rows"].values():
+        assert v[f.index("inningsPitched")] == v[f.index("outs")] / 3.0
+
+
+# --------------------------------------------------------------------------- innings (2026-10-19)
+@pytest.mark.parametrize("resp, msg", [
+    (FV.FetchResponse(503, b""), "IP line: HTTP 503"),
+    (FV.FetchResponse(200, b"not json"), "IP line: unparseable"),
+    (FV.FetchResponse(200, _body([])), "IP line: the feed returned no rows"),
+])
+def test_a_failed_ip_line_fails_the_whole_run(resp, msg):
+    with pytest.raises(FV.FreezeError, match=msg):
+        _freeze(None, [2025], fetch=FakeFetch({(2025, "ip_line"): resp}))
+
+
+def test_ip_from_lines_resolves_totals_sums_stints_and_refuses_the_rest():
+    lines = [_ipline(1, 30, 5, 5), _ipline(2, 60, 20, 0, n=2), _ipline(2, 30, 10, 0),
+             _ipline(2, 30, 10, 0),
+             _ipline(3, 10, 4, 1), _ipline(3, 11, 6, 0),     # two stints and no total: summed
+             _ipline(4, 1, 1, 0, n=2), _ipline(4, 2, 1, 0, n=2),   # two totals: refused
+             dict(_ipline(5, 3, 1, 0), stat={"outs": "3", "gamesPitched": 1, "gamesStarted": 0})]
+    ip, rec = FV.ip_from_lines(lines)
+    assert ip == {1: {"outs": 30, "gamesPitched": 5, "gamesStarted": 5},
+                  2: {"outs": 60, "gamesPitched": 20, "gamesStarted": 0},
+                  3: {"outs": 21, "gamesPitched": 10, "gamesStarted": 1}}
+    assert rec["n_summed"] == 1 and rec["refused_ids"] == [4, 5]
+    assert rec["outs_sum_lines"] == 111 and rec["gs_sum_lines"] == 6 and rec["g_sum_lines"] == 35
+
+
+def test_apply_ip_appends_the_columns_to_an_old_block_and_moves_nothing_else():
+    blob = _freeze(None, [2025])
+    pit = blob["seasons"]["2025"]["pitching"]
+    k = len(pit["fields"]) - len(FV.IP_FIELDS)
+    old = dict(pit, fields=pit["fields"][:k], rows={m: v[:k] for m, v in pit["rows"].items()})
+    old.pop("ip_join")
+    old["content_sha256"] = FV.group_content_sha(old)
+    again = FV.apply_ip(old, {7: {"outs": 4, "gamesPitched": 2, "gamesStarted": 1}}, {})
+    assert again["fields"] == old["fields"] + list(FV.IP_FIELDS)
+    assert again["content_sha256"] != old["content_sha256"]
+    for m, v in again["rows"].items():
+        assert v[:k] == old["rows"][m] and len(v) == k + len(FV.IP_FIELDS)
+    assert again["rows"]["7"][k:] == [4 / 3.0, 4, 2, 1]
+    assert again["rows"]["2003"][k:] == [None] * 4
+    assert len(again["ip_join"]["unjoined_ids"]) == 10
+    swapped = {"seasons": {"2025": dict(blob["seasons"]["2025"], pitching=again)}}
+    assert FV.side_targets(swapped, "pit") == FV.side_targets(blob, "pit")
+    assert FV.apply_ip({"status": "absent", "rows": {}}, {}, {}) == {"status": "absent", "rows": {}}
