@@ -34648,39 +34648,6 @@ function eToolsPlusTip(r) {
     + (zero.length ? ` Weight 0, contributes nothing: ${zero.join(", ")}.` : "")
     + " A summary of the tool grades, not a forecast.";
 }
-function _eToolsPlusTier(v) {
-  // the plus scale on the 20-80 colour ramp: 100 is 50, 10 points is 5 grade points
-  return _toolTier(Math.max(20, Math.min(80, 50 + (Number(v) - 100) / 2)));
-}
-// The eT+ chip on the list row's tool strip (the card summary).
-function eToolsPlusChipHTML(p) {
-  const r = _eToolsPlusFor(p);
-  if (!r) return "";
-  const tier = _eToolsPlusTier(r.plus);
-  return `<span class="tool-grade-pill tg-total tg-etplus"
-             style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
-             title="${escapeHtml(eToolsPlusTip(r))}">`
-    + `<span class="tg-code">eT+</span>`
-    + `<span class="tg-val">${r.plus}</span>`
-    + `</span>`;
-}
-// The player page line under the eTools block: the number and each tool's push.
-function eToolsPlusDetailHTML(p) {
-  const r = _eToolsPlusFor(p);
-  if (!r) return "";
-  const parts = _eToolsPlusParts(r).map(d =>
-    `<span class="etool-driver">${escapeHtml(d.label)} ${d.shown != null ? escapeHtml(String(d.shown)) : "n/a"}`
-    + ` · weight ${Math.round(d.weight * 100)}%${d.points != null ? ` <b>${escapeHtml(_eToolPts(d.points))}</b>` : ""}</span>`).join("");
-  const cov = r.coverage != null && r.coverage < 1 ? ` · coverage ${Math.round(r.coverage * 100)}%` : "";
-  return `<div class="etools-block etools-plus-block" title="${escapeHtml(eToolsPlusTip(r))}">
-    <div class="etools-head"><span class="g-term" data-term="etools_plus">eTools+</span> <span class="etools-sub">the eTools weighted as eFV's re-weight read weighted them; 100 = the average ${r.side === "pit" ? "pitcher" : "hitter"} prospect with an eTool, 10 points per SD${escapeHtml(cov)}</span></div>
-    <div class="etool-row">
-      <span class="etool-name">eTools+</span>
-      <span class="etool-vals"><span class="fv-badge size-sm">${r.plus}</span></span>
-      <span class="etool-drivers">${parts}</span>
-    </div>
-  </div>`;
-}
 // The strip's TOOL chip tooltip: the composite and its basis.
 function _stripCompTitle(p, cv) {
   const t = (p && p.tools) || {};
@@ -41482,8 +41449,6 @@ function makeToolGradeChips(p, activeToolKey) {
       + `</span>`
     );
   }
-  const etPlusChip = eToolsPlusChipHTML(p);
-  if (etPlusChip) pills.push(etPlusChip);
   let sortedPill = null;   // the active-sort tool's chip, hoisted to the front
   // The shown grades (ETOOLS_SITEWIDE_FLIP): each passing eTool in place of its
   // consensus grade; flag off, the consensus map itself.
@@ -51849,10 +51814,6 @@ function renderPlayerDetail(key) {
       composite_off: ["hit", "game_pwr", "pitch_sel", "bat_ctrl"], composite_def: [],
       composite_stuff: ["fb"], composite_cmd: ["cmd"] };
     const _compUses = (k) => _compIsE ? (t.etool_keys || []).filter(x => (_COMP_INPUTS[k] || []).includes(x)) : [];
-    const _compRef = (k) => {
-      if (!_ETOOLS_UI || !_compUses(k).length || _compCons[k] == null || t[k] == null) return "";
-      return `<span class="tool-cons-ref" title="Consensus composite: the same formula on the consensus grades (rounded up)">cons ${fvCeil(_compCons[k])}</span>`;
-    };
     const _compNote = (k) => {
       if (!_ETOOLS_UI || !t.composite_basis) return "";
       const uses = _compUses(k);
@@ -51982,13 +51943,10 @@ function renderPlayerDetail(key) {
       const labelHtml = slug
         ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(shownLabel)}</span>`
         : escapeHtml(shownLabel);
-      const refV = (isE && key === "pwr") ? _consToolVal(t.grades, "game_pwr") : v;
-      const consRef = (isE && refV != null)
-        ? `<span class="tool-cons-ref" title="Consensus grade (all sources, rounded up)">cons ${fvCeil(refV)}</span>` : "";
       const badge = isE ? `<span class="fv-badge ${fvClass(String(sh.shown))} size-sm">${sh.shown}</span>` : badgeFor(v);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
         <span class="tools-grade-name">${labelHtml}${toolBasisMarkHTML(sh.basis)}${dualMark}${spreadTag}</span>
-        ${badge}${consRef}${deltaChip(key)}
+        ${badge}${deltaChip(key)}
       </div>`;
     };
     let compositeBar = "";
@@ -51996,8 +51954,7 @@ function renderPlayerDetail(key) {
     let hasSpeedMarker = false;
     if (isPitcher) {
       const overallChip = compositeChip("Tool", _compV("composite_overall"), null,
-        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)." + _compNote("composite_overall"), true, 'grade',
-        _compRef("composite_overall"));
+        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)." + _compNote("composite_overall"), true, 'grade');
       const stuffGradeChip = compositeChip("FVStuff+", _compV("composite_stuff"), _compV("composite_stuff_plus"),
         "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort." + _compNote("composite_stuff"), false);
       const cmdChip = compositeChip("Command", _compV("composite_cmd"), _compV("composite_cmd_plus"),
@@ -52030,14 +51987,11 @@ function renderPlayerDetail(key) {
       // (DEF 60 / ARM 30 / RUN 10, catchers DEF 70 / ARM 30), p=3
       // power-mean. All three on the 20-80 scouting scale (50 = avg).
       const overallChip = compositeChip("Tool", _compV("composite_overall"), null,
-        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale." + _compNote("composite_overall"), true, 'grade',
-        _compRef("composite_overall"));
+        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale." + _compNote("composite_overall"), true, 'grade');
       const offChip = compositeChip("O-Tool", _compV("composite_off"), null,
-        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale." + _compNote("composite_off"), false, 'grade',
-        _compRef("composite_off"));
+        "O-Tool: weighted offensive composite - HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale." + _compNote("composite_off"), false, 'grade');
       const defChip = compositeChip("D-Tool", _compV("composite_def"), null,
-        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale." + _compNote("composite_def"), false, 'grade',
-        _compRef("composite_def"));
+        "D-Tool: weighted power-mean (p=3) - DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale." + _compNote("composite_def"), false, 'grade');
       compositeBar = (overallChip || offChip || defChip)
         ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
         : "";
@@ -52217,14 +52171,12 @@ function renderPlayerDetail(key) {
       // composite when this side carries an eTool, the consensus one beside it.
       const _opE = op.composite_basis === "etools" && !!op.composite_cons;
       const _opV = (_opE && !_ETOOLS_UI) ? op.composite_cons.composite_overall : op.composite_overall;
-      const _opRef = (_opE && _ETOOLS_UI && op.composite_cons.composite_overall != null)
-        ? `<span class="tool-cons-ref" title="Consensus composite: the same formula on the consensus grades (rounded up)">cons ${fvCeil(op.composite_cons.composite_overall)}</span>` : "";
       const otherOverall = compositeChip("Tool",
         _opV, null,
         (otherIsPitcher ? "Tool: 65% stuff + 35% command, 20-80 scouting scale"
                         : "Tool: equally-weighted p=4 power-mean of every tool, 20-80 scouting scale")
-          + (_ETOOLS_UI && op.composite_basis ? (_opE ? " eTool composite: built from the shown grades." : " Built from the consensus grades.") : ""),
-        true, 'grade', _opRef);
+          + (_ETOOLS_UI && op.composite_basis ? (_opE ? ` eTool composite: built from the shown grades.${op.composite_cons.composite_overall != null ? ` The consensus composite is ${fvCeil(op.composite_cons.composite_overall)}.` : ""}` : " Built from the consensus grades.") : ""),
+        true, 'grade');
       const otherCompositeBar = otherOverall
         ? `<div class="tools-composite-bar">${otherOverall}</div>`
         : "";
@@ -52246,7 +52198,6 @@ function renderPlayerDetail(key) {
         ${compositeBar}
         ${groupBlocks}
         ${eToolsBlock}
-        ${eToolsPlusDetailHTML(p)}
         ${footer}
       </div>${twoWayExtraCard}`;
   })();

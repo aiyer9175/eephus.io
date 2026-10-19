@@ -73,8 +73,7 @@ def _runtime():
 
 _PX_FUNCS = ["fvCeil", "toolFullName", "toolAbbrev", "_resolvePwr", "_eToolsFor", "_eToolRec", "_consToolVal",
              "toolGradeShown", "toolGradesShown", "toolBasis", "toolBasisMarkHTML", "toolBasisMarkText",
-             "_eToolPts", "_eToolBand", "_eToolDrivers", "toolGradeTip", "_toolTier", "makeToolGradeChips",
-             "_eToolsPlusFor", "_eToolsPlusParts", "eToolsPlusTip", "_eToolsPlusTier", "eToolsPlusChipHTML"]
+             "_eToolPts", "_eToolBand", "_eToolDrivers", "toolGradeTip", "_toolTier", "makeToolGradeChips"]
 _PX_OBJECTS = ["const TOOL_DISPLAY_NAMES = {", "const _ETOOL_TOOL_OF = {", "const _ETOOL_KEY = {"]
 _PX_STATEMENTS = ["const _BASIS_TOOLS = ", "const _HITTER_TOOL_ORDER = ", "const _PITCHER_TOOL_ORDER = "]
 
