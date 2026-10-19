@@ -681,6 +681,51 @@ def test_fetcher_heals_damaged_receipts_and_refetches_unreceipted_or_altered_pay
     assert fwh.heal_receipts(tmp_path / "nowhere") == {}
 
 
+def test_fetcher_keeps_a_tied_official_game_only_when_the_schedule_confirms_the_tie(tmp_path):
+    """2016-09-29 Cubs at Pirates ended 1-1 after six innings: its list ends at 50, not 0 or 100."""
+    hist = tmp_path / "win_prob_hist"
+
+    def tied(inning=6, home=1, away=1, complete=True):
+        plays = _complete_plays()
+        plays[-1]["homeTeamWinProbability"] = 50.0
+        plays[-1]["about"].update({"inning": inning, "isComplete": complete})
+        plays[-1]["result"].update({"homeScore": home, "awayScore": away})
+        return json.dumps(plays).encode("utf-8")
+    body = tied()
+    assert fwh.plays_end_tied(json.loads(body))
+    for bad in (tied(inning=4), tied(home=2), tied(complete=False)):
+        assert not fwh.plays_end_tied(json.loads(bad))
+
+    def sched(pk, is_tie):
+        return _FakeResp(200, json.dumps({"dates": [{"games": [
+            {"gamePk": pk, "isTie": is_tie, "status": {"abstractGameState": "Final"}}]}]}).encode("utf-8"))
+    calls = []
+
+    class _S:
+        def get(self, url, params=None, headers=None, timeout=None):
+            calls.append((url, (params or {}).get("gamePk"), headers))
+            if params:
+                return sched(params["gamePk"], params["gamePk"] == 1)
+            return _FakeResp(200, body)
+    sleeps = []
+    pacer = fwh.Pacer(1.0, clock=lambda: 0.0, sleep=lambda s: sleeps.append(s))
+    summ = fwh.run([2016], out_dir=hist, session=_S(), pacer=pacer, user_agent="ua",
+                   schedules={2016: [[1, "2016-09-29"], [2, "2016-09-29"]]})
+    import mlb_leverage
+    assert [(c[0] == mlb_leverage.SCHEDULE_API, c[1]) for c in calls] == [(False, None), (True, 1),
+                                                                         (False, None), (True, 2)]
+    assert all(c[2] == {"User-Agent": "ua"} for c in calls) and sleeps == [1.0] * 3
+    assert (hist / "1.json").read_bytes() == body and not (hist / "2.json").exists()
+    recs = [json.loads(x) for x in (hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [(r["game_pk"], r["status"], r.get("tie")) for r in recs] == [(1, "ok", True), (2, "partial", None)]
+    assert summ["seasons"]["2016"]["fetched"] == 1 and summ["seasons"]["2016"]["partial"] == 1
+    # resumed: the receipted tie is kept without a request; with no receipt it is not complete
+    assert fwh.payload_complete(hist / "1.json", recs[0]["sha256"]) and not fwh.payload_complete(hist / "1.json")
+    calls.clear()
+    fwh.run([2016], out_dir=hist, session=_S(), pacer=pacer, user_agent="ua", schedules={2016: [[1, "2016-09-29"]]})
+    assert calls == []
+
+
 def test_fetcher_limit_caps_the_requests_of_one_run(tmp_path):
     hist = tmp_path / "win_prob_hist"
     complete = json.dumps(_complete_plays()).encode("utf-8")
