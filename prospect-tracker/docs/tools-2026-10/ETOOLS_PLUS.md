@@ -128,3 +128,22 @@ Hitter eTools+ is ePOW alone under D-1. Options: (a) keep D-1; (b) the served eF
 consensus-slot weights mapped onto the eTools (hitters eHIT alone, pitchers eFB 0.24 and eCMD
 0.76); (c) equal weights over each side's passing eTools; (d) weights from each eTool's own
 tool-label accuracy.
+
+## Check results (run once 2026-10-19, `python etools_plus.py --check <cache>`)
+
+From `data/_labs/etools/etools_plus_check.json`. Within-(side, year) Spearman, row-weighted over
+groups of 20 or more rows; descriptive only, no verdict, no cut by consensus-FV level.
+
+| frame | side | rows | eTools+ vs eFV outcome label | eTools+ vs consensus FV | same weights on consensus grades: vs label / vs consensus FV |
+|---|---|---|---|---|---|
+| lv_dev (list years 2017 to 2019) | hitters | 1,397 | 0.075 | 0.319 | 0.075 / 0.324 |
+| lv_dev | pitchers | 1,350 | 0.071 | 0.310 | 0.081 / 0.383 |
+| vm_dev (debut classes 2017 to 2023) | hitters | 403 | 0.122 | 0.380 | 0.123 / 0.460 |
+| vm_dev | pitchers | 408 | 0.267 | 0.503 | 0.257 / 0.534 |
+
+The hitter rows equal ePOW alone (its only weighted tool), and they reproduce the re-weight
+read's Part 1 ePOW figures (0.075 and 0.122), a check that the as-of values were joined as that
+read joined them. Each weighted eTool alone, pitchers: eFB -0.013 (lv_dev) and 0.127 (vm_dev)
+against the label, eCMD 0.118 and 0.165. eTools+ tracks consensus FV loosely (0.31 to 0.50) and
+the eFV label weakly; it is a summary of the stat-moved tool grades, not an outcome forecast,
+and the site says no more than that.

@@ -9604,6 +9604,7 @@
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
             <option value="tool">Tool grade (toolsiest)</option>
+            <option value="etools_plus">eTools+ (highest)</option>
             <option value="stock_movers">Biggest movers</option>
           </optgroup>
           <optgroup label="Age &amp; ETA">
@@ -14467,7 +14468,7 @@ const REVERSE_SORT_PAIRS = {
 const _INTERNAL_DIR_MAIN_SORTS = new Set([
   "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
   "surplus_pbust", "wag", "star_odds",
-  "tool", "t_plus", "conviction", "fv", "xfv",
+  "tool", "t_plus", "conviction", "fv", "xfv", "etools_plus",
 ]);
 
 // v29 - Universal post-sort direction helper. Each renderer that owns
@@ -16559,6 +16560,17 @@ function getFilteredActives() {
     pool.sort((a, b) => {
       const av = (a.tools || {}).composite_overall;
       const bv = (b.tools || {}).composite_overall;
+      if (av == null && bv == null) return fvCmpDesc(a, b);
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
+    });
+  } else if (state.sort === "etools_plus") {
+    // eTools+ desc (ETOOLS_PLUS); no eTools+ sinks in both directions, FV breaks ties.
+    const _rev = !!(state.sortRev && state.sortRev.sort);
+    const _ev = p => { const r = _eToolsPlusFor(p); return r ? r.plus : null; };
+    pool.sort((a, b) => {
+      const av = _ev(a), bv = _ev(b);
       if (av == null && bv == null) return fvCmpDesc(a, b);
       if (av == null) return 1;
       if (bv == null) return -1;
@@ -34504,13 +34516,17 @@ let _ETOOLS = null, _ETOOLS_PROMISE = null;
 function ensureETools() {
   if (!_ETOOLS_UI || _ETOOLS !== null) return Promise.resolve(_ETOOLS);
   if (_ETOOLS_PROMISE) return _ETOOLS_PROMISE;
+  const _grabPlus = fetch("/data/etools_plus.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null)).catch(() => null);
   _ETOOLS_PROMISE = fetch("/data/etools.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => {
+    .then(j => _grabPlus.then(pj => [j, pj]))
+    .then(([j, pj]) => {
       const byMlbam = {};
       const players = (j && j.players) || {};
       for (const k in players) if (players[k] && players[k].mlbam != null) byMlbam[String(players[k].mlbam)] = players[k];
-      _ETOOLS = { players, byMlbam, tools: (j && j.tools) || {}, labels: (j && j.driver_labels) || {} };
+      _ETOOLS = { players, byMlbam, tools: (j && j.tools) || {}, labels: (j && j.driver_labels) || {},
+                  plus: _indexETPlus(pj) };
     })
     .catch(() => { _ETOOLS = { players: {}, byMlbam: {}, tools: {}, labels: {} }; })
     .then(() => {
@@ -34586,6 +34602,84 @@ function _revertEtoolComposites(list) {
     t.composite_basis = "consensus";
     p.tool = t.composite_overall != null ? Math.round(t.composite_overall) : null;
   }
+}
+// eTools+ (ETOOLS_PLUS, owner decision EW3-28; docs/tools-2026-10/ETOOLS_PLUS.md): one
+// tools summary per prospect, the shown eTools weighted by the tool weights of the eFV
+// re-weight read (candidate E), 100 = the side's average live prospect, 10 points per SD,
+// to the nearest whole number. Read from its own sidecar beside the eTools payload and
+// shown only while the eTools are the shown grades. Descriptive: no outcome claim.
+function _indexETPlus(pj) {
+  if (!pj || !pj.players) return null;
+  const byMlbam = {};
+  for (const k in pj.players) {
+    const r = pj.players[k];
+    if (r && r.mlbam != null) byMlbam[String(r.mlbam)] = r;
+  }
+  return { players: pj.players, byMlbam, sides: pj.sides || {}, names: pj.names || {}, keys: pj.keys || {} };
+}
+function _eToolsPlusFor(p) {
+  if (!_ETOOLS_UI || !p || !_ETOOLS || !_ETOOLS.plus) return null;
+  const x = _ETOOLS.plus;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  const r = x.players[p.player_key] || (mid != null ? x.byMlbam[String(mid)] : null) || null;
+  return (r && r.plus != null) ? r : null;
+}
+function _eToolsPlusParts(r) {
+  const x = (_ETOOLS && _ETOOLS.plus) || {};
+  const names = x.names || {}, keys = x.keys || {};
+  return (r.parts || []).map(([t, w, shown, pts]) => ({
+    tool: t, label: keys[t] || names[t] || t, weight: Number(w), shown,
+    points: pts == null ? null : Number(pts) }));
+}
+// Plain-text tooltip: the number, each weighted tool's share and push, the tools at zero.
+function eToolsPlusTip(r) {
+  if (!r) return "";
+  const x = (_ETOOLS && _ETOOLS.plus) || {};
+  const side = (x.sides || {})[r.side] || {};
+  const names = x.names || {};
+  const parts = _eToolsPlusParts(r).map(d => d.points == null
+    ? `${d.label} (weight ${Math.round(d.weight * 100)}%): not on file`
+    : `${d.label} ${d.shown} (weight ${Math.round(d.weight * 100)}%): ${_eToolPts(d.points)}`);
+  const zero = Object.keys(side.zero_weight || {}).map(t => names[t] || t);
+  const cov = r.coverage != null && r.coverage < 1 ? ` Coverage ${Math.round(r.coverage * 100)}% of the weight.` : "";
+  return `eTools+ ${r.plus}: the eTools weighted as eFV's re-weight read weighted them, 100 = the average`
+    + ` ${r.side === "pit" ? "pitcher" : "hitter"} prospect with an eTool, 10 points per standard deviation.`
+    + ` ${parts.join("; ")}.${cov}`
+    + (zero.length ? ` Weight 0, contributes nothing: ${zero.join(", ")}.` : "")
+    + " A summary of the tool grades, not a forecast.";
+}
+function _eToolsPlusTier(v) {
+  // the plus scale on the 20-80 colour ramp: 100 is 50, 10 points is 5 grade points
+  return _toolTier(Math.max(20, Math.min(80, 50 + (Number(v) - 100) / 2)));
+}
+// The eT+ chip on the list row's tool strip (the card summary).
+function eToolsPlusChipHTML(p) {
+  const r = _eToolsPlusFor(p);
+  if (!r) return "";
+  const tier = _eToolsPlusTier(r.plus);
+  return `<span class="tool-grade-pill tg-total tg-etplus"
+             style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
+             title="${escapeHtml(eToolsPlusTip(r))}">`
+    + `<span class="tg-code">eT+</span>`
+    + `<span class="tg-val">${r.plus}</span>`
+    + `</span>`;
+}
+// The player page line under the eTools block: the number and each tool's push.
+function eToolsPlusDetailHTML(p) {
+  const r = _eToolsPlusFor(p);
+  if (!r) return "";
+  const parts = _eToolsPlusParts(r).map(d =>
+    `<span class="etool-driver">${escapeHtml(d.label)} ${d.shown != null ? escapeHtml(String(d.shown)) : "n/a"}`
+    + ` · weight ${Math.round(d.weight * 100)}%${d.points != null ? ` <b>${escapeHtml(_eToolPts(d.points))}</b>` : ""}</span>`).join("");
+  const cov = r.coverage != null && r.coverage < 1 ? ` · coverage ${Math.round(r.coverage * 100)}%` : "";
+  return `<div class="etools-block etools-plus-block" title="${escapeHtml(eToolsPlusTip(r))}">
+    <div class="etools-head"><span class="g-term" data-term="etools_plus">eTools+</span> <span class="etools-sub">the eTools weighted as eFV's re-weight read weighted them; 100 = the average ${r.side === "pit" ? "pitcher" : "hitter"} prospect with an eTool, 10 points per SD${escapeHtml(cov)}</span></div>
+    <div class="etool-row">
+      <span class="etool-name">eTools+</span>
+      <span class="etool-vals"><span class="fv-badge size-sm">${r.plus}</span></span>
+      <span class="etool-drivers">${parts}</span>
+    </div>
+  </div>`;
 }
 // The strip's TOOL chip tooltip: the composite and its basis.
 function _stripCompTitle(p, cv) {
@@ -36695,7 +36789,7 @@ function _gfxSubtitle(total, cap) {
     surplus_sv: "by expected surplus value", surplus_risk: "by simulated mean SV",
     surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
     wag: "by WAR-above-grade", age_asc: "youngest first", age_desc: "oldest first",
-    age_vs_level: "most young-for-level", eta: "earliest ETA",
+    age_vs_level: "most young-for-level", eta: "earliest ETA", etools_plus: "by eTools+",
   };
   if (snap.section === "active") {
     parts.push("ranked " + (SORT[state.sort] || "by eFV"));
@@ -41388,6 +41482,8 @@ function makeToolGradeChips(p, activeToolKey) {
       + `</span>`
     );
   }
+  const etPlusChip = eToolsPlusChipHTML(p);
+  if (etPlusChip) pills.push(etPlusChip);
   let sortedPill = null;   // the active-sort tool's chip, hoisted to the front
   // The shown grades (ETOOLS_SITEWIDE_FLIP): each passing eTool in place of its
   // consensus grade; flag off, the consensus map itself.
@@ -52150,6 +52246,7 @@ function renderPlayerDetail(key) {
         ${compositeBar}
         ${groupBlocks}
         ${eToolsBlock}
+        ${eToolsPlusDetailHTML(p)}
         ${footer}
       </div>${twoWayExtraCard}`;
   })();

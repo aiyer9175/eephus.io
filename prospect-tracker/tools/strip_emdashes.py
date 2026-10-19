@@ -185,6 +185,9 @@ TARGETS: list[str] = [
     # Its verification (LADDER_V2_REVERT, 2026-10-15) writes the second record
     # that view fetches.
     "tools/ladder_v2_verify.py",
+    # eTools+ (ETOOLS_PLUS, 2026-10-19): its tool names and zero-weight reasons land
+    # in data/etools_plus.json, which the PROSPX tooltip prints.
+    "etools_plus.py",
 ]
 
 EM = "—"
