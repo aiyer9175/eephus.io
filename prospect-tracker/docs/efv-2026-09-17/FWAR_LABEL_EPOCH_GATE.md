@@ -1405,6 +1405,92 @@ nightly's with its claim regeneration, not this amendment's. The swar preview
 (`.cache/swar/preview/`) is rebuilt by `python tools/build_swar.py` before the eWAR v3 skill look, which
 refuses a preview stamped with another id.
 
+### 2026-10-19: amendment, innings, outs, games and starts added to the frozen vintage (new vintage id)
+
+This entry amends item 1 of the LABEL FREEZE RECEIPT a second time, after the 2026-10-15 entry
+above. It reports no accuracy measurement, and clause (l) binds every line: a new vintage id is a
+new build of the same label, not a gain.
+
+**Why.** MLB's sabermetrics feed carries no innings, games or starts on any pitching row, so the
+frozen vintage stored none (its pitching fields were war, rar, fip, xfip, ra9War, gmli, exli, pli,
+inli, eraMinus, fipMinus, md, sd and numTeams). The eWAR v3 skill look's precondition (2)
+(`docs/ebr-2026-09-30/EBR_GATE.md` 7.3 item 2) needs fWAR, plate appearances, innings and the
+pitchers' gmLI on the vintage for 2016 to 2025, and EWV3_SKILL_LOOK stopped on it on 2026-10-19.
+
+**Decision.** The EW3-19 precedent (owner, 2026-10-15: a NEW VINTAGE ID for such a fill), option
+(b) of the look's question EWV3-VINTAGE-IP, task EWAR_P0B_VINTAGE_IP.
+
+**What moved, and what did not.** No fresh fWAR fetch was made (part 3, E3). Four columns were
+appended to every frozen pitching group, `inningsPitched` (TRUE innings, outs / 3, a number, never
+baseball notation), `outs`, `gamesPitched` and `gamesStarted`, filled from StatsAPI's official
+season pitching line
+(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&season={season}&sportId=1&limit=5000&playerPool=All`),
+joined by MLBAM id (a traded pitcher's row takes his numTeams > 1 season total), by
+`python tools/amend_fwar_vintage_ip.py --write`, once, on 2026-10-19, committed at `bd4eaa2a`.
+The 54 source bodies (one season line and one thirty-club total per season) were fetched that day
+into `.cache/ewar_p0b_vintage_ip/` with a sha256 manifest. The tool refuses the write unless all
+of these hold, and all held:
+
+1. every hitting block is unchanged, key for key;
+2. every pitching block is unchanged outside the four appended columns, its `content_sha256`
+   and a new `ip_join` receipt, and the first 14 values of every row are unchanged, so every
+   fWAR value is the frozen one;
+3. war_source's maps (`side_targets` on both sides, `season_totals`) are equal before and after;
+4. no pitching row of 2000 to 2026 is left without the four columns (19,438 of 19,438 rows
+   joined, none refused);
+5. per season, outs and games started summed over the vintage's rows, over the season lines and
+   over StatsAPI's thirty team totals are equal (the table below; innings are outs / 3, so the
+   innings sums agree with them), and `inningsPitched` equals `outs` / 3 on every row;
+6. `fwar_vintage.verify` passes and `war_lineage` chains the new id to the previous one.
+
+The swar preview's own StatsAPI lines (`.cache/swar/preview/swar.json`) give the same innings,
+games and starts on all 8,233 pitcher-seasons of 2016 to 2025. In the table, IP is printed in
+baseball notation (whole innings, then the extra outs); the vintage stores outs / 3.
+
+| season | IP | outs | GS | season | IP | outs | GS | season | IP | outs | GS |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2000 | 43,244.1 | 129,733 | 4,858 | 2009 | 43,272.0 | 129,816 | 4,860 | 2018 | 43,489.0 | 130,467 | 4,862 |
+| 2001 | 43,287.1 | 129,862 | 4,858 | 2010 | 43,305.1 | 129,916 | 4,860 | 2019 | 43,423.1 | 130,270 | 4,858 |
+| 2002 | 43,269.0 | 129,807 | 4,852 | 2011 | 43,527.1 | 130,582 | 4,858 | 2020 | 15,468.2 | 46,406 | 1,796 |
+| 2003 | 43,335.1 | 130,006 | 4,860 | 2012 | 43,355.1 | 130,066 | 4,860 | 2021 | 42,615.0 | 127,845 | 4,858 |
+| 2004 | 43,394.0 | 130,182 | 4,856 | 2013 | 43,653.1 | 130,960 | 4,862 | 2022 | 43,075.1 | 129,226 | 4,860 |
+| 2005 | 43,232.1 | 129,697 | 4,862 | 2014 | 43,613.2 | 130,841 | 4,860 | 2023 | 43,087.1 | 129,262 | 4,860 |
+| 2006 | 43,258.0 | 129,774 | 4,858 | 2015 | 43,407.2 | 130,223 | 4,858 | 2024 | 43,116.1 | 129,349 | 4,858 |
+| 2007 | 43,425.2 | 130,277 | 4,862 | 2016 | 43,306.1 | 129,919 | 4,856 | 2025 | 43,075.0 | 129,225 | 4,860 |
+| 2008 | 43,357.2 | 130,073 | 4,856 | 2017 | 43,257.0 | 129,771 | 4,860 | 2026 | 43,079.2 | 129,239 | 4,858 |
+
+**The new receipt item 1.** `data/fwar_vintage.json`, `vintage_id` `2026-10-02-a020cf64844a`
+(was `2026-10-02-57bf90f7143e`), sha256
+`02232201dc3242c605829707389044efc4a34a84f5209dd972dac90a61b31ba0` (was
+`c4de5ca2e4a1492167f2a47666503112c916a67dcfd38389de39f910187550fa`), seasons 2000 to 2026. The
+date part of the id is unchanged because no group was refetched. The file's `amendments` key
+records the step with the previous id, and `fwar_vintage.war_lineage` returns
+`2026-10-02-a020cf64844a`, `2026-10-02-57bf90f7143e`, `2026-10-02-0341299c20ec`. The
+fingerprint's `label=` term reads `label=fwar@2026-10-02-a020cf64844a`;
+`storage.BOARD_RANK_BASIS_EPOCH` is not bumped, because the training label is value-identical
+and no grade or rank moves.
+
+**The builder.** `fwar_vintage.freeze_seasons` now makes one call to the same season pitching
+line after each frozen pitching group and keeps the four columns (`freeze_ip`, rule 4 applying to
+that call), so a future freeze does not store them absent again.
+
+**The dependent reads.** Re-run under the new id at this entry: the board fingerprint's `label=`
+term (restamped), and the E7 rebuild check (`tools/fwar_label_rebuild_check.py`, receipt written
+outside the repository so the step F receipt above stays as recorded): hitters 968 of 968,
+pitchers 1,116 of 1,116, share 1.0000. The reads recorded on an earlier id stay as recorded,
+because they read the same fWAR values: everything the 2026-10-15 entry lists, that entry itself,
+the eBR outcome look of 2026-10-19 (`EBR_GATE.md` 12.1, stamped `2026-10-02-57bf90f7143e`), the
+pitch-basis shrink fit (`pitch_basis.K_FIT_LOG`), B1's fit logs (`tools/swar_lab.py`
+`B1_FIT_LOG` and `B1_AMENDED_FIT_LOG`), and the lab artifacts under `data/_labs/` and the
+registry notes that name the label they were fit on. The `fwar` registry row now names the new
+id. The stamps every regeneration rewrites (those the 2026-10-15 entry names, plus the vintage id
+in `data/ebr_eval.json` and `data/fielding_triangulation_eval.json`) move at their next
+regeneration. Before the eWAR v3 skill look, the swar preview is rebuilt by
+`python tools/build_swar.py` (part 7.3 item 1 asks for a fresh preview build in any case), since
+the lab refuses a preview stamped with another id. With this entry the look's precondition (2)
+holds: the vintage carries published fWAR, plate appearances, innings and gmLI on every row of
+2016 to 2025.
+
 ---
 
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is
