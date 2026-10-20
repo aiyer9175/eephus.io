@@ -2890,6 +2890,38 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbx-tmtable th, .mlbx .mlbx-tmtable td { padding-left: 5px; padding-right: 5px; }
   .mlbx .mlbx-tmtable th { font-size: 9.5px; max-width: 5.5em; }
 }
+/* ---- the Trends tab (assets/mlbstats-league-trends.js) ------------------------
+   Cards in one column at 390 and two from 740. A direction is words and a
+   number: no green or red anywhere in this block. */
+.mlbx .mlbx-trnote { margin-top: 4px; }
+.mlbx .mlbx-trfold { margin: 4px 0 8px; max-width: 980px; font-size: 12px; color: var(--text-secondary); }
+.mlbx .mlbx-trfold summary { cursor: pointer; }
+.mlbx .mlbx-trgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 8px 0 14px; }
+@media (min-width: 740px) { .mlbx .mlbx-trgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mlbx .mlbx-trcard { min-width: 0; border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 10px; }
+.mlbx .mlbx-trcard header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.mlbx .mlbx-trcard h3 { margin: 0; font-size: 14px; }
+.mlbx .mlbx-trtype { font-size: 11px; color: var(--text-secondary); margin: 2px 0 6px; }
+.mlbx .mlbx-trsent { margin: 0 0 6px; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.mlbx .mlbx-trdots { white-space: nowrap; }
+.mlbx .mlbx-trdot { display: inline-block; width: 7px; height: 7px; border: 1px solid var(--text-secondary);
+  border-radius: 50%; margin-right: 2px; vertical-align: baseline; }
+.mlbx .mlbx-trdot.is-on { background: var(--text-secondary); }
+.mlbx .mlbx-trnums { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5em, 1fr)); gap: 4px 10px; margin: 0 0 6px; }
+.mlbx .mlbx-trnums div { min-width: 0; }
+.mlbx .mlbx-trnums dt { font-size: 10px; color: var(--text-tertiary); line-height: 1.2; }
+.mlbx .mlbx-trnums dd { margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mlbx .mlbx-trspark { margin: 2px 0 6px; }
+.mlbx .mlbx-trsparkkey { font-size: 10px; }
+.mlbx .mlbx-trctx { font-size: 11px; color: var(--text-secondary); margin: 4px 0; overflow-wrap: anywhere; }
+.mlbx .mlbx-trlinks { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin-top: 4px; }
+.mlbx .mlbx-trchips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; }
+.mlbx .mlbx-trh { font-size: 13px; margin: 10px 0 2px; }
+.mlbx .mlbx-trrd { margin: 4px 0; }
+.mlbx .mlbx-trrdh { font-size: 11px; color: var(--text-secondary); }
+.mlbx .mlbx-trpen { margin: 6px 0 0; padding-left: 16px; font-size: 11px; color: var(--text-secondary); }
+.mlbx .mlbx-trnotable { font-size: 10px; border: 1px solid var(--accent-gold); padding: 0 4px; color: var(--text-primary); }
+.mlbx .mlbx-trfoot { font-size: 10px; margin-top: 4px; overflow-wrap: anywhere; }
 /* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }

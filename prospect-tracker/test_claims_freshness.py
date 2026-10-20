@@ -223,6 +223,7 @@ CLAIM_SURFACES = (
     "sources/index.html",
     "assets/mlbstats.js",
     "assets/mlbstats-league.js",
+    "assets/mlbstats-league-trends.js",
 )
 
 # ---------------------------------------------------------------------------
