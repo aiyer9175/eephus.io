@@ -6,25 +6,32 @@
 """The eWAR v3 gate RESULT pins (docs/ebr-2026-09-30/EBR_GATE.md part 12).
 
 Part 12.1 holds the eBR outcome look (parts 5 and 6), run once on 2026-10-19 by
-tools/ebr_gate.py as an OWNER-WAIVED EARLY READ (owner EW3-5). This file pins that
-result so it cannot be edited after the fact. It lives apart from
-test_ebr_gate_registration.py on purpose: a result pin that lives beside a
-criterion pin invites editing the criterion to match the result (the reason
-test_arb_gate_c2_registration.py gives). Parts 12.2 and 12.3 (the skill look and
-its holdout) stay asserted EMPTY by the registration pin until their own runs,
-which extend this file.
+tools/ebr_gate.py as an OWNER-WAIVED EARLY READ (owner EW3-5). Part 12.2 holds the
+eWAR v3 skill look (parts 9.5 and 9.6, as amended by part 11), run once on
+2026-10-19 by tools/swar_lab.py, also an OWNER-WAIVED EARLY READ, with its
+machine-readable record in the TRACKED file docs/ebr-2026-09-30/swar_eval.json.
+This file pins both results so they cannot be edited after the fact, and asserts
+that the tracked record's dispositions and admissions equal the part 12.2 text.
+It lives apart from test_ebr_gate_registration.py on purpose: a result pin that
+lives beside a criterion pin invites editing the criterion to match the result
+(the reason test_arb_gate_c2_registration.py gives). Part 12.3 (the skill
+holdout) stays asserted EMPTY by the registration pin until its own run, which
+extends this file.
 
-No correlation against runs or wins is pinned here; those stay in part 12.1 and
-the preview look block only (EBR_GATE.md parts 5.3 and 5.10).
+No correlation against runs or wins is pinned here; those stay in parts 12.1 and
+12.2, the preview look block and the tracked record's look block only (EBR_GATE.md
+parts 5.3, 5.10 and 11.2.4).
 """
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DOC = ROOT / "docs" / "ebr-2026-09-30" / "EBR_GATE.md"
+RECORD = ROOT / "docs" / "ebr-2026-09-30" / "swar_eval.json"
 
 
 def _doc() -> str:
@@ -118,3 +125,138 @@ def test_the_owner_waived_early_read_note_follows_the_last_section():
     flat = _flat(doc[doc.index(note):])
     assert "--owner-waived-early-read`, which lifts only part 7.2's date clauses" in flat
     assert "the look itself fetched nothing and read that cached copy as it stood" in flat
+
+
+# ---- part 12.2: the skill look ------------------------------------------------
+
+SKILL_HEADER = ("**2026-10-19, `python -u tools/swar_lab.py --out docs/ebr-2026-09-30/swar_eval.json` at "
+                "`210fb38a`, OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14).**")
+
+
+def _part_12_2() -> str:
+    doc = _doc()
+    i = doc.index("### 12.2 The skill look (parts 9.5 and 9.6)")
+    return doc[i:doc.index("### 12.3 The skill holdout (part 9.5)", i)]
+
+
+def _record() -> dict:
+    return json.loads(RECORD.read_text(encoding="ascii"))
+
+
+def _verbatim(sec: str) -> str:
+    return sec[sec.index("```text"):sec.rindex("```")]
+
+
+def test_part_12_2_holds_exactly_one_run_dated_with_its_commit_and_the_waiver():
+    sec = _part_12_2()
+    assert sec.count(SKILL_HEADER) == 1
+    assert sec.count("`python -u tools/swar_lab.py --out") == 1, "the skill look runs once"
+    assert "EMPTY." not in sec
+    v = _verbatim(sec)
+    assert v.count("swar_lab swar_lab/2 look on 2026-10-19: preview vintage 2026-10-02-a020cf64844a") == 1
+    assert "[holdout]" not in v, "the holdout is not read in the look"
+
+
+def test_the_tracked_record_is_the_one_scored_look():
+    rec = _record()
+    assert rec["status"] == "SCORED" and rec["mode"] == "look" and rec["date"] == "2026-10-19"
+    assert rec["holdout"] is None, "the holdout appends its own block in its own commit"
+    assert rec["fwar_vintage_id"] == "2026-10-02-a020cf64844a"
+    assert rec["params"]["seed"] == 20261008 and rec["params"]["boot"] == 2000
+    assert rec["params"]["predictor_seasons"] == [2021, 2022, 2023, 2024]
+    sec = _part_12_2()
+    assert rec["preview_generated_at"] in sec and rec["inputs"]["preview_sha256"] in sec
+
+
+def test_inputs_floors_and_the_hr_arm_clause_print_before_any_gap():
+    v = _verbatim(_part_12_2())
+    gaps = v.index("[look] GAPS AND DISPOSITIONS, primary")
+    assert v.index("inputs (sha256, read only, never fetched)") < v.index("[look] FLOORS, primary") < gaps
+    assert v.index("[look] HR-ARM CLAUSE (primary target)") < gaps
+    assert ("[look] HR-ARM CLAUSE (primary target): P-rate gap hr_shrunk over hr_fwar, 2016-2018 +0.0003, "
+            "2021-2024 -0.0122: fails; home-run term hr_fwar") in v
+    rec = _record()
+    assert rec["hr_arm_clause"]["holds"] is False and rec["hr_arm_clause"]["variant"] == "hr_fwar"
+    flat = _flat(_part_12_2())
+    assert "positive in both blocks: False. The clause fails, so the home-run term reverts to fWAR's (hr_fwar)" in flat
+
+
+def test_every_cell_disposition_in_the_record_equals_the_part_12_2_text():
+    sec = _part_12_2()
+    v = _verbatim(sec)
+    primary = v[v.index("[look] GAPS AND DISPOSITIONS, primary"):v.index("[look] POSITION PART")]
+    lines = primary.splitlines()
+    rec = _record()
+    n = 0
+    for part, fam in rec["look"]["cells"].items():
+        for cell, c in fam.items():
+            n += 1
+            disp = c["disposition"]
+            pat = re.compile(rf"^\s+{re.escape(part)}\s+{re.escape(cell)}\s+n\s+{c['n_pairs']}\s.*=> "
+                             rf"{re.escape(disp)}\s*$")
+            assert sum(bool(pat.match(ln)) for ln in lines) == 1, (part, cell, disp)
+            rows = [ln for ln in sec.splitlines() if ln.startswith("| ") and f" | {cell} | " in ln]
+            assert len(rows) == 1, (part, cell)
+            ship = "n/a (not a WIN) |" if not disp.startswith("WIN") else f"{bool(c['ship_flag_no_weight'])} |"
+            assert rows[0].rstrip().endswith(f"| {disp} | {c['counts_as']} | {ship}"), rows[0]
+    assert n == 18, "parts 4, 5, 6 (with S2b, S3t and S3c), PE-P and PE-H: 18 cells"
+
+
+def test_every_admission_in_the_record_equals_the_part_12_2_text():
+    sec = _part_12_2()
+    v = _verbatim(sec)
+    flat = _flat(sec)
+    adm = _record()["look"]["admission"]
+    assert set(adm) == {"batting", "pitching", "fielding", "pe_p", "pe_h", "position"}
+    for part, a in adm.items():
+        assert a["admitted"] is False, part
+        assert re.search(rf"ADMIT {re.escape(part)}\s*: False \({re.escape(a['reason'])}", v), part
+        assert a["reason"] in flat, part
+    assert adm["fielding"]["catcher_component"]["admitted"] is False
+    assert adm["batting"]["arm"] is None and adm["pitching"]["arm"] is None and adm["fielding"]["arm"] is None
+    for label in ("candidate part 3 (position, our ladder): not admitted",
+                  "candidate part 4 (batting): not admitted, no arm enters",
+                  "candidate part 5 (pitching): not admitted, no arm enters",
+                  "candidate part 6 (fielding): not admitted, no arm enters",
+                  "the catcher component S3c not admitted",
+                  "PE-P (pitch economy, pitching): not admitted",
+                  "PE-H (pitch economy, batting): not admitted"):
+        assert label in flat, label
+    assert ("no candidate part is admitted: under part 9.7 eWAR v3 equals fWAR on every row, its meta says so, "
+            "and the column label reads \"eWAR v3 (equals FanGraphs WAR: no part admitted)\"") in flat
+
+
+def test_the_team_guard_and_the_licensed_sentences_match_the_record():
+    sec = _part_12_2()
+    v = _verbatim(sec)
+    flat = _flat(sec)
+    rec = _record()["look"]
+    assert "[look] TEAM GUARD dT" in v
+    for key, g in rec["team_guard"].items():
+        verdict = "NON-INFERIOR" if g["non_inferior"] else "NOT NON-INFERIOR"
+        assert re.search(rf"^  {re.escape(key)}\s+guard: {verdict}\b", v, re.M), key
+    for part, s in rec["sentences"].items():
+        if s is not None:
+            assert f'"{s}"' in flat, part
+    assert rec["sentences"]["batting"] is None and rec["sentences"]["position"] is None
+    assert "no sentence cites the secondary estimand or the team guard's r values" in flat
+
+
+def test_the_descriptive_legs_are_labelled_descriptive():
+    sec = _part_12_2()
+    flat = _flat(sec)
+    assert "**Descriptive legs (descriptive: no verdict weight; claims nothing, part 8).**" in flat
+    assert "Exposure-band bias, descriptive" in flat and "The L-B leverage disclosure, descriptive" in flat
+    assert "[look] DESCRIPTIVE LEGS (descriptive: no verdict weight; claims nothing (part 8))" in sec
+    assert _record()["look"]["descriptive"]["label"].startswith("descriptive")
+
+
+def test_the_skill_look_owner_waived_early_read_note_follows_the_last_section():
+    doc = _doc()
+    note = "**Dated note, 2026-10-19: the skill look of part 12.2 is an OWNER-WAIVED EARLY READ.**"
+    assert doc.count(note) == 1
+    assert doc.index(note) > doc.index("**Dated note, 2026-10-19: the outcome look of part 12.1")
+    flat = _flat(doc[doc.index(note):])
+    assert "part 7.3 item 3 (on or after 2026-11-17)" in flat
+    assert "part 7.5's own-day clause under EWV3-Q3 (a)" in flat
+    assert "The look ran once and is not rerun whatever it printed (part 9.5)" in flat

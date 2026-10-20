@@ -2269,7 +2269,277 @@ WHAT PART 6 LICENSES under part 1's answers (EBR-Q1 (a), EBR-Q2 (a), EBR-Q3 (a))
 
 ### 12.2 The skill look (parts 9.5 and 9.6)
 
-EMPTY.
+**2026-10-19, `python -u tools/swar_lab.py --out docs/ebr-2026-09-30/swar_eval.json` at `210fb38a`, OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14).**
+
+The run read the preview `.cache/swar/preview/swar.json`, rebuilt the same day by `python tools/build_swar.py` (generated 2026-10-19T23:16:35+00:00, sha256 `449157313f16c485c42e818d2c4ee0408c08683b5f92b748395ad33fc1fa76bf`) on the frozen fWAR vintage `2026-10-02-a020cf64844a` (sha256 `02232201dc3242c605829707389044efc4a34a84f5209dd972dac90a61b31ba0`), after `test_swar.py` and `test_swar_lab_dispositions.py` passed on that preview (57 passed) and after `python tools/swar_lab.py --dry-run` passed on fixtures with nulls. It wrote the tracked record `docs/ebr-2026-09-30/swar_eval.json` (status SCORED) and nothing under `data/`. The estimand is part 11.2's primary target, next-season realized runs of each part's own component; the secondary estimand (published fWAR(Y+1), 11.2.5) is printed beside and decides nothing. The dated note after this part names the clauses of part 7.3 the waiver lifted.
+
+What part 9.6 licenses, as amended by 11.2.6, 11.3.5, 11.4.5, 11.5.3 and 11.6.3, under part 1's recorded answers (EWV3-Q1 (a), EWV3-Q2 (a); PB-Q1 (a), the default 11.3.5 records):
+
+- candidate part 3 (position, our ladder): not admitted (dMAE lo95 -0.14040534925097803, control fails False, guard True; dMAE in the ladder's favour -0.1054, ladder v1 against FanGraphs' positional adjustment fg_inv); eWAR v3 keeps FanGraphs' positional adjustment
+- candidate part 4 (batting): not admitted, no arm enters (no arm qualifies (HEM+: HEM+ H-rate UNRESOLVED, HEM+ H-cum EQUIVALENT, guard False; xHEM+: xHEM+ H-rate WIN (components), xHEM+ H-cum WIN (components), guard False)); eWAR v3 keeps FanGraphs' batting runs. The xHEM+ arm's two cells read WIN (components), but its team guard is not NON-INFERIOR with half-widths above 0.02, so 11.2.4 reads the guard as underpowered, not as harm; EWV3-Q2's arm contrast is not computed because no arm qualifies
+- candidate part 5 (pitching): not admitted, no arm enters (no arm qualifies (S2: P-rate LOSS, P-cum LOSS, guard False; S2b: S2b P-rate EQUIVALENT, S2b P-cum EQUIVALENT, guard False)); the HR-arm clause fails, so the home-run term is fWAR's (hr_fwar); eWAR v3 keeps FanGraphs' pitching runs
+- candidate part 6 (fielding): not admitted, no arm enters (no arm qualifies (S3: H-rate EQUIVALENT, H-cum EQUIVALENT, guard False; S3t: S3t H-rate LOSS, S3t H-cum LOSS, guard False)); the catcher component S3c not admitted (C-rate UNRESOLVED, C-cum UNRESOLVED, guard True); eWAR v3 keeps FanGraphs' fielding and framing runs
+- PE-P (pitch economy, pitching): not admitted (PE-P rate LOSS, PE-P total LOSS, guard False); no pitch-economy term
+- PE-H (pitch economy, batting): not admitted (PE-H rate SMALL WIN, PE-H total SMALL WIN, guard True, sensitivity not LOSS True; SMALL WIN counts as EQUIVALENT for admission and copy); no pitch-economy term
+- with part 12.1 (candidate parts 1 and 2 not admitted), no candidate part is admitted: under part 9.7 eWAR v3 equals fWAR on every row, its meta says so, and the column label reads "eWAR v3 (equals FanGraphs WAR: no part admitted)"; the holdout of part 12.3 changes no admission
+- registry (part 6.4, at EBR_3_EWAR_V3's flip, folded into EWAR_V3_ASSEMBLE): `swar_bat`, `swar_pit`, `swar_fld` and `swar_pos` `provisional` with `measured_not_adopted`; `swar_pit`'s notes name the home-run term hr_fwar; `swar_bat`'s notes name no arm
+
+The one comparative sentence each part's rate cell licenses (11.2.6; on the admitted arm's rate cell, else the first arm's), with its frame and numbers:
+
+- candidate part 4 (batting, the HEM+ arm's H-rate, UNRESOLVED): none
+- candidate part 5 (pitching, S2's P-rate, LOSS): "ranked the next season's realized runs allowed (adjusted for park, defense and inherited runners) less well than the season's own runs allowed (adjusted for park, defense and inherited runners) did, on 2021 to 2024 seasons, pitchers with 50 or more IP in both seasons, Spearman gap -0.017 (95 percent interval -0.027 to -0.006, 866 pairs)"
+- candidate part 6 (fielding, S3's H-rate, EQUIVALENT): "ranked the next season's realized fielding runs (from Baseball-Reference's runs_field) about as well as the season's own fielding runs (from Baseball-Reference's runs_field) did, on 2021 to 2024 seasons, hitters with 200 or more PA in both seasons, Spearman gap -0.005 (95 percent interval -0.015 to +0.005, 1,071 pairs)"
+- candidate part 6, catcher component S3c (C-rate, UNRESOLVED): none
+- PE-P (rate, LOSS): "ranked the next season's realized runs saved over a league-average reliever (adjusted for park, defense and inherited runners) less well than the season's own runs saved over a league-average reliever (adjusted for park, defense and inherited runners) did, on 2021 to 2024 seasons, pitchers with 50 or more IP in both seasons, Spearman gap -0.005 (95 percent interval -0.007 to -0.002, 866 pairs)"
+- PE-H (rate, SMALL WIN): "ranked the next season's realized batting runs plus starter-wear runs about as well as the season's own batting runs plus starter-wear runs did, on 2021 to 2024 seasons, hitters with 200 or more PA in both seasons, Spearman gap +0.013 (95 percent interval +0.006 to +0.020, 1,071 pairs)"
+- candidate part 3 (position): none
+- no sentence cites the secondary estimand or the team guard's r values, and part 8's may-not list stands
+
+**The HR-arm clause (computed first).** The P-rate gap of S2 with the home-run shrink over S2 with fWAR's own home-run term, primary target (RA9* in Y+1 (11.2.1), B0 the actual arm of S2): 2016 to 2018 +0.0003, 2021 to 2024 -0.0122; positive in both blocks: False. The clause fails, so the home-run term reverts to fWAR's (hr_fwar) in both pitcher cells, in S2b's cells and PE-P's (11.3.1, 11.4.2) and in the served series: consistent with R2e.2's closure; licenses no HR-shrink proposal for eWAR v2, and R2e.2 is not re-run.
+
+**The cells, against B0, under the registered precedence (WIN, SMALL WIN, LOSS, EQUIVALENT, UNRESOLVED).** Convention v2 primary (player-clustered, season-stratified bootstrap, B = 2,000, seed 20261008), v1 required to agree in sign. The B1 clause is lo95 above 0 against the amended B1 (k bat 537, pit 402, fld 1398, cat 440, pep 130, peh 427); the twin clause is the permuted delta's gap lo95 at or below 0; the era transport clause (pitching cells and PE-P) needs the rate cell's point gap positive in the 2016 to 2018 block and in the 2021 to 2024 block. MDE95 is 1.645 bootstrap sd. The SHIP flag is `docs/EFV_GATE_STANDARD.md` part 8's (the 1.645-sd interval entirely above +0.02), printed beside a WIN with no weight. The table's figures are the tracked record's, rounded to five decimals there; the verbatim output prints them from unrounded values to four. Holm families: batting k = 4, pitching k = 4 (11.3.4), fielding k = 6 (11.7), PE-P k = 2, PE-H k = 2.
+
+| Candidate part | Arm | Cell | Pairs | Gap vs B0 | 95 percent interval | MDE95 | Holm rejects | B1 clause (lo95 vs B1) | Twin clause (twin lo95) | v1 agrees in sign | Era transport | Disposition | Counts as | SHIP flag (no weight) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 4 batting | HEM+ (S1) | HEM+ H-rate | 1,071 | +0.00908 | -0.01093 to +0.02874 | 0.01686 | False | -0.01526, fails | -0.06616, fails to reproduce (holds) | True | n/a | UNRESOLVED | UNRESOLVED | n/a (not a WIN) |
+| 4 batting | HEM+ (S1) | HEM+ H-cum | 1,071 | +0.00245 | -0.01623 to +0.02146 | 0.01582 | False | -0.01848, fails | -0.07943, fails to reproduce (holds) | True | n/a | EQUIVALENT | EQUIVALENT | n/a (not a WIN) |
+| 4 batting | xHEM+ (S1x) | xHEM+ H-rate | 1,071 | +0.06475 | +0.03094 to +0.09934 | 0.02884 | True | +0.02541, holds | -0.07480, fails to reproduce (holds) | True | n/a | WIN (components) | WIN (components) | True |
+| 4 batting | xHEM+ (S1x) | xHEM+ H-cum | 1,071 | +0.04199 | +0.00737 to +0.07670 | 0.02879 | True | +0.00566, holds | -0.08799, fails to reproduce (holds) | True | n/a | WIN (components) | WIN (components) | False |
+| 5 pitching | S2 | P-rate | 866 | -0.01659 | -0.02650 to -0.00621 | 0.00860 | False | -0.02709, fails | -0.01563, fails to reproduce (holds) | True | fails (2016 to 2018 point gap -0.01205) | LOSS | LOSS | n/a (not a WIN) |
+| 5 pitching | S2 | P-cum | 866 | -0.01360 | -0.02058 to -0.00695 | 0.00565 | False | +0.09521, holds | -0.00273, fails to reproduce (holds) | True | fails | LOSS | LOSS | n/a (not a WIN) |
+| 5 pitching | S2b | S2b P-rate | 866 | -0.00700 | -0.01867 to +0.00488 | 0.01010 | False | -0.01995, fails | -0.01961, fails to reproduce (holds) | True | fails (2016 to 2018 point gap -0.00074) | EQUIVALENT | EQUIVALENT | n/a (not a WIN) |
+| 5 pitching | S2b | S2b P-cum | 866 | -0.01038 | -0.02169 to +0.00129 | 0.00952 | False | +0.09864, holds | -0.00880, fails to reproduce (holds) | True | fails | EQUIVALENT | EQUIVALENT | n/a (not a WIN) |
+| 6 fielding | S3 (DEM+) | H-rate | 1,071 | -0.00459 | -0.01455 to +0.00520 | 0.00832 | False | -0.01430, fails | -0.05314, fails to reproduce (holds) | True | n/a | EQUIVALENT | EQUIVALENT | n/a (not a WIN) |
+| 6 fielding | S3 (DEM+) | H-cum | 1,071 | -0.00467 | -0.01426 to +0.00514 | 0.00807 | False | -0.01171, fails | -0.03231, fails to reproduce (holds) | True | n/a | EQUIVALENT | EQUIVALENT | n/a (not a WIN) |
+| 6 fielding | S3t | S3t H-rate | 1,057 | -0.03864 | -0.06319 to -0.01431 | 0.02081 | False | -0.06124, fails | -0.09841, fails to reproduce (holds) | True | n/a | LOSS | LOSS | n/a (not a WIN) |
+| 6 fielding | S3t | S3t H-cum | 1,057 | -0.03803 | -0.06152 to -0.01419 | 0.02029 | False | -0.05389, fails | -0.09262, fails to reproduce (holds) | True | n/a | LOSS | LOSS | n/a (not a WIN) |
+| 6 fielding | S3c | C-rate | 130 | -0.03783 | -0.10143 to +0.01652 | 0.04961 | False | -0.10468, fails | -0.05959, fails to reproduce (holds) | True | n/a | UNRESOLVED | UNRESOLVED | n/a (not a WIN) |
+| 6 fielding | S3c | C-cum | 130 | -0.03853 | -0.10163 to +0.01984 | 0.05172 | False | -0.09832, fails | -0.05396, fails to reproduce (holds) | True | n/a | UNRESOLVED | UNRESOLVED | n/a (not a WIN) |
+| PE-P | PE-P | PE-P rate | 866 | -0.00456 | -0.00715 to -0.00216 | 0.00206 | False | +0.01055, holds | -0.00688, fails to reproduce (holds) | True | fails (2016 to 2018 point gap -0.00312) | LOSS | LOSS | n/a (not a WIN) |
+| PE-P | PE-P | PE-P total | 866 | -0.00528 | -0.00766 to -0.00307 | 0.00194 | False | -0.07596, fails | -0.00638, fails to reproduce (holds) | True | fails | LOSS | LOSS | n/a (not a WIN) |
+| PE-H | PE-H | PE-H rate | 1,071 | +0.01304 | +0.00604 to +0.02029 | 0.00595 | True | -0.00147, fails | -0.00675, fails to reproduce (holds) | True | n/a | SMALL WIN | EQUIVALENT | n/a (not a WIN) |
+| PE-H | PE-H | PE-H total | 1,071 | +0.01341 | +0.00659 to +0.02069 | 0.00610 | True | +0.00243, holds | -0.01741, fails to reproduce (holds) | True | n/a | SMALL WIN | EQUIVALENT | n/a (not a WIN) |
+
+- PE-H's sensitivity guard (11.4.4, deciding): the rate cell's gap on wRAA(Y+1) alone, W left out, +0.0133, 95 percent interval +0.0063 to +0.0207; LOSS False, so the guard holds.
+- Candidate part 3 (11.2.3, Holm k = 1): ladder v1 against FanGraphs' positional adjustment (fg_inv) on 4,141 rows of 611 players: dMAE in the ladder's favour -0.1054, 95 percent interval -0.1404 to -0.0711; control fails False; passes False. Its H-rate and H-cum cells sit in the secondary block only.
+
+**The team guard (11.2.4, deciding; B = 2,000 per bootstrap, seed 20261024, 120 club-seasons, outcome seasons 2022 to 2025).** NON-INFERIOR needs dT - 1.645 sd above -0.02 under both the player-clustered and the club-clustered bootstrap for every outcome the part carries. The r values and dT are in the verbatim output below and the tracked record's look block only.
+
+| Series | Per outcome | Guard | Underpowered |
+|---|---|---|---|
+| 3 position (ladder) | run_differential NON-INFERIOR, wins NON-INFERIOR | NON-INFERIOR | no |
+| 4 batting, HEM+ arm | runs_scored not non-inferior, run_differential not non-inferior, wins not non-inferior | NOT NON-INFERIOR | yes (a half-width above 0.02) |
+| 4 batting, xHEM+ arm | runs_scored not non-inferior, run_differential not non-inferior, wins not non-inferior | NOT NON-INFERIOR | yes (a half-width above 0.02) |
+| 6 fielding, S3 | run_differential not non-inferior, wins not non-inferior | NOT NON-INFERIOR | no |
+| 6 fielding, S3t | run_differential not non-inferior, wins not non-inferior | NOT NON-INFERIOR | no |
+| 6 fielding, S3c | run_differential NON-INFERIOR, wins NON-INFERIOR | NON-INFERIOR | no |
+| PE-H | runs_scored NON-INFERIOR, run_differential NON-INFERIOR, wins NON-INFERIOR | NON-INFERIOR | no |
+| 5 pitching, S2 | runs_allowed not non-inferior, run_differential NON-INFERIOR, wins NON-INFERIOR | NOT NON-INFERIOR | yes (a half-width above 0.02) |
+| 5 pitching, S2b | runs_allowed not non-inferior, run_differential NON-INFERIOR, wins NON-INFERIOR | NOT NON-INFERIOR | yes (a half-width above 0.02) |
+| PE-P | runs_allowed not non-inferior, run_differential NON-INFERIOR, wins NON-INFERIOR | NOT NON-INFERIOR | yes (a half-width above 0.02) |
+
+**Descriptive legs (descriptive: no verdict weight; claims nothing, part 8).** The agreement with fWAR and bWAR, self-persistence (shrinkage raises it mechanically), the pitching subsets and the same-season team wins leg are in the verbatim output; the delta sizes, split-half calibration of the batting and pitching constants and the coverage census are in the tracked record's `look.descriptive` block. The team-wins leg appears only here and in the tracked record: same-season wins over 120 club-seasons, read beside fWAR's own sum, descriptive.
+
+Exposure-band bias, descriptive (mean of the part's test value fWAR + d / RPW, or fWAR + Delta, minus fWAR, in WAR, by PA band for hitters and IP band for pitchers, predictor seasons 2021 to 2024, every row with both; pitching on the home-run term hr_fwar):
+
+| Series | By band |
+|---|---|
+| pos | 0-100: +0.0015 WAR (n 1,201); 100-200: +0.0040 WAR (n 401); 200-400: -0.0022 WAR (n 635); 400-inf: -0.0025 WAR (n 812) |
+| bat | 0-100: +0.1076 WAR (n 1,201); 100-200: +0.2406 WAR (n 401); 200-400: +0.0959 WAR (n 635); 400-inf: -0.3530 WAR (n 812) |
+| batx | 0-100: +0.1143 WAR (n 1,201); 100-200: +0.2778 WAR (n 401); 200-400: -0.0782 WAR (n 635); 400-inf: -0.2452 WAR (n 812) |
+| fld | 0-100: +0.0146 WAR (n 1,201); 100-200: +0.0304 WAR (n 401); 200-400: +0.0028 WAR (n 635); 400-inf: -0.0388 WAR (n 812) |
+| pit | 0-20: +0.0302 WAR (n 1,289); 20-40: +0.0363 WAR (n 585); 40-100: -0.0262 WAR (n 1,097); 100-inf: -0.0601 WAR (n 522) |
+| pit_s2b | 0-20: +0.0309 WAR (n 1,289); 20-40: +0.0386 WAR (n 585); 40-100: -0.0213 WAR (n 1,097); 100-inf: -0.0749 WAR (n 522) |
+
+The L-B leverage disclosure, descriptive (S2's dwar0 in WAR before the re-pin, on the home-run term hr_fwar, with the published gmLI levering both arms, L-A, against gmLI 1 in both arms, L-B; nopp rows out; computed, never served):
+
+| Season | Pitchers | sd L-A | sd L-B | Pearson | Mean absolute difference |
+|---|---|---|---|---|---|
+| 2021 | 850 | 0.1162 | 0.1117 | 0.9835 | 0.0109 |
+| 2022 | 807 | 0.1181 | 0.1142 | 0.9854 | 0.0113 |
+| 2023 | 804 | 0.1091 | 0.1070 | 0.9850 | 0.0105 |
+| 2024 | 802 | 0.1084 | 0.1057 | 0.9879 | 0.0094 |
+
+The output of `tools/swar_lab.py`, verbatim:
+
+```text
+swar_lab swar_lab/2 look on 2026-10-19: preview vintage 2026-10-02-a020cf64844a, generated 2026-10-19T23:16:35+00:00; B1 (primary) k {"bat": 537.0, "cat": 440.0, "fld": 1398.0, "peh": 427.0, "pep": 130.0, "pit": 402.0}; B1 (secondary) k hit 662 PA, pit 244 IP; seed 20261008, B 2000
+  assembled 2021: 1374 hitters, 909 pitchers, corpus True
+  assembled 2022: 794 hitters, 871 pitchers, corpus True
+  assembled 2023: 769 hitters, 863 pitchers, corpus True
+  assembled 2024: 742 hitters, 855 pitchers, corpus True
+  assembled 2025: 765 hitters, 873 pitchers, corpus True
+inputs (sha256, read only, never fetched): {"bwar_cache_sha256": {"bat": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55", "pit": "3279bfbdc5bcf0ee5e6f6dd0609f6252366871fa9b257b2fd92ddc984fd93cb6"}, "count_value_sha256": "758d99141b5de4b54608afbddc355920c785b281061fda3e175f0db423152f71", "fielding": {"fetch_manifest": ".cache/sdr/fetch_manifest.json", "fwar_vintage_id": "2026-10-02-a020cf64844a", "fwar_vintage_sha256": "02232201dc3242c605829707389044efc4a34a84f5209dd972dac90a61b31ba0", "inputs_sha256": {"06_defense_plus_2017__no_drs.csv": "4a6451d349a4e25cbe9691e0b0513b6425980798d48b8e05ac90dc424e46435b", "06_defense_plus_2017__no_statcast.csv": "9b30a5117b67f359202aa79802520b7ecb966b1fd2b8c5586e93fd971c8b4bca", "06_defense_plus_2018__no_drs.csv": "8e466ebee51e2d937a930b6fa791ddf2f97a4a059abe7426a9c2160487511828", "06_defense_plus_2018__no_statcast.csv": "e4c4e0a936b066b56b2c3b8fcdd2ba61caa49c593bf01fb57409015a6fac96ef", "06_defense_plus_2019__no_drs.csv": "c12bade7d7172ee30f017209b780a4f723b123cde9f4401f14f51130503a76db", "06_defense_plus_2019__no_statcast.csv": "5809e595a5c07233b0b63514dfaf1e1c904716af0595c4c2776113d51b3268bc", "06_defense_plus_2020__no_drs.csv": "f6fdb96fa713639f505d0c88eed6a666c3297f640295160ce6d6ddb852073801", "06_defense_plus_2020__no_statcast.csv": "f9b27efe6e7d50ac589a2e144ca4c26df68ab80a5c64a1d1eb78878ac1407fb0", "06_defense_plus_2021__no_drs.csv": "edd1963d89dc8d4997c0c8b402acadff65d30319189aed7bbdbc88a67e35a5af", "06_defense_plus_2021__no_statcast.csv": "096abc675dee41da6dbc11d57633df03c24fc18ae5597bba194f82872f9008a6", "06_defense_plus_2022__no_drs.csv": "0e12c23009fec8dc9a21dd2775ac6e25a7de49f87abd4fffb92e4ae765c6afd6", "06_defense_plus_2022__no_statcast.csv": "48e077c5843ac4d77883ab772953ed5461eb0fe45818efd858e06da7d5e70d16", "06_defense_plus_2023__no_drs.csv": "46d1583936f27cb4d3ab925e3bbb310f9affb90e17982cc40fdc3e9624747ada", "06_defense_plus_2023__no_statcast.csv": "f046ab6c4fa478633bf1062cda4077a4ebfd4f7f683ada3669d56bc8e5bb68b6", "06_defense_plus_2024__no_drs.csv": "40302f329cebcb51bed3a8c5b5a6cab0d6d5a34361eec8bb595c56287a696332", "06_defense_plus_2024__no_statcast.csv": "6248532d2d72e78f5a1876e25868c4961558c37c46d62c0faaebedb0d04cbea4", "06_defense_plus_2025__no_drs.csv": "f5a064f9b3082399c47349d5f2607e55b52b01a8d6921a6de4c69895f69b7c3a", "06_defense_plus_2025__no_statcast.csv": "586447f7397cffa1c6bb16af644f97822ec940c00cd362e0af6081fa16e0f24b", "06_defense_plus_2026__no_drs.csv": "bba48de839389910f2832ef285b464631816bdd503478ead6e8424853ae7762e", "06_defense_plus_2026__no_statcast.csv": "39ff933faae677d6cf1318137e95012be2f9e273ce6c473504ce556ba67b77cd", "fg_field_full_2016.csv": "115491cd47651c3c77c534ca22b1ce7ee937249842934bc4bd20b7903dc06d5a", "fg_field_full_2017.csv": "4f8661ded724eed0e291604e918400f599a5f9d7885cd5d54f5dcd20679c299f", "fg_field_full_2018.csv": "a900238e8c459ba3452c2b0bb04a55e5a35ddb07570f73cf92ee4ce80e237608", "fg_field_full_2019.csv": "7ad1552ec9719d78546566c64e0060b191fee38d1183b1bf67671839d1d70347", "fg_field_full_2020.csv": "8be0a647ead4c9c7b9c06769ef0018b3fbeed54b1bae21e8277b849301ec7a91", "fg_field_full_2021.csv": "a28ad2e6780d0fc977e1fdd1ebd4abdbb8faf45df2146178a031a8ad3cb7b238", "fg_field_full_2022.csv": "435a35d0fe701b8f34fd2b717edd7bfd1aabfe381a62f25efd7d56f44d32d2e7", "fg_field_full_2023.csv": "ac0bf48666d991b32d56f67cf3d836eefe18ef379df79a2392e1926db729fe73", "fg_field_full_2024.csv": "c8d1c9311692dc2e0ab67b990523d6d997b2ec6c687838a3c4cc79c596458a2a", "fg_field_full_2025.csv": "9bbd2fc9c7b8fa38021c38d1a0dd05adad5945805ad514adc2c306712f22ffc9", "fg_field_full_2026.csv": "58e53c3a5ca76befeae87a5d5d32035da9fb7073f88275c69914b3263fe671cc", "fg_field_split_2016.csv": "5feeb7085fcdb23cc7faf73eda0489b8c368beb4ca64b17ca47aef034f16fc24", "fg_field_split_2017.csv": "3ed25bbe73ab26fbc48e951c0a18cfcc9f535f2621730ab93de27ee4b76986b2", "fg_field_split_2018.csv": "6ea3faaee66362d680cbab67a10d9642e40ad2bf7ac15689cfb61465090426c3", "fg_field_split_2019.csv": "8ef31dbc936273c2937892f63e8095a0d9aa7484b1945381df05330be324db64", "fg_field_split_2020.csv": "96b3e2be8d6728330412d38fcccbd06085ebb886c6aa46ca0d511029eac74539", "fg_field_split_2021.csv": "34d9fc69abc2ddf18c5043a478ee673ad5beb53231bef0f793713efdd90be6a5", "fg_field_split_2022.csv": "e57e83f0c3a915448143f2b6a2354b9816d3788fc640c4fd27a40eca5d68cca1", "fg_field_split_2023.csv": "3928fd88c007283cf74c9c852c2469f70dbb06c8bf21c42bd947d1d0b18f5bb7", "fg_field_split_2024.csv": "823214d8f8048761a56e104e246aa85f2e56b822b7e3a9926c428a63379ff442", "fg_field_split_2025.csv": "56b6cadcd5c5fb7dddbb20bdc1355fd87d25812f3f582b8622e7ac6dc8e8ebf2", "fg_field_split_2026.csv": "a6c4d620b5bf4f87d949d2226633f0d89d0491da452811e20d67fd7f62594713", "fg_team_pit_2016.csv": "d15b18c736682235e6104e2247f355d00aa7355072ad0db47e13f6619d1efc91", "fg_team_pit_2017.csv": "7b1dbd3888f9725b0dc343d304fa8996655e4dea012456564c8e945dc47344bb", "fg_team_pit_2018.csv": "6a79eca2a8423fb60e426eac81afa6947131d067b04391d2599fae55291a7f8a", "fg_team_pit_2019.csv": "9fdca971b3cad8499dfdded52bc8f228a25ed6ef415846d9716e979f309ad9df", "fg_team_pit_2020.csv": "8b494fb84863e3bffe793d06666c88c42c836b538e95766c4fb32e2e029091d2", "fg_team_pit_2021.csv": "6a873f02d75e14ed924ee60846549f0f149caac5b4144027177331b1dcbdbc75", "fg_team_pit_2022.csv": "994bc94960744482b0c7a61155d82ba713a73bdf3d331ae161388356b6f70e49", "fg_team_pit_2023.csv": "6edb79575924d44de555750731d98603eca017a9e0ef2fb6a9e3225eb5966fd0", "fg_team_pit_2024.csv": "032d0697d05cbe414408392b809acd6956b4e1bac80aef0186887899b8a9f0f4", "fg_team_pit_2025.csv": "5c6ae6a6ad7b6e5218245bbfe2d01322f69127f3105abc444ddeabddd5c18a5e", "fg_team_pit_2026.csv": "aa00708026f99132db490403d9be6750028bb02a32bd7d0ab7584e5b949dc023", "sdr_drop": "8a41d1c20ce37a45fec3150fcf87ceae67f74a16d77cbdf53f44edc44691358e"}, "sdr_drop": "data/drops/wills/sdr_defense_card__2026-10-15.csv", "war_daily_bat": {"modified": "2026-10-19T23:28:11.480529+00:00", "sha256": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55"}}, "ladder": {"eval_sha256": "af81d8224a67a7626f2b11af1f1109a4014c66552a7ac18c0dea2c54e7dd854d", "standing": "v1", "verify_sha256": "3e3d5078811ebd354c7983d2db9ea1faae5d84d924481c2b806b0bd675746a4f"}, "preview_sha256": "449157313f16c485c42e818d2c4ee0408c08683b5f92b748395ad33fc1fa76bf", "re288_receipts": {"2021": {"identity_exact": 181818, "identity_share": 1.0, "intent_walk": 703, "missing_pitcher": 0, "no_pitch": 534, "pa": 181818}, "2022": {"identity_exact": 182052, "identity_share": 1.0, "intent_walk": 475, "missing_pitcher": 0, "no_pitch": 362, "pa": 182052}, "2023": {"identity_exact": 184104, "identity_share": 1.0, "intent_walk": 474, "missing_pitcher": 0, "no_pitch": 371, "pa": 184104}, "2024": {"identity_exact": 182449, "identity_share": 1.0, "intent_walk": 509, "missing_pitcher": 0, "no_pitch": 386, "pa": 182449}, "2025": {"identity_exact": 182926, "identity_share": 1.0, "intent_walk": 556, "missing_pitcher": 0, "no_pitch": 442, "pa": 182926}}, "triangulation_fit": {"path": "data/_labs/fielding_triangulation_fit.json", "sha256": "b52b2a7d6642fc27454f255d3cdd087944d0bd4d7ee80e68e05330e15ebb54eb"}}
+fielding systems by source (11.2.2), every season 2016 to 2025: fg_fld: Statcast; fg_frm: FanGraphs framing; bref_runs_field: DRS; fg_drs: DRS; fg_uzr: DRS; fg_frp: Statcast; savant_frv: Statcast; S3's target ['bref_runs_field']; S3t's DRS, Statcast and UZR (UZR to 2024); S3c's DRS; S3t eligible True (owner decision EW3-37, EBR_GATE.md 11.7)
+[look] PRIMARY frame (part 11.2): bat 1071, pit 866, fld 1071, fldt:DRS 1057, fldt:Statcast 1057, fldt:UZR 710, cat 130, pep 866, peh 1071; 2016 to 2018 block: pit 670, pep 670
+[look] FLOORS, primary (convention v2, B = 2000; MDE95 = 1.645 sd; no gap is printed here)
+  batting   HEM+ H-rate  bat              n  1071  sd +0.0102  half-width +0.0198  MDE95 +0.0169
+  batting   HEM+ H-cum   bat              n  1071  sd +0.0096  half-width +0.0188  MDE95 +0.0158
+  batting   xHEM+ H-rate batx             n  1071  sd +0.0175  half-width +0.0342  MDE95 +0.0288  EQUIVALENT unreachable (MDE95 > 0.02)
+  batting   xHEM+ H-cum  batx             n  1071  sd +0.0175  half-width +0.0347  MDE95 +0.0288  EQUIVALENT unreachable (MDE95 > 0.02)
+  pitching  P-rate       hr_shrunk        n   866  sd +0.0113  half-width +0.0225  MDE95 +0.0186
+  pitching  P-rate       hr_fwar          n   866  sd +0.0052  half-width +0.0101  MDE95 +0.0086
+  pitching  P-cum        hr_shrunk        n   866  sd +0.0100  half-width +0.0198  MDE95 +0.0165
+  pitching  P-cum        hr_fwar          n   866  sd +0.0034  half-width +0.0068  MDE95 +0.0056
+  pitching  S2b P-rate   pb_hr_shrunk     n   866  sd +0.0116  half-width +0.0227  MDE95 +0.0192
+  pitching  S2b P-rate   pb_hr_fwar       n   866  sd +0.0061  half-width +0.0118  MDE95 +0.0101
+  pitching  S2b P-cum    pb_hr_shrunk     n   866  sd +0.0101  half-width +0.0191  MDE95 +0.0166
+  pitching  S2b P-cum    pb_hr_fwar       n   866  sd +0.0058  half-width +0.0115  MDE95 +0.0095
+  fielding  H-rate       fld              n  1071  sd +0.0051  half-width +0.0099  MDE95 +0.0083
+  fielding  H-cum        fld              n  1071  sd +0.0049  half-width +0.0097  MDE95 +0.0081
+  fielding  S3t H-rate   fldt             n  1057  sd +0.0127  half-width +0.0244  MDE95 +0.0208  EQUIVALENT unreachable (MDE95 > 0.02)
+  fielding  S3t H-cum    fldt             n  1057  sd +0.0123  half-width +0.0237  MDE95 +0.0203  EQUIVALENT unreachable (MDE95 > 0.02)
+  fielding  C-rate       cat              n   130  sd +0.0302  half-width +0.0590  MDE95 +0.0496  EQUIVALENT unreachable (MDE95 > 0.02)
+  fielding  C-cum        cat              n   130  sd +0.0314  half-width +0.0607  MDE95 +0.0517  EQUIVALENT unreachable (MDE95 > 0.02)
+  pe_p      PE-P rate    pep_hr_shrunk    n   866  sd +0.0011  half-width +0.0021  MDE95 +0.0018
+  pe_p      PE-P rate    pep_hr_fwar      n   866  sd +0.0013  half-width +0.0025  MDE95 +0.0021
+  pe_p      PE-P total   pep_hr_shrunk    n   866  sd +0.0010  half-width +0.0020  MDE95 +0.0017
+  pe_p      PE-P total   pep_hr_fwar      n   866  sd +0.0012  half-width +0.0023  MDE95 +0.0019
+  pe_h      PE-H rate    peh              n  1071  sd +0.0036  half-width +0.0071  MDE95 +0.0060
+  pe_h      PE-H total   peh              n  1071  sd +0.0037  half-width +0.0071  MDE95 +0.0061
+[look] HR-ARM CLAUSE (primary target): P-rate gap hr_shrunk over hr_fwar, 2016-2018 +0.0003, 2021-2024 -0.0122: fails; home-run term hr_fwar
+[look] GAPS AND DISPOSITIONS, primary (convention v2 against B0; v1 must agree in sign)
+  batting   HEM+ H-rate  n  1071 gap +0.0091 [-0.0109, +0.0287] 90% [-0.0076, +0.0263] p +0.1889 holm False | vs B1 lo95 -0.0153 | twin lo95 -0.0662 | v1 +0.0093 | B0r gap +0.0091 => UNRESOLVED
+  batting   HEM+ H-cum   n  1071 gap +0.0024 [-0.0162, +0.0215] 90% [-0.0134, +0.0184] p +0.3953 holm False | vs B1 lo95 -0.0185 | twin lo95 -0.0794 | v1 +0.0028 | B0r gap +0.0024 => EQUIVALENT
+  batting   xHEM+ H-rate n  1071 gap +0.0647 [+0.0309, +0.0993] 90% [+0.0355, +0.0942] p +0.0005 holm True | vs B1 lo95 +0.0254 | twin lo95 -0.0748 | v1 +0.0651 | B0r gap +0.0647 => WIN (components)
+  batting   xHEM+ H-cum  n  1071 gap +0.0420 [+0.0074, +0.0767] 90% [+0.0141, +0.0716] p +0.0100 holm True | vs B1 lo95 +0.0057 | twin lo95 -0.0880 | v1 +0.0429 | B0r gap +0.0420 => WIN (components)
+  pitching  P-rate       n   866 gap -0.0166 [-0.0265, -0.0062] 90% [-0.0251, -0.0078] p +1.0000 holm False | vs B1 lo95 -0.0271 | twin lo95 -0.0156 | v1 -0.0164 | B0r gap +0.0352 => LOSS
+  pitching  P-cum        n   866 gap -0.0136 [-0.0206, -0.0069] 90% [-0.0191, -0.0083] p +1.0000 holm False | vs B1 lo95 +0.0952 | twin lo95 -0.0027 | v1 -0.0135 | B0r gap -0.0278 => LOSS
+  pitching  S2b P-rate   n   866 gap -0.0070 [-0.0187, +0.0049] 90% [-0.0168, +0.0035] p +0.8611 holm False | vs B1 lo95 -0.0200 | twin lo95 -0.0196 | v1 -0.0069 | B0r gap +0.0448 => EQUIVALENT
+  pitching  S2b P-cum    n   866 gap -0.0104 [-0.0217, +0.0013] 90% [-0.0197, -0.0006] p +0.9580 holm False | vs B1 lo95 +0.0986 | twin lo95 -0.0088 | v1 -0.0104 | B0r gap -0.0246 => EQUIVALENT
+  fielding  H-rate       n  1071 gap -0.0046 [-0.0145, +0.0052] 90% [-0.0130, +0.0034] p +0.8256 holm False | vs B1 lo95 -0.0143 | twin lo95 -0.0531 | v1 -0.0048 | B0r gap -0.1033 => EQUIVALENT
+  fielding  H-cum        n  1071 gap -0.0047 [-0.0143, +0.0051] 90% [-0.0127, +0.0037] p +0.8331 holm False | vs B1 lo95 -0.0117 | twin lo95 -0.0323 | v1 -0.0053 | B0r gap -0.1090 => EQUIVALENT
+  fielding  S3t H-rate   n  1057 gap -0.0386 [-0.0632, -0.0143] 90% [-0.0594, -0.0177] p +0.9990 holm False | vs B1 lo95 -0.0612 | twin lo95 -0.0984 | v1 -0.0385 | B0r gap -0.0777 => LOSS
+  fielding  S3t H-cum    n  1057 gap -0.0380 [-0.0615, -0.0142] 90% [-0.0576, -0.0175] p +0.9985 holm False | vs B1 lo95 -0.0539 | twin lo95 -0.0926 | v1 -0.0376 | B0r gap -0.0783 => LOSS
+  fielding  C-rate       n   130 gap -0.0378 [-0.1014, +0.0165] 90% [-0.0897, +0.0102] p +0.8901 holm False | vs B1 lo95 -0.1047 | twin lo95 -0.0596 | v1 -0.0461 | B0r gap +0.0222 => UNRESOLVED
+  fielding  C-cum        n   130 gap -0.0385 [-0.1016, +0.0198] 90% [-0.0919, +0.0108] p +0.8876 holm False | vs B1 lo95 -0.0983 | twin lo95 -0.0540 | v1 -0.0455 | B0r gap +0.0413 => UNRESOLVED
+  pe_p      PE-P rate    n   866 gap -0.0046 [-0.0072, -0.0022] 90% [-0.0066, -0.0026] p +1.0000 holm False | vs B1 lo95 +0.0106 | twin lo95 -0.0069 | v1 -0.0045 | B0r gap -0.0318 => LOSS
+  pe_p      PE-P total   n   866 gap -0.0053 [-0.0077, -0.0031] 90% [-0.0072, -0.0034] p +1.0000 holm False | vs B1 lo95 -0.0760 | twin lo95 -0.0064 | v1 -0.0053 | B0r gap -0.0249 => LOSS
+  pe_h      PE-H rate    n  1071 gap +0.0130 [+0.0060, +0.0203] 90% [+0.0071, +0.0191] p +0.0005 holm True | vs B1 lo95 -0.0015 | twin lo95 -0.0067 | v1 +0.0133 | B0r gap +0.0152 => SMALL WIN
+  pe_h      PE-H total   n  1071 gap +0.0134 [+0.0066, +0.0207] 90% [+0.0073, +0.0196] p +0.0005 holm True | vs B1 lo95 +0.0024 | twin lo95 -0.0174 | v1 +0.0136 | B0r gap +0.0157 => SMALL WIN
+  pe_h sensitivity (wRAA alone): gap +0.0133 hi95 +0.0207 loss False
+[look] POSITION PART (11.2.3): ladder v1 against FanGraphs' positional adjustment (fg_inv): dMAE in the ladder's favour -0.1054 [-0.1404, -0.0711]; control fails False; passes False
+[look] TEAM GUARD FLOORS (11.2.4; B = 2000 each, seed 20261024; no dT is printed here)
+  pos   run_differential player sd +0.0016 half-width +0.0031 | club sd +0.0010 half-width +0.0021
+  pos   wins             player sd +0.0017 half-width +0.0033 | club sd +0.0012 half-width +0.0024
+  bat   runs_scored      player sd +0.0268 half-width +0.0522 | club sd +0.0341 half-width +0.0650
+  bat   run_differential player sd +0.0163 half-width +0.0320 | club sd +0.0183 half-width +0.0358
+  bat   wins             player sd +0.0170 half-width +0.0331 | club sd +0.0175 half-width +0.0347
+  batx  runs_scored      player sd +0.0305 half-width +0.0591 | club sd +0.0406 half-width +0.0786
+  batx  run_differential player sd +0.0185 half-width +0.0371 | club sd +0.0204 half-width +0.0396
+  batx  wins             player sd +0.0192 half-width +0.0369 | club sd +0.0204 half-width +0.0396
+  fld   run_differential player sd +0.0080 half-width +0.0156 | club sd +0.0089 half-width +0.0174
+  fld   wins             player sd +0.0080 half-width +0.0160 | club sd +0.0082 half-width +0.0162
+  fldt  run_differential player sd +0.0092 half-width +0.0180 | club sd +0.0099 half-width +0.0193
+  fldt  wins             player sd +0.0093 half-width +0.0185 | club sd +0.0090 half-width +0.0176
+  cat   run_differential player sd +0.0022 half-width +0.0043 | club sd +0.0019 half-width +0.0038
+  cat   wins             player sd +0.0023 half-width +0.0046 | club sd +0.0021 half-width +0.0042
+  peh   runs_scored      player sd +0.0040 half-width +0.0081 | club sd +0.0047 half-width +0.0092
+  peh   run_differential player sd +0.0029 half-width +0.0058 | club sd +0.0025 half-width +0.0046
+  peh   wins             player sd +0.0030 half-width +0.0059 | club sd +0.0026 half-width +0.0050
+  S2    runs_allowed     player sd +0.0191 half-width +0.0377 | club sd +0.0198 half-width +0.0390
+  S2    run_differential player sd +0.0080 half-width +0.0160 | club sd +0.0069 half-width +0.0135
+  S2    wins             player sd +0.0084 half-width +0.0168 | club sd +0.0073 half-width +0.0142
+  S2b   runs_allowed     player sd +0.0188 half-width +0.0367 | club sd +0.0203 half-width +0.0394
+  S2b   run_differential player sd +0.0081 half-width +0.0155 | club sd +0.0074 half-width +0.0145
+  S2b   wins             player sd +0.0085 half-width +0.0167 | club sd +0.0077 half-width +0.0155
+  pep   runs_allowed     player sd +0.0192 half-width +0.0371 | club sd +0.0177 half-width +0.0353
+  pep   run_differential player sd +0.0075 half-width +0.0146 | club sd +0.0046 half-width +0.0089
+  pep   wins             player sd +0.0074 half-width +0.0141 | club sd +0.0047 half-width +0.0094
+[look] TEAM GUARD dT (part r minus frame r; NON-INFERIOR when dT - 1.645 sd > -0.02 under both)
+  pos   run_differential n  120 dT +0.0004 lower player -0.0022 club -0.0013 => NON-INFERIOR
+  pos   wins             n  120 dT +0.0009 lower player -0.0019 club -0.0011 => NON-INFERIOR
+  pos   guard: NON-INFERIOR
+  bat   runs_scored      n  120 dT -0.0454 lower player -0.0895 club -0.1015 => not non-inferior
+  bat   run_differential n  120 dT +0.0079 lower player -0.0189 club -0.0223 => not non-inferior
+  bat   wins             n  120 dT -0.0069 lower player -0.0348 club -0.0357 => not non-inferior
+  bat   guard: NOT NON-INFERIOR (underpowered: a half-width above 0.02)
+  batx  runs_scored      n  120 dT -0.0302 lower player -0.0804 club -0.0971 => not non-inferior
+  batx  run_differential n  120 dT +0.0080 lower player -0.0225 club -0.0254 => not non-inferior
+  batx  wins             n  120 dT -0.0052 lower player -0.0368 club -0.0388 => not non-inferior
+  batx  guard: NOT NON-INFERIOR (underpowered: a half-width above 0.02)
+  fld   run_differential n  120 dT -0.0109 lower player -0.0240 club -0.0255 => not non-inferior
+  fld   wins             n  120 dT -0.0119 lower player -0.0251 club -0.0253 => not non-inferior
+  fld   guard: NOT NON-INFERIOR
+  fldt  run_differential n  120 dT -0.0105 lower player -0.0256 club -0.0268 => not non-inferior
+  fldt  wins             n  120 dT -0.0107 lower player -0.0260 club -0.0255 => not non-inferior
+  fldt  guard: NOT NON-INFERIOR
+  cat   run_differential n  120 dT -0.0001 lower player -0.0037 club -0.0032 => NON-INFERIOR
+  cat   wins             n  120 dT +0.0003 lower player -0.0035 club -0.0031 => NON-INFERIOR
+  cat   guard: NON-INFERIOR
+  peh   runs_scored      n  120 dT +0.0038 lower player -0.0028 club -0.0040 => NON-INFERIOR
+  peh   run_differential n  120 dT +0.0034 lower player -0.0014 club -0.0007 => NON-INFERIOR
+  peh   wins             n  120 dT -0.0001 lower player -0.0050 club -0.0044 => NON-INFERIOR
+  peh   guard: NON-INFERIOR
+  S2    runs_allowed     n  120 dT -0.0264 lower player -0.0579 club -0.0589 => not non-inferior
+  S2    run_differential n  120 dT -0.0028 lower player -0.0160 club -0.0141 => NON-INFERIOR
+  S2    wins             n  120 dT -0.0033 lower player -0.0172 club -0.0153 => NON-INFERIOR
+  S2    guard: NOT NON-INFERIOR (underpowered: a half-width above 0.02)
+  S2b   runs_allowed     n  120 dT -0.0124 lower player -0.0433 club -0.0458 => not non-inferior
+  S2b   run_differential n  120 dT +0.0012 lower player -0.0120 club -0.0109 => NON-INFERIOR
+  S2b   wins             n  120 dT +0.0004 lower player -0.0136 club -0.0123 => NON-INFERIOR
+  S2b   guard: NOT NON-INFERIOR (underpowered: a half-width above 0.02)
+  pep   runs_allowed     n  120 dT -0.0143 lower player -0.0458 club -0.0435 => not non-inferior
+  pep   run_differential n  120 dT -0.0022 lower player -0.0146 club -0.0097 => NON-INFERIOR
+  pep   wins             n  120 dT -0.0028 lower player -0.0150 club -0.0106 => NON-INFERIOR
+  pep   guard: NOT NON-INFERIOR (underpowered: a half-width above 0.02)
+[look] ADMISSION (part 11.2.6; EWV3-Q1 (a), EWV3-Q2 (a), PB-Q1 (a))
+  ADMIT batting  : False (no arm qualifies (HEM+: HEM+ H-rate UNRESOLVED, HEM+ H-cum EQUIVALENT, guard False; xHEM+: xHEM+ H-rate WIN (components), xHEM+ H-cum WIN (components), guard False))
+  ADMIT pitching : False (no arm qualifies (S2: P-rate LOSS, P-cum LOSS, guard False; S2b: S2b P-rate EQUIVALENT, S2b P-cum EQUIVALENT, guard False))
+  ADMIT fielding : False (no arm qualifies (S3: H-rate EQUIVALENT, H-cum EQUIVALENT, guard False; S3t: S3t H-rate LOSS, S3t H-cum LOSS, guard False)); catcher component False
+  ADMIT pe_p     : False (PE-P rate LOSS, PE-P total LOSS, guard False)
+  ADMIT pe_h     : False (PE-H rate SMALL WIN, PE-H total SMALL WIN, guard True, sensitivity not LOSS True)
+  ADMIT position : False (dMAE lo95 -0.14040534925097803, control fails False, guard True)
+[look] SECONDARY ESTIMAND (11.2.5): published fWAR(Y+1), B1 at a32ff1bb's constants; decides nothing
+[look secondary] frame: 1071 hitter pairs, 866 pitcher pairs; 2016 to 2018 pitcher block 670 pairs
+[look secondary] FLOORS (convention v2, B = 2000; MDE95 = 1.645 sd; no gap is printed here)
+  position  H-rate        pos       n  1071  sd +0.0018  half-width +0.0034  MDE95 +0.0029
+  position  H-cum         pos       n  1071  sd +0.0015  half-width +0.0028  MDE95 +0.0024
+  batting   HEM+ H-rate   bat       n  1071  sd +0.0104  half-width +0.0198  MDE95 +0.0170
+  batting   HEM+ H-cum    bat       n  1071  sd +0.0076  half-width +0.0151  MDE95 +0.0124
+  batting   xHEM+ H-rate  batx      n  1071  sd +0.0162  half-width +0.0316  MDE95 +0.0266  EQUIVALENT unreachable (MDE95 > 0.02)
+  batting   xHEM+ H-cum   batx      n  1071  sd +0.0133  half-width +0.0260  MDE95 +0.0218  EQUIVALENT unreachable (MDE95 > 0.02)
+  pitching  P-rate        hr_shrunk n   866  sd +0.0125  half-width +0.0245  MDE95 +0.0206  EQUIVALENT unreachable (MDE95 > 0.02)
+  pitching  P-rate        hr_fwar   n   866  sd +0.0055  half-width +0.0108  MDE95 +0.0090
+  pitching  P-cum         hr_shrunk n   866  sd +0.0084  half-width +0.0165  MDE95 +0.0138
+  pitching  P-cum         hr_fwar   n   866  sd +0.0031  half-width +0.0064  MDE95 +0.0052
+  pitching  S2b P-rate    pb_hr_shrunk n   866  sd +0.0129  half-width +0.0258  MDE95 +0.0212  EQUIVALENT unreachable (MDE95 > 0.02)
+  pitching  S2b P-rate    pb_hr_fwar n   866  sd +0.0059  half-width +0.0119  MDE95 +0.0097
+  pitching  S2b P-cum     pb_hr_shrunk n   866  sd +0.0087  half-width +0.0168  MDE95 +0.0144
+  pitching  S2b P-cum     pb_hr_fwar n   866  sd +0.0044  half-width +0.0088  MDE95 +0.0072
+  fielding  H-rate        fld       n  1071  sd +0.0048  half-width +0.0094  MDE95 +0.0079
+  fielding  H-cum         fld       n  1071  sd +0.0039  half-width +0.0077  MDE95 +0.0065
+  pe_p      PE-P rate     pep_hr_shrunk n   866  sd +0.0009  half-width +0.0018  MDE95 +0.0015
+  pe_p      PE-P rate     pep_hr_fwar n   866  sd +0.0010  half-width +0.0019  MDE95 +0.0016
+  pe_p      PE-P total    pep_hr_shrunk n   866  sd +0.0008  half-width +0.0015  MDE95 +0.0012
+  pe_p      PE-P total    pep_hr_fwar n   866  sd +0.0008  half-width +0.0017  MDE95 +0.0014
+  pe_h      PE-H rate     peh       n  1071  sd +0.0035  half-width +0.0067  MDE95 +0.0058
+  pe_h      PE-H total    peh       n  1071  sd +0.0030  half-width +0.0060  MDE95 +0.0050
+[look secondary] home-run term carried from the look: hr_fwar
+[look secondary] GAPS AND DISPOSITIONS (convention v2 against fWAR(Y); v1 must agree in sign)
+  position  H-rate        n  1071 gap -0.0030 [-0.0064, +0.0005] 90% [-0.0059, -0.0001] MDE95 +0.0029 p +0.9550 holm False | vs B1 lo95 -0.0240 | twin lo95 -0.0016 | v1 -0.0030 | pearson -0.0030 => EQUIVALENT
+  position  H-cum         n  1071 gap -0.0022 [-0.0050, +0.0006] 90% [-0.0045, +0.0001] MDE95 +0.0024 p +0.9385 holm False | vs B1 lo95 -0.0073 | twin lo95 -0.0021 | v1 -0.0022 | pearson -0.0011 => EQUIVALENT
+  batting   HEM+ H-rate   n  1071 gap +0.0226 [+0.0026, +0.0421] 90% [+0.0051, +0.0400] MDE95 +0.0170 p +0.0160 holm True | vs B1 lo95 -0.0104 | twin lo95 -0.0348 | v1 +0.0225 | pearson +0.0155 => WIN (regression only) (SHIP flag, no weight: False)
+  batting   HEM+ H-cum    n  1071 gap +0.0036 [-0.0119, +0.0183] 90% [-0.0088, +0.0165] MDE95 +0.0124 p +0.3168 holm False | vs B1 lo95 -0.0061 | twin lo95 -0.0428 | v1 +0.0041 | pearson +0.0031 => EQUIVALENT
+  batting   xHEM+ H-rate  n  1071 gap +0.0420 [+0.0105, +0.0737] 90% [+0.0149, +0.0684] MDE95 +0.0266 p +0.0040 holm True | vs B1 lo95 -0.0019 | twin lo95 -0.0808 | v1 +0.0419 | pearson +0.0531 => WIN (regression only) (SHIP flag, no weight: False)
+  batting   xHEM+ H-cum   n  1071 gap +0.0141 [-0.0114, +0.0406] 90% [-0.0075, +0.0365] MDE95 +0.0218 p +0.1474 holm False | vs B1 lo95 -0.0013 | twin lo95 -0.0575 | v1 +0.0146 | pearson +0.0265 => UNRESOLVED
+  pitching  P-rate        n   866 gap -0.0082 [-0.0187, +0.0029] 90% [-0.0169, +0.0013] MDE95 +0.0090 p +0.9220 holm False | vs B1 lo95 -0.0264 | twin lo95 -0.0151 | v1 -0.0079 | pearson -0.0093 => EQUIVALENT
+  pitching  P-cum         n   866 gap -0.0002 [-0.0067, +0.0062] 90% [-0.0055, +0.0049] MDE95 +0.0052 p +0.5362 holm False | vs B1 lo95 -0.0138 | twin lo95 -0.0054 | v1 -0.0002 | pearson +0.0002 => EQUIVALENT
+  pitching  S2b P-rate    n   866 gap -0.0086 [-0.0201, +0.0038] 90% [-0.0180, +0.0016] MDE95 +0.0097 p +0.9245 holm False | vs B1 lo95 -0.0290 | twin lo95 -0.0210 | v1 -0.0083 | pearson -0.0097 => EQUIVALENT
+  pitching  S2b P-cum     n   866 gap -0.0008 [-0.0093, +0.0082] 90% [-0.0080, +0.0066] MDE95 +0.0072 p +0.5822 holm False | vs B1 lo95 -0.0139 | twin lo95 -0.0072 | v1 -0.0009 | pearson -0.0033 => EQUIVALENT
+  fielding  H-rate        n  1071 gap -0.0113 [-0.0207, -0.0020] 90% [-0.0192, -0.0034] MDE95 +0.0079 p +0.9930 holm False | vs B1 lo95 -0.0357 | twin lo95 -0.0166 | v1 -0.0111 | pearson -0.0068 => LOSS
+  fielding  H-cum         n  1071 gap -0.0059 [-0.0135, +0.0018] 90% [-0.0125, +0.0006] MDE95 +0.0065 p +0.9345 holm False | vs B1 lo95 -0.0104 | twin lo95 -0.0167 | v1 -0.0060 | pearson -0.0016 => EQUIVALENT
+  pe_p      PE-P rate     n   866 gap -0.0007 [-0.0026, +0.0013] 90% [-0.0023, +0.0010] MDE95 +0.0016 p +0.7396 holm False | vs B1 lo95 -0.0169 | twin lo95 -0.0022 | v1 -0.0006 | pearson -0.0020 => EQUIVALENT
+  pe_p      PE-P total    n   866 gap +0.0012 [-0.0005, +0.0029] 90% [-0.0002, +0.0026] MDE95 +0.0014 p +0.0740 holm False | vs B1 lo95 -0.0124 | twin lo95 -0.0008 | v1 +0.0012 | pearson +0.0002 => EQUIVALENT
+  pe_h      PE-H rate     n  1071 gap +0.0063 [-0.0003, +0.0130] 90% [+0.0005, +0.0121] MDE95 +0.0058 p +0.0360 holm False | vs B1 lo95 -0.0160 | twin lo95 -0.0087 | v1 +0.0062 | pearson +0.0073 => EQUIVALENT
+  pe_h      PE-H total    n  1071 gap +0.0051 [-0.0009, +0.0111] 90% [-0.0001, +0.0102] MDE95 +0.0050 p +0.0555 holm False | vs B1 lo95 -0.0004 | twin lo95 -0.0037 | v1 +0.0050 | pearson +0.0078 => EQUIVALENT
+[look] DESCRIPTIVE LEGS (descriptive: no verdict weight; claims nothing (part 8))
+  agreement: {"bat": {"n": 1447, "n_bwar": 1447, "spearman_with_bwar": 0.8729, "spearman_with_fwar": 0.9572}, "batx": {"n": 1447, "n_bwar": 1447, "spearman_with_bwar": 0.8336, "spearman_with_fwar": 0.9082}, "fld": {"n": 1447, "n_bwar": 1447, "spearman_with_bwar": 0.927, "spearman_with_fwar": 0.9876}, "pit": {"n": 1393, "n_bwar": 1393, "spearman_with_bwar": 0.75, "spearman_with_fwar": 0.9927}, "pit_s2b": {"n": 1393, "n_bwar": 1393, "spearman_with_bwar": 0.7846, "spearman_with_fwar": 0.9876}, "pos": {"n": 1447, "n_bwar": 1447, "spearman_with_bwar": 0.9268, "spearman_with_fwar": 0.9988}}
+  self_persistence: {"bat": {"fwar": 0.4155, "n": 1071, "test": 0.528}, "batx": {"fwar": 0.4155, "n": 1071, "test": 0.5305}, "fld": {"fwar": 0.4155, "n": 1071, "test": 0.4097}, "pit": {"fwar": 0.3835, "n": 866, "test": 0.3679}, "pos": {"fwar": 0.4155, "n": 1071, "test": 0.4105}}
+  pitching_subsets: {"reliever_sigma_le_0_10": {"n_pairs": 298, "p_rate_gap_v2": -0.0158, "s2b_p_rate_gap_v2": -0.0133}, "starter_heavy_sigma_ge_0_5": {"n_pairs": 536, "p_rate_gap_v2": -0.0057, "s2b_p_rate_gap_v2": -0.007}}
+  team_wins: {"same_season_wins": {"n_team_seasons": 120, "pearson_r": {"bat": 0.9254, "batx": 0.9006, "fld": 0.932, "fwar": 0.938, "pit": 0.9323, "pos": 0.9383}, "r_minus_fwar": {"bat": -0.0126, "batx": -0.0374, "fld": -0.006, "pit": -0.0057, "pos": 0.0003}}, "unallocated_rows": 635}
+wrote C:\Users\noah\baseball-projects\wt\s202\prospect-tracker\docs\ebr-2026-09-30\swar_eval.json
+```
 
 ### 12.3 The skill holdout (part 9.5)
 
@@ -2305,3 +2575,34 @@ started; the look itself fetched nothing and read that cached copy as it stood, 
 `fetched_at` printed in part 12.1 before any statistic. The 2026-10-14 attempt (stopped at
 precondition 2, nothing computed) ran the same build. The look ran once and is not rerun whatever
 it printed (part 5.9).
+
+**Dated note, 2026-10-19: the skill look of part 12.2 is an OWNER-WAIVED EARLY READ.** It ran on
+2026-10-19 by `python -u tools/swar_lab.py --out docs/ebr-2026-09-30/swar_eval.json`, once, under
+owner decision EW3-5 (2026-10-14, `DECISIONS_FOR_OWNER.md`: registered look days and registered
+dates are waived; a look waits only for data that does not exist yet). The clauses it lifted:
+part 7.3 item 3 (on or after 2026-11-17); item 4's dates (DEM+'s confirmatory holdout block in
+`data/dem_plus_eval.json` is dated 2026-10-14, itself an owner-waived early read at `edabd1f9`,
+and the HEM+ versus xwOBA re-gate's result was committed early at `5f92838d` with its registry rows
+and eval artifact moved in the same commit, both before the 2026-11-16 the clause names); item 5's
+day rules (it ran on the outcome look's day, after the outcome look of part 12.1 and other
+registered reads were committed on 2026-10-19); and part 7.5's own-day clause under EWV3-Q3 (a):
+the two looks ran in two writer sessions, on one day. Every other precondition held at launch:
+the step Z entry of `FWAR_LABEL_EPOCH_GATE.md` part 9; the frozen vintage `2026-10-02-a020cf64844a`
+(the 2026-10-19 amendment entry of that part 9, task EWAR_P0B_VINTAGE_IP) carrying published fWAR,
+plate appearances, innings and gmLI on every row of 2016 to 2025; the skill build (EWV3_SKILL_BUILD_CORE
+`eab494e4`), the lab (EWV3_SKILL_BUILD_LAB `a32ff1bb`) and the amended-target lab with B1's frozen
+constants and fit log (EWV3_LAB_AMENDED_TARGETS `59f4b235`) at HEAD `210fb38a`; a fresh preview
+built that day on the new vintage, with `test_swar.py` and `test_swar_lab_dispositions.py` passing
+on it; part 12.2 EMPTY, no `docs/ebr-2026-09-30/swar_eval.json` or `data/swar_eval.json`, and no look
+block in the preview before the run; part 1 matching `DECISIONS_FOR_OWNER.md` for SWAR-Q0 to SWAR-Q3
+and EWV3-Q1 to EWV3-Q3; and no python process of any kind in the tool's process listing at launch
+(20:21 local time, after waiting for other lanes' processes to end). Disclosed: B1's two fit logs and
+the pitch-basis shrink fit were recorded on the earlier vintage id `2026-10-02-57bf90f7143e` and an
+earlier preview, which carry the same fWAR values (the 2026-10-19 amendment entry says those reads stay
+recorded as they are); the lab read the cached Baseball-Reference frame `.cache/war_daily/bat.parquet`,
+whose file time (23:28 UTC) falls between the preview build and the look; its sha256 `e9571c42...`
+equals the one part 12.1 read, so its content is the one the outcome look read; a parallel lane's eBR history backfill (EBR-Q4 (b)) was writing
+the runner record's 2011 to 2017 and 2020 seasons while the preview was built, and the preview's runner
+terms read only seasons with both the runner record and the play-by-play corpus (2018, 2019 and 2021
+to 2025), which that backfill does not write. The dry run on fixtures with nulls ran first. The look
+ran once and is not rerun whatever it printed (part 9.5); the holdout of part 7.4 is a separate task.
