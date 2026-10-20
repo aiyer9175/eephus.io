@@ -964,3 +964,66 @@ def test_the_teams_charts_fit_and_print_readable_labels(browser, server, size):
     assert m["min_h"] is None or m["min_h"] >= 8, m
     assert m["aria"], m
 
+
+
+# ---------------------------------------------------------------- the Trends tab
+# League Trends plan 4.5 (task TR_4_PAGE_DARK): every sub-view, with and without
+# a club filter, in both themes, never scrolls the page sideways, draws its
+# charts with a role and a label, and prints any svg text at 8px or taller.
+# Skipped, never failed, while the tab is dark or its payload is not on disk.
+TRENDS_PAGES = [
+    ("trends players", "section=trends"),
+    ("trends players filtered", "section=trends&mtype=swing&mdir=up"),
+    ("trends players club", "section=trends&team=CIN"),
+    ("trends teams", "section=trends&mview=teams"),
+    ("trends teams club", "section=trends&mview=teams&team=CIN"),
+    ("trends league", "section=trends&mview=league"),
+]
+_TRENDS_TEXT = r"""
+() => {
+  const root = document.getElementById('mlbstats-section-trends');
+  const svgs = Array.from(root.querySelectorAll('svg')).filter(s => s.getClientRects().length);
+  const hs = [];
+  svgs.forEach(s => s.querySelectorAll('text').forEach(t => { const h = t.getBoundingClientRect().height; if (h) hs.push(h); }));
+  return {n_svg: svgs.length, min_h: hs.length ? Math.min.apply(null, hs) : null,
+          aria: svgs.every(s => s.getAttribute('role') === 'img' && !!s.getAttribute('aria-label')),
+          undef: /undefined|NaN/.test(root.textContent),
+          page_overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+}
+"""
+
+
+def _trends_built() -> bool:
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    return 'data-mlbsection="trends"' in shell and (ROOT / "data" / "league_trends.json").exists()
+
+
+@pytest.mark.parametrize("size", SIZES, ids=["%dx%d" % s for s in SIZES])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_the_trends_views_fit_in_both_themes(browser, server, size, scheme):
+    if not _trends_built():
+        pytest.skip("the Trends tab is dark in this build")
+    w, h = size
+    ctx = _context(browser, w, h)
+    page = ctx.new_page()
+    page.emulate_media(color_scheme=scheme)
+    problems = []
+    try:
+        for label, hash_ in TRENDS_PAGES:
+            page.goto("about:blank")
+            page.goto(server + "mlbstats/#" + hash_, wait_until="load", timeout=60_000)
+            page.wait_for_selector("#mlbstats-section-trends .mlbx-trgrid, #mlbstats-section-trends .mlbstats-empty", timeout=30_000)
+            page.wait_for_timeout(300)
+            m = page.evaluate(_TRENDS_TEXT)
+            where = "%dpx %s %s" % (w, scheme, label)
+            if m["page_overflow"] > 0:
+                problems.append("%s: the page scrolls sideways by %dpx" % (where, m["page_overflow"]))
+            if m["min_h"] is not None and m["min_h"] < 8:
+                problems.append("%s: svg text prints %.1fpx tall" % (where, m["min_h"]))
+            if not m["aria"]:
+                problems.append("%s: an svg without role=img and an aria-label" % where)
+            if m["undef"]:
+                problems.append("%s: 'undefined' or 'NaN' in the rendered text" % where)
+    finally:
+        ctx.close()
+    assert not problems, "\n".join(problems)

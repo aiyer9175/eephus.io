@@ -456,6 +456,7 @@
       : section === "defense" ? defenseTeam
       : section === "baserunning" ? brTeam
       : section === "eabs" ? abTeam
+      : section === "trends" ? trTeam
       : section === "war" ? warTeam : relTeam;
   }
   function clearActiveTeam() {
@@ -466,6 +467,7 @@
     else if (section === "baserunning") { brTeam = ""; writeHash(); renderBaserunningInPlace(); }
     else if (section === "eabs") { abTeam = ""; writeHash(); renderEabs(); }
     else if (section === "war") { warTeam = ""; writeHash(); renderWar(); }
+    else if (section === "trends") { trTeam = ""; writeHash(); if (window.MLBX_TRENDS) window.MLBX_TRENDS.render(); }
     else { relTeam = ""; writeHash(); renderInPlace(); }
   }
   // One delegated listener, the pattern the phone drawer and the Team note
@@ -3604,8 +3606,9 @@
     // board, as an unknown section does.
     // `baserunning` likewise needs its panel (build_site writes it only while
     // baserunning_export.MLBSTATS_BASERUNNING_LIVE is on).
-    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams|baserunning|eabs)\b/.exec(h);
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams|trends|baserunning|eabs)\b/.exec(h);
     if (s && (s[1] === "baserunning" ? baserunningLive() : s[1] === "eabs" ? eabsLive()
+              : s[1] === "trends" ? trendsSrc()
               : (s[1] !== "league" && s[1] !== "teams") || leagueSrc())) section = s[1];
     var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
@@ -3633,7 +3636,7 @@
     // a deep-linked club is the first thing each one is narrowed to.
     var tm = TEAM_HASH_RE.exec(h);
     if (tm) {
-      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = brTeam = abTeam = tm[1];
+      relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = brTeam = abTeam = trTeam = tm[1];
     }
     var gr = GRAD_HASH_RE.exec(h);
     if (gr) gradSel = gr[1];
@@ -3723,6 +3726,7 @@
     pushSort(parts, "asort", abSort);
     leagueHashParts(parts);
     teamsHashParts(parts);
+    trendsHashParts(parts);
     // The ACTIVE section's team, so the URL describes the board on screen
     // rather than a club the reader left behind on another one.
     var tm = activeTeam();
@@ -7667,7 +7671,7 @@
                   starters: "mlbstats-section-starters",
                   hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
                   defense: "mlbstats-section-defense", league: "mlbstats-section-league",
-                  teams: "mlbstats-section-teams", baserunning: "mlbstats-section-baserunning",
+                  teams: "mlbstats-section-teams", trends: "mlbstats-section-trends", baserunning: "mlbstats-section-baserunning",
                   eabs: "mlbstats-section-eabs" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
@@ -7685,6 +7689,7 @@
     else if (name === "bullpen") initBullpen();
     else if (name === "league") initLeague();
     else if (name === "teams") initTeams();
+    else if (name === "trends") initTrends();
   }
   // ---- the League and Teams tabs (assets/mlbstats-league.js, lazy) ----------
   // The shell names the script on its root only while the tabs are live, so a
@@ -7767,6 +7772,76 @@
     var h = location.hash || "", m;
     TEAMS_KEY_RE.lastIndex = 0;
     while ((m = TEAMS_KEY_RE.exec(h))) parts.push(m[1]);
+  }
+  // ---- the Trends tab (assets/mlbstats-league-trends.js, lazy) ------------------
+  // League Trends plan 4.1. The shell names the script on its root only while
+  // league_trends_export.MLBSTATS_TRENDS_LIVE is True, so a dark build carries
+  // no Trends button, no panel and no fetch. The script is injected ONCE, the
+  // first time the tab opens. Its hash keys all start with m (mview, mtype,
+  // mpos, mstr, mdir, msort); the club filter is the shared team= key.
+  var trTeam = "";
+  function trendsSrc() {
+    var r = document.querySelector(".mlbx");
+    return (r && r.getAttribute && r.getAttribute("data-trends-src")) || "";
+  }
+  function trendsCtx() {
+    var lg = !!leagueSrc();
+    var c = { root: document.querySelector(".mlbx"),
+              host: function () { return document.getElementById("mlbstats-trends-root"); },
+              active: function () { return section === "trends"; },
+              writeHash: writeHash, bannerHTML: bannerHTML, pxState: pxState, wireGlossary: wireGlossary,
+              filtCls: filtCls, filtBtn: filtBtn, playerHref: playerHref,
+              team: function () { return trTeam; },
+              setTeam: function (t) { trTeam = /^[A-Z]{2,3}$/.test(t || "") ? t : ""; },
+              openBoard: function (sec, id) {
+                if (!LAB_BOARD[sec] && sec !== "bullpen") return;
+                if (drawerSrc()) drawerPending = String(id);
+                showSection(sec);
+                writeHash();
+              } };
+    if (lg) {
+      c.gotoLeague = function (side, stat) {
+        var h = "#section=league&gview=time&gside=" + side + "&gstat=" + stat;
+        try { history.replaceState(null, "", h); } catch (e) { /* hash optional */ }
+        if (window.MLBX_LEAGUE && window.MLBX_LEAGUE.readHash) window.MLBX_LEAGUE.readHash(h);
+        showSection("league");
+        writeHash();
+      };
+    }
+    return c;
+  }
+  var trendsAsked = false;
+  function initTrends() {
+    if (window.MLBX_TRENDS && window.MLBX_TRENDS.show) { window.MLBX_TRENDS.show(trendsCtx()); return; }
+    window.MLBX_TRENDS_CTX = trendsCtx;
+    var src = trendsSrc();
+    if (!src) return;
+    var host = document.getElementById("mlbstats-trends-root");
+    if (host) host.innerHTML = pxState("loading", "Loading the Trends tab.");
+    if (trendsAsked) return;
+    trendsAsked = true;
+    var el = document.createElement("script");
+    el.src = src;
+    el.defer = true;
+    el.onerror = function () {
+      trendsAsked = false;
+      var h = document.getElementById("mlbstats-trends-root");
+      if (h) h.innerHTML = pxState("failed", "The Trends tab did not load. "
+        + '<button type="button" class="chip" data-mlbtrendsretry="1">Retry</button>', "mlbstats-load-error");
+    };
+    (document.head || document.body).appendChild(el);
+  }
+  try { document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-mlbtrendsretry]") : null;
+    if (b) initTrends();
+  }); } catch (e) { /* no document events */ }
+  var TRENDS_KEY_RE = /(?:^#|[#&])(m(?:view|type|pos|str|dir|sort)=[A-Za-z0-9_]+)/g;
+  function trendsHashParts(parts) {
+    var T = window.MLBX_TRENDS;
+    if (T && T.hashParts) { T.hashParts().forEach(function (p) { parts.push(p); }); return; }
+    var h = location.hash || "", m;
+    TRENDS_KEY_RE.lastIndex = 0;
+    while ((m = TRENDS_KEY_RE.exec(h))) parts.push(m[1]);
   }
   // The bullpen board is lazy like the other five now, because it is no longer
   // the one a bare URL opens: measured on the served payloads, the landing

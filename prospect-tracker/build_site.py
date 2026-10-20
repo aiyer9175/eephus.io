@@ -6399,6 +6399,13 @@ def build_mlbstats() -> str:
     no caret. Live, the root names assets/mlbstats-drawer.js there and
     mlbstats.js injects it on the first drawer open (owner answer LTS-3).
 
+    THE TRENDS TAB (owner ask of 2026-09-30; League Trends plan 4.1; task
+    TR_4_PAGE_DARK) is built dark behind league_trends_export.
+    MLBSTATS_TRENDS_LIVE: while it is False the shell carries no Trends
+    button, panel or data-trends-src, and mlbstats.js ignores section=trends.
+    Live, the root names assets/mlbstats-league-trends.js (injected on the
+    first open) and the button and panel follow League.
+
     THE BASERUNNING TAB (owner ask of 2026-09-30; the eWAR v3 gate
     docs/ebr-2026-09-30/EBR_GATE.md; task EBR_2_BUILD_DARK) is built dark behind
     baserunning_export.MLBSTATS_BASERUNNING_LIVE: while it is False the shell
@@ -6414,7 +6421,16 @@ def build_mlbstats() -> str:
     import baserunning_export
     import eabs_export
     import league_averages
+    import league_trends_export
     import mlbstats_trends_export
+    trends_root = trends_btn = trends_panel = ""
+    if league_trends_export.MLBSTATS_TRENDS_LIVE:
+        trends_root = f' data-trends-src="/assets/mlbstats-league-trends.js?v={_asset_ver("assets/mlbstats-league-trends.js")}"'
+        trends_btn = ('<button type="button" class="mlbstats-sectionbtn" data-mlbsection="trends" role="tab" '
+                      'aria-selected="false" aria-controls="mlbstats-section-trends">Trends</button>')
+        trends_panel = ('<div id="mlbstats-section-trends" class="mlbstats-section" role="tabpanel" aria-label="Trends" hidden>'
+                        f'<div id="mlbstats-trends-root"{_csv_optin("mlb-trends")}></div>'
+                        '</div>')
     league_root = league_btn = league_panel = teams_btn = teams_panel = ""
     baserunning_btn = baserunning_panel = ""
     if baserunning_export.MLBSTATS_BASERUNNING_LIVE:
@@ -6453,7 +6469,7 @@ def build_mlbstats() -> str:
         # site.css is scoped under it, because .mlbstats-app is shared by ten
         # module roots (test_mlbx_css_scope.py pins the scope).
         '<div class="fa-app mlbstats-app mlbx"'
-        f'{league_root}{drawer_root}>'
+        f'{league_root}{drawer_root}{trends_root}>'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         # One line: each board's number once, and the scale. The tabs under it
@@ -6483,7 +6499,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
         f'{baserunning_btn}{eabs_btn}'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
-        f'{teams_btn}{league_btn}'
+        f'{teams_btn}{league_btn}{trends_btn}'
         '</div>'
         # Panel order follows the nav, so tab order and reading order agree.
         '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">'
@@ -6506,7 +6522,7 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'
-        f'{teams_panel}{league_panel}'
+        f'{teams_panel}{league_panel}{trends_panel}'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
