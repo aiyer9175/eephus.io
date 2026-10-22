@@ -1247,7 +1247,7 @@
    "eval_artifact": "docs/efv-2026-10-22/ewar_headline_label_guard.json",
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
-   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_HEADLINE_EWAR_CHECK, owner answer EWLE-Q2): G-1 gap +0.0000 (5th percentile +0.0000, n 2416 pairs, 0 departing); permuted twin gap +0.0000; G-2 runs_scored dT +0.0000; runs_allowed dT +0.0000; run_differential dT +0.0000; wins dT +0.0000; guard holds: True, by identity: the label carries no departure before 2026, so the guard cannot see the eABS part (gate part 4.5); its own read EWHL-R1 needs the 2027 season's data. The switch is cleared and not yet flipped (war_source.EFV_LABEL_EWAR_HEADLINE = False). No accuracy claim is made for any label."
+   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_HEADLINE_EWAR_CHECK, owner answer EWLE-Q2): G-1 gap +0.0000 (5th percentile +0.0000, n 2416 pairs, 0 departing); permuted twin gap +0.0000; G-2 runs_scored dT +0.0000; runs_allowed dT +0.0000; run_differential dT +0.0000; wins dT +0.0000; guard holds: True, by identity: the label carries no departure before 2026, so the guard cannot see the eABS part (gate part 4.5); its own read EWHL-R1 needs the 2027 season's data. eFV's label is this series (war_source.EFV_LABEL_EWAR_HEADLINE = True, owner default EWHL-Q1 (a)); DEFAULT_PROVIDER and every other label reader stay published fWAR. No accuracy claim is made for any label."
   },
   {
    "model_id": "swar_bat",

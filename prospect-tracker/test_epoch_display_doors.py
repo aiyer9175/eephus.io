@@ -69,8 +69,16 @@ def test_the_label_term_names_the_frozen_vintage_build():
         # the disp= term carries a bare '|' inside it, so pick the label= part by prefix
         return next(part for part in fp.split("|") if part.startswith("label="))[len("label="):]
 
-    assert _label_term(storage.board_basis_fingerprint()) == f"fwar@{vid}"
-    assert _label_term(storage.BOARD_BASIS_FINGERPRINT) == f"fwar@{vid}"
+    want = f"fwar@{vid}"
+    import war_source
+    if war_source.EFV_LABEL_PROVIDER == "ewar_headline":
+        # the headline eWAR label check's switch (EWAR_HEADLINE_LABEL_GATE.md part 3): the term
+        # names eFV's label, whose frozen vintage id embeds this fWAR vintage's id
+        import ewar_headline_label
+        want = f"ewar_headline@{ewar_headline_label.vintage_id()}"
+        assert ewar_headline_label.vintage_id().startswith(f"ewar-headline-{vid}-")
+    assert _label_term(storage.board_basis_fingerprint()) == want
+    assert _label_term(storage.BOARD_BASIS_FINGERPRINT) == want
     # the epoch bump rode the same commit (runbook U)
     assert storage.BOARD_RANK_BASIS_EPOCH >= "2026-10-03"
 
@@ -225,4 +233,9 @@ def test_the_frozen_vintage_is_the_one_the_fingerprint_names():
         pytest.skip("needs data/fwar_vintage.json (EPOCH_D9_FREEZE)")
     import storage
     blob = json.loads(p.read_text(encoding="utf-8"))
-    assert f"label=fwar@{blob.get('vintage_id')}" in storage.BOARD_BASIS_FINGERPRINT
+    import war_source
+    if war_source.EFV_LABEL_PROVIDER == "ewar_headline":
+        # the headline label's vintage is built on this fWAR vintage and names it
+        assert f"label=ewar_headline@ewar-headline-{blob.get('vintage_id')}-" in storage.BOARD_BASIS_FINGERPRINT
+    else:
+        assert f"label=fwar@{blob.get('vintage_id')}" in storage.BOARD_BASIS_FINGERPRINT

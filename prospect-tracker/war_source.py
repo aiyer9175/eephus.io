@@ -227,8 +227,10 @@ LABEL_ONLY_PROVIDERS: tuple[str, ...] = ("ewar_core",)
 #: table, efv_labels' development frames (registered reads froze fWAR), every other label
 #: reader and every display door are untouched. It flips only after the gate's guard holds
 #: (part 4.4), in a commit that bumps storage.BOARD_RANK_BASIS_EPOCH and restamps
-#: BOARD_BASIS_FINGERPRINT.
-EFV_LABEL_EWAR_HEADLINE: bool = False
+#: BOARD_BASIS_FINGERPRINT. FLIPPED 2026-10-22: the guard held, by identity (gate part 9;
+#: owner default EWHL-Q1 (a)); BOARD_RANK_BASIS_EPOCH 2026-10-22 and the label term
+#: ewar_headline@<vintage id> moved in the same commit.
+EFV_LABEL_EWAR_HEADLINE: bool = True
 
 #: The WAR series eFV's label is summed from: "ewar_headline" under the switch, else the
 #: site-wide label DEFAULT_PROVIDER. "ewar_headline" is not a provider id in PROVIDERS: no

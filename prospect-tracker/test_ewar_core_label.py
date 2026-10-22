@@ -144,4 +144,8 @@ def test_label_vintage_is_off_the_webroot():
 
 def test_fingerprint_label_term_unchanged_while_flag_off():
     import storage
-    assert "|label=fwar@" in storage.board_basis_fingerprint()
+    fp = storage.board_basis_fingerprint()
+    assert "|label=ewar_core@" not in fp
+    # the term names eFV's label: published fWAR, or the headline eWAR under its own switch
+    want = "|label=ewar_headline@" if war_source.EFV_LABEL_PROVIDER == "ewar_headline" else "|label=fwar@"
+    assert want in fp

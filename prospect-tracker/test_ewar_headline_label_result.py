@@ -86,3 +86,27 @@ def test_registry_row_claims_no_accuracy():
     assert row["eval_artifact"] == "docs/efv-2026-10-22/ewar_headline_label_guard.json"
     assert "No accuracy claim is made for any label." in row["notes"]
     assert "by identity" in row["notes"]
+
+
+def test_the_switch_flipped_with_the_epoch_and_the_fingerprint():
+    # the flag commit (part 4.4, owner default EWHL-Q1 (a)): flag, epoch and label term together
+    import ewar_headline_label as H
+    import storage
+    import war_source
+    assert war_source.EFV_LABEL_EWAR_HEADLINE is True
+    assert war_source.EFV_LABEL_PROVIDER == "ewar_headline"
+    assert war_source.DEFAULT_PROVIDER == "fwar" and war_source.LABEL_EWAR_CORE is False
+    assert storage.BOARD_RANK_BASIS_EPOCH == "2026-10-22"
+    assert f"|label=ewar_headline@{H.vintage_id()}|" in storage.BOARD_BASIS_FINGERPRINT
+    assert storage.board_basis_fingerprint() == storage.BOARD_BASIS_FINGERPRINT
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(r for r in reg["models"] if r["model_id"] == "ewar_headline_label")
+    assert "war_source.EFV_LABEL_EWAR_HEADLINE = True" in row["notes"]
+
+
+def test_glossary_names_efv_label_without_an_accuracy_claim():
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    by_id = {e.get("id"): e for e in g["entries"]}
+    assert "eFV's own training label (first-six-season WAR) is, from 2026-10-22, the headline eWAR" in         by_id["war"]["definition"]
+    assert "no accuracy gain is claimed from it" in by_id["war"]["methodology"]
+    assert "on eFV's training label (from 2026-10-22 the headline eWAR" in by_id["xfv"]["formula"]
