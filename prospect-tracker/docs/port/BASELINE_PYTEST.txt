@@ -1,0 +1,119 @@
+PORT BASELINE: deploy-mode pytest, recorded 2026-10-22 by task PORT_PREP (PORT_SPEC P0.1, Gate A)
+
+This is the REHEARSAL baseline, not the full two-mode baseline of PORT_RUNBOOK.md step L3,
+which the owner records on the main tree after step L1. Machine: the owner's PC, Windows 11,
+Python 3.13.9 (Anaconda), chromium 148.0.7778.96 through playwright 1.60.0, Rscript absent from PATH.
+
+1. Clean clone of wt-PORT_PREP at f7e4a5ce, seeded from tools/port_bundle.py's bundle without
+   served data, then run_monthly.py --rebuild-only, tools/export_trade_values.py, build_site.py:
+     EEPHUS_DEPLOY_RUN=1 python -m pytest -q -p no:cacheprovider -rfE
+     177 failed, 17008 passed, 265 skipped, 1 xfailed, 31 warnings, 5 errors in 10145.66s (2:49:05)
+
+2. The same 182 failing or erroring ids rerun on the local worktree (HEAD tracked files plus the
+   main tree's gitignored artifacts and caches), same flag:
+     91 failed, 90 passed, 1 xfailed, 3 warnings in 1029.24s (0:17:09)
+   So 91 are red on the local build itself, and 91 were red only on the clean clone.
+
+3. Of the 91 clean-clone-only ids, after copying the small SAFE_CACHES directories (now carried
+   by tools/port_bundle.py) and the daily-only artifacts into the clone:
+     45 failed, 46 passed in 1499.16s (0:24:59)
+
+4. The 45 left, rerun on the clone reset to HEAD plus the carried served data (runbook P-5 (a)):
+     44 passed, 1 xfailed in 210.42s (0:03:30)
+   So on the carried-data path the clean clone's gate equals the local gate.
+
+One of the 91 local failures, test_dependency_lock.py::test_every_third_party_import_is_declared,
+was a false positive on `import __main__` and is fixed in this commit. The other 90 local
+failures at HEAD, to be cleared or carried as known red before step T7 (the nightly gate blocks
+the rsync while any test fails):
+
+test_arbitration_scaffold.py::test_a_new_module_appends_and_never_reorders_the_existing_ones
+test_awards_copy.py::test_the_glossary_drafts_are_clean_and_land_only_at_the_flip
+test_awards_flag.py::test_hof_is_its_committed_bytes_except_stamps_and_the_flag_off_head_is_the_shelfs
+test_awards_flag.py::test_the_served_pages_carry_the_rename
+test_awards_flag.py::test_with_the_flag_true_the_strip_marks_the_current_page
+test_betting.py::test_every_published_slot_is_a_row_off_the_board
+test_betting_close_job.py::test_the_diagnosis_separates_not_scheduled_from_never_firing
+test_betting_sidecar_isolation.py::test_no_module_still_resolves_a_watched_artifact_by_default
+test_betting_sidecar_isolation.py::test_the_redirect_list_and_the_watch_list_agree
+test_bust_inclusive_frame.py::test_a_player_with_real_major_league_war_is_not_a_bust
+test_claims_freshness.py::test_glossary_numbers_match_artifacts
+test_clemens_reconciliation.py::test_cache_cleared_on_set_switch
+test_clemens_reconciliation.py::test_surplus_50_hitter_stays_model_scale_not_table
+test_control_theme_site.py::test_no_control_renders_its_text_in_the_browser_font
+test_control_theme_site.py::test_no_select_leaves_the_browser_to_draw_its_arrow
+test_control_theme_site.py::test_no_select_renders_the_browser_fill_or_face
+test_control_theme_site.py::test_the_lifted_fields_do_not_zoom_or_shrink_on_a_touch_screen
+test_control_window_dom.py::test_the_csv_carries_the_control_window
+test_debut_placeholder.py::test_no_matrix_row_reads_a_placeholder_day[hit]
+test_design_tokens.py::test_fractional_font_sizes_bounded
+test_draft_upcoming_class.py::test_only_the_upcoming_chip_has_the_hourglass
+test_eabs_board.py::test_glossary_and_registry_script_is_idempotent
+test_efv_delta_chip_display.py::test_the_rendered_badge_and_its_tooltip_reconcile
+test_efv_surrogate_guard.py::test_vintage_frame_blob_is_pinned
+test_efv_surrogate_look.py::test_t5_static_holds_on_this_tree
+test_efv_v2_model.py::test_screen_flag_off_keeps_the_lists_the_heads_and_the_assembly
+test_efv_w2_popmle.py::test_non_affiliated_lines_leave_the_population_under_the_repair
+test_efv_w2_popmle.py::test_norms_sum_each_count_once_under_the_repair
+test_efv_w2_popmle.py::test_the_repair_is_dark_until_the_refit
+test_efv_x1_translate.py::test_no_served_module_imports_the_translation
+test_fa_readonly_prospx.py::test_fa_app_is_standalone
+test_fa_readonly_prospx.py::test_fa_storage_accessors_only_touch_fa_tables
+test_fa_realized_ledger.py::test_the_served_archive_names_the_displayed_basis
+test_farm_finances_surplus.py::test_tiles_read_gross_cost_net_for_every_org
+test_franchise_export.py::test_roster_ewar_equals_war_leaderboard_teams
+test_gate2_untouched_by_path.py::test_the_readers_of_the_legacy_escalator_are_a_closed_list[_destale_rate(]
+test_glossary_management_ids.py::test_the_management_ids_exist_with_the_module_tag
+test_glossary_provenance.py::test_arkmetric_origin_names_the_platform
+test_library_rename.py::test_glossary_page_masthead_title_and_meta_read_library
+test_library_term_shelves.py::test_every_entry_has_a_section_in_the_seven
+test_library_term_shelves.py::test_the_section_script_is_idempotent_and_stamps_through_glossary_version
+test_methodology_freshness.py::test_every_registry_model_has_a_documentation_decision
+test_mgmt_steal_context.py::test_the_served_percentiles_equal_the_cached_leaderboard_rows
+test_mlb_events_rows.py::test_history_flag_off_is_the_prospect_page
+test_mlb_events_rows.py::test_history_flag_on_is_on_this_day_with_the_mlb_rows
+test_mlb_events_rows.py::test_news_page_flag_off_serves_no_mlb_row
+test_mlb_events_rows.py::test_on_this_day_names_the_page_on_every_built_page
+test_mlb_news_rename.py::test_news_page_head
+test_mlbp_css_contract.py::test_every_emitted_mlbp_class_has_a_site_css_rule
+test_mlbstats_display_pass.py::test_the_pager_turns_pages_and_csv_keeps_every_row
+test_mlbstats_fit.py::test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels
+test_mlbstats_windows.py::test_every_served_board_column_is_declared_or_explained
+test_model_registry.py::test_every_eval_artifact_is_registered
+test_model_registry.py::test_stale_threshold_is_reachable
+test_model_report_cards.py::test_models_page_links_every_row_to_its_history
+test_model_updates.py::test_every_registry_model_is_present
+test_model_updates.py::test_other_holds_at_most_ten_rows
+test_pixel_icon_coverage.py::test_masthead_draws_one_32px_icon_first_in_the_h1[franchise]
+test_pixel_icon_coverage.py::test_masthead_is_one_icon_one_grid_title_one_rule_under_the_flag[franchise]
+test_postseason_cache.py::test_the_tracked_set_is_in_git_and_ships_in_neither_deploy_consumer
+test_proj_eval.py::test_run_rowmatch_source_is_pinned
+test_proj_eval.py::test_run_source_is_pinned
+test_prospect_anchor_gate.py::test_serve_flag_defaults_false_and_is_read_at_one_site
+test_prospx_board_layout.py::test_board_cuts_nothing_off_at_any_width[dark]
+test_prospx_board_layout.py::test_board_cuts_nothing_off_at_any_width[light]
+test_prospx_card_one_consensus.py::test_placeholder_card_prints_no_consensus_fv
+test_prospx_card_one_consensus.py::test_split_card_prints_one_consensus_and_the_chip_on_it[jackson_flora]
+test_prospx_card_one_consensus.py::test_split_card_prints_one_consensus_and_the_chip_on_it[jurrangelo_cijntje]
+test_prospx_lb_library.py::test_new_aliases_are_unique_across_the_glossary
+test_prospx_surplus_card_basis.py::test_consensus_mode_detail_card_prints_sim_mean
+test_prospx_title_repetition.py::test_no_long_sentence_repeats_across_row_tooltips[prospx/-.player-row[data-key]]
+test_provisional_v2.py::test_the_registry_row_quotes_the_artifact
+test_reduced_motion_px.py::test_the_px_block_draws_in_tokens_only
+test_report_excerpt.py::test_copy_states_the_excerpt_limit
+test_scores_render.py::test_chart_role_label_twin_crosshair_and_keys
+test_share_cards.py::test_each_card_line_is_cut_from_its_pages_meta_description
+test_share_cards.py::test_each_card_title_is_the_pages_masthead_title
+test_smoke_home_otd_account.py::test_sho02_otd_body_title_and_phone_wrap
+test_source_updates.py::test_section_is_in_the_page_index_and_the_nightly
+test_sources_attribution.py::test_every_ingest_host_has_a_sources_row
+test_standings_render.py::test_budgets_and_the_cold_first_paint
+test_team_basis_coverage.py::test_every_render_site_that_shows_a_team_mounts_the_note
+test_team_masthead.py::test_page_is_the_masthead
+test_theme_tokens.py::test_no_stylesheet_names_a_token_that_does_not_exist
+test_trade_audit_basis.py::test_every_party_goes_through_the_one_pricer
+test_value_ruler.py::test_every_hand_written_tier_class_names_its_family
+test_value_ruler.py::test_only_the_ruler_block_names_the_tier_colours
+test_wag_career_exposure.py::test_prospx_wag_copy_quotes_the_engine_rules
+test_wag_l13_repairs.py::test_the_one_series_claim_names_what_it_does_not_cover
+test_wire_type_system.py::test_history_rows_carry_the_family_and_the_ev_il_pictogram
