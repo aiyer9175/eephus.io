@@ -1888,6 +1888,7 @@ def run_all(cache_dir: Path, work: Path, *, log=print) -> dict:
                                    for s, w in wa.items()} for nm, wa in wall.items()},
            "reads": {s: {"points": summarize(reads[s]["bt"]["player"]),
                          "clusters": {nm: reads[s]["bt"][nm]["n_clusters"] for nm in ("player", "club")},
+                         "S_vs_K": {nm: diff(reads[s]["bt"][nm], "S", "K") for nm in ("player", "club")},
                          "n": scored[s].n} for s in SIDES},
            "served_constant_weights": served_const, "planted": planted, "secondary": secondary,
            "shift_after": shift_after, "production": production,

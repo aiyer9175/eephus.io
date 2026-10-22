@@ -268,3 +268,201 @@ alternatives.
 - D-6 the D loss is normalized by the pair weight total, so its penalty grid is its own.
 - D-7 consensus-only is the null comparator; the permuted-change null of EFV_PIT_SIGN_STABILITY is
   not repeated.
+
+## 11. The read (appended by the run, 2026-10-22; development frames)
+
+Run: `python -u efv_weight_integrity.py --run --cache <EFV_FIX_B_REFIT cache> --work <scratch>` after
+the registration commit 88b91432 and the module commit ba64ee57 (artifact
+`data/efv_weight_integrity.json`; label `fwar@2026-10-02-0341299c20ec`, the cache's, whose values
+the later vintage id `fwar@2026-10-02-57bf90f7143e` leaves unchanged; B 4000, seed 20261022). No
+reserved row was built; nothing was cut by consensus-FV level; `backtest.run_backtest` was not
+called.
+
+Disclosed before the read: a smoke run on three folds checked the solver parity and the timing
+(it printed the folds' chosen penalties, no statistic), and a dry run at B 20 on four folds ran
+every code path (its numbers were discarded unread). Disclosed after it: the first write did not
+store the served-minus-consensus difference (S minus K) with its interval. The artifact was
+re-assembled from the same cached parts with that one block added; against the first write, only
+`generated_at`, `elapsed_s` and the module hash changed (a second re-assembly without the block
+reproduced the first write exactly).
+
+### 11.1 Receipts
+
+- The module's solver reproduces both stored production skill heads exactly (largest slope
+  difference 0.0; hitters 1 key, pitchers 21); the cached fold models reproduce the cached e_skill
+  on every test row (0.0); the served skill procedure refitted on each of the 20 folds reproduces
+  every fold head (0.0).
+- The live board of 2026-10-16 (1,055 hitters, 941 pitchers) is scored by the served models to
+  the served grade of every row (largest move 0.0).
+- Clubs: every one of the 3,692 scored rows and 5,186 production rows has a club (30 to 33
+  clusters per side; none is its own cluster). Players: 986 hitter and 1,001 pitcher clusters.
+- The planted truth covers every training and scored row from its table (5,582 hitter and 5,566
+  pitcher identities, none outside it); noise SD 0.286 (hitters) and 0.294 (pitchers).
+
+### 11.2 Arm A: how sure the served weights are
+
+Slope per SD in order-index units (0.01 is one percentile point of consensus rank); the order
+weight is that times w_skill. CI95 under player and club clusters; LOCO is the 14 leave-one-cohort-
+out production refits (+ / - / 0 counts).
+
+Hitters (w_skill 0.2965; one key, alpha 100; effective degrees of freedom 0.93):
+
+| key | per SD | order weight | CI95 player | CI95 club | LOCO | reading |
+|---|---|---|---|---|---|---|
+| tool_hit | +0.171 | +0.051 | +0.092 to +0.289 | +0.092 to +0.274 | 14 / 0 / 0 | real |
+
+Pitchers (w_skill 1.0; 21 keys at lambda 1000, chosen again in 13 of the 14 LOCO refits;
+effective degrees of freedom 9.37 over 19 free slopes):
+
+| key | per SD | CI95 player | CI95 club | at bound 0 | LOCO | reading |
+|---|---|---|---|---|---|---|
+| w4p_pop_pit (population translation, rank) | +0.128 | +0.075 to +0.201 | +0.084 to +0.184 | 0 | 14 / 0 / 0 | real |
+| w2p_csw_p (called plus swinging strikes) | +0.068 | +0.021 to +0.121 | +0.018 to +0.128 | 0 | 14 / 0 / 0 | real |
+| w2b_pu_p (popups per ball in play) | -0.067 | -0.126 to -0.017 | -0.132 to -0.007 | 0 | 0 / 14 / 0 | real |
+| w2p_k_resid_p (strikeouts beyond whiffs) | +0.055 | +0.013 to +0.108 | +0.023 to +0.088 | 0 | 14 / 0 / 0 | real |
+| w2s_cmd_pit (command grade) | +0.055 | +0.014 to +0.110 | +0.020 to +0.102 | 0 | 14 / 0 / 0 | real |
+| w2i_days_skill_pit (IL days) | -0.041 | -0.088 to +0.002 | -0.087 to -0.002 | 0 | 0 / 14 / 0 | weak |
+| g5_pit_A_all_SP_k_pct | +0.030 | 0 to +0.058 | 0 to +0.060 | 0.05 | 14 / 0 / 0 | noise |
+| w2i_stints_skill_pit (IL stints) | +0.028 | -0.011 to +0.069 | -0.011 to +0.068 | 0 | 14 / 0 / 0 | noise |
+| w2p_cstr_p (called strikes) | +0.021 | -0.022 to +0.067 | -0.008 to +0.053 | 0 | 13 / 1 / 0 | noise |
+| w2s_brk_pit (breaking-ball grade) | +0.020 | -0.023 to +0.069 | -0.023 to +0.062 | 0 | 14 / 0 / 0 | noise |
+| w2i_sixty_skill_pit (60-day IL) | -0.019 | -0.071 to +0.027 | -0.068 to +0.032 | 0 | 0 / 14 / 0 | noise |
+| w2i_recur_skill_pit | +0.018 | -0.024 to +0.059 | -0.016 to +0.062 | 0 | 14 / 0 / 0 | noise |
+| t5_pit_AAA_all_all_fb_fut (Triple-A fastball) | +0.017 | -0.017 to +0.053 | -0.018 to +0.060 | 0 | 14 / 0 / 0 | noise |
+| g5_pit_A_all_SP_k_minus_bb | +0.012 | 0 to +0.043 | 0 to +0.044 | 0.29 | 12 / 0 / 2 | noise |
+| g5_pit_A_all_all_k_pct | +0.009 | 0 to +0.038 | 0 to +0.037 | 0.37 | 12 / 0 / 2 | noise |
+| w2p_fstrike_p (first-pitch strikes) | -0.008 | -0.055 to +0.040 | -0.056 to +0.039 | 0 | 1 / 13 / 0 | noise |
+| g5_pit_A_all_SP_bf_per_g | +0.007 | -0.026 to +0.042 | -0.033 to +0.043 | 0 | 12 / 2 / 0 | noise |
+| w2i_open_skill_pit (on the IL at the read) | +0.005 | -0.037 to +0.044 | -0.032 to +0.047 | 0 | 12 / 2 / 0 | noise |
+| g5_pit_A_young_all_k_pct | +0.001 | 0 to +0.035 | 0 to +0.030 | 0.50 | 10 / 0 / 4 | noise |
+| g5_pit_A_all_all_k_minus_bb | 0 | 0 to +0.007 | 0 to +0.004 | 0.92 | 0 / 0 / 14 | noise |
+| g5_pit_A_young_all_k_minus_bb | 0 | 0 to +0.018 | 0 to +0.024 | 0.80 | 0 / 0 / 14 | noise |
+
+Head weights (DS-08 as served): hitters w_skill ratio 0.297 (CI95 0.080 to 0.590 player, 0.078 to
+0.586 club), w_time ratio -0.242 (-0.550 to +0.042; -0.495 to +0.019), clipped to 0; pitchers
+w_skill ratio 1.053 (0.528 to 1.870; 0.499 to 1.743), clipped to 1.0, so the served weight's CI95 is
+0.53 to 1.0; w_time ratio -0.496 (-0.845 to -0.206; -0.780 to -0.174), clipped to 0.
+
+Planted recovery (A5): hitters, the planted hit tool slope is covered and resolved. Pitchers, the
+CI95 covers 76 percent of the planted slopes (the ridge shrinks them) and excludes 0 for 32 percent
+of the nonzero planted slopes; under the zero plant 2 of 21 intervals exclude 0 (9.5 percent). A
+head whose every slope is real at the served size would show about 6 resolved keys; the read shows
+5 real and 1 weak. The 15 noise keys are not shown to be zero; they are below what 1,737 rows can
+resolve one at a time.
+
+The hitter timing head (nine keys) carries weight 0 and moves no order; its slopes are in the
+artifact as read.
+
+### 11.3 Arm C: the live board against training
+
+| side | CV AUC (in-sample) | carrying keys (SMD on the design; KS; drop in CV AUC) | CV AUC after re-standardization |
+|---|---|---|---|
+| hitters | 0.621 (0.623) | hit tool -0.46 SD; KS 0.21; drop 0.121 | 0.509 |
+| pitchers | 0.718 (0.736) | 60-day IL +1.23 SD (KS 0.27, drop 0.070); command grade -0.39 (0.18, 0.031); strikeout residual -0.10 (0.04, 0.011); IL stints +0.31 (0.09, drop under 0.01); IL open +0.26 (0.07, under 0.01) | 0.620 |
+
+Every other served pitcher key moves under 0.25 SD and its drop is under 0.01; the Single-A group
+columns show no location shift (their spread drift is EFV_PIT_DRIFT_REBASE's). Descriptively, the
+hitter power-present grade (not in the served head) sits 0.69 SD lower on the live board. On the
+served head's own inputs the live board is far easier to tell from training for pitchers than
+for hitters, and far less separable than X3's feature set (0.94 to 0.997), whose shift ran mostly
+through college draftees and consensus grade, inputs no served head reads.
+
+### 11.4 The development read (pooled within Spearman, player clusters)
+
+| side | consensus K | served S | B1 unit | B2 ridge | B3 top-k | C re-standardized | D rank loss |
+|---|---|---|---|---|---|---|---|
+| hitters (n 1,871) | 0.2384 | 0.2370 | 0.2316 | 0.2376 | 0.2353 | 0.2371 | 0.2382 |
+| pitchers (n 1,821) | 0.2091 | 0.2186 | 0.2192 | 0.2188 | 0.2055 | 0.2138 | 0.2171 |
+
+S minus K: hitters -0.0014 (CI95 -0.021 to +0.017 player, -0.018 to +0.017 club); pitchers +0.0095
+(-0.013 to +0.032; -0.018 to +0.034).
+
+Each arm minus S (CI95 player; one-sided 95 percent lower bound player / club; the larger
+non-inferiority p value; Holm):
+
+| test | minus S | CI95 | lower bounds | p | Holm threshold | Holm | not below K |
+|---|---|---|---|---|---|---|---|
+| hit C | +0.0002 | -0.002 to +0.002 | -0.0013 / -0.0013 | 0.0003 | 0.0050 | rejects | no (-0.0012) |
+| hit B2 | +0.0006 | -0.006 to +0.007 | -0.0046 / -0.0037 | 0.038 | 0.0056 | no | no (-0.0008) |
+| pit B2 | +0.0002 | -0.006 to +0.006 | -0.0048 / -0.0037 | 0.040 | 0.0063 | no | yes |
+| hit D | +0.0013 | -0.008 to +0.011 | -0.0063 / -0.0065 | 0.088 | 0.0071 | no | no (-0.0001) |
+| pit B1 | +0.0007 | -0.011 to +0.012 | -0.0091 / -0.0083 | 0.173 | 0.0083 | no | yes |
+| pit D | -0.0015 | -0.012 to +0.009 | -0.0099 / -0.0092 | 0.247 | 0.0100 | no | yes |
+| hit B3 | -0.0017 | -0.013 to +0.010 | -0.0114 / -0.0105 | 0.302 | 0.0125 | no | no |
+| pit C | -0.0048 | -0.011 to +0.001 | -0.0100 / -0.0106 | 0.508 | 0.0167 | no | yes |
+| hit B1 | -0.0054 | -0.013 to +0.002 | -0.0118 / -0.0115 | 0.566 | 0.0250 | no | no |
+| pit B3 | -0.0131 | -0.032 to +0.005 | -0.0287 / -0.0295 | 0.796 | 0.0500 | no | no |
+
+The fits: B2's nested CV chose a penalty above the served grid's 1000 in 2 of 20 folds (3000) and
+the production pitcher B2 head is the served head (lambda 1000, 0 board movers). B3 chose 1 or 2
+pitcher keys in every fold (the command grade and the population translation in production). D's
+nested CV chose infinity (no driver) in 5 hitter and 6 pitcher folds and in the hitter production
+fit. B1 kept 8 to 13 sign-stable pitcher keys per fold, 1 in vm_dev 2017 (13 in production, each at 0.072 per SD).
+
+The planted check recovers on both sides: S minus K under the plant +0.049 (lower bound +0.040,
+hitters) and +0.108 (+0.093, pitchers). Under the plant (a dense truth, the served head's own),
+B1 reads -0.031 and -0.021 against S, B3 -0.002 and -0.034, D -0.008 and -0.004, C -0.001 and
+-0.002, B2 -0.008 and 0.000: the instrument sees the loss a simpler head takes when the truth is
+the served head's shape, and on the real outcomes B1 takes no such loss on pitchers (+0.0007).
+
+Secondaries. The six-season WAR label (L6; 1,794 hitter and 1,763 pitcher rows): S 0.2506 and
+0.2459, K 0.2420 and 0.2464, D 0.2470 and 0.2469; D minus S -0.0037 (CI95 -0.013 to +0.007) and
++0.0010 (-0.009 to +0.012), so D does not lose on it; S minus K +0.0086 (-0.012 to +0.028) and
+-0.0005 (-0.025 to +0.023). Pooled after the map and contributor AUC: every arm minus S spans zero on
+both frames except hitter B3 on vm_dev pooled (+0.015, CI95 +0.001 to +0.028). At the served constant
+weights (sensitivity) no arm reads more than +0.0002 above S; pitcher C reads -0.0071 (CI95 -0.0135 to
+-0.0013).
+
+### 11.5 Simplicity and variance (production heads on the live board)
+
+| head | hitters edf / w_skill / board variance (pp^2, ratio to S) | pitchers edf / w_skill / board variance (ratio) |
+|---|---|---|
+| S | 0.93 / 0.297 / 2.45 (1.00) | 9.37 / 1.0 / 137.96 (1.00) |
+| B1 | 1.00 / 0.283 / 2.89 (1.18) | 1.00 / 0.734 / 28.03 (0.20) |
+| B2 | 6.85 / 0.284 / 4.25 (1.73) | 9.37 / 1.0 / 137.96 (1.00) |
+| B3 | 1.00 / 0.243 / 2.13 (0.87) | 2.00 / 0.963 / 158.78 (1.15) |
+| C | 0.93 / 0.298 / 2.20 (0.90) | 9.44 / 0.804 / 57.11 (0.41) |
+| D | 0 / 0.209 / 0 (consensus) | 8.92 / 0.610 / 77.11 (0.56) |
+
+Board variance is the mean over the live rows of the bootstrap variance of the head's order
+contribution, in percentile points squared (the served pitcher head: median 91.8, so a typical
+pitcher's driver contribution carries a sampling SD near 10 percentile points; outliers on the
+60-day IL count carry more). The unit-weight pitcher head would cut that to a fifth.
+
+## 12. The verdict (section 8)
+
+Ten adoption tests were read (B1, B2, B3, C, D on each side). Holm at family alpha 0.05 clears one:
+hitter C (the hit tool re-standardized within level x season), non-inferior to S (p 0.0003). It
+fails the null comparator: like S itself, it trails consensus alone (C minus K -0.0012). No other
+test clears Holm. The planted check recovers on both sides, so the instrument could have seen a
+real gain or loss of the served head's size; it found none.
+
+NOTHING IS ADOPTED on either side. No flag is wired into the serve path, no weights file is written,
+`efv_weight_integrity.EFV_WEIGHT_INTEGRITY_ON` stays False and is read by nothing; there is no
+OWNER QUESTION per passing arm because no arm passes. No row is written to `data/efv_progress.json`.
+Nothing served moved.
+
+What the read says:
+
+- Real weights. Hitters: the hit tool (the hitter head's only key) is real (CI95 excludes 0 under
+  both clusterings, all 14 cohort refits +). Pitchers: five of 21 keys are real (the population
+  translation, called plus swinging strikes, the strikeout residual, the command grade, and popups
+  with a negative sign), one is weak (IL days), fifteen read as noise one at a time. The planted
+  check shows that 1,737 rows resolve only about a third of slopes of the served size, so noise
+  here means "not shown", not "shown to be zero".
+- The head weights. Hitter w_skill 0.297 is real but uncertain (CI95 0.08 to 0.59); pitcher
+  w_skill 1.0 rests on a ratio whose CI95 is 0.53 to 1.87 (clipped at 1); both arrival ratios are
+  negative, so w_time 0 is supported.
+- Against consensus. The served hitter head does not beat consensus alone on these frames (S
+  minus K -0.0014, CI95 -0.021 to +0.017); the served pitcher head leads it by +0.0095 (CI95 -0.013
+  to +0.032). Both are ties.
+- Simpler heads. Unit weights on the pitcher side tie the served head in point (+0.0007) with one
+  fifth of its sampling variance on the live board, but its interval is too wide to clear the
+  registered margin, so it is not adopted. Sparse top-k loses on pitchers (-0.013). The extended
+  ridge grid picks the served penalty back.
+- Shift. The live board differs from training mostly through the pitcher 60-day IL count (+1.23
+  SD), the pitcher command grade (-0.39 SD) and the hitter hit tool grade (-0.46 SD). Re-reading
+  those within level x season removes most of the separability (pitchers 0.718 to 0.620, hitters
+  0.621 to 0.509) but costs the pitcher order -0.0048 (not non-inferior).
+- Objective. The pairwise rank loss ties the served squared loss on hitters (+0.0013) and pitchers
+  (-0.0015) and does not lose on the six-season label; it is not non-inferior after Holm.
