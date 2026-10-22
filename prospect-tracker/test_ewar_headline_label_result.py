@@ -110,3 +110,9 @@ def test_glossary_names_efv_label_without_an_accuracy_claim():
     assert "eFV's own training label (first-six-season WAR) is, from 2026-10-22, the headline eWAR" in         by_id["war"]["definition"]
     assert "no accuracy gain is claimed from it" in by_id["war"]["methodology"]
     assert "on eFV's training label (from 2026-10-22 the headline eWAR" in by_id["xfv"]["formula"]
+
+
+def test_flip_entry_names_its_commit():
+    text = re.sub(r"\s+", " ", DOC.read_text(encoding="utf-8"))
+    assert "### 2026-10-22: the switch flipped (`70c0c00d`)" in text
+    assert "EWHL-R1 stays registered for the 2027 season's data." in text

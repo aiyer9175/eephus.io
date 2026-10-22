@@ -331,3 +331,15 @@ everything `efv_dataset` feeds (the v1 model, the scored pools, `data/xfv_histor
 label term names it. A registered read that reads the v1 matrices from disk reads them as built; each
 matrix report names its label (`efv_dataset._label_provider`). The guard, its record and its verdict are
 untouched. This amendment is committed alone.
+
+### 2026-10-22: the switch flipped (`70c0c00d`)
+
+`war_source.EFV_LABEL_EWAR_HEADLINE` is True in `70c0c00d`, under part 3 as amendment 9.2 scopes it, with
+`storage.BOARD_RANK_BASIS_EPOCH` 2026-10-15 to 2026-10-22 and the fingerprint's label term
+`fwar@2026-10-02-a020cf64844a` to `ewar_headline@ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d` in
+the same commit (the owner's flip rule AG4-Q: flag, epoch, fingerprint, registry, glossary and tests
+only). The regenerations (the v1 matrices and model, the scored pools, `data/xfv_history.json` through
+`efv_score.score_history`, and the pages that stamp the glossary's content hash) are the integrator's,
+on the main tree. Owner question EWHL-Q1 is recorded in DECISIONS_FOR_OWNER.md with default (a)
+applied. EWHL-R1 stays registered for the 2027 season's data. Clause (l) binds this entry: no accuracy
+is claimed for the switch.
