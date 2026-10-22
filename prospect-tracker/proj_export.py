@@ -936,6 +936,28 @@ COMPONENTS_FRAME = "FanGraphs frame"
 # prospect WAR cell stays the FV-anchored path. Distinct from
 # value_framework.SERVE_PROSPECT_ANCHOR_V2; neither flag reads the other.
 SERVE_PROSPECT_STATLINE = True
+# RETIREES (owner answer Q3, 2026-10-22, 'Drop MLB-listed retirees'). The
+# universe is every player with an MLB season in the last three, so a player who
+# has left the game was still projected and still counted in his old club's Team
+# Outlook (Clayton Kershaw, 5Y 0.4 WAR with LAD). With this on, every id StatsAPI
+# lists inactive who has not played this season (mlb_people_status) leaves the
+# veteran rows AND the depth pool, so he moves no Team Outlook number either.
+DROP_RETIRED = True
+#: The ids dropped by the last build (filled by _build_payload_body).
+_RETIRED: set[int] = set()
+
+
+def _retired_ids(corpus: dict) -> set[int]:
+    """StatsAPI-listed retirees among the projectable universe. Best-effort: a
+    failure drops nobody."""
+    ids = {row["mlbam"] for side in ("hit", "pit") for row in corpus[side]
+           if row.get("mlbam") and row["season"] >= FIRST_SEASON - 3}
+    try:
+        import mlb_people_status as mps
+        return mps.retired_mlbams(mps.refresh(ids), FIRST_SEASON - 1) & ids
+    except Exception:                                          # noqa: BLE001
+        log.warning("retiree status unavailable; nobody dropped", exc_info=True)
+        return set()
 #: {mlbam: component block} of the last _veteran_rows build, and its context
 #: receipt; written by `_write_components` from export().
 _COMPONENT_BLOCKS: dict[int, dict] = {}
@@ -1237,7 +1259,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         "hit": defaultdict(dict), "pit": defaultdict(dict)}
     for side in ("hit", "pit"):
         for row in corpus[side]:
-            if row.get("mlbam") and row["season"] >= FIRST_SEASON - 3:
+            if (row.get("mlbam") and row["season"] >= FIRST_SEASON - 3
+                    and row["mlbam"] not in _RETIRED):
                 by_player[side][row["mlbam"]][row["season"]] = row
 
     # Spotrac contracts are keyed by NORMALIZED NAME only (no mlbam), so two active
@@ -2641,7 +2664,8 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         "hit": defaultdict(dict), "pit": defaultdict(dict)}
     for side in ("hit", "pit"):
         for row in corpus[side]:
-            if row.get("mlbam") and row["season"] >= FIRST_SEASON - 3:
+            if (row.get("mlbam") and row["season"] >= FIRST_SEASON - 3
+                    and row["mlbam"] not in _RETIRED):
                 by_player[side][row["mlbam"]][row["season"]] = row
     team_war: dict[str, list[float]] = defaultdict(lambda: [0.0] * HORIZON)
     war_unassigned = [0.0] * HORIZON
@@ -4460,6 +4484,10 @@ def build_payload() -> dict:
 def _build_payload_body() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
+    _RETIRED.clear()
+    if DROP_RETIRED:
+        _RETIRED.update(_retired_ids(corpus))
+        log.info("projections: %d StatsAPI-listed retirees dropped", len(_RETIRED))
     _PT_LEDGER.clear()
     _LEDGER_META.clear()
     _TEAM_PREVIEW.clear()
