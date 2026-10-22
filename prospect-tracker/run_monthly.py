@@ -567,6 +567,12 @@ SCHEDULED_EXPORTS = (
     # MLBSTATS_TRENDS_LIVE is False it writes .cache/league_trends/preview/
     # only. Appended at the end, so nothing above mgmt_export moves.
     "league_trends_export",
+    # xM$ and Fair $ (step d10x and the rebuild-only tail, xm_export,
+    # XM_2_EXPORT_ROLLUPS_DARK): data/xm_players.json and data/xm_clubs.json.
+    # A raise leaves the previous files on disk and files ok=False here, so a
+    # stale pair is printed on the night it goes stale. Appended at the end, so
+    # nothing above mgmt_export moves.
+    "xm_export",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -3033,6 +3039,28 @@ def _export_source_updates(log) -> bool:
         return False
 
 
+def _export_xm(log) -> bool:
+    """Write data/xm_players.json and data/xm_clubs.json (xm_export; nightly
+    step d10x and the rebuild-only tail). True on a write. It reads the
+    projections and the trade board, so it runs after proj_export and
+    export_trade_values, and before the Ledger and Franchise boards, which
+    attach its club block once xm_export.XM_DISPLAY_ON flips. A failure leaves
+    the previous files on disk and files a red under "xm_export"
+    (SCHEDULED_EXPORTS)."""
+    try:
+        import xm_export as _xm
+        _res = _xm.export()
+        log.info("xm: %d priced rows, %d unpriced, %d clubs", _res["n_players"],
+                 _res["n_unpriced"], _res["n_clubs"])
+        _record_ingest("xm_export", True, int(_res["n_players"]),
+                       f"xM$ players and club roll-ups, {_res['n_clubs']} clubs", "mlb", log)
+        return True
+    except Exception as e:                # noqa: BLE001
+        log.exception("xm export failed - continuing")
+        _record_ingest("xm_export", False, 0, f"xm export raised: {e}", "mlb", log)
+        return False
+
+
 def _export_ledger_board(log) -> bool:
     """Write the Club Ledger board, its thirty per-club row files and the
     Trade Machine CBT slice (the body of nightly step d10e). True on a write.
@@ -3243,6 +3271,10 @@ def _rebuild_ledger_and_franchise(out_dir: Path, log) -> dict:
         log.warning("rebuild_only: ledger board SKIPPED: %s; the board on disk stands", why)
         res["ledger"] = f"skipped: {why}"
     else:
+        # xM$ first: it reads the same three inputs and the boards attach its
+        # club block once xm_export.XM_DISPLAY_ON flips; its failure is filed
+        # under its own health row and does not stop the ledger.
+        _export_xm(log)
         res["ledger"] = "written" if _export_ledger_board(log) else "failed"
 
     missing = [n for n in REBUILD_FRANCHISE_INPUTS if not (Path(data_dir) / n).is_file()]
@@ -5059,6 +5091,18 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                          snapshot_served_penter())
             except Exception:
                 log.exception("daily: P(enter) snapshot failed - continuing")
+
+        # --- d10x. xM$ players and club roll-ups --------------------------
+        with _step("d10x. xM$ players and club roll-ups (xm_players.json)", log):
+            # xm_export (XM_2_EXPORT_ROLLUPS_DARK): xM$ and Fair $ for every
+            # 40-man player and board prospect, and the club roll-ups. AFTER d9's
+            # rebuild_only (proj_export, then export_trade_values) and d10b's FA
+            # re-export, whose class board its free-agent rows copy, and BEFORE
+            # d10e and 6b7d, which attach its club block once
+            # xm_export.XM_DISPLAY_ON flips. The writer is shared with the
+            # rebuild-only tail. The comment sits inside the _step body for
+            # tools/gen_audit_docs.py.
+            _export_xm(log)
 
         # --- d10c. TJStats SECOND Live capture of the day -----------------
         # The owner's Franklin Arias complaint was NOT a broken scraper: it

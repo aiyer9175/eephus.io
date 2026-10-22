@@ -60,6 +60,7 @@ happen inside the called module, so this file alone cannot split them).
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10p. FA P(enter) served snapshot | - |
+| d10x. xM$ players and club roll-ups (xm_players.json) | xm_players.json |
 | d10c. TJStats Live second capture | - |
 | d10d. ESPN new-article probe | ledger_board.json |
 | d10e. Club Ledger board (ledger_board.json) | ledger_board.json |

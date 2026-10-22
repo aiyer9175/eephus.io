@@ -3227,6 +3227,16 @@ def build_all() -> tuple:
                          "cap_bytes": SHARD_CAP_BYTES, "board_guard_bytes": PREVIEW_GUARD_BYTES,
                          "trajectories": TRAJECTORY_RECEIPT}
 
+    # xM$ club block (XM_2_EXPORT_ROLLUPS_DARK): attached only once
+    # xm_export.XM_DISPLAY_ON flips; while it is False nothing is read and the
+    # board does not change.
+    import xm_export as _xm
+    _xmb = _xm.club_blocks(DATA)
+    if _xmb:
+        for c in club_docs:
+            if c in _xmb:
+                club_docs[c]["xm"] = _xmb[c]
+
     _finalize(PREVIEW_N)
     if _doc_bytes(doc) > PREVIEW_GUARD_BYTES:
         log.warning("ledger_export: board over %d bytes at preview %d; dropping to %d",

@@ -74,6 +74,12 @@
 # files are written by tools/scores_job.py into the scores store's
 # standings/ folder on the box, served by the same nginx location, so no
 # data rule is added to either consumer.
+#
+# 2026-10-22: xM$ (XM_2_EXPORT_ROLLUPS_DARK) writes data/xm_players.json and
+# data/xm_clubs.json nightly (xm_export, step d10x). Data only while
+# xm_export.XM_DISPLAY_ON is False: no page fetches them yet. Both sit at data/
+# depth one, which both consumers already ship; no exclusion names them and no
+# page dir is added.
 index.html
 404.html
 robots.txt

@@ -78,6 +78,9 @@ def test_the_tail_runs_the_ledger_before_the_franchise_board():
     calls = _calls_in_order("_rebuild_ledger_and_franchise")
     assert calls.count("_export_ledger_board") == 1 and calls.count("_export_franchise_board") == 1
     assert calls.index("_export_ledger_board") < calls.index("_export_franchise_board")
+    # xM$ (XM_2) runs once, before the ledger whose club block it feeds.
+    assert calls.count("_export_xm") == 1
+    assert calls.index("_export_xm") < calls.index("_export_ledger_board")
 
 
 def test_the_nightly_steps_and_the_rebuild_share_one_writer_each():
@@ -117,6 +120,7 @@ def wired(monkeypatch, tmp_path):
     monkeypatch.setattr(rm, "_EXPORTER_DATA_DIR", tmp_path)
     monkeypatch.setattr(rm, "rebuild_only", lambda out_dir=None, **kw: calls.append("rebuild"))
     monkeypatch.setattr(mlb_player_export, "export", lambda: calls.append("cards"))
+    monkeypatch.setattr(rm, "_export_xm", lambda log: calls.append("xm") or True)
     monkeypatch.setattr(rm, "_export_ledger_board", lambda log: calls.append("ledger") or True)
     monkeypatch.setattr(rm, "_export_franchise_board", lambda log: calls.append("franchise") or True)
     for n in rm.REBUILD_FRANCHISE_INPUTS:
@@ -127,7 +131,7 @@ def wired(monkeypatch, tmp_path):
 def test_a_rebuild_with_its_inputs_writes_both_boards_after_the_cards(wired):
     rm, calls, d = wired
     rm.rebuild_only_cli(out_dir=d)
-    assert calls == ["rebuild", "cards", "ledger", "franchise"]
+    assert calls == ["rebuild", "cards", "xm", "ledger", "franchise"]
 
 
 @pytest.mark.parametrize("gone", ["timeseries.json", "trade_values.json", "mlb_projections.json"])
@@ -147,7 +151,7 @@ def test_a_failed_ledger_skips_the_franchise_board(wired, caplog, monkeypatch):
     monkeypatch.setattr(rm, "_export_ledger_board", lambda log: calls.append("ledger") and False)
     with caplog.at_level(logging.WARNING, logger="rebuild_only"):
         res = rm._rebuild_ledger_and_franchise(d, logging.getLogger("rebuild_only"))
-    assert calls == ["ledger"]
+    assert calls == ["xm", "ledger"]
     assert res["ledger"] == "failed" and res["franchise"].startswith("skipped: ")
     assert "the ledger board did not rebuild in this pass" in caplog.text
 
@@ -158,7 +162,7 @@ def test_a_missing_ledger_board_skips_only_the_franchise_board(wired, caplog, mo
     # A ledger writer that does not leave its file behind (a stub here).
     with caplog.at_level(logging.WARNING, logger="rebuild_only"):
         res = rm._rebuild_ledger_and_franchise(d, logging.getLogger("rebuild_only"))
-    assert calls == ["ledger"]
+    assert calls == ["xm", "ledger"]
     assert res == {"ledger": "written", "franchise": "skipped: input missing: ledger_board.json"}
     assert "franchise board SKIPPED: input missing: ledger_board.json" in caplog.text
 

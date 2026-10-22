@@ -1613,6 +1613,15 @@ def build() -> dict:
                 raise FranchiseRefusal("fscore: F-SCORE is the root score and data/fscore.json is absent "
                                        "or not today's")
             replace_index(doc, fs)
+    # xM$ club block (XM_2_EXPORT_ROLLUPS_DARK): attached only once
+    # xm_export.XM_DISPLAY_ON flips; while it is False nothing is read and the
+    # board does not change.
+    import xm_export as _xm
+    _xmb = _xm.club_blocks(DATA)
+    if _xmb:
+        for cd in doc["clubs"]:
+            if cd.get("code") in _xmb:
+                cd["xm"] = _xmb[cd["code"]]
     _assert_document(doc)
     return doc
 
