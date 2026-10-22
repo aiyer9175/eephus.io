@@ -63,8 +63,8 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
             # (answered 2026-10-02) sets its provider: the displayed eWAR, not
             # fWAR. M14 rebuilt it on ewar_v2 on 2026-10-08 (fa_archive.warBasis
             # ewar_v2). A later switch of the displayed eWAR (EBR-Q5, eWAR v3)
-            # changes this provider by name.
-            return war_source.stint_frame(side, provider="ewar_v2")
+            # changes this provider: it reads war_source.DISPLAY_PROVIDER.
+            return war_source.stint_frame(side, provider=war_source.DISPLAY_PROVIDER)
         except Exception as e:                                # noqa: BLE001
             log.warning("%s fetch failed: %s", label, e)
             return None
@@ -131,7 +131,7 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
             # every ledger row so the Archive can say which WAR it realized.
             war_by_key[key] = {"seasons": {str(y): round(w, 2)
                                            for y, w in sorted(cands[mid]["war"].items())},
-                               "source": "ewar_v2"}
+                               "source": war_source.DISPLAY_PROVIDER}
     stats = {"seen": n_seen, "resolved": len(resolved),
              "no_match": n_nomatch, "ambiguous": n_ambig}
     return resolved, war_by_key, stats

@@ -248,7 +248,8 @@ def _arsenal_block(mlbam: int, year: int) -> list[dict] | None:
 def _career_rows(mlbam: int, is_pitcher: bool,
                  war_by: dict[int, dict[int, dict[str, float]]],
                  war_bwar_by: dict[int, dict[int, dict[str, float]]] | None = None,
-                 war_fwar_by: dict[int, dict[int, dict[str, float]]] | None = None
+                 war_fwar_by: dict[int, dict[int, dict[str, float]]] | None = None,
+                 war_ref_by: dict[str, dict] | None = None
                  ) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
     out = []
@@ -281,6 +282,16 @@ def _career_rows(mlbam: int, is_pitcher: bool,
             "pit" if is_pitcher else "bat")
         if _fw is not None:
             extra["war_fwar"] = round(_fw, 1)
+        # war_real (eWAR realized) and war_ewar2 (the eWAR v2 reference): carried
+        # on every row their map covers while the displayed eWAR is eWAR v3
+        # (EBR_GATE.md 11.10.5; owner answers EW3-19 and EW3-20). Display only.
+        for _key, _map in (("war_real", (war_ref_by or {}).get("real")),
+                           ("war_ewar2", (war_ref_by or {}).get("ewar2"))):
+            if war is None or not _map:
+                continue
+            _v = (((_map.get(mlbam) or {}).get(season) or {}).get("pit" if is_pitcher else "bat"))
+            if _v is not None:
+                extra[_key] = round(_v, 1)
         if is_pitcher:
             bf = _f(r.get("bf")) or 0
             so, bb = _f(r.get("so")), _f(r.get("bb"))
@@ -355,8 +366,36 @@ def _war_maps() -> tuple[dict, dict]:
     war_source.DEFAULT_PROVIDER, which is now the training label (fWAR). An fWAR
     reference column beside it is its own later task (EPOCH_FWAR_REFERENCE_COLUMN)."""
     import war_source
-    served = war_source.side_war_by_season(provider="ewar_v2")
+    served = war_source.side_war_by_season(provider=war_source.DISPLAY_PROVIDER)
     return served, war_source.side_war_by_season(provider="bwar")
+
+
+#: The career note while the displayed eWAR is eWAR v3 (EBR_GATE.md 11.10.5).
+_CAREER_NOTE_V3 = (
+    "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v3, the displayed "
+    "eWAR (FanGraphs' published WAR from the frozen vintage plus the ABS challenge part from 2026, "
+    "data/ewar_v3.json); war_real = eWAR realized (the same frame, pitchers on runs allowed adjusted for "
+    "park, defense and inherited runners from 2016); war_ewar2 = eWAR v2, a reference; war_fwar = "
+    "FanGraphs' published WAR, a reference; war_bwar = Baseball-Reference's WAR where it differs from "
+    "eWAR at 1dp, absent means equal; every reference is display only")
+
+
+def _war_ref_maps() -> dict[str, dict]:
+    """{"real": eWAR realized, "ewar2": eWAR v2}: the two series a player page
+    prints beside the displayed eWAR once it is eWAR v3 (EBR_GATE.md 11.10.5).
+    Both empty while the displayed provider is eWAR v2. A map that cannot serve
+    is empty (logged), so it drops its column and never the card."""
+    import war_source
+    out: dict[str, dict] = {"real": {}, "ewar2": {}}
+    if war_source.DISPLAY_PROVIDER != "ewar_v3":
+        return out
+    for key, kw in (("real", {"provider": "ewar_v3", "series": "realized"}),
+                    ("ewar2", {"provider": "ewar_v2"})):
+        try:
+            out[key] = war_source.side_war_by_season(**kw)
+        except war_source.DataUnavailable as e:
+            log.warning("mlb player detail: no %s column (%s)", key, e)
+    return out
 
 
 def _fwar_reference_map() -> dict[int, dict[int, dict[str, float]]]:
@@ -889,6 +928,7 @@ def _card_skills(sk: dict | None, is_pit: bool, two_way: bool) -> dict:
 
 
 def build_payload() -> dict:
+    import war_source
     proj = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
     frame = {"first_season": proj.get("first_season"), "horizon": proj.get("horizon")}
     comp_rows = _component_rows(proj)
@@ -920,6 +960,7 @@ def build_payload() -> dict:
     fa_ids = _ident_mlbams(all_keys)
     war_by, war_bwar_by = _war_maps()
     war_fwar_by = _fwar_reference_map()
+    war_ref_by = _war_ref_maps()
     hof_by = _hof_index()
     year = date.today().year
     players: dict[str, dict] = {}
@@ -1053,7 +1094,7 @@ def build_payload() -> dict:
         if hof:
             p["hof"] = hof
         p["career"] =_career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by,
-                                   war_fwar_by)
+                                   war_fwar_by, war_ref_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
         if sc:
@@ -1064,7 +1105,7 @@ def build_payload() -> dict:
         # line + arsenal ride alongside.
         if p.get("twoWay"):
             p["careerPit"] = _career_rows(int(mlbam), True, war_by, war_bwar_by,
-                                          war_fwar_by)
+                                          war_fwar_by, war_ref_by)
             scp = _statcast_block(int(mlbam), True, year)
             if scp:
                 p["scPit"] = scp
@@ -1117,7 +1158,8 @@ def build_payload() -> dict:
                      "origin_aaa_hit": sum(1 for p in players.values()
                                            if (p.get("origin") or {}).get("aaaHit"))},
         "notes": [
-            "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v2, the displayed WAR (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal; war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a reference beside the displayed eWAR v2; absent means no published value",
+            (_CAREER_NOTE_V3 if war_source.DISPLAY_PROVIDER == "ewar_v3" else
+             "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v2, the displayed WAR (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal; war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a reference beside the displayed eWAR v2; absent means no published value"),
             "statcast: Savant leaderboard percentiles within the season's pool (contact board 25+ batted balls; expected-stats board unfloored); pitcher contact metrics invert (suppression = good); hitter Luck = xwOBA minus wOBA",
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",

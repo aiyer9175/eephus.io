@@ -469,7 +469,7 @@ def _ensure_bwar_loaded(is_pitcher: bool, timeout_seconds: float = 30.0) -> bool
     def _worker():
         try:
             result["df"] = war_source.condensed_frame("pit" if is_pitcher else "bat",
-                                                      provider="ewar_v2")
+                                                      provider=war_source.DISPLAY_PROVIDER)
         except Exception as e:
             result["err"] = e
     t = threading.Thread(target=_worker, daemon=True)

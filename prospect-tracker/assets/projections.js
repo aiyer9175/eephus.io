@@ -2609,7 +2609,10 @@
   // carries has a published value (a partial sum would mix in eWAR).
   const warFg = s => (((s.a != null && s.fgA == null) || (s.b != null && s.fgB == null)
     || (s.fgA == null && s.fgB == null)) ? null : (s.fgA || 0) + (s.fgB || 0));
-  const FG_WAR_TIP = "FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: the site's WAR is eWAR v2.";
+  const FG_WAR_TIP = "FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: the site's WAR is eWAR.";
+  const REAL_WAR_TIP = "eWAR realized: the same frame as eWAR, with pitchers priced on the runs they allowed, adjusted for park, defense and inherited runners. Shown beside eWAR; it never sorts, sums or ranks.";
+  const V2_WAR_TIP = "eWAR v2, the site's earlier WAR: Baseball-Reference's WAR with pitching re-priced on FIP. A reference only.";
+  const BREF_WAR_TIP = "Baseball-Reference's WAR (bWAR). A reference only.";
   function warBarsSVG(ss, sides) {
     const use = (ss || []).filter(s => s.a != null || s.b != null);
     if (!use.length) return "";
@@ -2942,10 +2945,21 @@
     const c = rows || [];
     if (!c.length) return "";
     const hasFg = c.some(r => r && r.war_fwar != null);
+    // eWAR v3 (EBR_GATE.md 11.10.5): eWAR realized beside eWAR, then eWAR v2 and
+    // bWAR as reference columns; present only when the payload carries them.
+    const hasReal = c.some(r => r && r.war_real != null);
+    const hasV2 = c.some(r => r && r.war_ewar2 != null);
+    const bref = r => (r.war_bwar != null ? r.war_bwar : r.war);
     const warTh = `<th>${term("ewar", "eWAR")}</th>`
-      + (hasFg ? `<th class="mlbp-fgwar" title="${esc(FG_WAR_TIP)}">FanGraphs WAR</th>` : "");
+      + (hasReal ? `<th class="mlbp-realwar" title="${esc(REAL_WAR_TIP)}">${term("ewar_realized", "eWAR realized")}</th>` : "")
+      + (hasV2 ? `<th class="mlbp-fgwar" title="${esc(V2_WAR_TIP)}">eWAR v2</th>` : "")
+      + (hasFg ? `<th class="mlbp-fgwar" title="${esc(FG_WAR_TIP)}">FanGraphs WAR</th>` : "")
+      + (hasReal ? `<th class="mlbp-fgwar" title="${esc(BREF_WAR_TIP)}">bWAR</th>` : "");
     const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`
-      + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "");
+      + (hasReal ? `<td class="mlbp-realwar">${r.war_real != null ? fmtWar(r.war_real) : EM_DASH}</td>` : "")
+      + (hasV2 ? `<td class="mlbp-fgwar">${r.war_ewar2 != null ? fmtWar(r.war_ewar2) : EM_DASH}</td>` : "")
+      + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "")
+      + (hasReal ? `<td class="mlbp-fgwar">${bref(r) != null ? fmtWar(bref(r)) : EM_DASH}</td>` : "");
     const head = isPit
       ? `<th>Year</th><th title="${IP_TIP}">IP</th><th>ERA</th><th>K%</th><th>BB%</th>` + warTh
       : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>" + warTh;

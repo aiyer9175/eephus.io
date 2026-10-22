@@ -227,7 +227,7 @@ def test_the_frame_sentence_is_derived_from_the_served_provider_never_typed_on_t
     note = BE._ewar_baserunning_note()
     assert note.endswith(".") and len(note) > 20
     assert note not in JS, "assets/mlbstats.js types no WAR frame; it reads frame.ewar_note"
-    assert BE._war_provider() in ("ewar_v2", "fwar", "bwar", ""), BE._war_provider()
+    assert BE._war_provider() in ("ewar_v2", "ewar_v3", "fwar", "bwar", ""), BE._war_provider()
 
 
 def test_bem_plus_rides_only_on_a_recorded_pass(tmp_path):

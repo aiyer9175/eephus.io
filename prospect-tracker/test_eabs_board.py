@@ -56,9 +56,10 @@ def test_script_wires_the_section_and_its_hash_keys():
                    'pushSort(parts, "asort", abSort)', 'readSort(h, "asort", AB_COLS, abSort)',
                    'eabs: "mlbstats-section-eabs"', 'section === "eabs" ? abTeam'):
         assert needle in js, needle
-    # gate part 6: the persistence sentence is derived from the payload, and only
-    # PERSISTS may say results carry over
-    assert 'd[k] === "PERSISTS"' in js
+    # owner EW3-32 (EABS_GATE.md 9.2): no persistence line is printed; the eWAR
+    # sentence is derived from the payload's ewar_part block
+    assert "not distinguishable from chance" not in js and "abStabilityLine" not in js
+    assert "var ep = abData && abData.ewar_part;" in js and "abEwarLine()" in js
 
 
 @pytest.mark.skipif(not PAYLOAD.exists(), reason="data/eabs_leaderboards.json is not built")

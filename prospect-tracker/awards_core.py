@@ -154,7 +154,11 @@ except Exception:   # noqa: BLE001 - the platform's one home for it; the identit
 
 #: The one map from a war_provider id to the unit a page prints. Every WAR unit
 #: label is built through war_unit_label(); no label string is typed elsewhere.
-WAR_UNIT_LABELS = {"ewar_v2": "eWAR v2", "ewar_v3": "eWAR v3", "fwar": "fWAR", "bwar": "bWAR"}
+WAR_UNIT_LABELS = {"ewar_v2": "eWAR v2", "ewar_v3": "eWAR", "fwar": "fWAR", "bwar": "bWAR"}
+
+#: The unit of the eWAR realized column printed beside a ballot score while the
+#: displayed eWAR is eWAR v3 (owner answer EW3-20; EBR_GATE.md 11.10.5).
+REALIZED_UNIT_LABEL = "eWAR realized"
 
 #: The registry row the selection cards cite (lands at AWARDS_11).
 SELECTION_REGISTRY = "awards_selection"
@@ -258,6 +262,8 @@ EN_DASH = chr(0x2013)
 CREDIT_LINES = {
     "mlb": "Rosters and the writers' award results come from MLB's public StatsAPI feed. {mlb_copyright}",
     "bref": "eWAR starts from Baseball-Reference's WAR file, with pitching re-priced by the site.",
+    "bref_v3": ("Rosters by league and club come from Baseball-Reference's WAR file; eWAR starts from "
+                "FanGraphs' published WAR, with the site's ABS challenge part from 2026."),
     "fangraphs": "The {fwar} reference column and the fielding inputs to DEM+ are FanGraphs' published values.",
     "savant": "Expected-stat inputs to xHEM+ and xSEM+ come from Baseball Savant (MLB).",
     "eephus": "Every selection, superlative and percentile is computed by eephus.io.",
@@ -395,6 +401,10 @@ def league_split(frames: dict, *, season: int, war_provider: str) -> list[dict]:
             cell = acc.setdefault(mlbam, {}).setdefault(
                 lg, {"bat": 0.0, "pit": 0.0, "pa": 0, "ip": 0.0, "clubs": [], "stints": []})
             cell[side] += war
+            real = _num(r.get("WAR_realized"))
+            if real is not None:
+                # eWAR realized beside the displayed series (provider ewar_v3 only)
+                cell[side + "_real"] = cell.get(side + "_real", 0.0) + real
             expo = _num(r.get(expo_col)) or 0.0
             if side == "bat":
                 cell["pa"] += int(round(expo))
@@ -427,6 +437,7 @@ def league_split(frames: dict, *, season: int, war_provider: str) -> list[dict]:
                 "age": names.get(mlbam, {}).get("age"),
                 "league": lg,
                 "bat": c["bat"], "pit": c["pit"],
+                **{k: c[k] for k in ("bat_real", "pit_real") if k in c},
                 "pa": c["pa"], "ip": round(c["ip"], 3),
                 "clubs": clubs,
                 "split_season": split,
@@ -449,7 +460,7 @@ def side_totals(league_rows: list[dict]) -> dict:
 
 # --- the four rules ---------------------------------------------------------------
 
-def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None) -> dict:
+def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None, realized=None) -> dict:
     mlbam = int(r["mlbam"])
     club = (r.get("clubs") or [None])[-1]
     row = {
@@ -463,7 +474,20 @@ def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None) -> di
     }
     if r.get("split_season") and "split_season" not in row["flags"]:
         row["flags"].append("split_season")
+    if realized is not None:
+        # eWAR realized on the same rule, printed beside the score (EW3-20);
+        # it never ranks, sorts or breaks a tie
+        row["realized"] = float(realized)
+        row["realized_display"] = score_display(realized)
     return row
+
+
+def _realized(r: dict, sides) -> float | None:
+    """The row's in-league eWAR realized over `sides`, or None when the frame
+    carried no realized column (any provider but ewar_v3)."""
+    if not any((s + "_real") in r for s in sides):
+        return None
+    return sum(float(r.get(s + "_real") or 0.0) for s in sides)
 
 
 def _mark_ties(rows: list[dict]) -> None:
@@ -560,7 +584,8 @@ def _war_ballot(award: str, league_rows: list[dict], league: str, season: int, *
         flags = []
         if rookies is not None and rookies[int(r["mlbam"])]["near"]:
             flags.append(ROOKIE_NEAR_TOKEN)
-        rows.append(_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), flags=flags))
+        rows.append(_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), flags=flags,
+                                realized=_realized(r, ("bat", "pit"))))
     top = _ballot(award, rows, n)
     excluded.sort(key=lambda e: (-(_num(e.get("proxy_days")) or 0.0), e["mlbam"]))
     war_provider = (league_rows[0].get("war_provider") if league_rows else None)
@@ -592,7 +617,7 @@ def cy_young_ballot(league_rows: list[dict], league: str, season: int, *,
     scored = [(float(r.get("pit") or 0.0), r) for r in pool]
     scored.sort(key=lambda t: (-t[0], -(_num(t[1].get("ip")) or 0.0),
                                -_skill(int(t[1]["mlbam"])), int(t[1]["mlbam"])))
-    rows = [_player_row(i, r, score, pos=pos.get(int(r["mlbam"])))
+    rows = [_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), realized=_realized(r, ("pit",)))
             for i, (score, r) in enumerate(scored, 1)]
     top = _ballot("CY", rows, n)
     war_provider = (league_rows[0].get("war_provider") if league_rows else None)
@@ -1509,7 +1534,7 @@ def selection_caption(season: int, frozen: bool) -> str:
 
 
 def drift_unit_label(war_provider: str) -> str:
-    """'Now, eWAR v3': the drift column's unit from its own block's provider."""
+    """'Now, eWAR': the drift column's unit from its own block's provider."""
     return f"Now, {war_unit_label(war_provider)}"
 
 
@@ -1571,9 +1596,13 @@ def does_not_claim_lines(selection_provider: str, *, frozen_at: str | None = Non
     ]
 
 
-def credit_lines(shows, *, mlb_copyright: str | None = None) -> list[str]:
-    """The credits whose data the page shows, in CREDIT_LINES order."""
+def credit_lines(shows, *, mlb_copyright: str | None = None, war_provider: str | None = None) -> list[str]:
+    """The credits whose data the page shows, in CREDIT_LINES order. Under the
+    displayed provider ewar_v3 the "bref" line names eWAR's FanGraphs base."""
     shows = set(shows)
+    if war_provider == "ewar_v3" and "bref" in shows:
+        shows.discard("bref")
+        shows.add("bref_v3")
     out = []
     for key, line in CREDIT_LINES.items():
         if key not in shows:

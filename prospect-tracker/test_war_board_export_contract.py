@@ -387,6 +387,8 @@ def test_the_earned_basis_reads_stints_and_speaks_this_boards_dialect(monkeypatc
     })
 
     class _WarSourceStub:
+        DISPLAY_PROVIDER = "ewar_v2"
+
         @staticmethod
         def stint_frame(side, **kw):
             return frame if side == "bat" else frame.iloc[0:0]
@@ -416,6 +418,8 @@ def test_a_last_good_stint_frame_is_disclosed_on_the_earned_basis(monkeypatch):
     reads: list = []
 
     class _WarSourceStub:
+        DISPLAY_PROVIDER = "ewar_v2"
+
         @staticmethod
         def stint_frame(side, **kw):
             reads.append(side)

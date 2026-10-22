@@ -8528,7 +8528,7 @@ def _served_career_war(row: dict | None) -> dict:
     if str(r.get("source") or "") != "fwar" or not isinstance(r.get("seasons_ewar_v2"), dict):
         return _strip_exposure(row)
     import war_source
-    return _strip_exposure(war_source.row_on_provider(row, "ewar_v2"))
+    return _strip_exposure(war_source.row_on_provider(row, war_source.DISPLAY_PROVIDER))
 
 
 def _label_career_war(row: dict | None) -> dict:

@@ -436,7 +436,7 @@ def _display_names() -> dict[int, str]:
     import war_source
     for side in ("bat", "pit"):
         try:
-            df = war_source.stint_frame(side, provider="ewar_v2")
+            df = war_source.stint_frame(side, provider=war_source.DISPLAY_PROVIDER)
         except Exception:                                     # noqa: BLE001
             continue
         sub = df[df["mlb_ID"].notna()]

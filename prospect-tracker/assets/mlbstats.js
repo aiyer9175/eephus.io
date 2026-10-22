@@ -4410,7 +4410,7 @@
     // match the neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
       ewar: true,
-      title: "Position-player eWAR (equal to bWAR on this side) per PA, 100 + 10z over hitters with 50+ PA; shown at 100+ PA. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. p = percentile on this board.",
+      title: "Position-player eWAR per PA, 100 + 10z over hitters with 50+ PA; shown at 100+ PA. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. p = percentile on this board.",
       get: function (r) { return r.war_pa_plus; },
       cell: function (r) {
         if (r.war_pa_plus == null) return "";
@@ -6603,8 +6603,10 @@
   // OURS, descriptive: what each player's challenges of ball and strike calls
   // were worth this season, priced on RE288 (a ball against a strike at the
   // challenged count, bases and outs). Three boards by who challenged: batters,
-  // catchers, pitchers. No run column carries a value-ruler colour. Not part of
-  // any WAR: whether a challenge part enters eWAR is the owner's decision.
+  // catchers, pitchers. No run column carries a value-ruler colour. Whether the
+  // challenge part is inside eWAR is read from the payload's ewar_part block
+  // (eabs_export, EBR_GATE.md 11.10.2), never typed here. No persistence line is
+  // printed (owner EW3-32); the payload keeps the stability record.
   // ===========================================================================
   var AB_URL = "/data/eabs_leaderboards.json";
   var abData = null;
@@ -6664,23 +6666,15 @@
       + '<input class="mlbstats-search" type="search" id="mlbstats-ab-q" placeholder="Search player or team" value="' + esc(abQuery) + '">'
       + "</div>";
   }
-  // The persistence line is derived from the payload's stability block (the
-  // registered look, EABS_GATE.md part 5): only a PERSISTS disposition may say
-  // results carry over (part 6); every other result says that it is not shown.
-  function abStabilityLine() {
-    var st = abData && abData.stability;
-    if (!st || !st.dispositions) return "";
-    var d = st.dispositions, roles = [], held = [];
-    ["batter", "catcher"].forEach(function (k) {
-      if (!d[k]) return;
-      (d[k] === "PERSISTS" ? held : roles).push(k === "batter" ? "batters" : "catchers");
-    });
-    var bits = [];
-    if (held.length) bits.push("Challenge results carried from one AAA season to the next for " + held.join(" and ")
-      + " (" + esc(st.frame || "") + ").");
-    if (roles.length) bits.push("Whether challenge results carry from one season to the next is not shown for "
-      + roles.join(" or ") + ": on " + esc(st.frame || "AAA seasons") + " they were not distinguishable from chance.");
-    return bits.join(" ");
+  // The eWAR line is derived from the payload's ewar_part block (eabs_export):
+  // what the challenge part of eWAR measures, plainly, when eWAR carries it.
+  function abEwarLine() {
+    var ep = abData && abData.ewar_part;
+    if (!ep || !ep.in_ewar) return "Descriptive: what happened this season, not a forecast, and not part of any WAR.";
+    return "Descriptive: what happened this season, not a forecast. From " + esc(ep.first_season)
+      + ", " + gloss("eWAR", "ewar") + " carries a challenge part: a catcher's overturned calls are measured against"
+      + " an average catcher's per inning caught and moved from his pitchers' runs, and failed challenges are"
+      + " charged to the challenger. A batter's own overturned calls are already in his batting runs.";
   }
   function abExplainer() {
     var v = (abData && abData.values) || {};
@@ -6689,8 +6683,8 @@
       + " a ball against a strike at that moment, for the challenger's club. A failed challenge costs the value of the"
       + " challenge it spent"
       + (num(v.mean_fail_cost) != null ? " (" + num(v.mean_fail_cost).toFixed(2) + " runs on average this season)" : "")
-      + ". eABS is the net against the league's overturn rate on the same mix of counts; eABS raw is the net itself."
-      + " Descriptive: what happened this season, not a forecast, and not part of any WAR. " + abStabilityLine();
+      + ". eABS is the net against the league's overturn rate on the same mix of counts; eABS raw is the net itself. "
+      + abEwarLine();
     return explainer("eabs", html);
   }
   function abSourcesLine() {

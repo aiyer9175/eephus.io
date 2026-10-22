@@ -18,8 +18,9 @@ fg_leaderboards would fail by construction.
      open() and Path.write_* monkeypatched to record every write path, and
      each lies under .cache/swar/ or the test's tmp_path, never under data/ or
      a path deploy/publish_paths.txt lists.
-  3. war_source.PROVIDERS lacks 'ewar_v3' (EBR_3_EWAR_V3 adds it, behind
-     EWAR_V3_LIVE, with the pin updated in the same commit).
+  3. war_source.PROVIDERS carries 'ewar_v3' (EWAR_V3_ASSEMBLE, which folded
+     EBR_3_EWAR_V3, added it; it serves data/ewar_v3.json behind EWAR_V3_LIVE
+     and reads no skill module), never a 'swar' provider.
 """
 from __future__ import annotations
 
@@ -184,7 +185,11 @@ def test_the_builder_default_output_sits_under_cache_swar_preview():
     assert B.main(["--out", str(ROOT / "data" / "swar.json"), "--seasons", str(SEASON)]) == 2
 
 
-def test_war_source_providers_lack_ewar_v3_before_the_flip():
-    assert "ewar_v3" not in war_source.PROVIDERS
+def test_war_source_carries_ewar_v3_and_no_skill_provider():
+    assert "ewar_v3" in war_source.PROVIDERS and war_source.DEFAULT_PROVIDER == "fwar"
     assert "swar" not in war_source.PROVIDERS and "swar_v1" not in war_source.PROVIDERS
-    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
+    assert war_source.DISPLAY_PROVIDER == ("ewar_v3" if war_source.EWAR_V3_LIVE else "ewar_v2")
+    # the provider's reader imports no skill module
+    import ewar_v3
+    src = Path(ewar_v3.__file__).read_text(encoding="utf-8")
+    assert not (_python_imports(src, Path(ewar_v3.__file__)) & set(SKILL_MODULES))

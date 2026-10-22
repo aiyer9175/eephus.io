@@ -239,7 +239,7 @@ def _display_provider() -> str:
 # --- small helpers -----------------------------------------------------------------
 
 _KEEP_COLS = ("name_common", "age", "mlb_ID", "year_ID", "team_ID", "stint_ID", "lg_ID",
-              "PA", "IPouts", "WAR")
+              "PA", "IPouts", "WAR", "WAR_realized")
 
 
 def _season_records(frame, seasons: set) -> dict:
@@ -1254,7 +1254,7 @@ def _credits(ctx: _Ctx, current: bool, copyright_: str | None) -> list:
     shows = ["mlb", "bref", "fangraphs", "eephus"]
     if current:
         shows.append("savant")
-    return A.credit_lines(shows, mlb_copyright=copyright_)
+    return A.credit_lines(shows, mlb_copyright=copyright_, war_provider=ctx.provider)
 
 
 def _seasons_index(ctx: _Ctx, built: dict, frozen_seasons: set) -> list:
@@ -1665,9 +1665,12 @@ def _apply_frozen(ctx: _Ctx, cur: dict, record: dict) -> dict:
     a drift column with each frozen row's score on today's files."""
     S = cur["season"]
     live_scores = {}
+    live_real = {}
     for (award, lg), full in cur["full"].items():
         for r in full["top"]:
             live_scores[(award, lg, _row_key(r))] = r["score"]
+            if r.get("realized") is not None:
+                live_real[(award, lg, _row_key(r))] = r["realized"]
     w = cur["world"]
     totals = {}
     for r in w["rows"]:
@@ -1679,16 +1682,25 @@ def _apply_frozen(ctx: _Ctx, cur: dict, record: dict) -> dict:
             for r in blk.get("top") or []:
                 k = _row_key(r)
                 now = live_scores.get((award, lg, k))
+                real = live_real.get((award, lg, k))
                 if now is None and award != "MOY":
                     lr = totals.get((lg, r.get("mlbam")))
                     if lr is not None:
                         now = (float(lr.get("pit") or 0.0) if award == "CY"
                                else float(lr.get("bat") or 0.0) + float(lr.get("pit") or 0.0))
-                drift.append({"id": k, "score_now": now,
-                              "score_now_display": A.score_display(now),
-                              "war_provider": ctx.provider,
-                              "unit_label": A.drift_unit_label(ctx.provider),
-                              "tooltip": A.drift_tooltip(str(record.get("frozen_at"))[:10])})
+                        sides = ("pit",) if award == "CY" else ("bat", "pit")
+                        if any((s + "_real") in lr for s in sides):
+                            real = sum(float(lr.get(s + "_real") or 0.0) for s in sides)
+                entry = {"id": k, "score_now": now,
+                         "score_now_display": A.score_display(now),
+                         "war_provider": ctx.provider,
+                         "unit_label": A.drift_unit_label(ctx.provider),
+                         "tooltip": A.drift_tooltip(str(record.get("frozen_at"))[:10])}
+                if real is not None and award != "MOY":
+                    # eWAR realized on today's files beside the Now value (owner EW3-20)
+                    entry["realized_now"] = real
+                    entry["realized_now_display"] = A.score_display(real)
+                drift.append(entry)
             blk["drift"] = drift
     live_next = [s for s in cur["superlatives"] if s["id"] in ("next_rise", "next_drop")]
     sl = list(record.get("superlatives") or [])

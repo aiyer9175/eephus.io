@@ -253,3 +253,26 @@ Held-out (leave one season out) errors over the 300 team-seasons, in wins:
   is worse; its RMSE is worse with dRMSE hi95 -0.0049).
 - **Against the registered expectations (part 8):** the first was wrong for (c), which passed; (e) did
   worse than (a), as expected; part 5 did not separate, as expected.
+
+### 12.2 The team guard, 2026-10-21: NON-INFERIOR as an identity; candidate (c) carried into eWAR v3
+
+Computed once by task EWAR_V3_ASSEMBLE (`tools/build_ewar_v3.py`, `EBR_GATE.md` 11.10.4), as part 4's
+team-guard bullet assigns it.
+
+- **What the guard compares.** `EBR_GATE.md` 11.2.4 relates roster-weighted sums of a series in
+  predictor seasons 2021 to 2024 to club outcomes in 2022 to 2025, the series here being eWAR v3 with
+  (c)'s RPW in place of the incumbent's. The looks of `EBR_GATE.md` parts 12.1 and 12.2 admitted no
+  candidate part, and the one part eWAR v3 carries (the ABS part, owner override EW3-32) begins in
+  2026. So in 2021 to 2024 every eWAR v3 departure is 0 under either conversion, and the candidate's
+  series equals the frame's on every row: the build checked that no headline departure exists in
+  those seasons (0 rows) before carrying (c).
+- **The result.** The two roster sums are the same number on every club-season, so dT is 0 for run
+  differential and wins under both the player-clustered and the club-clustered bootstrap, with sd 0:
+  NON-INFERIOR by 11.2.4's rule. It measured no departure; it neither shows (c) helps nor that it
+  harms. No WAR sum was related to a club outcome to compute it.
+- **What it licenses.** (c) replaces `league_totals(s)["rpw"]` in eWAR v3 (`data/ewar_v3.json`
+  `meta.rpw`, form `c`): 10.6261 runs per win for every season. Today it converts only the ABS part's
+  runs (2026); R2 in eWAR realized is in wins from the replica's own chain and is not re-converted.
+  Against the incumbent's 9.8218 for 2026, each ABS run is worth 0.0941 wins instead of 0.1018.
+- The task report puts to the owner whether a guard that measured no departure should carry (c)
+  (the default applied) or leave the closed form until a departure exists in the guard's seasons.

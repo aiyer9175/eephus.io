@@ -243,7 +243,14 @@ def test_name_index_identical_to_fa_ident():
     assert old == new
     assert _digest(old) == _digest(new)
     assert 545361 in new["mike_trout"]
-    assert new["shohei_ohtani"][660271]["war"][2023] == 10.0
+    # the index rides the displayed series: eWAR v2 on the patched bWAR frame, or,
+    # since the eWAR v3 flip, FanGraphs' published 2023 total (no v3 departure in 2023)
+    if war_source.DISPLAY_PROVIDER == "ewar_v3":
+        import fwar_vintage
+        want = fwar_vintage.season_totals()[(660271, 2023)]
+        assert abs(new["shohei_ohtani"][660271]["war"][2023] - want) < 1e-6
+    else:
+        assert new["shohei_ohtani"][660271]["war"][2023] == 10.0
 
 
 def test_side_war_by_season_identical_to_mlb_player_export():
@@ -319,8 +326,8 @@ def test_fwar_is_the_default_provider_everywhere():
     every display door (test_epoch_display_doors.py). 'bwar' stays first in
     PROVIDERS because it is the input frame."""
     assert war_source.DEFAULT_PROVIDER == "fwar"
-    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
-    assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged", "fwar")
+    assert war_source.DISPLAY_PROVIDER == ("ewar_v3" if war_source.EWAR_V3_LIVE else "ewar_v2")
+    assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged", "fwar", "ewar_v3")
     for fn in _PUBLIC_FNS:
         sig = inspect.signature(fn)
         assert sig.parameters["provider"].default == "fwar", fn.__name__

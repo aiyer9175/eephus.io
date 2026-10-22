@@ -815,6 +815,31 @@ def test_amendment_11_9_coded_steals_count_in_history_seasons_only():
     assert doc.index("### 11.8 2026-10-19") < doc.index("### 11.9 2026-10-19") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_10_the_assembled_series_and_the_display_flip():
+    flat = _flat(_section(_doc(), "### 11.10 2026-10-21", RESULTS_HEADING))
+    assert ("### 11.10 2026-10-21: the assembled series, eWAR realized, the ABS part by owner override, "
+            "the runs-per-win conversion and the display flip (clause (i), owner decisions EBR-Q5, EW3-19, "
+            "EW3-20, EW3-24 and EW3-32)") in flat
+    for row in ("| EW3-32 | Whether the ABS reattribution part enters eWAR v3 |",
+                "| EW3-20 (display) | Which of the two numbers shows where |",
+                "| EW3-24 | The runs-per-win conversion of eWAR v3 |",
+                "| EBR-Q5 (served) | When eWAR v3 replaces eWAR v2 on the display doors |"):
+        assert row in flat, row
+    assert "It is recorded as an owner override of those sentences for these items alone." in flat
+    assert "parts 12.1 to 12.3 stand as written" in flat
+    assert "M_i = m_i - E_i * (sum_j m_j) / (sum_j E_j)" in flat
+    assert "F_i = f_i - PA_i * (sum_j f_j) / (sum_j PA_j)" in flat
+    assert "Q_j = q_j - IP_j * (sum_l q_l) / (sum_l IP_l)" in flat
+    assert "eWAR realized_j = fWAR_j + Delta_r,j + h_abs,j / RPW_s" in flat
+    assert "no WAR sum is related to a club outcome for it" in flat
+    assert "No stability caveat and no \"validated\" claim" in flat
+    assert "F-DEF's input file reads only Baseball-Reference's decomposition columns and stays on `ewar_v2`" in flat
+    assert ("Committed alone, docs only, before any number of the assembled series exists. No served number "
+            "moves at this commit.") in flat
+    doc = _doc()
+    assert doc.index("### 11.9 2026-10-19") < doc.index("### 11.10 2026-10-21") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

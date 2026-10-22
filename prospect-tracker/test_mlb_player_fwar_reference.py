@@ -37,7 +37,7 @@ DETAIL = ROOT / "data" / "mlb_player_detail.json"
 NOTE = ("war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a "
         "reference beside the displayed eWAR v2; absent means no published value")
 TIP = ("FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: "
-       "the site's WAR is eWAR v2.")
+       "the site's WAR is eWAR.")
 
 # StatsAPI season lines for the fixture players (milb_history.player_index shape).
 _LINES = {
@@ -58,10 +58,18 @@ def lines(monkeypatch):
 
 
 def _maps():
-    with _patched_pybaseball(_EWAR_FIX, _VINTAGE_FIX):
-        served, bwar = mpe._war_maps()
-        ref = mpe._fwar_reference_map()
-        provider = war_source.side_war_by_season(provider="fwar")
+    # the fixtures are eWAR v2 and fWAR frames; the served map is read on eWAR v2
+    # here whatever war_source.EWAR_V3_LIVE says (eWAR v3 reads data/ewar_v3.json,
+    # which these fixtures do not carry; tests of that door live in test_ewar_v3.py)
+    prev = war_source.DISPLAY_PROVIDER
+    war_source.DISPLAY_PROVIDER = "ewar_v2"
+    try:
+        with _patched_pybaseball(_EWAR_FIX, _VINTAGE_FIX):
+            served, bwar = mpe._war_maps()
+            ref = mpe._fwar_reference_map()
+            provider = war_source.side_war_by_season(provider="fwar")
+    finally:
+        war_source.DISPLAY_PROVIDER = prev
     return served, bwar, ref, provider
 
 
@@ -117,10 +125,10 @@ def test_a_missing_vintage_drops_the_reference_not_the_card(monkeypatch):
     assert mpe._fwar_reference_map() == {}
 
 
-def test_the_served_war_door_is_still_ewar_v2_by_name():
+def test_the_served_war_door_reads_the_display_provider():
     import inspect
     body = inspect.getsource(mpe._war_maps)
-    assert 'war_source.side_war_by_season(provider="ewar_v2")' in body
+    assert 'war_source.side_war_by_season(provider=war_source.DISPLAY_PROVIDER)' in body
     ref = inspect.getsource(mpe._fwar_reference_map)
     assert 'side_war_by_season(provider="fwar")' in ref
     assert "fwar_vintage.side_targets(" in ref
@@ -155,7 +163,8 @@ def _served():
 
 def test_the_served_payload_names_the_reference():
     d, _rows = _served()
-    assert any(NOTE in n for n in d["notes"])
+    # the eWAR v2 note, or the eWAR v3 note once the displayed eWAR is eWAR v3
+    assert any(NOTE in n or "war_fwar = FanGraphs' published WAR, a reference" in n for n in d["notes"])
 
 
 def test_the_served_reference_matches_the_frozen_vintage_cell_for_cell():

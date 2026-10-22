@@ -33,7 +33,7 @@ def war_daily_index() -> dict[str, dict[int, dict]]:
     missing: list[str] = []
     for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
         try:
-            df = war_source.stint_frame(side, provider="ewar_v2")
+            df = war_source.stint_frame(side, provider=war_source.DISPLAY_PROVIDER)
         except Exception as e:                                # noqa: BLE001
             # HALF AN INDEX IS WORSE THAN NO INDEX (2026-08-05). This used to
             # `continue` and return whatever it had, which looks safe and is the

@@ -412,7 +412,24 @@ def _ewar_fielding_note() -> str:
     Until it does, the configuration states it: fielding_blend_w is the weight
     on the Statcast read over the innings it covers (ewar.py; 0.0 is the shipped
     v2 value and means B-Ref's rfield rides through unchanged). An unreadable
-    artifact says so rather than guessing a frame."""
+    artifact says so rather than guessing a frame.
+
+    Under the displayed provider ewar_v3 (EBR_GATE.md 11.10.5) the sentence is
+    data/ewar_v3.json's meta.fielding_source, by the same rule."""
+    try:
+        from bullpen_export import served_war_basis   # noqa: PLC0415
+        prov = (served_war_basis() or {}).get("war_provider") or ""
+    except Exception:   # noqa: BLE001 - absence is a reportable state
+        prov = ""
+    if prov == "ewar_v3":
+        try:
+            import ewar_v3 as _v3   # noqa: PLC0415
+            sent = str((_v3.meta() or {}).get("fielding_source") or "").strip()
+        except Exception:   # noqa: BLE001
+            sent = ""
+        if sent:
+            return sent if (sent[:1].isupper() and sent.endswith(".")) else "Its fielding comes from " + sent + "."
+        return "The frame behind eWAR's fielding could not be read from data/ewar_v3.json this run."
     try:
         import ewar as _ewar   # noqa: PLC0415 - optional, artifact may be absent
         meta = (_ewar.load() or {}).get("meta") or {}

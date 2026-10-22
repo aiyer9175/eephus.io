@@ -276,7 +276,10 @@ def test_vintage_record_holds_the_top_ten_per_award_and_league():
 
 # --- the exporter copies the tracked file --------------------------------------------------
 
-def test_the_exporter_copies_the_race_file_byte_for_byte_and_writes_no_vintage_before_2027(tmp_path):
+def test_the_exporter_copies_the_race_file_byte_for_byte_and_writes_no_vintage_before_2027(tmp_path, monkeypatch):
+    # the fixture tree is on PROV; pin the displayed provider to it (since the eWAR v3
+    # flip the live display provider is ewar_v3, EBR_GATE.md 11.10.5)
+    monkeypatch.setattr(E, "_display_provider", lambda: PROV)
     for sub in ("data", "cache", "labs", "model"):
         shutil.copytree(EXPORT_FIX / sub, tmp_path / sub)
     stints = json.loads((EXPORT_FIX / "stints.json").read_text(encoding="utf-8"))

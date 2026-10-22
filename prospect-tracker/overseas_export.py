@@ -393,7 +393,7 @@ def _load_mlb_career_index() -> dict[str, dict]:
     for pk, cw in cwar.items():
         if not isinstance(cw, dict) or cw.get("career_war") is None:
             continue
-        shown = _ws.row_on_provider(cw, "ewar_v2") if _ws is not None else cw
+        shown = _ws.row_on_provider(cw, _ws.DISPLAY_PROVIDER) if _ws is not None else cw
         idx[pk] = {"career_war": shown, "career_war_label": cw,
                    "career_stats": cstats.get(pk) or []}
 
