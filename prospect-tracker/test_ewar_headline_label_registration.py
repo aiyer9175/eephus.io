@@ -114,3 +114,12 @@ def test_owner_question_and_exclusions():
 def test_results_empty_at_registration():
     text = _flat()
     assert "## 9. Results **EMPTY AT REGISTRATION.**" in text
+
+
+def test_amendment_9_1_identity_3_tolerance():
+    text = _flat()
+    assert ("### Amendment 9.1 (2026-10-22, before the vintage is frozen and before any guard statistic): "
+            "identity 3's tolerance") in text
+    assert ("(a) the artifact's own pre-rounding sum `checks[s].sum_departure_wins.dh_<side>` is within "
+            "1e-9 wins of zero, and (b) the stored 6-decimal departures sum to zero within the rounding "
+            "bound n x 0.5e-6 wins") in text

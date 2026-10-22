@@ -226,3 +226,17 @@ surplus, anchors) at a main-tree epoch run.
 No label value, guard statistic, twin, secondary leg or blast-radius number has been computed at this
 commit. The first entry here is dated, names the commit that produced it, and states what was met when
 it ran. Clause (l) binds this part.
+
+### Amendment 9.1 (2026-10-22, before the vintage is frozen and before any guard statistic): identity 3's tolerance
+
+Part 3's identity 3 reads "per season and side, the headline departures sum to zero within 1e-6 wins".
+`data/ewar_v3.json` stores each departure at 6 decimals, so the stored departures of a season carry
+rounding residue: in 2026 they sum to -0.000001 wins on the hitting side (662 cells) and +0.000008 on
+the pitching side (868 cells), while the artifact's own pre-rounding check
+(`checks["2026"].sum_departure_wins`, `dh_bat` and `dh_pit`) reads under 1e-14. Read with the registered
+1e-6, the builder would refuse a correct file on rounding alone. Identity 3 is therefore read as two
+conditions, both required: (a) the artifact's own pre-rounding sum `checks[s].sum_departure_wins.dh_<side>`
+is within 1e-9 wins of zero, and (b) the stored 6-decimal departures sum to zero within the rounding
+bound n x 0.5e-6 wins, n the season's listed cells on that side (the convention of eWAR v3's own
+`r2_rounding_bound`). Nothing else in parts 0 to 8 changes. This amendment is committed alone, found by
+reading the input's sums before the build, with no label value frozen and no guard statistic computed.
