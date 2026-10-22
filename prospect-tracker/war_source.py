@@ -213,6 +213,12 @@ LABEL_EWAR_CORE: bool = False
 
 DEFAULT_PROVIDER: str = "ewar_core" if LABEL_EWAR_CORE else "fwar"
 
+#: Providers that exist only as a TRAINING LABEL: never a display door, never a WAR basis a
+#: served payload names, and never a stored career_war row's source while their flag is off.
+#: 'ewar_core' is one for good: its epoch closed without a flip (EWAR_CORE_LABEL_EPOCH_GATE.md
+#: part 11, owner answer EWLE-Q2), so no surface needs a label for it.
+LABEL_ONLY_PROVIDERS: tuple[str, ...] = ("ewar_core",)
+
 #: The headline eWAR label check's switch (docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md
 #: part 3 under amendment 9.2; owner answer EWLE-Q2), scoped to eFV's label: on,
 #: efv_dataset's first-6 label (the v1 training target and resolved label) reads each stored

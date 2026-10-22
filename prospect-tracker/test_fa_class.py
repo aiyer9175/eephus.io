@@ -301,7 +301,8 @@ def test_every_war_basis_token_has_its_own_realized_label():
     import war_source
     here = Path(__file__).parent
     v3 = [p for p in war_source.PROVIDERS if p.startswith("ewar_v3")] or ["ewar_v3"]
-    tokens = set(war_source.PROVIDERS) | set(v3) | {"mixed"}
+    # a label-only provider is never a basis a served payload names (war_source.LABEL_ONLY_PROVIDERS)
+    tokens = (set(war_source.PROVIDERS) - set(war_source.LABEL_ONLY_PROVIDERS)) | set(v3) | {"mixed"}
     assert tokens <= set(_KNOWN_WAR_BASES) | set(v3)
     fa = _js_label_map((here / "assets" / "fa.js").read_text(encoding="utf-8"),
                        "REALIZED_WAR_LABELS")

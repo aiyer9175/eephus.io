@@ -82,6 +82,9 @@ def test_epoch_closed_after_ewle_q2():
     assert "no task EWAR_CORE_EPOCH_RUN is owed" in tail
     import war_source
     assert war_source.LABEL_EWAR_CORE is False and war_source.DEFAULT_PROVIDER == "fwar"
+    # closed for good: a label-only provider no served payload names
+    assert war_source.LABEL_ONLY_PROVIDERS == ("ewar_core",)
+    assert set(war_source.LABEL_ONLY_PROVIDERS) <= set(war_source.PROVIDERS)
     reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
     row = next(r for r in reg["models"] if r["model_id"] == "ewar_core_label")
     assert "the core label epoch is closed without a flip" in row["notes"]
