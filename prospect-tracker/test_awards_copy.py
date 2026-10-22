@@ -437,7 +437,9 @@ def test_the_glossary_drafts_are_clean_and_land_only_at_the_flip(tmp_path, monke
     new, changed = G.apply(pre)
     assert changed == [f"add {i}" for i in G._ids()]
     assert new["entries"][:len(pre["entries"])] == pre["entries"], "nothing already there moves"
-    assert new["entries"] == doc["entries"]
+    # later lanes appended entries after the fourteen, so the served order is
+    # the pre-flip file, the fourteen, then theirs: compare by id
+    assert sorted(new["entries"], key=lambda e: e["id"]) == sorted(doc["entries"], key=lambda e: e["id"])
     again, changed2 = G.apply(new)
     assert changed2 == [] and again == new
     for e in ents:

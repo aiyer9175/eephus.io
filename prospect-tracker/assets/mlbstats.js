@@ -6735,7 +6735,8 @@
       if (retry) retry.addEventListener("click", function () { root.innerHTML = pxState("loading", "Loading the ABS challenges board."); loadEabs(); });
       return;
     }
-    root.innerHTML = bannerHTML(abData, { sec: "eabs" }) + abTabBar() + abControls() + eabsInner();
+    root.innerHTML = bannerHTML(abData, { sec: "eabs" }) + teamBasisNote(sectionBasis("eabs", abData, null))
+      + abTabBar() + abControls() + eabsInner();
     if (focusId) restoreFocus(root, focusId);
     bindEabsEvents(root);
     wireGlossary(root);

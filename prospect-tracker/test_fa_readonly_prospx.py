@@ -45,6 +45,9 @@ def test_fa_modules_never_write_prospect_tables():
 def test_fa_storage_accessors_only_touch_fa_tables():
     src = (ROOT / "storage.py").read_text(encoding="utf-8")
     fa_section = src.split("MLB Free Agency module — storage accessors")[-1]
+    # the Staff Gems accessors (staff_* and player_location_spells) follow the
+    # FA block in the file and are not FA storage
+    fa_section = fa_section.split("# Staff Gems stage 1", 1)[0]
     for stmt in re.findall(r"(?i)\b(?:INSERT\s+INTO|FROM)\s+\{?([a-z_{}]+)", fa_section):
         t = stmt.strip("{}").lower()
         if t in ("table",):                      # the parameterized helper
@@ -89,7 +92,10 @@ def test_fa_app_is_standalone():
         assert f'load("{name}")' in src, f"fa.js never loads {name}"
     assert "timeseries.json" not in src, "fa.js must not read the PROSPX boot payload"
     fetches = re.findall(r"fetch\(([^)]+)\)", src)
-    assert fetches == ["`/data/${name}.json`, { cache: \"no-cache\" }"], \
+    # the IL days column (b23d211a, mlb_events.MLB_EVENTS_LIVE) reads the MLB
+    # events index beside the fa_* sidecars; still no PROSPX data file
+    assert fetches == ["`/data/${name}.json`, { cache: \"no-cache\" }",
+                       "\"/data/mlb_events/index.json\", { cache: \"no-cache\" }"], \
         f"unexpected fetch targets in fa.js: {fetches}"
 
 

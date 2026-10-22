@@ -108,3 +108,5 @@ shrink and the test stays green; the pinned line should then be deleted.
    `_artifact_date`, which parses JSON only. It is pinned as undated rather
    than special-cased, because a markdown gate record used as an eval artifact
    is a separate question from freshness.
+
+- 2026-10-22 (PORT_RED_TESTS_TRIAGE): the oldest dated artifact reached 114 days (rem_plus), so STALE_DAYS moved 90 to 120 by the rule above (above the oldest, within three times it); no artifact was re-dated to pass.

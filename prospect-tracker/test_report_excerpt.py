@@ -346,5 +346,5 @@ def test_copy_states_the_excerpt_limit():
     page = B.build_sources()
     assert f"at most {MAX} characters" in page
     assert "full text" not in page.split('id="api"')[0]
-    gl = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
-    assert f"at most {MAX} characters" in gl
+    # The Library's Methodology chapters (8e40db54, 2026-10-08) no longer carry a
+    # sources note; /sources/, where the excerpts render, states the limit.

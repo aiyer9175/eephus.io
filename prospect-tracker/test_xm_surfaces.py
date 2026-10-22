@@ -197,3 +197,16 @@ def test_a_prospect_shows_fair_only_with_xm_withheld():
     for col in ("arrive", "xm_withheld", "msur_xm", "msur_fair", "ctrl", "pop"):
         assert col in X.COLUMNS, col
     assert "reach" not in X.COLUMNS
+
+
+def test_the_fa_board_detail_row_gets_a_pad_for_the_xm_column():
+    """PORT_RED_TESTS_TRIAGE (2026-10-22): faBoard() widened the header by one
+    th and skipped the open detail row, which paints one pad per column past
+    its colspan cell (fa.js faDetailRow), so the row drew one cell fewer than
+    the header. The pad carries the column's fold class and rides with it."""
+    i = JS.index("function faBoard()")
+    body = JS[i:JS.index("function ", i + 10)]
+    assert 'tr.querySelector("td.fa-dt-cell")' in body
+    assert 'pad.className = "fc-xm fa-dt-pad";' in body
+    assert 'pad.setAttribute("aria-hidden", "true");' in body
+    assert 'if (dt && !tr.querySelector("td.fc-xm"))' in body

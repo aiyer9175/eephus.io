@@ -402,7 +402,8 @@ def test_prospx_wag_copy_quotes_the_engine_rules():
         assert "+2.5" not in ln and "800 PA" not in ln
     card = src[src.index('<span class="metric-label">Boom%</span>') - 400:
                src.index('<span class="metric-label">Bust%</span>')]
-    assert f"percentile of {float(bb['boom_percentile']):.2f} or higher" in card
+    # the card title reads "percentile 0.80+" since the COPY_3 pass (6fe85259)
+    assert f"percentile {float(bb['boom_percentile']):.2f}+" in card
     assert "_wagUnified()" in card
 
 

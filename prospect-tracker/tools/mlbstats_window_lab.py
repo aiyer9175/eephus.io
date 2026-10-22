@@ -1624,6 +1624,13 @@ def columns_spec() -> dict:
             },
             "hidden": {
                 "woba": "The shrink target is that season's pool.",
+                "p_pa": ("A pitch rate off the season line (pitch_rates_boards, PM-03): "
+                         "pitches seen over that season's PA, not re-pooled over a window."),
+                "par": ("PAR is anchored to that season's league line for the role; "
+                        "a window has no one line to anchor to."),
+                "par_delta": "A difference of two season-line numbers.",
+                "pit": ("Pitches seen ride the season line of pitch_rates_boards and are "
+                        "not summed over a window."),
                 "wrc_plus": ("wRC+ is MLB's published season index. We hold the "
                              "index, not the pieces behind it."),
                 "tier": "A cut on a season pool.",
@@ -1666,6 +1673,14 @@ def columns_spec() -> dict:
                 "fip": ("Skill FIP is shrunk toward that season's starter pool "
                         "and offset by that season's FIP constant. Two season "
                         "parameters, so it does not travel."),
+                "p_ip": ("A pitch rate off the season role line (pitch_rates_boards, PM-03): "
+                         "pitches per inning in starts, not re-pooled over a window."),
+                "p_bf": "Pitches per batter faced off the same season role line.",
+                "par": ("PAR is anchored to that season's league starts line; a window "
+                        "has no one line to anchor to."),
+                "par_delta": "A difference of two season-line numbers.",
+                "pit_per_gs": "Pitches per start off the season role line, not summed over a window.",
+                "sp_ip_per_gs": "Innings per start off the season role line, a season fact.",
                 "role": "Role is a season fact.",
                 "xsem_plus": "Anchored to one season's pool.",
                 "xwoba_against": "The same anchoring and the same coverage gap.",
@@ -1717,6 +1732,14 @@ def columns_spec() -> dict:
             },
             "hidden": {
                 "fip": "Two season-pool parameters, as on the starter board.",
+                "p_ip": ("A pitch rate off the season role line (pitch_rates_boards, PM-03): "
+                         "pitches per inning in relief, not re-pooled over a window."),
+                "p_bf": "Pitches per batter faced off the same season role line.",
+                "par": ("PAR is anchored to that season's league relief line; a window "
+                        "has no one line to anchor to."),
+                "par_delta": "A difference of two season-line numbers.",
+                "pit_per_g": "Pitches per appearance off the season role line, not summed over a window.",
+                "role_line_basis": "Which season line the row read, a season fact.",
                 "swstr_pct": ("Derived from two Baseball Savant season rates "
                               "(whiff% x swing%) with no pitch count beside "
                               "them, so it cannot be repooled."),

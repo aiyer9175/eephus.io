@@ -1422,7 +1422,10 @@
     var seasons = tSeasons(doc).map(function (s) {
       return '<option value="' + s + '"' + (s === y ? " selected" : "") + ">" + s + "</option>";
     }).join("");
-    var sel = '<label class="mlbstats-ctl">season <select id="mlbx-tm-season" data-tsel="season">' + seasons + "</select></label>";
+    // inside the module's control bar, so the select takes the one control rule
+    // (.mlbstats-bar select) every other board's select is drawn with
+    var sel = '<div class="mlbstats-bar"><label class="mlbstats-ctl">season <select id="mlbx-tm-season" data-tsel="season">'
+      + seasons + "</select></label></div>";
     var basis = '<div class="mlbstats-seasons mlbstats-roles" role="group" aria-label="Club basis"><span class="mlbstats-roles-lbl">Basis</span>'
       + TBASES.map(function (p) {
           var on = (live ? T.basis : "earned") === p[0], dis = !live && p[0] === "today";

@@ -64,7 +64,7 @@ def test_news_page_head():
     html = _read("news/index.html")
     assert OLD not in html
     assert "<title>MLB News - eephus.io</title>" in html
-    assert re.search(r"</svg>MLB News</h1>", html)
+    assert re.search(r'</svg>(?:<span class="mh-title">)?MLB News(?:</span>)?</h1>', html)
     meta = re.search(r'<meta name="description" content="([^"]*)"', html).group(1)
     assert meta == ("MLB and MiLB transactions, debuts, IL moves, eFV changes and FA signings, "
                     "filterable by type."), meta

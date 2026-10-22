@@ -81,12 +81,15 @@ def test_only_the_upcoming_chip_has_the_hourglass(page):
     classes = _classes()
     up = _upcoming(classes)
     _open_draft(page, up)
+    # the hourglass is the 12 px pixel icon (pxIcoHTML("hourglass", 12)) since
+    # the PX pass, not a glyph in the chip's text
     chips = page.eval_on_selector_all(
         "[data-draft-year]",
-        "els => els.map(e => [e.dataset.draftYear, e.textContent.trim(), e.title])")
-    marked = [y for y, txt, _ in chips if "⏳" in txt]
+        "els => els.map(e => [e.dataset.draftYear, e.textContent.trim(), e.title,"
+        " !!e.querySelector('use[href$=\"#i-hourglass\"]')])")
+    marked = [y for y, _txt, _, hourglass in chips if hourglass]
     assert marked == [str(up)], chips
-    for y, _, title in chips:
+    for y, _, title, _hourglass in chips:
         if y == "overall":
             continue
         c = next(c for c in classes if str(c["year"]) == y)

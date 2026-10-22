@@ -767,9 +767,15 @@ def test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels():
     # task Q8_13b, before it); a dark shell is the six sections exactly.
     # The ABS Challenges tab (EWAR_T4_EABS, eabs_export.MLBSTATS_EABS_LIVE) sits
     # between Defense and Leverage while live.
-    order = [s for s in labels if s != "eabs"]
+    # The Baserunning tab (eBR flip) sits after Defense and the Trends tab
+    # (TR_5_FLIP, 2026-10-21) after League while each is live.
+    order = [s for s in labels if s not in ("eabs", "baserunning", "trends")]
     if "eabs" in labels:
         assert list(labels).index("eabs") == list(labels).index("leverage") - 1, list(labels)
+    if "baserunning" in labels:
+        assert list(labels).index("baserunning") == list(labels).index("defense") + 1, list(labels)
+    if "trends" in labels:
+        assert list(labels).index("trends") == list(labels).index("league") + 1, list(labels)
     assert order[:6] == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
     assert order[6:] in ([], ["league"], ["teams", "league"]), list(labels)
     assert 'class="mlbstats-sectionbtn active" data-mlbsection="war"' in shell, "rerun build_site.py"

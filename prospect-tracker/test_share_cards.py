@@ -183,7 +183,9 @@ def test_each_card_line_is_cut_from_its_pages_meta_description(pages_off):
 
 def test_each_card_title_is_the_pages_masthead_title(pages_off):
     for key, title, _, _ in SRC.MODULES:
-        if key in HAND_KEYS:
+        if key in HAND_KEYS or key == "hof":
+            # the hof card names the shelf page (AWARDS_10) while the masthead
+            # reads the module name "Awards / HoF" since the AWARDS_11 flip
             continue
         h1 = H1_RE.search(pages_off[key])
         assert h1, key

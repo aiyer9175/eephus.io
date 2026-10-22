@@ -934,7 +934,7 @@ COMPONENTS_FRAME = "FanGraphs frame"
 # stats whose L1 verdict in data/prospect_statline_eval.json is PASS. It is a
 # separate file: mlb_projections.json is byte-identical either way, and the
 # prospect WAR cell stays the FV-anchored path. Distinct from
-# value_framework.SERVE_PROSPECT_ANCHOR_V2; neither flag reads the other.
+# value_framework's own realized-anchor switch; neither flag reads the other.
 SERVE_PROSPECT_STATLINE = True
 # RETIREES (owner answer Q3, 2026-10-22, 'Drop MLB-listed retirees'). The
 # universe is every player with an MLB season in the last three, so a player who

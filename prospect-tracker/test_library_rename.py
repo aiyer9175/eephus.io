@@ -68,8 +68,8 @@ def test_no_served_nav_masthead_or_title_says_glossary(rel):
 def test_glossary_page_masthead_title_and_meta_read_library():
     out = B.build_glossary()
     assert "<title>Library - eephus.io</title>" in out
-    h1 = re.search(r"<h1>(.*?)</h1>", out, re.S).group(1)
-    assert h1.endswith("Library") and "#i-library" in h1
+    h1 = re.search(r'<h1(?: class="mh-px")?>(.*?)</h1>', out, re.S).group(1)
+    assert re.sub(r"</?span[^>]*>", "", h1).endswith("Library") and "#i-library" in h1
     desc = re.search(r'<meta name="description" content="([^"]*)"', out).group(1)
     assert desc.startswith("The eephus.io Library:")
     # the page-index view keeps its key and URL; its chip no longer repeats the module name

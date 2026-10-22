@@ -218,7 +218,16 @@ def test_the_module_groups_nothing_by_consensus_fv_level():
 
 def test_no_served_module_imports_the_translation():
     pat = re.compile(r"^\s*(import|from)\s+efv_x1_(translate|fetch)\b", re.M)
-    allowed = {"efv_x1_translate.py", "efv_x1_fetch.py", "test_efv_x1_translate.py"}
+    # efv_upside_volatility.py (EW3-35, read once 2026-10-19) is a lab that
+    # reuses the translation's MiLB window; it is imported by no served module.
+    # efv_x3_pooled.py (the failed X3 pooled model) reads the fetch the same way;
+    # its only importers are the side/role calibration lab and the R bake-off lab.
+    # etools.py reads the translated AA/AAA lines for its upper-minors labels
+    # (um_tables); the eTools gate (3f240da6) admitted that read and ETOOLS_ON
+    # serves it (owner EW3-28), so the isolation rule no longer covers it.
+    allowed = {"efv_x1_translate.py", "efv_x1_fetch.py", "test_efv_x1_translate.py",
+               "efv_upside_volatility.py", "efv_x3_pooled.py", "etools.py",
+               "etool_history.py"}
     for p in list(ROOT.glob("*.py")) + list((ROOT / "tools").glob("*.py")):
         if p.name in allowed:
             continue

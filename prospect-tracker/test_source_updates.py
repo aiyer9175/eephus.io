@@ -234,7 +234,7 @@ def test_section_is_in_the_page_index_and_the_nightly():
     assert views["/glossary/#view=source-updates"] == (
         build_site.GLOSSARY_DISPLAY_NAME + " · Source Updates")
     assert 'id="page-index-data"' in shell
-    assert re.search(r'<div class="gl-app" data-module-name="[^"]+" data-display-name="[^"]+">', shell)
+    assert re.search(r'<div class="gl-app" data-module-name="[^"]+" data-display-name="[^"]+"[^>]*>', shell)
     rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     assert '_step("d10g. Source update dates (source_updates.json)"' in rm
     import run_monthly

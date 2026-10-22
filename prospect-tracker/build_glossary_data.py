@@ -415,7 +415,7 @@ PROSPX_LB_ENTRIES = [
      "formula": "Pull-air% = pulled (fly balls + line drives + popups) / batted balls x 100",
      "seeAlso": ["pull_pct", "barrel_pct", "game_power"]},
     {"id": "fb_ivb", "term": "FB IVB", "category": "statcast",
-     "module": ["prospx"], "aliases": ["Fastball IVB", "Induced vertical break", "IVB"],
+     "module": ["prospx"], "aliases": ["Fastball IVB", "IVB"],
      "priority": 12, "shelf": "industry",
      "origin": "Industry metric. Pitch-tracking measure published by MLB Statcast; the MiLB value here is the game feed's induced vertical break.",
      "definition": "Induced vertical break on a pitcher's main fastball, in inches: the vertical movement the pitch's spin creates, with gravity taken out. A higher number means the ball drops less than gravity alone would make it.",

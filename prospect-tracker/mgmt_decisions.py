@@ -160,7 +160,7 @@ COUNTERFACTUAL = {
 
 #: Verbatim (spec 4.3). The page prints it on every leaderboard and club page.
 REALIZED_SENTENCE = (
-    "Realized value, not skill. Each figure is the win probability that actually moved "
+    "Realized value, not skill. Each figure is the win probability that moved "
     "after the decision, credited to the club that made it, from the decision to the last "
     "play it governed. What the alternative would have produced, the reliever not used, "
     "the batter not lifted, the pitch not thrown, is not observed, so this is a record of "

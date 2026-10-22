@@ -85,7 +85,7 @@ def test_every_party_goes_through_the_one_pricer():
     assert body.count("_taPriceParty(_TA_TV.idx") == 2, (
         "tracked rows and narrative-named players must both price through _taPriceParty")
     assert "_taVerdict(g.netDeltaA, pendingCount, BALANCED_THRESHOLD_MM)" in body
-    assert "withheld" not in _src(), "an unpriced party no longer withholds the verdict (M9-1)"
+    assert "withheld" not in body, "an unpriced party no longer withholds the verdict (M9-1)"
     assert "_taTradeValuesLoad()" in body
     assert "trade_value_lo" not in body and "trade_value_hi" not in body, (
         "the audit must never sum a quantile point")

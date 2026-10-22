@@ -637,6 +637,21 @@ _SIDECAR_GLOBS = (
     # arm ledger itself, which the screen regenerates.
     "data/efv_v2_model_class_screen.json",
     "data/xfv_arm_ledger.json",
+    # VAL3-Q3: the surplus-from-served-odds read (surplus_odds_gate.OUT_PATH),
+    # redirected by the harness and watched here so a failed redirect shows.
+    "data/surplus_backtest_real.json",
+    # the Trade Machine CBT ledger (trade_cbt_export), redirected by the harness
+    "data/trade_cbt.json",
+    # four more redirected writers (PORT_RED_TESTS_TRIAGE, 2026-10-22): the
+    # arbitration prospect rungs, the tool source accuracy table, the team
+    # outlook preview and the prospect statline projections
+    "data/arb_prospect_rungs.json",
+    "data/tool_source_accuracy.json",
+    ".cache/team_projection/preview/team_outlook_display.json",
+    "data/prospect_statline.json",
+    # the bat-tracking lane's served and preview folders (_SIDECAR_WRITE_DIRS)
+    ".cache/bat_tracking/served/**/*",
+    ".cache/bat_tracking/preview/**/*",
     # M21-4: the Fantasy Rank, its monthly model cache and its backtest.
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
@@ -981,6 +996,7 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/betting/close_attach_result.json"),
     ("betting_model", "CONTEXT_PATH", "data/betting_model_context.json"),
     ("betting_model", "EVAL_PATH", "data/betting_model_eval.json"),
+    ("tools.betting_workload_gate", "BETTING_EVAL", "data/betting_model_eval.json"),
     ("betting_shadow", "SHADOW_CACHE_PATH", ".cache/betting/shadow.json"),
     ("betting_shadow", "SHADOW_PATH", ".cache/betting/shadow.json"),
     ("betting_shadow", "SHADOW_DERIVED_PATH", "data/betting_shadow.json"),

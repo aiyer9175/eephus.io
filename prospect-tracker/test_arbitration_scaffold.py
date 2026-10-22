@@ -53,7 +53,9 @@ def test_a_new_module_appends_and_never_reorders_the_existing_ones():
     # 2026-09-23: the Franchise hub sits FIRST in the group by owner decision
     # (the hub before the modules, not a module appended to them), so it is
     # skipped here and the invariant still reads the modules' own order.
-    keys = tuple(k for k in keys if k != "franchise")
+    # 2026-10-07: Scores / Standings sits SECOND, directly after the hub, by
+    # owner answer SC-NAV (SCORES_5b), so it is skipped on the same reading.
+    keys = tuple(k for k in keys if k not in ("franchise", "scores"))
     assert keys[:len(_MLB_PREFIX_AT_ARBITRATION)] == _MLB_PREFIX_AT_ARBITRATION, (
         f"the MLB Modules group was REORDERED, not appended to: {keys}")
 
