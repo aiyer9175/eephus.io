@@ -521,7 +521,7 @@ function copyText() {
   clip(lines.join("\n"), "Ballot text copied.", "Ballot text");
 }
 function ask(q, yes, no, ys, ns) { return `<div class="aw-b-ask"><p>${esc(q)}</p>${btn(yes, ys) + btn(no, ns)}</div>`; }
-function paintConfirm() { el("confirm").innerHTML = ui.confirm ? ask(`Clear your ${title(ui.active)} ballot?`, "clear-yes", "clear-no", "Clear", "Keep") : ""; }
+function paintConfirm() { el("confirm").innerHTML = ui.confirm ? ask(`Clear your ${title(ui.active)} ballot.`, "clear-yes", "clear-no", "Clear", "Keep") : ""; }
 function banner() {
   if (!shared || shared.season !== S) return "";
   var keys = KEYS.filter(k => has(shared.ballots[k])), n = shared.dropped;
@@ -532,7 +532,7 @@ function banner() {
       return r ? `<li value="${i + 1}">${esc(label(k, r))}</li>` : "";
     }).join("") + "</ol></div>").join("") +
     (n ? `<p>${n} ${n === 1 ? "name in this link is" : "names in this link are"} not on the ${S} candidate list and ${n === 1 ? "was" : "were"} left out.</p>` : "") +
-    (shared.ask && shared.ask.length ? ask(`Replace your ${title(shared.ask[0])} ballot?`, "sh-yes", "sh-no", "Replace", "Keep mine") : "") +
+    (shared.ask && shared.ask.length ? ask(`Replace your ${title(shared.ask[0])} ballot.`, "sh-yes", "sh-no", "Replace", "Keep mine") : "") +
     `<div class="aw-b-bact">${keys.length && !shared.ask ? btn("sh-copy", "Copy to my ballot") : ""}${btn("sh-close", "Close")}</div></section>`;
 }
 function put(k) {

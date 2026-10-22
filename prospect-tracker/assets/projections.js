@@ -1373,9 +1373,11 @@
   };
   function verdictBadge(v) {
     const m = VERDICT_META[v] || { label: v || "?", col: "var(--text-tertiary)" };
-    // Only `background` stays inline: it is a computed VALUE (the verdict's own
-    // colour). Shape, type and the on-badge text colour live on .proj-verdict.
-    return `<span class="proj-verdict" style="background:${m.col};">${esc(m.label)}</span>`;
+    // The 2026-08-03 move of these styles to a .proj-verdict rule never wrote
+    // the rule, so the badge inherited the page text colour: light text on a
+    // bright fill in dark mode (1.1:1 on Validated). The on-badge colour is a
+    // fixed near-black because every fill is a bright accent in both themes.
+    return `<span class="proj-verdict" style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.02em;color:#0b0b0b;background:${m.col};">${esc(m.label)}</span>`;
   }
   function _num(v, d) {
     return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(d == null ? 2 : d);

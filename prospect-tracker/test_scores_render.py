@@ -446,8 +446,8 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     assert "<title>MLB Scores - eephus.io</title>" in html
     assert "Scores / Standings" in html and build_site._stage_chip("scores") in html
     assert build_site.MODULE_STAGE["scores"] == (
-        "β", "Beta. Scores, standings, win probability and video come from MLB; Stars of the Game is a "
-        "published rule; odds are the site's simulators, implied, no market")  # STANDINGS_7_FLIP
+        "β", "Beta. Scores, standings, win probability and video from MLB; Stars of the Game by "
+        "published rule; odds are site simulations, implied, no market")  # STANDINGS_7_FLIP
     body = html.split('id="scores-app-root"')[0].split("section-head--byline")[-1]
     import re
     assert not re.search(r"\d", re.sub(r"<[^>]+>", "", body)), "a number is typed in the shell's masthead"
