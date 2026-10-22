@@ -457,6 +457,52 @@ def test_accountability_vet_horizons_surfaces_survived_and_pinball():
         assert r["coverage"] + 1e-9 >= r["coverage_survived"], r
 
 
+def test_zero_path_receipt_copies_the_sweep_run_s2():
+    """SWEEP-Q2 (owner 2026-10-22): the Veteran WAR paths receipts carry a
+    zero-path column copied from the null comparator sweep's run S2, both
+    engines on the same rows, and nothing when a cell is missing or the two
+    engines disagree on the zero path (different rows)."""
+    def cell(mae, zero, verdict):
+        return {"n": 10, "mae_model": mae, "nulls": {"ZERO": {
+            "mae_null": zero, "verdict": verdict, "lo95": -0.1, "hi95": 0.1}},
+            "instrument": {"verdict": "PASS"}}
+    sweep = {"generated_at": "2026-10-22T04:31:36Z", "registration": "docs/NULL_COMPARATOR_SWEEP.md",
+             "runs": {"S2": {"frame": "row-matched, bases [2017, 2018, 2019, 2021], horizons 1-5",
+                             "label": "fwar", "n_players_matched": 10, "cells": {
+                 "challenger_proj_lgbm": {"h1": cell(0.4, 0.6, "BEATS"), "h4": cell(0.33, 0.34, "TIES"),
+                                          "pooled_h1_h5": cell(0.3, 0.4, "BEATS")},
+                 "champion_decay": {"h1": cell(0.5, 0.6, "BEATS"), "h4": cell(0.36, 0.34, "LOSES"),
+                                    "pooled_h1_h5": cell(0.4, 0.4, "TIES")}}}}}
+    zp = pe._zero_path_receipt(sweep)
+    assert zp["bases"] == [2017, 2018, 2019, 2021] and zp["label"] == "fwar"
+    assert zp["models"] == ["proj_lgbm_v1", "marcel_decay_v2"]
+    assert [r["h"] for r in zp["by_horizon"]] == [1, 4]          # pooled is not a horizon
+    h4 = zp["by_horizon"][1]
+    assert h4["mae"] == {"proj_lgbm_v1": 0.33, "marcel_decay_v2": 0.36, "zero": 0.34}
+    assert h4["vs_zero"]["marcel_decay_v2"]["verdict"] == "LOSES"
+    sweep["runs"]["S2"]["cells"]["champion_decay"]["h4"]["nulls"]["ZERO"]["mae_null"] = 0.35
+    assert pe._zero_path_receipt(sweep) == {}
+    assert pe._zero_path_receipt({}) == {}
+
+
+def test_zero_path_receipt_matches_the_committed_sweep():
+    path = ROOT / "data" / "null_comparator_sweep.json"
+    if not path.exists():
+        pytest.skip("null_comparator_sweep.json not present")
+    sweep = json.loads(path.read_text(encoding="utf-8"))
+    zp = pe._zero_path_receipt(sweep)
+    by_h = {r["h"]: r for r in zp["by_horizon"]}
+    assert sorted(by_h) == [1, 2, 3, 4, 5]
+    cells = sweep["runs"]["S2"]["cells"]
+    for h, r in by_h.items():
+        assert r["mae"]["proj_lgbm_v1"] == cells["challenger_proj_lgbm"][f"h{h}"]["mae_model"]
+        assert r["mae"]["marcel_decay_v2"] == cells["champion_decay"][f"h{h}"]["mae_model"]
+        assert r["mae"]["zero"] == cells["champion_decay"][f"h{h}"]["nulls"]["ZERO"]["mae_null"]
+    if (ROOT / "data" / "proj_horizon_eval.json").exists():
+        vh = pe._accountability_block()["backtests"]["data/proj_horizon_eval.json"]
+        assert vh.get("zero_path") == zp
+
+
 def test_site_carries_projections_surface():
     site = (ROOT / "build_site.py").read_text(encoding="utf-8")
     assert '"/projections/"' in site, "NAV_ITEMS must deep-link /projections/"
