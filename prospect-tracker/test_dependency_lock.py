@@ -62,7 +62,10 @@ def third_party_imports() -> dict[str, list[str]]:
             elif isinstance(n, ast.ImportFrom) and n.module and n.level == 0:
                 mods = [n.module.split(".")[0]]
             for m in mods:
-                if m in std or m in local or m in NOT_PACKAGES or m == "__future__":
+                # __main__ is the running script (efv_side_role_calibration.py and
+                # efv_x3_pooled.py import it), never a package; it is not in
+                # sys.stdlib_module_names, so name it here.
+                if m in std or m in local or m in NOT_PACKAGES or m in ("__future__", "__main__"):
                     continue
                 found.setdefault(m, []).append(f.name)
     return found

@@ -48,7 +48,7 @@ def _mod(tmp_path: Path, name: str, payload: str) -> Path:
     (root / "deploy" / "publish_paths.txt").write_text("index.html\n", encoding="utf-8")
     (root / "index.html").write_text("<p>x</p>", encoding="utf-8")
     (root / "data" / "pitch_plots").mkdir(parents=True)
-    (root / "data" / "a.json").write_text(payload, encoding="utf-8")
+    (root / "data" / "a.json").write_bytes(payload.encode("utf-8"))  # exact line endings
     (root / "data" / "secret.json").write_text("{}", encoding="utf-8")
     (root / "data" / "pitch_plots" / "p.json").write_text('{"v": [1, 2]}', encoding="utf-8")
     return root
@@ -73,6 +73,13 @@ def test_categories(tmp_path):
         assert "data/a.json" in res["files"].get(want, []), (payload, res["counts"])
         assert "data/pitch_plots/p.json" in res["files"]["IDENTICAL"]
         assert res["ok"] is (want != "DIFFERENT")
+
+
+def test_crlf_checkout_reads_as_line_endings_not_a_value_change(tmp_path):
+    ref = pe.snapshot(_mod(tmp_path, "ref", '{\r\n "x": 1\r\n}\r\n'))
+    res = pe.compare(ref, _mod(tmp_path, "t", '{\n "x": 1\n}\n'))
+    assert res["files"].get("LINE_ENDINGS") == ["data/a.json"] and res["ok"]
+    assert res["pages_differing"] == []
 
 
 def test_missing_and_extra_fail(tmp_path):

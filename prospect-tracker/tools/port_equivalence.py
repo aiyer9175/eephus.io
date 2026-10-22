@@ -15,6 +15,8 @@ Three commands:
         Sort every payload into one category and exit 1 on any DIFFERENT,
         MISSING or EXTRA file:
           IDENTICAL   same bytes
+          LINE_ENDINGS same bytes once CRLF reads as LF (a Windows checkout of
+                      a tracked file against the Linux box's LF checkout)
           TIMESTAMP   equal once the stamp keys below are dropped
           FLOAT_REPR  equal once numbers compare as decimals (1.0 == 1)
           ORDERING    equal once every list is sorted
@@ -119,7 +121,8 @@ def _load(raw: bytes):
 
 def fingerprint(path: Path) -> dict:
     raw = path.read_bytes()
-    rec = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+    rec = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+           "sha256_lf": hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()}
     if path.suffix == ".json":
         try:
             obj = _load(raw)
@@ -132,18 +135,24 @@ def fingerprint(path: Path) -> dict:
     return rec
 
 
+def _sha_lf(path: Path) -> str:
+    """sha256 with CRLF read as LF: a page is the same page on either checkout."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def snapshot(root: Path) -> dict:
     return {
         "root": str(root),
         "payloads": {rel: fingerprint(root / rel) for rel in payload_files(root)},
-        "pages": {rel: {"sha256": hashlib.sha256((root / rel).read_bytes()).hexdigest()}
-                  for rel in page_files(root)},
+        "pages": {rel: {"sha256_lf": _sha_lf(root / rel)} for rel in page_files(root)},
     }
 
 
 def categorize(ref: dict, new: dict) -> str:
     if ref["sha256"] == new["sha256"]:
         return "IDENTICAL"
+    if "sha256_lf" in ref and ref["sha256_lf"] == new.get("sha256_lf"):
+        return "LINE_ENDINGS"
     for key, cat in (("canon_stamp", "TIMESTAMP"), ("canon_num", "FLOAT_REPR"),
                      ("canon_unordered", "ORDERING")):
         if key in ref and ref.get(key) == new.get(key):
@@ -165,7 +174,7 @@ def compare(ref_doc: dict, root: Path) -> dict:
     pages_ref = ref_doc.get("pages", {})
     page_diff = sorted(rel for rel, r in pages_ref.items()
                        if not (root / rel).is_file()
-                       or hashlib.sha256((root / rel).read_bytes()).hexdigest() != r["sha256"])
+                       or _sha_lf(root / rel) != r.get("sha256_lf"))
     return {"counts": {k: len(v) for k, v in sorted(cats.items())},
             "files": cats, "pages_differing": page_diff,
             "ok": not any(k in cats for k in ("DIFFERENT", "MISSING", "EXTRA"))}

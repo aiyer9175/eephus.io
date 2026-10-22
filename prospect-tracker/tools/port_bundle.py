@@ -20,6 +20,8 @@ Bundle layout (``--out DIR``)::
     cache-carry.tar       .cache/ minus SAFE_CACHES, paths stored as .cache/<rel>
     data-imports.tar      gitignored hand-dropped inputs under data/ (FanGraphs and
                           Baseball America drops, data/drops/, ignored sample CSVs)
+                          and the gitignored files inside published page
+                          directories (collegesavant/logos/)
     served-data.tar       optional (--served-data): every other gitignored file under
                           data/, so the target can serve before its first full build
     MANIFEST.tsv          relpath, bytes, sha256 for every file inside the tars
@@ -53,6 +55,21 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 from prune_cache import SAFE_CACHES  # noqa: E402  (imported, never transcribed)
 
+# SAFE_CACHES means "the pruner may delete it", not "a new box can do without
+# it". Two small SAFE directories hold files that registered fits pin by hash,
+# measured 2026-10-22 on a clean clone seeded without them:
+#   savant_mlb  expected_<side>_<season>.csv, read by prospect_statline: the
+#               rebuild raised "the served fit does not reproduce the look's
+#               fit: hit:xwoba" and kept the committed file;
+#   milb_stats  the 2005 to 2013 season files milb_history reads cache-only
+#               (FETCH_FLOOR_SEASON), pinned by efv_surrogate: 11 gate tests
+#               raised "hitting sport 1 2013 drifted from its pin".
+# So the port carries every SAFE directory except the four large feed caches
+# below (54.7 GB of the 55.9 GB, per-game and per-player pulls that the nightly
+# re-reads from StatsAPI and Savant); the rest come to about 0.8 GB.
+LEAVE_BEHIND: tuple[str, ...] = ("win_prob", "statcast_metrics", "zone_metrics", "game_feeds")
+ALSO_CARRY: tuple[str, ...] = tuple(d for d in SAFE_CACHES if d not in LEAVE_BEHIND)
+
 # Hand-dropped, gitignored inputs under data/ that no build can recreate.
 IMPORT_DIRS: tuple[str, ...] = (
     "data/fangraphs_imports",
@@ -76,7 +93,8 @@ def _sha256(path: Path) -> str:
 
 
 def cache_carry_files(cache_root: Path, exclude_dirs: tuple[str, ...] = ()) -> list[Path]:
-    """Every file under cache_root that is not inside a SAFE_CACHES top-level dir.
+    """Every file under cache_root that is not inside a SAFE_CACHES top-level dir
+    (ALSO_CARRY directories excepted: they are carried).
 
     exclude_dirs names further top-level directories the owner chose to leave
     behind (refetchable but slow, such as win_prob_hist); the default is none."""
@@ -86,7 +104,9 @@ def cache_carry_files(cache_root: Path, exclude_dirs: tuple[str, ...] = ()) -> l
     for entry in sorted(os.scandir(cache_root), key=lambda e: e.name):
         p = Path(entry.path)
         if entry.is_dir(follow_symlinks=False):
-            if entry.name in SAFE_CACHES or entry.name in exclude_dirs:
+            if entry.name in exclude_dirs:
+                continue
+            if entry.name in SAFE_CACHES and entry.name not in ALSO_CARRY:
                 continue
             for dirpath, dirnames, filenames in os.walk(p):
                 dirnames.sort()
@@ -106,9 +126,37 @@ def _git_ignored_under_data(root: Path) -> list[str]:
     return sorted(line.strip() for line in r.stdout.splitlines() if line.strip())
 
 
+def _git_ignored_in_page_dirs(root: Path) -> list[str]:
+    """Gitignored FILES inside the page directories deploy/publish_paths.txt ships.
+
+    The rsync ships those directories whole, so a file there is served even when
+    git ignores it. Measured 2026-10-22: collegesavant/logos/ (16 PNGs, 392 KB,
+    ignored by the root .gitignore's `logos/` and `*.png`) is read by
+    collegesavant/app.js, pitcher_app.js and team_names.js, and a clean clone
+    has none of them (test_mlb_player_pages.py::test_collegesavant_logos_present)."""
+    dirs = []
+    manifest = root / "deploy" / "publish_paths.txt"
+    if not manifest.is_file():
+        return []
+    for line in manifest.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and (root / line).is_dir():
+            dirs.append(line)
+    if not dirs:
+        return []
+    r = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "--others", "--ignored",
+         "--exclude-standard", "--", *dirs],
+        capture_output=True, text=True, check=True)
+    return sorted(x.strip() for x in r.stdout.splitlines()
+                  if x.strip() and "__pycache__" not in x)
+
+
 def split_data_files(root: Path) -> tuple[list[str], list[str]]:
-    """(imports, served) gitignored data files; NEVER_CARRY and __pycache__ dropped."""
-    imports: list[str] = []
+    """(imports, served) gitignored files; NEVER_CARRY and __pycache__ dropped.
+
+    imports also carries the gitignored files inside published page directories."""
+    imports: list[str] = list(_git_ignored_in_page_dirs(root))
     served: list[str] = []
     for rel in _git_ignored_under_data(root):
         if rel in NEVER_CARRY or "__pycache__" in rel:

@@ -53,6 +53,22 @@ def test_safe_caches_is_the_imported_tuple():
     assert pb.SAFE_CACHES is prune_cache.SAFE_CACHES
 
 
+def test_also_carry_names_safe_dirs_with_pinned_inputs():
+    assert set(pb.LEAVE_BEHIND) <= set(prune_cache.SAFE_CACHES)
+    assert set(pb.ALSO_CARRY) | set(pb.LEAVE_BEHIND) == set(prune_cache.SAFE_CACHES)
+    assert "savant_mlb" in pb.ALSO_CARRY       # prospect_statline pins expected_*.csv
+    assert "milb_stats" in pb.ALSO_CARRY       # efv_surrogate pins 2005 to 2013 seasons
+
+
+def test_also_carry_dir_travels(tmp_path):
+    root = _tree(tmp_path)
+    (root / ".cache" / "savant_mlb").mkdir()
+    (root / ".cache" / "savant_mlb" / "expected_batter_2020.csv").write_text("a\n", encoding="utf-8")
+    rels = [p.relative_to(root / ".cache").as_posix()
+            for p in pb.cache_carry_files(root / ".cache")]
+    assert "savant_mlb/expected_batter_2020.csv" in rels
+
+
 def test_carry_rule_skips_safe_dirs_only(tmp_path):
     root = _tree(tmp_path)
     rels = sorted(p.relative_to(root / ".cache").as_posix()
@@ -70,6 +86,24 @@ def test_data_split_keeps_imports_apart_and_drops_strays(tmp_path, monkeypatch):
     imports, served = pb.split_data_files(root)
     assert imports == ["data/fangraphs_imports/a.csv"]
     assert served == ["data/timeseries.json"]
+
+
+def test_ignored_files_in_page_dirs_travel_with_the_imports(tmp_path, monkeypatch):
+    """collegesavant/logos/ is gitignored and served: a clean clone had none."""
+    root = _tree(tmp_path)
+    _ignored(monkeypatch)
+    monkeypatch.setattr(pb, "_git_ignored_in_page_dirs",
+                        lambda r: ["collegesavant/logos/IU.png"])
+    imports, _ = pb.split_data_files(root)
+    assert imports == ["collegesavant/logos/IU.png", "data/fangraphs_imports/a.csv"]
+
+
+def test_real_tree_carries_the_collegesavant_logos():
+    logos = ROOT / "collegesavant" / "logos"
+    if not any(logos.glob("*.png")):
+        import pytest
+        pytest.skip("no local logos in this checkout")
+    assert any(r.startswith("collegesavant/logos/") for r in pb._git_ignored_in_page_dirs(ROOT))
 
 
 def test_build_then_verify_and_positive_control(tmp_path, monkeypatch):
