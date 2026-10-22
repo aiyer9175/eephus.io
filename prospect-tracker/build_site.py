@@ -1030,7 +1030,7 @@ MODULE_STAGE = {
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
     "hof": ("β", "Beta. Award selections follow a published rule, not a forecast of the vote; every unpublished section names its blocker"),
     # Scores / Standings (SCORES_3, behind scores_core.SCORES_LIVE).
-    "scores": ("β", "Beta. Scores, standings, win probability and video come from MLB; Stars of the Game is a published rule; odds are the site's simulators, implied, no market"),
+    "scores": ("β", "Beta. Scores, standings, win probability and video from MLB; Stars of the Game by published rule; odds are site simulations, implied, no market"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0]; the rows above carry the sigil, which STAGE_CHIP_TEXT turns
     # into the chip text. Every row renders through _stage_chip(). Nothing is
@@ -6548,9 +6548,9 @@ def build_mlbstats() -> str:
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
-                "MLB leaderboards: every player by eWAR, season or year range; HEM+, SEM+, "
-                "REM+, RIV+ and DEM+ boards; WPA leverage; team Bullpen+, Rotation+, Offense+, "
-                "DEM+" + (f"; team stats and league averages since {league_averages.FIRST_SEASON}." if league_live else "."),
+                "MLB leaderboards by eWAR, season or range; HEM+, SEM+, REM+, RIV+, DEM+; "
+                "WPA leverage; team Bullpen+, Rotation+, Offense+, DEM+"
+                + (f"; league averages since {league_averages.FIRST_SEASON}." if league_live else "."),
                 url=f"{SITE_ORIGIN}/mlbstats/", image=module_share_image("mlbstats"))
 
 _PAL_REVERSED_LABEL = {
@@ -6674,10 +6674,9 @@ def build_pal() -> str:
     # all-zero ladder scores as well (docs/ewar/LADDER_V2_GATE.md part 9), so
     # the closing clause names that basis and v2's state; 31 words.
     return page("Alchemy Lab - eephus.io", "pal", body,
-                "MLB role and position conversions: RP-to-SP, SP-to-RP, position fit, pitch-add, "
-                "reverse-platoon and prospect boards, the conversion backtest. Statcast arsenals and "
-                "velocity; our positional ladder, fitted on Baseball-Reference positional runs "
-                "(v2 under re-read).",
+                "MLB role conversions: RP-to-SP, SP-to-RP, position-fit, pitch-add, "
+                "reverse-platoon and prospect boards; conversion backtest; positional ladder "
+                "on Baseball-Reference runs (v2 under re-read).",
                 url=f"{SITE_ORIGIN}/pal/", image=module_share_image("pal"))
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
@@ -7587,9 +7586,8 @@ def write_scores_page(preview_root=None) -> str:
 
 #: The /standings/ title and meta description (STANDINGS_PLAN 5.11).
 STANDINGS_TITLE = "MLB Standings - eephus.io"
-STANDINGS_DESC = ("MLB standings by division, wild card and league: records, splits, run differential and "
-                  "expected record from MLB, races over the season, and the site's simulator chances, "
-                  "implied with no market.")
+STANDINGS_DESC = ("MLB standings by division, wild card and league: records, splits, run differential, "
+                  "expected record, season races and simulator chances (implied, no market).")
 
 
 def build_standings() -> str:
@@ -9774,10 +9772,10 @@ SOURCE_ROWS = [
      "terms": "http://gdx.mlb.com/components/copyright.txt", "terms_label": "Copyright notice",
      "use": ("Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
              "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
-             "and zone metrics), and player headshots via MLB static media; on the Scores / "
-             "Standings page, live scores, win probability, box scores and highlight video "
-             "played in MLB's own embedded player, and the standings, records, splits and "
-             "expected records its Standings page prints. The Awards / HoF page reads the writers' MVP, "
+             "and zone metrics) and player headshots via MLB static media. On Scores / "
+             "Standings: live scores, win probability, box scores, highlight video in MLB's "
+             "own embedded player, and the standings, records, splits and expected records "
+             "the Standings page prints. The Awards / HoF page reads the writers' MVP, "
              "Cy Young, Rookie and Manager of the Year results from MLB's awards endpoint.")},
     {"name": "Baseball-Reference", "url": "https://www.baseball-reference.com/",
      "take": "war_daily (bWAR), historical player pages",
@@ -9863,11 +9861,11 @@ def build_sources() -> str:
         f'{_SOURCES_STYLE}{table}'
         '<div class="gl-intro">'
         "<p>PROSPX grades are a consensus of seven industry sources. A player's card shows "
-        "each source's own FV grade beside the consensus, and excerpts of the scouting "
-        f"reports {_name_series(SCOUT_REPORT_SOURCES)} have published on that player: the "
-        f"opening of each report, at most {REPORT_EXCERPT_CHARS} characters, labelled with its "
-        "source, list and publication date, with a View on link to the player's page at the "
-        "source where we know it and otherwise to the source's page for that list. The draft "
+        "each source's FV grade beside the consensus, with excerpts of the reports "
+        f"{_name_series(SCOUT_REPORT_SOURCES)} published on him, at most "
+        f"{REPORT_EXCERPT_CHARS} characters each, labelled with source, list and date. "
+        "Each excerpt links to the player's page at the source where known, otherwise to "
+        "the list page. The draft "
         "board shows excerpts of the draft reports from "
         f"{_name_series(DRAFT_REPORT_SOURCES)} the same way. The full reports stay with their "
         "publishers. Trademarks, data and report text belong to their owners.</p>"

@@ -122,7 +122,7 @@ def test_the_scores_files_hosts_are_credited():
     assert {"img.mlbstatic.com", "streamable.com", "statsapi.mlb.com"} <= seen, seen
     assert {_registered(h) for h in seen} == {"mlb.com"}, seen
     html = build_site.build_sources()
-    assert "Scores / Standings page, live scores, win probability, box scores and highlight video" in html
+    assert "On Scores / Standings: live scores, win probability, box scores, highlight video" in html
 
 
 def test_the_awards_results_are_credited():
@@ -148,4 +148,4 @@ def test_the_standings_files_hosts_are_credited():
     assert "mlb.com" in _sources_domains()
     html = build_site.build_sources()
     assert "live scores, standings and video" in html
-    assert "the standings, records, splits and expected records its Standings page prints" in html
+    assert "the standings, records, splits and expected records the Standings page prints" in html
