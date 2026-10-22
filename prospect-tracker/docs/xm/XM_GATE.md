@@ -307,8 +307,67 @@ rerun and an OWNER_QUESTION.md.
 
 ## 14. Amendments
 
-None.
+### 2026-10-22: the first read crashed in step 4; resumed once (owner answer XM1-Q1)
+
+* WHAT HAPPENED. `python tools/xm_lab.py --read` started 2026-10-22 at
+  00:34:53 EDT (04:34:53 UTC) in worktree wt/s200, code head `70864a33`, and
+  ended at 00:35:57 EDT with exit 139; bash reported "Segmentation fault".
+  Its stdout and stderr, teed to the task directory before the run, were
+  empty: no Python traceback and no exception message. The artifact's
+  `order` ended at `development`: steps 1 to 3 (fixture dry run, planted
+  recovery, development read and selection) were written. No holdout
+  prediction, metric, paired bound or verdict was written to any file or
+  printed, and none was seen. Windows logged no application error for the
+  process. The machine has recorded memory-access faults (bugchecks 0x7e and
+  0x1e, code c0000005), and this interpreter has recorded native access
+  violations in numpy fancy-index assignment inside long bootstrap loops in
+  two other labs (`tools/efv_rank_objective_lab.py`,
+  `tools/ba_tool_grade_lab.py`).
+* THE RESUME RULE (owner answer XM1-Q1, "Resume once", 2026-10-22). Steps 4
+  and 5 of section 13 run ONCE, by `python tools/xm_lab.py --resume-holdout`,
+  in a fresh process, from the development block as persisted: the selection
+  (a_incumbent) and the band methods are read from the artifact and never
+  recomputed. Planted recovery, the development read and the selection are
+  not rerun. The resume refuses if the artifact already holds a holdout
+  block, if this document changed above this section, or if the rebuilt
+  input counts differ from the persisted ones. Its stdout and stderr are
+  teed to the task directory before it runs.
+* THE CRASH FIX; no registered choice changes. The weight matrix of the
+  section 9 player-clustered bootstrap is built by one bincount instead of an
+  `np.add.at` fancy-index accumulation. The draws, B 4000 and seed 20261019
+  are unchanged and the counts are exactly equal (pinned by a test; the
+  fixture dry run is byte-identical before and after). faulthandler is on, so
+  a native fault leaves a Python traceback.
+* If the resume dies after scoring began, the read is VOID under section 9:
+  no verdict, no registry claim, no further rerun, and an owner question.
 
 ## 15. Results
 
-Not read.
+Read 2026-10-22: steps 1 to 3 by `--read`, steps 4 and 5 once by
+`--resume-holdout` (section 14). Artifact `data/xm_eval.json`; plain-language
+write-up `docs/xm/RESULTS.md`.
+
+* Planted recovery: P1 censoring passed (Tobit RMSE 0.053 against least
+  squares 0.059, 0.6 percent censored). P2a: incumbent 1.128 and hurdle 1.098
+  times the oracle MAE, pass; GBM 1.179, FAIL against the 1.15 bar, so (c) is
+  VOID. P2b permuted null: all three pass.
+* Development 2018-2024 (n 893 MLB deals), log-total MAE: incumbent 0.742,
+  hurdle 0.768, GBM 0.734 (VOID, not eligible), NULL 1 1.015, constant 1.141.
+  Band methods: in-sample for (a) and (b); conformal for (c) (in-sample
+  coverage 0.515). SELECTED: (a) the incumbent; no challenger is read.
+* Holdout 2025 and 2026 (n 306 MLB deals, 260 players), read once:
+  incumbent 0.736, NULL 1 0.899, constant 1.163. Incumbent against NULL 1:
+  +0.163, one-sided 95 percent lower bound +0.092. P10-P90 coverage 0.853;
+  years exact 0.765.
+* VERDICT: INCUMBENT. Registry row `xm`: `provisional`,
+  `provisional_kind` `inherits_parent_gate`. The site may use only the
+  section 9 INCUMBENT words.
+* MLB Trade Rumors, sticker basis: development 309 paired rows, MLBTR 0.453
+  against the incumbent 0.832; holdout 92 paired rows, MLBTR 0.452 against
+  0.712, MLBTR better with the lower bound of its improvement above 0. No
+  claim against MLBTR is made.
+* Counterfactual (2027 winter, descriptive): share outside the training
+  support, prospects 0.614, pre-arbitration 0.060, arbitration 0.003.
+  Extension anchor: median bought-FA AAV over xM$ AAV 1.034 (n 101, 95
+  percent interval 0.813 to 1.352), inconclusive. Posting anchor: NOT
+  MEASURABLE (48 rows, median AAV $3.112M).
