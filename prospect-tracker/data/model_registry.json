@@ -6484,10 +6484,24 @@
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
    "owner": "Awards / HoF module",
-   "notes": "AWARDS_11_FLIP_RENAME 2026-10-09, the commit that serves /awards/ and renames the module Awards / HoF (owner ask 2026-10-02). A published rule, not a model and not a forecast: the page prints no chance of winning and no count of agreement with the writers. The 2026 selection reads the write-once record data/_labs/awards/frozen_2026.json (sha256 fc51d2e9b763, frozen 2026-10-08 on ewar_v2, owner answer AW-Q2); later revisions show as Now and never move the podium. Manager of the Year ranks club-seasons because no manager entity is on disk (M-MWAR-2). The projection superlatives are dark for 2026 (AW-Q3); the prospect superlatives read only debut cohorts the reserved eFV frames leave open. Writers' results come from MLB's StatsAPI awards endpoint (AW-Q4).",
+   "notes": "AWARDS_11_FLIP_RENAME 2026-10-09, the commit that serves /awards/ and renames the module Awards / HoF (owner ask 2026-10-02). A published rule, not a model and not a forecast: the page prints no chance of winning and no count of agreement with the writers. The 2026 selection reads the write-once record data/_labs/awards/frozen_2026.json (sha256 fc51d2e9b763, frozen 2026-10-08 on ewar_v2, owner answer AW-Q2); later revisions show as Now and never move the podium. Manager of the Year ranks club-seasons because no manager entity is on disk (M-MWAR-2). The projection superlatives are dark for 2026 (AW-Q3); the prospect superlatives read only debut cohorts the reserved eFV frames leave open. Writers' results come from MLB's StatsAPI awards endpoint (AW-Q4). 2026-10-22 EWAR_SITEWIDE_CALIBRATION: beside the frozen selection the page serves the same rules on eWAR realized (row awards_realized_read; docs/ewar-2026-10-22/EWAR_SITEWIDE_CALIBRATION.md part 4); the selection, its freeze and the closed season files do not move.",
    "last_checked": "2026-10-09",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "awards_realized_read",
+   "summary": "Measured, not a forecast: the Awards rules applied to eWAR realized, each place with a measurement band, and whether the first leads by more than the band.",
+   "surface": "/awards/: the 'The rule on eWAR realized' panel on each MVP, Cy Young and Rookie card (2021 on)",
+   "predicts": "nothing: who led each award on eWAR realized under the module's own floors and rookie test",
+   "champion": "awards_core.deserved_block (payload key realized_read): the rule's top 5 on eWAR realized; band realized +/- 1.645 sigma, sigma^2 = k_bat * PA + k_pit * IP, k = sum (fWAR - bWAR)^2 / (2 * sum exposure) over player-seasons 2015 to 2025 without 2020; 'too close to call' when another place is within 1.645 * sqrt(sigma_1^2 + sigma_i^2) of the first",
+   "baseline": "n/a: descriptive; the frozen selection on the displayed series stands beside it",
+   "metric": "Accounting checks only (D-1 to D-4 of part 4.4): realized league totals reconcile with the artifact, the pool equals the selection rule's, k is finite from at least 1,000 player-seasons, closed season files byte-identical. The band is the disagreement between two published WAR systems, not a confidence interval.",
+   "eval_artifact": "data/awards_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "Awards / HoF module",
+   "notes": "Registered in docs/ewar-2026-10-22/EWAR_SITEWIDE_CALIBRATION.md part 4 (committed alone before any number; owner EW3-20 'the Awards module shows who deserved each award on eWAR realized with its uncertainty band'; the page words it neutrally under the module's copy rules). No rate or count of writers' winners inside or outside the band is computed. Band constants measured 2026-10-22: k_bat 0.000525 wins^2 per PA (8,592 player-seasons), k_pit 0.003787 wins^2 per IP (8,221)."
   },
   {
    "model_id": "mgmt_decision_ledger",

@@ -153,3 +153,13 @@ def test_the_wag_flip_rides_with_its_glossary_and_registry_records():
     assert R.WAG_NEW in _glossary("wag") and R.WAG_OLD not in _glossary("wag")
     assert R.WARWAG_NEW in _glossary("warwag")
     assert R.WAG_TAG in _registry("wag")["notes"]
+
+
+def test_the_awards_flip_rides_with_its_glossary_and_registry_records():
+    assert A.AWARDS_DESERVED_LIVE is True
+    import register_ewar_sitewide as R
+    assert R.REAL_NEW in _glossary("ewar_realized") and R.REAL_OLD not in _glossary("ewar_realized")
+    row = _registry("awards_realized_read")
+    assert row and row["verdict"] == "provisional" and row["provisional_kind"] == "measurement_only"
+    assert R.SEL_TAG in _registry("awards_selection")["notes"]
+    assert A.verdict_hits(row["summary"]) == []

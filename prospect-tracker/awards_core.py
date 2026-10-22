@@ -167,7 +167,8 @@ SELECTION_REGISTRY = "awards_selection"
 #: part 4; owner decision EW3-20). Off: the band constants and the deserved ballots are
 #: built into awards_eval.json only; on: awards.json also serves them under `deserved`,
 #: keyed by season, so the frozen selection and the closed season files never move.
-AWARDS_DESERVED_LIVE = False
+#: FLIPPED 2026-10-22 after the registered check (part 4.4, recorded in part 9.1) held.
+AWARDS_DESERVED_LIVE = True
 #: Places on each deserved ballot, and the band's multiplier (part 4.2 and 4.3).
 DESERVED_N = 5
 DESERVED_Z = 1.645

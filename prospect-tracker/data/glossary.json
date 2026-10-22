@@ -2020,7 +2020,7 @@
     "realized eWAR"
    ],
    "priority": 6,
-   "definition": "The companion of eWAR on the same frame: what a season was worth in the runs that scored. Pitchers are priced on the runs they allowed, adjusted for park, their club's defense and the runners they inherited and left behind, in place of FanGraphs' FIP-based pitching; everything else, the ABS challenge part included, is eWAR's. Shown beside eWAR on player pages and in Awards; it never sorts, ranks or sums anything there.",
+   "definition": "The companion of eWAR on the same frame: what a season was worth in the runs that scored. Pitchers are priced on the runs they allowed, adjusted for park, their club's defense and the runners they inherited and left behind, in place of FanGraphs' FIP-based pitching; everything else, the ABS challenge part included, is eWAR's. Shown beside eWAR on player pages and in Awards, where it also ranks a second read of the Awards rules: the same rules applied to eWAR realized, with a measurement band. It sorts and sums nothing else.",
    "methodology": "From 2016. For each pitcher-season the runs he was charged with are corrected for the runners he left on base who later scored and for the inherited runners who scored on him, each against the league's scoring rate for that base and out, then park-adjusted, with his club's fielding runs put back in proportion to the batters he faced. That runs-allowed rate replaces FIP in FanGraphs' own pitcher WAR chain, and the change is re-centred so the pitchers' league total equals FanGraphs'. Hitters' eWAR realized equals their eWAR.",
    "formula": "eWAR realized = eWAR + (pitchers) runs-allowed WAR - FIP WAR on FanGraphs' chain, re-centred per season",
    "seeAlso": [
