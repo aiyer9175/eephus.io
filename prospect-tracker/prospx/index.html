@@ -21687,10 +21687,9 @@ function _boardAsOf(dateStr) {
     if (!best) continue;
     const cw = p.career_war || {};
     // Hindsight outcomes (only meaningful for since-debuted players). career_war is the
-    // displayed eWAR (source:"ewar_v2") and WAR/yr is its full-season-normalized rate
-    // (gradWarPerYr). WAG is NOT on that series: its observed_war is the label WAR
-    // (career_war_label, fWAR since the 2026-10 epoch), the basis wagWarBasis names
-    // on the card.
+    // displayed eWAR and WAR/yr is its full-season-normalized rate (gradWarPerYr). WAG's
+    // observed_war is on the same headline eWAR since 2026-10-22 (storage.WAG_EWAR_HEADLINE;
+    // the block's war_basis stamp, which wagWarBasis names on the card).
     const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
     const wagObj = (p.debuted_value || {}).wag;
     rows.push({

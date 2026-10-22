@@ -6584,8 +6584,9 @@ WAG_DEFINITION = "engine_at_debut"
 # row re-expressed on the headline eWAR (war_source.row_on_provider(row, "ewar_v3"), named
 # literally so an EWAR_V3_LIVE rollback to eWAR v2 never moves WAG onto a bWAR-based series);
 # off, it is the stored row (published fWAR). The expected leg, the exposure gate, the season
-# count and the debuted value (surplus, trade value) are untouched either way.
-WAG_EWAR_HEADLINE = False
+# count and the debuted value (surplus, trade value) are untouched either way. FLIPPED 2026-10-22
+# after the registered check (part 3.3, recorded in part 9.1) held: C-1, C-2 and C-3.
+WAG_EWAR_HEADLINE = True
 
 
 def _wag_observed_war(cw: dict | None) -> tuple[float | None, str]:

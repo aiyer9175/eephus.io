@@ -15,6 +15,9 @@ import pytest
 
 import awards_core as A
 import storage
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent / "tools"))
 
 
 # --------------------------------------------------------------------------- #
@@ -125,3 +128,28 @@ def test_the_deserved_flag_and_its_constants():
     assert A.DESERVED_N == 5 and A.DESERVED_Z == 1.645
     assert A.DESERVED_AWARDS == ("MVP", "CY", "ROY")
     assert A.BAND_SEASONS == (2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025)
+
+
+# --------------------------------------------------------------------------- #
+# the flips (part 7 step 4)
+# --------------------------------------------------------------------------- #
+def _glossary(eid: str) -> str:
+    import json
+    from pathlib import Path
+    doc = json.loads((Path(__file__).resolve().parent / "data" / "glossary.json").read_text(encoding="utf-8"))
+    return json.dumps(next(e for e in doc["entries"] if e.get("id") == eid), ensure_ascii=False)
+
+
+def _registry(mid: str) -> dict:
+    import json
+    from pathlib import Path
+    doc = json.loads((Path(__file__).resolve().parent / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    return next((m for m in doc["models"] if m.get("model_id") == mid), {})
+
+
+def test_the_wag_flip_rides_with_its_glossary_and_registry_records():
+    assert storage.WAG_EWAR_HEADLINE is True
+    import register_ewar_sitewide as R
+    assert R.WAG_NEW in _glossary("wag") and R.WAG_OLD not in _glossary("wag")
+    assert R.WARWAG_NEW in _glossary("warwag")
+    assert R.WAG_TAG in _registry("wag")["notes"]
