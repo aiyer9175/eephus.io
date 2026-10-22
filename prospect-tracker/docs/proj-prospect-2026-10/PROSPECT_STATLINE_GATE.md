@@ -451,6 +451,174 @@ list; the gate sha and the INC sha. Artifact `data/prospect_statline_eval.json` 
 artifact that ships); registry row `mlb_projections_prospects_statline`. Nothing above this part
 is edited once anything is written below it, except by the amendments listed at the top.
 
+### 2026-10-21: the look, taken once, as an OWNER-WAIVED EARLY READ (EW3-5)
+
+Written by TL_17_STATLINE_LOOK. The look ran once on 2026-10-21 (local; 2026-10-22T02:41Z) from HEAD
+`9050f778` (Amendment 2 committed alone just before it) by `python -u look_driver.py --look`, a
+driver kept in the task's output directory that calls `prospect_statline.run_look` once and adds
+the companions this document names (the overlap counts of 0.2 and 0.3 from row keys only, the R4
+source scan, the INC pin, the input sha256 at start and end). Its stdout and stderr were tee'd to
+the task's output directory before anything else ran (`look_stdout_stderr.log`, rc 0, scoring
+2026-10-22T02:41:26Z to 02:41:45Z). Before it: `python prospect_statline.py --dry-run` (Part 10.2,
+fixtures with None values, completed) and the driver's own dry run of the whole reporting path on
+the same fixtures (completed). Artifact `data/prospect_statline_eval.json`, sha256
+`21c253ffb24f93e09b68dee365b6dda47c2c7863f65cf8eaee3b1355af714676`, spent true; registry row `mlb_projections_prospects_statline`. `prospect_statline.py`
+is byte-identical to the freeze (sha256 8c9f8d69...e51fc); no line of the module was edited.
+
+**Verdicts.** L1: PASS for hitter AVG and hitter xwOBA; NULL for the other ten rates (hitter ISO
+cleared its lower bound and Holm but its P10 to P90 coverage, 0.852, sits above 0.85, so the
+coverage veto holds it at NULL); no LOSS and no NOT COMPUTABLE. L2: INC retains (the model's
+first-three-season WAR loses MAE and within-cohort rank to the FV-anchored path; both lower bounds
+below 0). Under Part 12, TL_18_STATLINE_DISPLAY_FLIP may serve the arrival line for hitter AVG and
+hitter xwOBA only, behind `SERVE_PROSPECT_STATLINE`; the WAR cell stays the served FV-anchored
+number. Against Part 8's prediction: K% did not pass (NULL), ISO did not pass (coverage veto),
+AVG passed where a NULL was expected, and L2 is the rank loss predicted, with an MAE loss beside it.
+
+**The record, pasted verbatim from the runner.**
+
+```
+Look on holdout H (debut cohorts 2022, 2023, 2024), fit once on debut cohorts 2016 to 2021; generated 2026-10-22T02:41:46Z; runner head 9050f778; gate sha 3507271552aed19de17fae2729d11523d4ce1894; freeze 1c25c75b73b1fa822b370c1d4d6d2e877bd6752f; amendment 2 9050f77877117863366cd3181aabe19453fc9254.
+
+L1, per stat and side (exposure-weighted MAE on identical rows; d = MAE(best baseline) minus MAE(model), positive favours the model; one-sided 95% bounds from B 2000 player-clustered draws, seed 20261210; Holm at 0.05 within each side's family; coverage of [P10, P90] must sit in [0.75, 0.85]):
+- hitters K%: n 230, MAE model 0.03486, best baseline B1 0.03582, d +0.00096, lb95 -0.00071, ub95 +0.00249, p 0.1844, Holm step 5 of 7 (threshold 0.0167), does not survive, coverage 0.778, verdict NULL
+- hitters BB%: n 230, MAE model 0.01625, best baseline B1 0.01607, d -0.00018, lb95 -0.00056, ub95 +0.00022, p 0.7846, Holm step 7 of 7 (threshold 0.0500), does not survive, coverage 0.743 (veto), verdict NULL
+- hitters ISO: n 230, MAE model 0.03030, best baseline B2 0.03438, d +0.00408, lb95 +0.00207, ub95 +0.00597, p 0.0005, Holm step 1 of 7 (threshold 0.0071), survives, coverage 0.852 (veto), verdict NULL
+- hitters AVG: n 230, MAE model 0.01912, best baseline B2 0.02013, d +0.00101, lb95 +0.00044, ub95 +0.00161, p 0.0035, Holm step 2 of 7 (threshold 0.0083), survives, coverage 0.835, verdict PASS
+- hitters BABIP: n 230, MAE model 0.02377, best baseline B0 0.02402, d +0.00026, lb95 -0.00118, ub95 +0.00172, p 0.3898, Holm step 6 of 7 (threshold 0.0250), does not survive, coverage 0.813, verdict NULL
+- hitters wOBA: n 230, MAE model 0.02161, best baseline B0 0.02338, d +0.00177, lb95 +0.00020, ub95 +0.00335, p 0.0320, Holm step 4 of 7 (threshold 0.0125), does not survive, coverage 0.822, verdict NULL
+- hitters xwOBA: n 230, MAE model 0.01923, best baseline B0 0.02248, d +0.00326, lb95 +0.00135, ub95 +0.00522, p 0.0045, Holm step 3 of 7 (threshold 0.0100), survives, coverage 0.817, verdict PASS
+- pitchers K%: n 257, MAE model 0.03259, best baseline B1 0.03235, d -0.00024, lb95 -0.00170, ub95 +0.00116, p 0.6037, Holm step 4 of 5 (threshold 0.0250), does not survive, coverage 0.833, verdict NULL
+- pitchers BB%: n 257, MAE model 0.01644, best baseline B1 0.01621, d -0.00024, lb95 -0.00122, ub95 +0.00074, p 0.6477, Holm step 5 of 5 (threshold 0.0500), does not survive, coverage 0.829, verdict NULL
+- pitchers HR per BF: n 257, MAE model 0.00712, best baseline B0 0.00713, d +0.00001, lb95 -0.00006, ub95 +0.00008, p 0.4113, Holm step 3 of 5 (threshold 0.0167), does not survive, coverage 0.821, verdict NULL
+- pitchers BABIP: n 257, MAE model 0.02070, best baseline B0 0.02096, d +0.00025, lb95 -0.00003, ub95 +0.00057, p 0.0720, Holm step 2 of 5 (threshold 0.0125), does not survive, coverage 0.794, verdict NULL
+- pitchers xwOBA: n 257, MAE model 0.01904, best baseline B0 0.01998, d +0.00094, lb95 +0.00009, ub95 +0.00176, p 0.0370, Holm step 1 of 5 (threshold 0.0100), does not survive, coverage 0.825, verdict NULL
+
+L2, first-three-season fWAR (frozen vintage, FanGraphs frame) against INC (the served FV-anchored path) on identical rows: n 694; MAE model 1.6626, INC 1.2899, d_mae -0.3727, lb95 -0.4310; within-(side, cohort) Spearman model 0.1627, INC 0.3380, d_rho -0.1753, lb95 -0.2396 (2000 draws); calibration slope model 0.9150, INC 1.4750; verdict INC retains
+
+Strata (gate Part 7; reported, never adjudicated; under 20 rows prints n only):
+- side: hit n 329 (hit:k_pct n 230 MAE model 0.0349 B0 0.0458; hit:bb_pct n 230 MAE model 0.0162 B0 0.0195; hit:iso n 230 MAE model 0.0303 B0 0.0373; hit:avg n 230 MAE model 0.0191 B0 0.0206; hit:babip n 230 MAE model 0.0238 B0 0.0240; hit:woba n 230 MAE model 0.0216 B0 0.0234; hit:xwoba n 230 MAE model 0.0192 B0 0.0225; WAR n 329 MAE model 2.025 INC 1.624) | pit n 365 (pit:k_pct n 257 MAE model 0.0326 B0 0.0343; pit:bb_pct n 257 MAE model 0.0164 B0 0.0186; pit:hr_bf n 257 MAE model 0.0071 B0 0.0071; pit:babip n 257 MAE model 0.0207 B0 0.0210; pit:xwoba n 257 MAE model 0.0190 B0 0.0200; WAR n 365 MAE model 1.336 INC 0.989)
+- debut_age_band: 21 or younger n 45 (hit:k_pct n 31 MAE model 0.0332 B0 0.0351; hit:bb_pct n 31 MAE model 0.0180 B0 0.0214; hit:iso n 31 MAE model 0.0277 B0 0.0317; hit:avg n 31 MAE model 0.0176 B0 0.0185; hit:babip n 31 MAE model 0.0235 B0 0.0255; hit:woba n 31 MAE model 0.0209 B0 0.0237; hit:xwoba n 31 MAE model 0.0218 B0 0.0267; WAR n 45 MAE model 3.976 INC 3.192) | 22 to 23 n 198 (hit:k_pct n 91 MAE model 0.0348 B0 0.0488; hit:bb_pct n 91 MAE model 0.0138 B0 0.0177; hit:iso n 91 MAE model 0.0325 B0 0.0388; hit:avg n 91 MAE model 0.0201 B0 0.0218; hit:babip n 91 MAE model 0.0232 B0 0.0247; hit:woba n 91 MAE model 0.0224 B0 0.0233; hit:xwoba n 91 MAE model 0.0180 B0 0.0213; pit:k_pct n 62 MAE model 0.0360 B0 0.0396; pit:bb_pct n 62 MAE model 0.0156 B0 0.0156; pit:hr_bf n 62 MAE model 0.0060 B0 0.0059; pit:babip n 62 MAE model 0.0206 B0 0.0208; pit:xwoba n 62 MAE model 0.0185 B0 0.0192; WAR n 198 MAE model 1.700 INC 1.459) | 24 to 25 n 285 (hit:k_pct n 80 MAE model 0.0377 B0 0.0484; hit:bb_pct n 80 MAE model 0.0170 B0 0.0200; hit:iso n 80 MAE model 0.0275 B0 0.0352; hit:avg n 80 MAE model 0.0175 B0 0.0192; hit:babip n 80 MAE model 0.0236 B0 0.0219; hit:woba n 80 MAE model 0.0202 B0 0.0222; hit:xwoba n 80 MAE model 0.0192 B0 0.0207; pit:k_pct n 126 MAE model 0.0293 B0 0.0301; pit:bb_pct n 126 MAE model 0.0160 B0 0.0188; pit:hr_bf n 126 MAE model 0.0067 B0 0.0067; pit:babip n 126 MAE model 0.0189 B0 0.0189; pit:xwoba n 126 MAE model 0.0184 B0 0.0189; WAR n 285 MAE model 1.552 INC 1.249) | 26 or older n 166 (hit:k_pct n 28 MAE model 0.0268 B0 0.0454; hit:bb_pct n 28 MAE model 0.0222 B0 0.0224; hit:iso n 28 MAE model 0.0380 B0 0.0537; hit:avg n 28 MAE model 0.0254 B0 0.0259; hit:babip n 28 MAE model 0.0289 B0 0.0258; hit:woba n 28 MAE model 0.0253 B0 0.0288; hit:xwoba n 28 MAE model 0.0193 B0 0.0262; pit:k_pct n 61 MAE model 0.0341 B0 0.0349; pit:bb_pct n 61 MAE model 0.0184 B0 0.0212; pit:hr_bf n 61 MAE model 0.0087 B0 0.0088; pit:babip n 61 MAE model 0.0257 B0 0.0266; pit:xwoba n 61 MAE model 0.0191 B0 0.0210; WAR n 166 MAE model 1.181 INC 0.642)
+- position_group: C n 32 (WAR n 32 MAE model 2.409 INC 1.384) | DH n 1 | IF n 170 (hit:k_pct n 126 MAE model 0.0384 B0 0.0462; hit:bb_pct n 126 MAE model 0.0152 B0 0.0194; hit:iso n 126 MAE model 0.0328 B0 0.0405; hit:avg n 126 MAE model 0.0193 B0 0.0199; hit:babip n 126 MAE model 0.0218 B0 0.0220; hit:woba n 126 MAE model 0.0221 B0 0.0231; hit:xwoba n 126 MAE model 0.0191 B0 0.0203; WAR n 170 MAE model 1.960 INC 1.573) | OF n 111 (hit:k_pct n 73 MAE model 0.0294 B0 0.0474; hit:bb_pct n 73 MAE model 0.0172 B0 0.0202; hit:iso n 73 MAE model 0.0261 B0 0.0332; hit:avg n 73 MAE model 0.0186 B0 0.0214; hit:babip n 73 MAE model 0.0264 B0 0.0263; hit:woba n 73 MAE model 0.0198 B0 0.0237; hit:xwoba n 73 MAE model 0.0184 B0 0.0226; WAR n 111 MAE model 1.967 INC 1.712) | RP n 45 (pit:k_pct n 21 MAE model 0.0338 B0 0.0374; pit:bb_pct n 21 MAE model 0.0188 B0 0.0259; pit:hr_bf n 21 MAE model 0.0099 B0 0.0100; pit:babip n 21 MAE model 0.0261 B0 0.0300; pit:xwoba n 21 MAE model 0.0213 B0 0.0213; WAR n 45 MAE model 0.507 INC 0.456) | SP n 320 (pit:k_pct n 236 MAE model 0.0325 B0 0.0341; pit:bb_pct n 236 MAE model 0.0163 B0 0.0182; pit:hr_bf n 236 MAE model 0.0069 B0 0.0069; pit:babip n 236 MAE model 0.0204 B0 0.0204; pit:xwoba n 236 MAE model 0.0189 B0 0.0199; WAR n 320 MAE model 1.453 INC 1.064) | other n 15
+- last_level: A+ or below n 97 (hit:k_pct n 32 MAE model 0.0350 B0 0.0476; hit:bb_pct n 32 MAE model 0.0169 B0 0.0234; hit:iso n 32 MAE model 0.0299 B0 0.0398; hit:avg n 32 MAE model 0.0172 B0 0.0172; hit:babip n 32 MAE model 0.0232 B0 0.0227; hit:woba n 32 MAE model 0.0215 B0 0.0241; hit:xwoba n 32 MAE model 0.0180 B0 0.0237; pit:k_pct n 35 MAE model 0.0373 B0 0.0374; pit:bb_pct n 35 MAE model 0.0182 B0 0.0228; pit:hr_bf n 35 MAE model 0.0093 B0 0.0093; pit:babip n 35 MAE model 0.0248 B0 0.0248; pit:xwoba n 35 MAE model 0.0259 B0 0.0269; WAR n 97 MAE model 1.934 INC 1.574) | AA n 291 (hit:k_pct n 97 MAE model 0.0318 B0 0.0392; hit:bb_pct n 97 MAE model 0.0181 B0 0.0197; hit:iso n 97 MAE model 0.0293 B0 0.0369; hit:avg n 97 MAE model 0.0185 B0 0.0202; hit:babip n 97 MAE model 0.0240 B0 0.0253; hit:woba n 97 MAE model 0.0207 B0 0.0249; hit:xwoba n 97 MAE model 0.0185 B0 0.0229; pit:k_pct n 123 MAE model 0.0301 B0 0.0339; pit:bb_pct n 123 MAE model 0.0165 B0 0.0187; pit:hr_bf n 123 MAE model 0.0069 B0 0.0070; pit:babip n 123 MAE model 0.0183 B0 0.0188; pit:xwoba n 123 MAE model 0.0187 B0 0.0189; WAR n 291 MAE model 1.713 INC 1.363) | AAA n 301 (hit:k_pct n 100 MAE model 0.0374 B0 0.0510; hit:bb_pct n 100 MAE model 0.0142 B0 0.0178; hit:iso n 100 MAE model 0.0307 B0 0.0366; hit:avg n 100 MAE model 0.0207 B0 0.0224; hit:babip n 100 MAE model 0.0240 B0 0.0234; hit:woba n 100 MAE model 0.0226 B0 0.0218; hit:xwoba n 100 MAE model 0.0202 B0 0.0217; pit:k_pct n 96 MAE model 0.0323 B0 0.0342; pit:bb_pct n 96 MAE model 0.0157 B0 0.0171; pit:hr_bf n 96 MAE model 0.0068 B0 0.0068; pit:babip n 96 MAE model 0.0224 B0 0.0226; pit:xwoba n 96 MAE model 0.0176 B0 0.0193; WAR n 301 MAE model 1.532 INC 1.140) | none n 5
+
+Holdout overlap (holdout_debut_records, from row keys only): n 743; in look P's key frame 300, look T's frozen grade rows 636, look W's universe 669, union 679; inside the anchor's fit cohort ([2014, 2020]) 426.
+Holdout overlap (scored_rows, from row keys only): n 694; in look P's key frame 300, look T's frozen grade rows 636, look W's universe 669, union 679; inside the anchor's fit cohort ([2014, 2020]) 426.
+Source scan (R4, gate 0.2 b): 2 line(s) in 16 modules name a look P, T or W artifact or runner: tool_implied.py:38 tool_grade_tables; tool_implied.py:328 tool_grade_tables; imports of a look runner: none.
+
+Row accounting: debuts_in_cohorts 1609, no_side 11, no_mlbam 0, no_asof_point 89, no_tool_grades 16, no_feature_vector 0, placeholder_debut_date 0, profiles 1509; scored rows 694 (by cohort 2022: 246, 2023: 231, 2024: 217).
+Fit: training cohorts [2016, 2017, 2018, 2019, 2020, 2021] (n 815), last training season 2021; penalties hit:k_pct 1000.000, hit:bb_pct 0.001, hit:iso 1000.000, hit:avg 1000.000, hit:babip 1000.000, hit:woba 1000.000, hit:xwoba 1000.000, pit:k_pct 10.000, pit:bb_pct 1000.000, pit:hr_bf 0.001, pit:babip 1000.000, pit:xwoba 0.001.
+Label: fwar_vintage 2026-10-02-a020cf64844a (Amendment 2; season totals equal to the freeze file's 2026-10-02-0341299c20ec: True).
+INC pin: head 9050f778, prospect_path.py 98c36f82e8e8, value_framework.py 0ab8cd2778cd, value_framework_config.yaml 75d3415d70dc, data/value_framework_fitted.json a36d22cefe5f (empirical_anchors generated_at 2026-10-03T16:35:15, cohort_window [2014, 2020], n_cohort 3463), SERVE_PROSPECT_ANCHOR_V2 False.
+Inputs unchanged during the run: True (66 files hashed at start and end).
+Accuracy AMONG DEBUTS: every number here is accuracy among players who reached the majors, conditional on reaching MLB, not accuracy over all prospects (gate 0.5).
+```
+
+**Disclosures carried into the verdict.**
+- The runner's own sha check (`efv_vintage_frame.gate_sha_committed`, called by `run_look`) reads
+  `docs/efv-v2/EFV_V2_GATE.md` at the named commit, not this file. Part 10.4 asks for this file, so
+  the driver checked it directly before scoring: at `3507271552aed19de17fae2729d11523d4ce1894` this
+  file carries `Registration status: REGISTERED` alone on its line, the commit is an ancestor of
+  HEAD, and the 1.7 freeze is recorded. The module was not changed after the freeze to fix it.
+- No fetch ran: StatsAPI season lines are read inside `scrapers.cache_only()`, and the driver pinned
+  `mlb_player_export._SAVANT_LIVE_TTL_S` to infinity so no current-season Savant file was
+  refreshed; the 66 input files hashed at start and end are identical.
+- Frame completeness (9.1 point 3): the 2026 season files the look read were written on 2026-10-21
+  (`fa_statsapi_hitting_2026.json` 22:09, `fa_statsapi_pitching_2026.json` 22:09,
+  `expected_batter_2026.csv` 22:26, `expected_pitcher_2026.csv` 22:25, local), after the regular
+  season ended on 2026-09-27.
+- The label file's id is 2026-10-02-a020cf64844a (Amendment 2); its season totals equal the
+  freeze-time file's (2026-10-02-0341299c20ec) on all 35,904 keys, checked before scoring.
+- The look-P overlap count is P's universe before its 300 PA floor (the floor reads exposure), so
+  it is an upper bound on the rows look P read; look W's is its universe before its tool and
+  exposure filters; look T's is its frozen grade rows file. No outcome was read to count them.
+  The source scan found no import of a look runner and no read of a look P, T or W artifact: its
+  two hits are docstring lines of `tool_implied.py` (38 and 328) that say no table reads
+  `data/tool_grade_tables.json`.
+- 426 of the 694 scored holdout players carry an FV snapshot inside the anchor's fit window
+  (2014 to 2020), so INC's empirical anchors were partly fit on rows of these players (0.3); that
+  tilts L2 toward INC, the conservative direction for the challenger.
+- numpy printed two RuntimeWarnings ("Mean of empty slice", `prospect_statline.py:770`, the
+  design matrix's training mean of a column with no training value); the missing-input rule of
+  Amendment 1 handles that column, and the run completed with rc 0.
+- Survivorship: every number above is accuracy among debuts, conditional on reaching MLB, not
+  accuracy over all prospects (0.5).
+
+**Input sha256, at start (equal at end).**
+
+- `data/debuts.json`: fec88ea5042ed4474d739518f09dfe3efd40269d5f7d428cf94b8a5250d5807f
+- `data/fwar_vintage.json`: 5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7
+- `data/league_constants.json`: c83180e6f1477a975dc3fef07631128865a8e2f17b78629948ccf1e592b8a191
+- `prospect_statline.py`: 8c9f8d69754cc13413463530438f80eff6277f82fbe8fbc6115375b0fe9e51fc
+- `tool_implied.py`: 536d88f42cc1bedbadfb3d31f730abdede6dc564a661ceacc88f9b2d65beca1d
+- `aging_v3.py`: 4a547052b3cf0620096012c878bfc585e9189e6d1dca3e2f0ccb3387fdc414e1
+- `proj_components.py`: bd91c61103e5c1d21ca10eb7e340d29335765a114014d313a44dc699a4b482d9
+- `fwar_frame.py`: ea4aa4c74cd4244dee519785345cb08f39f1e03590cfd3c108b43cbef4ce41a3
+- `efv_proxy.py`: 0c3103b72b9a821ab1ea7f44d0af09ca5f0e23e04bd6fa4b6e152ac2dc509277
+- `efv_dataset.py`: 1eb380dbaa3876087e959cefd3e6f78432d20805ea882b1160ad062dfeaccd99
+- `efv_model.py`: 01dacb910a2f92729105092f89830aab3dbc6891e32fa7b8319df55cada5853f
+- `college_translation.py`: 9da8ce0404758d44c48dcf097c58c37cd1feca6447283e189d11ad38874807ec
+- `milb_translation.py`: e606313137c377accd67580683e8872b9bdd52586f5bda87b73b29ca00926ff0
+- `milb_history.py`: aad8e61284b01255b42b71fb074b3ea4d284df5d1de655ff7833056a6e30afa2
+- `prospect_path.py`: 98c36f82e8e8584ebb9f4cc501186b0873c796249480a2b780133b2b585d6479
+- `.cache/fa_statsapi_hitting_2016.json`: d033b8caf8cbf2f3cca381e81b01a5277fb5e8c73a6bfa84dbb056e748fd5020
+- `.cache/fa_statsapi_pitching_2016.json`: 1e8cdd99e1ce92b443dcfc373ffc185a9a94f4bf25a65a381deb07f8be0825f0
+- `.cache/savant_mlb/expected_batter_2016.csv`: 9f0cc11f247a968073fc761a00a58f3d89be6824be8cc8407be9ff242ae0ed16
+- `.cache/savant_mlb/expected_pitcher_2016.csv`: 12f45d0c3695416ee753eb82516bbbb4fb7b2269f7e89650dcbe3585fcb47235
+- `.cache/fa_statsapi_hitting_2017.json`: bb14f2a006eece205a1f1dc17a734c7eaa441eb2b9468e3f9c42dbff47577d39
+- `.cache/fa_statsapi_pitching_2017.json`: 3ffab5e561f0cf194a4c51dea8d6638c223d83a1827af446b320da7fedb76369
+- `.cache/savant_mlb/expected_batter_2017.csv`: eec55473fc2db5d72997a09d58717da3a8c8024515409e69d0d7631a37ec9920
+- `.cache/savant_mlb/expected_pitcher_2017.csv`: 88d822b383a93a30eb6f0a795728c86c7b2184cacf25618f389297f1d64bf76a
+- `.cache/fa_statsapi_hitting_2018.json`: 0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97
+- `.cache/fa_statsapi_pitching_2018.json`: 6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e
+- `.cache/savant_mlb/expected_batter_2018.csv`: 6cf2c023f8c9bdef7c3a5b359ef0364429ac6bee4e1e83d294b2d28c048d5361
+- `.cache/savant_mlb/expected_pitcher_2018.csv`: 384dee71832bdef5159ab5b13d2144e0886f64e78679a531441f95265f6b4b8c
+- `.cache/fa_statsapi_hitting_2019.json`: 66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036
+- `.cache/fa_statsapi_pitching_2019.json`: f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864
+- `.cache/savant_mlb/expected_batter_2019.csv`: 9beea6d5192ae16fa4d710d8e7ac6ce767e9f9eb721fdabb9656ef96fd1ecbfd
+- `.cache/savant_mlb/expected_pitcher_2019.csv`: 58eefb050d6027d6345850e2ac9e851fabaf7bdd2d1e2f2e79fceb9fa785ded5
+- `.cache/fa_statsapi_hitting_2020.json`: 60a5ab0cc36c99bbbe322e1f0479bc5049a51b8eea4a2344eb0fb6c4c9869f5a
+- `.cache/fa_statsapi_pitching_2020.json`: 6f6e128c1f0f55f4445d9ec10ddb175f0a89475db94e931dddc7a97252c1ac62
+- `.cache/savant_mlb/expected_batter_2020.csv`: 3be0ec9c5ec5cef39b3d51904a119431dc2e290b0a1cce27614b4f7ef1f08ce3
+- `.cache/savant_mlb/expected_pitcher_2020.csv`: b1c47feb25ff203d2d9e883a4e562b0d280dc3f642e07c5d6da51f6a9aed6b6d
+- `.cache/fa_statsapi_hitting_2021.json`: ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02
+- `.cache/fa_statsapi_pitching_2021.json`: 6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70
+- `.cache/savant_mlb/expected_batter_2021.csv`: cd412383dc259dc97dcce08b6edf6408f98c78a5b29e6a8239043f06125ac846
+- `.cache/savant_mlb/expected_pitcher_2021.csv`: b1c764932ffbe1889c67a5d8f7440783fbd970c9690fb4ab8b296a68d3800d37
+- `.cache/fa_statsapi_hitting_2022.json`: 44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599
+- `.cache/fa_statsapi_pitching_2022.json`: fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8
+- `.cache/savant_mlb/expected_batter_2022.csv`: d0e7b2e15265cdc0508460869d3c8b04d389fab57a28c85f6910dc212783de6a
+- `.cache/savant_mlb/expected_pitcher_2022.csv`: b83f00123a31d59025f0cbdb25324234ec45f98c614dcb346325e71b4baa6193
+- `.cache/fa_statsapi_hitting_2023.json`: 1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c
+- `.cache/fa_statsapi_pitching_2023.json`: 8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75
+- `.cache/savant_mlb/expected_batter_2023.csv`: c9748b6a4fc12f826dbdf8f8de43ab160fdcd3e666a47f5e94be518e4ea98835
+- `.cache/savant_mlb/expected_pitcher_2023.csv`: 4c64c9838ad6ec061758dd42f33538db836afe867412a7d7b5a0082072f8f2f7
+- `.cache/fa_statsapi_hitting_2024.json`: 8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8
+- `.cache/fa_statsapi_pitching_2024.json`: f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225
+- `.cache/savant_mlb/expected_batter_2024.csv`: 49f1b57dc2ab1840eb5a467c0f812bb50631f7a905f970da0c94abe087bd0438
+- `.cache/savant_mlb/expected_pitcher_2024.csv`: b23dc93697cbff3e2e6f379f0a394cb5681fa036b93702ba0e68a7e00ee5d2eb
+- `.cache/fa_statsapi_hitting_2025.json`: a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935
+- `.cache/fa_statsapi_pitching_2025.json`: 18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392
+- `.cache/savant_mlb/expected_batter_2025.csv`: 0f929c6474db90b9967b94f915f6efee2849464f016ca691275d22afdd7576e3
+- `.cache/savant_mlb/expected_pitcher_2025.csv`: ff556e8a699035ddfbecedf84516a43ea18ed5ab12795b135e2d682e7aa0b4ed
+- `.cache/fa_statsapi_hitting_2026.json`: 1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf
+- `.cache/fa_statsapi_pitching_2026.json`: b81b02f8f44ca543d5cc77d260f83feea5ef2c2baf77c96a0b62965bc3adbe0c
+- `.cache/savant_mlb/expected_batter_2026.csv`: 94f3d69770321bd6e8c5fe3b23eb2d7be6b8bbd9d448b1c956e13523b451d961
+- `.cache/savant_mlb/expected_pitcher_2026.csv`: 9babc2635dbcc2e69eeff72e6b6d1a8cae8cc2e543b13932037cea93ae48e3a8
+- `value_framework.py`: 0ab8cd2778cd95aa0d4dd241624ffeb854ab5d43641418f72647d796efc42c35
+- `value_framework_config.yaml`: 75d3415d70dcebe31529ca68a71889a656d6a2c2648f4f75bcf47f32a698e309
+- `data/value_framework_fitted.json`: a36d22cefe5ff6eb479b5563144eb9c55d241d196cf61e23a7326b4c5dfdf8ee
+- `fa_projection.py`: 85beba1df4a420174915dce85b45f75d5221bc73e7ee9b2b524abec8ed65395d
+- `level_norms.py`: c3ce53ceab92772893384a16b24c6c6dcbae415c1fd94a583135612695d9584d
+- `fwar_vintage.py`: 38d5eba2ffe1529e48bac20e2660d6de4f4955aa2f4f94b8bea5ce7b87f3a0da
+- `prospects.db`: 9c6f6d90bfca1858dc20091fb418212881c9f0c56e2c79145ebf7ec7da2edd0b
+
+Gate sha `3507271552aed19de17fae2729d11523d4ce1894` (REGISTERED, TL_3); freeze `1c25c75b`;
+Amendment 2 `9050f778`; INC pinned at HEAD `9050f778` with `prospect_path.py` 98c36f82e8e8584ebb9f4cc501186b0873c796249480a2b780133b2b585d6479,
+`value_framework.py` 0ab8cd2778cd95aa0d4dd241624ffeb854ab5d43641418f72647d796efc42c35,
+`value_framework_config.yaml` 75d3415d70dcebe31529ca68a71889a656d6a2c2648f4f75bcf47f32a698e309 and
+`data/value_framework_fitted.json` a36d22cefe5ff6eb479b5563144eb9c55d241d196cf61e23a7326b4c5dfdf8ee (the
+file the PROSPECT_ANCHOR look scored), `SERVE_PROSPECT_ANCHOR_V2` False.
+
 ---
 
 ## Amendment 1 (2026-10-14): the development-read freeze (1.7), TL_11_STATLINE_BUILD_DARK
@@ -550,3 +718,38 @@ The 2020 season (60 games) sits inside the windows of the 2018 to 2020 cohorts a
 2020 and 2021 folds. Any change to this specification after this commit is an amendment in the 5c form
 committed alone before the look; a change after any holdout row has been read voids the look.
 
+## Amendment 2 (2026-10-21): inputs that moved on disk since the freeze (the 5c form), TL_17_STATLINE_LOOK
+
+Item 2 of the list at the top, committed alone before the look. It names what moved on disk
+between the freeze (Amendment 1, commit 1c25c75b, 2026-10-14) and the look, and changes no
+threshold, frame, candidate, seed, statistic or baseline. No holdout row was read to write it:
+the comparisons below are file hashes, code diffs, a record count over the development cohorts
+and an equality test over the label file, and no outcome value was printed.
+
+| input | sha256 at the freeze | sha256 now | what moved |
+|---|---|---|---|
+| `efv_dataset.py` | e9039786454f5b53f6344539c9461c1f196154633b89d07ccb2447fde1fb76d2 | 1eb380dbaa3876087e959cefd3e6f78432d20805ea882b1160ad062dfeaccd99 | c552f61e adds `LEVEL_ANCHOR_CAMEO_MULT` inside `_milb_features`' `LEVEL_BLEND_ANCHOR_MOST_EXPOSED` branch, whose flag is False, so the function returns what it returned at the freeze; 02b38332 edits the module docstring only |
+| `proj_components.py` | 68bdeb8b82d11c54bfc8cc66a2b5e125fe7243698ee74174fcfe16099b0177c3 | bd91c61103e5c1d21ca10eb7e340d29335765a114014d313a44dc699a4b482d9 | c5eca62a adds the keyword `price_gmli` to `pitcher_heads` and `project_components`, default True, the frozen behaviour; `prospect_statline.py` calls `pitcher_heads` without it |
+| `data/fwar_vintage.json` | 7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917 | 5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7 | c7dacaaa adds plate appearances to the hitting rows and bd4eaa2a innings, outs, games and games started to the pitching rows, every published WAR value unchanged; the vintage id moves 2026-10-02-0341299c20ec to 2026-10-02-57bf90f7143e to 2026-10-02-a020cf64844a. `fwar_vintage.season_totals` over the file at 1c25c75b and over the file now are equal on every one of 35,904 (player, season) keys, so the label of 2.3 is the same quantity under the new id |
+| `data/debuts.json` | 83bf4c5f00499a9f23413e41f3497f526ef68d4d33a5229b3e8c21ead6006eec | fec88ea5042ed4474d739518f09dfe3efd40269d5f7d428cf94b8a5250d5807f | the gitignored pipeline output, rewritten by the owner's pipeline on 2026-10-19; the development cohorts 2017 to 2021 still carry 770 records by resolved debut year, as at the read |
+
+Unchanged since the freeze, by sha256: `prospect_statline.py`, `tool_implied.py`, `aging_v3.py`,
+`college_translation.py`, `milb_translation.py`, `efv_proxy.py`, `efv_model.py`, `milb_history.py`,
+`fwar_frame.py`, `prospect_path.py`, `data/league_constants.json`, and every StatsAPI season cache
+and Savant expected-stats file of 2017 to 2023 listed in the development artifact's `inputs_sha256`.
+The look records the sha256 of every input it reads, the 2024 to 2026 season files included, at
+its start and at its end.
+
+## Note 2026-10-21: the look is an owner-waived early read (EW3-5)
+
+The look recorded in Part 13 above ran on 2026-10-21 under the owner's waiver of registered look
+days and dates (DECISIONS_FOR_OWNER.md EW3-5, owner 2026-10-14, verbatim: "Fuck the registered look
+days and waiting, we don't have to wait for anything. Let's do everything today"). It is an
+OWNER-WAIVED EARLY READ against Part 9.1, recorded in that word: (1) the dev-read commit
+`1c25c75b` was 7 days old, not the 14 that point 1 asks (that point is met on 2026-10-28);
+(4) two other registered looks are recorded on 2026-10-21 (the eWAR v3 skill holdout, commit
+`c0a1141f`, and the eBR `swar_lab --holdout` read in `docs/ebr-2026-09-30/EBR_GATE.md`), and
+2026-10-21 is on the U1c floor list. Point 2 held (the PROSPECT_ANCHOR look is recorded on
+2026-10-14 in `docs/PROSPECT_ANCHOR_GATE.md` section 18) and point 3 held (the 2026 season files
+were written after 2026-09-27). The clause "an earlier day voids the look" is set aside by the
+owner's decision and by nothing else; no data the look reads was missing on this day.
