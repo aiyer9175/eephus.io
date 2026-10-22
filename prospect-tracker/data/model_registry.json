@@ -1263,6 +1263,20 @@
    "notes": "Skill look 2026-10-19 (owner-waived early read, EW3-5), holdout 2026-10-21; admission: dMAE lo95 -0.14040534925097803, control fails False, guard True. Judged on the ladder's held-out dMAE (11.2.3)."
   },
   {
+   "model_id": "ewar_v3_valuation_input",
+   "summary": "Registered, not read: does eWAR v3 as the WAR input beat the fWAR label on FA Gate 2 guarantee MAE and Trade Machine Spearman; one look 2027-11-03.",
+   "surface": "None until a pass: the Trade Machine's MLB values (data/trade_values.json via MLB Projections surTotal) and the FA module's market price and rational value keep the fWAR label input (war_source.DEFAULT_PROVIDER)",
+   "predicts": "Nothing served; the read compares two inputs to the same valuation chains on the 2027 FA class and 2027 realized WAR",
+   "champion": "arm R: the projection corpus WAR read on provider ewar_v3 (fWAR plus the 2026 ABS part) instead of fwar, every other input and fit unchanged; registered, not read (one look 2027-11-03)",
+   "baseline": "the incumbent input, the corpus WAR on war_source.DEFAULT_PROVIDER fwar (fa_projection._side_war_age_maps), plus a shuffled-ABS null comparator; gated by registration",
+   "metric": "F: FA Hard Gate 2 guarantee MAE ($M NPV) on the 2027 class; T: rank Spearman of trade_value_mm vs 2027 realized WAR on modeled MLB rows; paired player-clustered bootstrap, Holm m = 2, alpha 0.05; not resolvable below 30 differing units",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Owner answer SWAR-Q4 (c) 'Also in valuations', 2026-10-01 (_audit_2026-09-09/DECISIONS_FOR_OWNER.md, eWAR v3 batch 2). Registered 2026-10-22 (task EWV3_VALUATION_GATE_REGISTRATION) before any candidate valuation, frozen record or statistic existed. Both incumbents are fWAR, and eWAR v3 equals fWAR on every player-season before 2026 (EBR_GATE.md 11.10.1), so every frame the valuation gates already score reads the two arms identical; the held-out frame is the first unit of each gate's forward chain with 2026 inputs. Frozen record of both arms (and 200 shuffled-ABS null arms) under .cache/ewar_v3_valuation/record/ between 2026-11-02 and 2027 Opening Day. One look 2027-11-03 (data permitting, else BLOCKER date), one run, a crash after scoring is VOID and never rerun; output data/ewar_v3_valuation_eval.json, after which the verdict moves to provisional whatever the outcome. No slot, record, edge or price moves on eWAR v3 before a pass; no statistic by consensus-FV cell; reserved eFV frames and the eBR and skill looks' frames untouched. Gate: docs/ewar-v3/EWAR_V3_VALUATION_GATE.md.",
+   "last_checked": "2026-10-22"
+  },
+  {
    "model_id": "fwar",
    "summary": "Measurement only: published fWAR frozen 2026-10-02 (48,900 player-seasons, 2000-2026) is the training label. A different label is a different definition, not an accuracy gain.",
    "surface": "The training label since the 2026-10-03 epoch: eFV labels, anchors, WAG, projections, slot curve, arbitration spine, backtests; not displayed",
