@@ -43,9 +43,10 @@ BUILDERS = {
 }
 
 
-def test_the_display_flag_ships_dark():
-    assert X.XM_DISPLAY_ON is False
-    assert B.xm_display_on() is False
+def test_the_display_flag_is_on():
+    # owner XM-FLIP 2026-10-22 'MLB + FA rows now'
+    assert X.XM_DISPLAY_ON is True
+    assert B.xm_display_on() is True
 
 
 def test_every_surface_page_is_listed_once():

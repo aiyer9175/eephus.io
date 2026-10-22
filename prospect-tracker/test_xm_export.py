@@ -107,7 +107,7 @@ def test_control_surplus_is_the_registered_sum():
 # ---------------------------------------------------------------------------
 def test_flags_ship_data_only():
     assert X.XM_EXPORT_ON is True
-    assert X.XM_DISPLAY_ON is False
+    assert X.XM_DISPLAY_ON is True  # owner XM-FLIP 2026-10-22
 
 
 def test_the_writer_goes_to_preview_while_export_is_off(monkeypatch, tmp_path):

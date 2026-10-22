@@ -79,7 +79,7 @@ XM_EXPORT_ON = True
 #: Arbitration, board columns) stay dark until the owner flips this after the
 #: gate (XM-4). ledger_export and franchise_export attach the club block only
 #: when it is True.
-XM_DISPLAY_ON = False
+XM_DISPLAY_ON = True   # owner XM-FLIP 2026-10-22 'MLB + FA rows now'; prospects show Fair $ only (XM2B-Q1)
 
 OUT_PLAYERS = DATA / "xm_players.json"
 OUT_CLUBS = DATA / "xm_clubs.json"

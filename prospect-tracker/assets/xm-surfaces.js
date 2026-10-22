@@ -512,7 +512,7 @@
       row("Farm, board prospects (" + esc(F.n) + ")", "withheld", F.fair_usd,
         "Fair $ only: the sum over every board prospect, on the 40-man or off it, of the NPV of his eFV WAR path at the winter's market $/WAR and a 7% discount. xM$ is withheld: " + XM_WITHHELD + ".") +
       "</tbody></table>" +
-      '<p class="xm-note"><a href="/glossary/#g=xm_dollars">xM$</a> and <a href="/glossary/#g=fair_dollars">Fair $</a> are separate numbers.</p></div>';
+      '<p class="xm-note"><a href="/glossary/#g=xm_dollars">xM$</a> and <a href="/glossary/#g=fair_dollars">Fair $</a> are separate numbers. Provisional: on 306 held-out 2025-26 signings xM$ missed by 0.736 (log of total) against 0.899 for a WAR-times-price rule; MLB Trade Rumors missed by 0.452 against 0.712 on the 92 signings both priced.</p></div>';
     return out;
   }
   function ledgerBlock() {
