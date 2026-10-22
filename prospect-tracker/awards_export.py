@@ -1709,6 +1709,65 @@ def _apply_frozen(ctx: _Ctx, cur: dict, record: dict) -> dict:
     return dict(cur, awards=awards, rules=record.get("rules") or cur["rules"], superlatives=sl)
 
 
+# --- the read on eWAR realized (EWAR_SITEWIDE_CALIBRATION.md part 4) -------------------------------
+
+def _band_records(frame, seasons) -> list:
+    """The band frame's stint records (year_ID, mlb_ID, PA, IPouts, WAR_bwar)."""
+    if frame is None:
+        return []
+    cols = ("year_ID", "mlb_ID", "PA", "IPouts", "WAR_bwar")
+    if hasattr(frame, "loc"):
+        sub = frame[frame["year_ID"].isin(sorted(seasons))]
+        return sub[[c for c in cols if c in sub.columns]].to_dict("records")
+    return [{c: r.get(c) for c in cols} for r in frame if A._num(r.get("year_ID")) in set(seasons)]
+
+
+def _fwar_targets() -> dict:
+    """{"bat": {(mlbam, season): fWAR}, "pit": {...}} from the frozen vintage; {} without it."""
+    try:
+        import fwar_vintage
+        if not fwar_vintage.available():
+            return {}
+        blob = fwar_vintage.load()
+        return {side: fwar_vintage.side_targets(blob, side) for side in ("bat", "pit")}
+    except Exception:   # noqa: BLE001 - no vintage, no band
+        return {}
+
+
+def deserved(ctx: _Ctx, seasons) -> dict:
+    """{"band": the constants of part 4.2, "band_ok": D-3, "seasons": {"<S>": {award:
+    {league: block}}}} on the context's stint frames; seasons with no realized column
+    (any provider but ewar_v3) or no rookie block (ROY) are left out."""
+    stints = {side: _band_records(_stint_frame(side, ctx.provider), A.BAND_SEASONS)
+              for side in ("bat", "pit")}
+    k = A.band_constants(stints, _fwar_targets())
+    out: dict = {}
+    for S in seasons:
+        w = ctx.world(int(S))
+        rows = A.realized_rows(w["rows"])
+        if rows is None:
+            continue
+        for award in A.DESERVED_AWARDS:
+            for lg in A.LEAGUES:
+                if award == "MVP":
+                    b = A.mvp_ballot(rows, lg, S, wpa=w["wpa"], pos=w["pos"], n=A.DESERVED_N)
+                elif award == "CY":
+                    b = A.cy_young_ballot(rows, lg, S, skill_raw=w["skill_raw"], pos=w["pos"],
+                                          n=A.DESERVED_N)
+                else:
+                    blk = ctx.rookie_block(S)
+                    if blk is None:
+                        continue
+                    b = A.rookie_ballot(rows, lg, S, rookies=blk, wpa=w["wpa"], pos=w["pos"],
+                                        n=A.DESERVED_N)
+                win = _winner_row(ctx, award, lg, S)
+                wid = _winner_id(ctx, award, win.get("winner") or {}) if win and win.get("winner") else None
+                out.setdefault(str(S), {}).setdefault(award, {})[lg] = A.deserved_block(
+                    award, b, rows, k, writers_id=wid)
+    return {"band": k, "band_ok": A.band_ok(k), "band_sentence": A.DESERVED_BAND_SENTENCE,
+            "seasons": out}
+
+
 # --- export --------------------------------------------------------------------------------------
 
 def _eval_doc(ctx: _Ctx, cur: dict, i1: dict, copies: dict, labs: Path, generated_at: str) -> dict:
@@ -1942,6 +2001,13 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             for (a, lg), f in (p.get("full") or {}).items():
                 built_full[(Sp, a, lg)] = f
         vote_table = _vote_table(ctx, shard_firsts, built_full)
+        # The read on eWAR realized (AWARDS_DESERVED_LIVE): built only under the flag; off, nothing
+        # is written and the registered check builds it in memory through deserved().
+        try:
+            des = deserved(ctx, range(SELECTOR_FIRST, S + 1)) if A.AWARDS_DESERVED_LIVE else None
+        except Exception as e:   # noqa: BLE001 - the deserved read never refuses the board
+            log(f"  awards: the read on eWAR realized was not built ({type(e).__name__}: {e})")
+            des = None
         frozen_seasons = {S} if frozen is not None else set()
         for p in built.values():
             if "world" in p:
@@ -1977,6 +2043,8 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             "what_this_page_does_not_claim": doc["what_this_page_does_not_claim"],
         }
         payload["stamps"] = dict(sorted(ctx.inp.stamps.items()))
+        if des is not None and A.AWARDS_DESERVED_LIVE and des["band_ok"]:
+            payload["realized_read"] = des
         raw_awards = _dump(payload)
         files["awards.json"] = raw_awards
         if frozen is not None:
@@ -1999,7 +2067,12 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             cand = _candidates(ctx, p, generated_at)
             n_rows += _n_rows(cand) if Sp == S else 0
             files[f"awards_candidates_{Sp}.json"] = _dump(cand)
-        files["awards_eval.json"] = _dump(_eval_doc(ctx, cur, i1, copies, labs, generated_at))
+        ev = _eval_doc(ctx, cur, i1, copies, labs, generated_at)
+        if des is not None and A.AWARDS_DESERVED_LIVE:
+            ev["realized_read_band"] = {"band": des["band"], "band_ok": des["band_ok"],
+                                   "n_blocks": sum(len(by) for a in des["seasons"].values()
+                                                   for by in a.values())}
+        files["awards_eval.json"] = _dump(ev)
         over = [f"{k} {len(v):,} bytes" for k, v in files.items()
                 if (k == "awards.json" and len(v) > AWARDS_MAX_BYTES)
                 or (k.startswith("awards_candidates_") and len(v) > CANDIDATES_MAX_BYTES)]

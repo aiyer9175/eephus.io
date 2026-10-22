@@ -23810,11 +23810,13 @@ function wagExposureNote(g) {
   if (w.exposure_load == null) return "";
   return `${Math.round(Number(w.exposure_load)).toLocaleString("en-US")} ${w.exposure_unit || "PA"}`;
 }
-// The WAR series WAG is measured on: its observed leg is the LABEL row
-// (career_war_label), not the eWAR the card shows beside it, so the card names
-// it. Read off the row, so the eWAR label epoch moves this line with the data.
+// The WAR series WAG is measured on: the WAG block's own war_basis stamp when the
+// export carries one (storage.WAG_EWAR_HEADLINE: the headline eWAR), else the LABEL
+// row (career_war_label) its observed leg was summed from. Read off the data, so a
+// basis switch moves this line with it.
 function wagWarBasis(g) {
-  const src = String(((g && g.career_war_label) || {}).source || "");
+  const wb = (((g && g.debuted_value) || {}).wag || {}).war_basis;
+  const src = String(wb || ((g && g.career_war_label) || {}).source || "");
   if (src === "fwar") return "FanGraphs WAR";
   if (src.startsWith("ewar")) return "eWAR";
   if (src === "bbref" || src === "bwar") return "Baseball-Reference WAR";

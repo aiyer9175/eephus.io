@@ -163,6 +163,21 @@ REALIZED_UNIT_LABEL = "eWAR realized"
 #: The registry row the selection cards cite (lands at AWARDS_11).
 SELECTION_REGISTRY = "awards_selection"
 
+#: The deserved read on eWAR realized (docs/ewar-2026-10-22/EWAR_SITEWIDE_CALIBRATION.md
+#: part 4; owner decision EW3-20). Off: the band constants and the deserved ballots are
+#: built into awards_eval.json only; on: awards.json also serves them under `deserved`,
+#: keyed by season, so the frozen selection and the closed season files never move.
+AWARDS_DESERVED_LIVE = False
+#: Places on each deserved ballot, and the band's multiplier (part 4.2 and 4.3).
+DESERVED_N = 5
+DESERVED_Z = 1.645
+#: The awards that carry a deserved read (Manager of the Year carries no WAR).
+DESERVED_AWARDS = ("MVP", "CY", "ROY")
+#: The band's frame: player-seasons 2015 to 2025, 2020 excluded (part 4.2).
+BAND_SEASONS = tuple(s for s in range(2015, 2026) if s != 2020)
+#: D-3: each side's band constant needs at least this many player-seasons.
+BAND_MIN_N = 1000
+
 #: Lamp ladder presentation per award: value per lamp (shared by both leagues and
 #: every season of an award so cards compare) and the tick spacing, in the
 #: award's unit. The exporter widens lamp_unit when a value would need more
@@ -626,6 +641,164 @@ def cy_young_ballot(league_rows: list[dict], league: str, season: int, *,
             "war_provider": war_provider,
             "lead": lead_sentence("CY", top, war_provider),
             "tiebreak_sentence": tiebreak_sentence("CY", top)}
+
+
+# --- the deserved read on eWAR realized (EWAR_SITEWIDE_CALIBRATION.md part 4) ------------
+
+def band_constants(stints: dict, fwar: dict, seasons=BAND_SEASONS) -> dict:
+    """The measurement band's constants per side (part 4.2).
+
+    `stints` is {"bat": records, "pit": records} of an eWAR stint frame (year_ID,
+    mlb_ID, PA or IPouts, WAR_bwar); `fwar` is {"bat": {(mlbam, season): published
+    fWAR}, "pit": {...}} from the frozen vintage. Per side, over the player-seasons
+    of `seasons` the vintage carries with exposure above 0:
+    k = sum (FanGraphs WAR - Baseball-Reference WAR)^2 / (2 * sum exposure), exposure PA
+    (bat) or IP (pit).
+    Returns {"bat": {k, n, sum_e, unit, terciles}, "pit": {...}, "seasons", "z"};
+    a side with no usable row carries k None."""
+    seasons = {int(s) for s in seasons}
+    out = {"seasons": sorted(seasons), "z": DESERVED_Z,
+           "how": ("k = sum (FanGraphs WAR - Baseball-Reference WAR)^2 / (2 * sum exposure) over "
+                   "player-seasons the frozen FanGraphs vintage carries; sigma^2 = k_bat * PA + k_pit * IP")}
+    for side, unit, col in (("bat", "PA", "PA"), ("pit", "IP", "IPouts")):
+        agg: dict = {}
+        for r in stints.get(side) or []:
+            y, m = _num(r.get("year_ID")), _num(r.get("mlb_ID"))
+            if y is None or m is None or int(y) not in seasons:
+                continue
+            b = _num(r.get("WAR_bwar"))
+            e = _num(r.get(col)) or 0.0
+            cell = agg.setdefault((int(m), int(y)), [0.0, 0.0])
+            cell[0] += b if b is not None else 0.0
+            cell[1] += e / 3.0 if side == "pit" else e
+        pairs = []
+        for key, (b, e) in agg.items():
+            f = (fwar.get(side) or {}).get(key)
+            if f is None or e <= 0:
+                continue
+            pairs.append((e, float(f) - b))
+        n = len(pairs)
+        sum_e = sum(e for e, _ in pairs)
+        k = (sum(d * d for _, d in pairs) / (2.0 * sum_e)) if sum_e > 0 else None
+        terc = []
+        if n >= 3:
+            pairs.sort(key=lambda t: t[0])
+            cuts = [0, n // 3, (2 * n) // 3, n]
+            for a, b_ in zip(cuts[:-1], cuts[1:]):
+                part = pairs[a:b_]
+                se = sum(e for e, _ in part)
+                terc.append({"e_lo": round(part[0][0], 1), "e_hi": round(part[-1][0], 1),
+                             "n": len(part),
+                             "k": (sum(d * d for _, d in part) / (2.0 * se)) if se > 0 else None})
+        out[side] = {"k": k, "n": n, "sum_e": round(sum_e, 1), "unit": unit, "terciles": terc}
+    return out
+
+
+def band_ok(k: dict) -> bool:
+    """D-3: both sides' k finite and positive, each from at least BAND_MIN_N player-seasons."""
+    for side in ("bat", "pit"):
+        blk = (k or {}).get(side) or {}
+        v = blk.get("k")
+        if v is None or not math.isfinite(float(v)) or float(v) <= 0 or int(blk.get("n") or 0) < BAND_MIN_N:
+            return False
+    return True
+
+
+def band_sigma(k: dict, award: str, pa, ip) -> float:
+    """sigma of one ballot row: k_bat * PA + k_pit * IP (the Cy Young reads pitching only)."""
+    kb = float(((k or {}).get("bat") or {}).get("k") or 0.0)
+    kp = float(((k or {}).get("pit") or {}).get("k") or 0.0)
+    v = kp * float(ip or 0.0)
+    if award != "CY":
+        v += kb * float(pa or 0.0)
+    return math.sqrt(max(v, 0.0))
+
+
+def realized_rows(league_rows: list[dict]) -> list[dict] | None:
+    """The same player rows with each side's WAR replaced by its eWAR realized share,
+    or None when the frame carried no realized column (any provider but ewar_v3)."""
+    if not any(("bat_real" in r or "pit_real" in r) for r in league_rows or []):
+        return None
+    out = []
+    for r in league_rows:
+        x = {k: v for k, v in r.items() if k not in ("bat_real", "pit_real")}
+        x["headline"] = float(r.get("bat") or 0.0) + float(r.get("pit") or 0.0)
+        x["headline_pit"] = float(r.get("pit") or 0.0)
+        x["bat"] = float(r.get("bat_real", r.get("bat")) or 0.0)
+        x["pit"] = float(r.get("pit_real", r.get("pit")) or 0.0)
+        out.append(x)
+    return out
+
+
+def deserved_block(award: str, ballot: dict, rows: list[dict], k: dict, *,
+                   writers_id=None) -> dict:
+    """One ballot on eWAR realized (part 4.3) from the rule's ballot on realized rows:
+    the top DESERVED_N with each row's band, the places within the band of the
+    first, the verdict, and the writers' winner's standing where it exists."""
+    by_id = {int(r["mlbam"]): r for r in rows}
+    z = DESERVED_Z
+    top = []
+    for r in (ballot.get("top") or [])[:DESERVED_N]:
+        src = by_id.get(int(r["mlbam"])) or {}
+        sig = band_sigma(k, award, r.get("pa"), r.get("ip"))
+        head = src.get("headline_pit") if award == "CY" else src.get("headline")
+        top.append({"rank": r["rank"], "mlbam": r["mlbam"], "name": r.get("name"),
+                    "club_code": r.get("club_code"), "pos": r.get("pos"),
+                    "score": r["score"], "score_display": score_display(r["score"]),
+                    "sigma": round(sig, 4),
+                    "lo_display": score_display(r["score"] - z * sig),
+                    "hi_display": score_display(r["score"] + z * sig),
+                    "ewar_display": score_display(head) if head is not None else None,
+                    "flags": list(r.get("flags") or [])})
+    within = []
+    if top:
+        lead = top[0]
+        for r in top[1:]:
+            gap = lead["score"] - r["score"]
+            r["within_band"] = gap < z * math.sqrt(lead["sigma"] ** 2 + r["sigma"] ** 2)
+            if r["within_band"]:
+                within.append(r["mlbam"])
+        lead["within_band"] = True
+    verdict = None if not top else ("clear" if not within else "too_close")
+    out = {"award": award, "top": top, "verdict": verdict, "within_band_of_first": within,
+           "n_pool": ballot.get("n_pool"), "unit_label": REALIZED_UNIT_LABEL}
+    if writers_id is not None and top:
+        if writers_id == top[0]["mlbam"]:
+            standing = "first"
+        elif writers_id in within:
+            standing = "within_band"
+        else:
+            standing = "outside_band"
+        out["writers"] = {"id": writers_id, "standing": standing}
+    out["sentence"] = deserved_sentence(out)
+    return out
+
+
+def deserved_sentence(blk: dict) -> str:
+    """The verdict in one plain sentence (no forecast word, no claim about the vote)."""
+    top = blk.get("top") or []
+    if not top:
+        return "No player cleared the rule's floor on eWAR realized."
+    lead = top[0]
+    if blk.get("verdict") == "clear":
+        s = (f"{lead['name']} leads on eWAR realized by more than the band: a clear first "
+             f"({lead['score_display']}).")
+    else:
+        names = [r["name"] for r in top if r["mlbam"] in blk.get("within_band_of_first", [])]
+        s = (f"Too close to call on eWAR realized: {lead['name']} ({lead['score_display']}) leads, "
+             f"with {', '.join(names)} within the band.")
+    w = blk.get("writers")
+    if w:
+        s += {"first": " The writers' winner is the first on eWAR realized.",
+              "within_band": " The writers' winner is within the band of the first.",
+              "outside_band": " The writers' winner is outside the band of the first."}[w["standing"]]
+    return s
+
+
+DESERVED_BAND_SENTENCE = (
+    "The band is the disagreement between two published WAR systems (FanGraphs and "
+    "Baseball-Reference) for a season of this playing time, halved in variance on the "
+    "assumption that their errors are independent and equal; it is not a confidence interval.")
 
 
 def _earned_map(war_earned) -> dict:

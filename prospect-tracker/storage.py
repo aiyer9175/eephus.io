@@ -6579,6 +6579,34 @@ FV_EXPECTED_WAR_PER_YR_HITTER = {
 WAG_UNIFIED = True
 WAG_DEFINITION = "engine_at_debut"
 
+# WAG ON THE HEADLINE eWAR (docs/ewar-2026-10-22/EWAR_SITEWIDE_CALIBRATION.md part 3; owner
+# decisions EW3-18 and EW3-20). On, the observed leg of the engine WAG is the stored career_war
+# row re-expressed on the headline eWAR (war_source.row_on_provider(row, "ewar_v3"), named
+# literally so an EWAR_V3_LIVE rollback to eWAR v2 never moves WAG onto a bWAR-based series);
+# off, it is the stored row (published fWAR). The expected leg, the exposure gate, the season
+# count and the debuted value (surplus, trade value) are untouched either way.
+WAG_EWAR_HEADLINE = False
+
+
+def _wag_observed_war(cw: dict | None) -> tuple[float | None, str]:
+    """(observed career WAR for WAG, the series it is on) for one stored career_war row."""
+    cw = cw or {}
+    stored = cw.get("career_war")
+    if not WAG_EWAR_HEADLINE or stored is None:
+        return stored, str(cw.get("source") or "fwar")
+    try:
+        import war_source
+        row = war_source.row_on_provider(cw, "ewar_v3")
+    except Exception:
+        return stored, str(cw.get("source") or "fwar")
+    if str(row.get("source") or "") != "ewar_v3":
+        return stored, str(cw.get("source") or "fwar")
+    # The stored total plus the season departures, so a row with no departure keeps its
+    # stored total to the digit (the provider re-sums the seasons at 2dp).
+    head, base = row.get("seasons") or {}, cw.get("seasons") or {}
+    dep = sum(float(head[y]) - float(base[y]) for y in head if y in base)
+    return round(float(stored) + dep, 2) if dep else stored, "ewar_v3"
+
 
 def _farm_grad_wag_and_label(wag_payload: dict, label_payload: dict,
                              block: dict | None) -> tuple[float | None, str]:
@@ -8718,7 +8746,9 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
         # abstains. Only the WAG baseline uses wag_fv; the debuted VALUE model above keeps
         # the `fv` passed in (its surplus is priced from the consensus/eFV value pipeline).
         _wag_baseline = wag_fv if wag_fv is not None else fv
-        w = _engine_wag_result(_wag_baseline, is_pitcher, position, observed_war,
+        # The observed leg's series (WAG_EWAR_HEADLINE): the headline eWAR when on.
+        _wag_obs, _wag_basis = _wag_observed_war(cw)
+        w = _engine_wag_result(_wag_baseline, is_pitcher, position, _wag_obs,
                                age=age,
                                service_years=(float(season_count) if season_count else None),
                                career_stats=career_stats, career_war=cw)
@@ -8749,6 +8779,9 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                 # categorical grade signal, replacing the legacy _compute_boom_bust.
                 "boom_label": _engine_wag_boom_bust(w),
             }
+            if WAG_EWAR_HEADLINE:
+                # The WAR series the observed leg is on (the card names it)
+                out["wag"]["war_basis"] = _wag_basis
             if WAG_UNIFIED:
                 # The per-season baseline the client's WAG chart and summary draw
                 # against, and the definition stamp, so the block alone says what it is.
