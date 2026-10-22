@@ -33639,6 +33639,10 @@ function efvProxyPanel(p) {
   const pr = _EFV_PROXY.projections[p.player_key];
   if (!pr || pr.proj_xwoba == null) return "";
   const side = pr.side === "pit" ? "pit" : "hit";
+  // Owner answer TL18-Q1 (2026-10-22, 'Hide the older panel'): a hitter whose arrival
+  // line is served reads his xwOBA there, so this older panel steps aside for him.
+  // Pitchers, and hitters with no arrival line, keep it.
+  if (side === "hit" && typeof _arrivalLineHides === "function" && _arrivalLineHides(p)) return "";
   const r = ((_EFV_PROXY.sides || {})[side] || {}).r;
   const isPit = side === "pit";
   const label = isPit ? "Proj. first-MLB xwOBA-against" : "Proj. first-MLB xwOBA";
@@ -34596,10 +34600,26 @@ function ensureStatline() {
       _SL = (j && j.rows) ? j : { rows: {}, stats: {} };
       scheduleRender();
     })
-    .catch(() => { _SL = { rows: {}, stats: {} }; });
+    .catch(() => { _SL = { rows: {}, stats: {} }; scheduleRender(); });
 }
 function _slRate(v, d) {
   return v == null ? "-" : Number(v).toFixed(d || 3).replace(/^0\./, ".");
+}
+// The stats his served arrival line carries (empty when he has none).
+function _slStatsFor(p) {
+  if (!_SL || !p || !p.player_key) return [];
+  const r = (_SL.rows || {})[p.player_key];
+  const meta = _SL.stats || {};
+  return r ? Object.keys(meta).filter(s => Array.isArray(r[s])) : [];
+}
+// True when the older 'Proj. first-MLB xwOBA' panel should step aside (TL18-Q1):
+// his arrival line prints, or it is still loading (so the old panel does not flash
+// and vanish). A failed load leaves _SL empty and the old panel returns.
+function _arrivalLineHides(p) {
+  if (!_STATLINE_UI || !p || !p.player_key) return false;
+  ensureStatline();
+  if (_SL === null) return true;
+  return _slStatsFor(p).length > 0;
 }
 function statlineCard(p) {
   if (!_STATLINE_UI || !p || !p.player_key) return "";
