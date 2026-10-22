@@ -215,7 +215,8 @@ def test_default_provider_is_fwar_and_the_display_provider_is_ewar_v2():
     'fwar'; eWAR v2 stays the DISPLAYED series (owner answer EPOCH-Q4) and every
     display door names it explicitly (test_epoch_display_doors.py)."""
     assert war_source.DEFAULT_PROVIDER == "fwar"
-    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
+    # eWAR v3 is the displayed series once EWAR_V3_LIVE is on (EBR_GATE.md 11.10.5)
+    assert war_source.DISPLAY_PROVIDER == ("ewar_v3" if war_source.EWAR_V3_LIVE else "ewar_v2")
     for fn in (war_source.career_war_bulk, war_source.career_war_table,
                war_source.side_war_by_season, war_source.stint_frame,
                war_source.condensed_frame, war_source.run_value_frame,
@@ -798,7 +799,11 @@ def test_the_glossary_states_the_nightly_and_the_freeze():
     meth = entry.get("methodology") or ""
     assert "rebuilds with the season" not in meth
     assert "DOES NOT REBUILD WITH THE SEASON" not in meth
-    assert "THE LIVE SEASON REBUILDS NIGHTLY" in meth and "November 1" in meth
+    # since the eWAR v3 flip (EBR_GATE.md 11.10.5) the entry names both cadences:
+    # eWAR v3 is a hand build on the frozen fWAR base; eWAR v2, the reference
+    # column, keeps its nightly live season and its November 1 freeze
+    assert "rebuilt by hand" in meth and "rebuilds its live season nightly" in meth
+    assert "November 1" in meth
 
 
 def test_the_three_year_war_rate_columns_share_the_one_year_basis():

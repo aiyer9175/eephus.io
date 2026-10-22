@@ -184,9 +184,16 @@ def build(inp: Inputs | None = None, log=print) -> dict:
                  "how": "the incumbent stands", "seasons": list(GUARD_SEASONS),
                  "departure_rows": guard_rows}
 
+    # (c) is one constant, 1 / beta, for every season (RPW_GATE.md part 4); the
+    # verdict lists 2016 to 2026, and a season outside that list takes the same value
+    cand_const = ((fit.get("full_fit") or {}).get("c") or {}).get("rpw") if cand == "c" else None
+
     def rpw(s: int) -> float:
-        if rpw_form != "incumbent" and s in cand_rpw:
-            return cand_rpw[s]
+        if rpw_form != "incumbent":
+            if s in cand_rpw:
+                return cand_rpw[s]
+            if cand_const:
+                return float(cand_const)
         return _incumbent_rpw(s)
 
     # --- assemble

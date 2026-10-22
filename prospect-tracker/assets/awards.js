@@ -501,9 +501,10 @@
       }
       // eWAR realized beside the score (owner EW3-20): the same rule on the realized
       // series, printed only when the payload carries it; it never ranks a row.
-      if (r.realized_display != null && A !== "MOY") {
-        h += '<span class="aw-drift aw-real" title="' + esc(REAL_TIP) + '">eWAR realized ' +
-          esc(fmt(r.realized_display, d)) + "</span>";
+      var realV = r.realized_display != null ? r.realized_display : (dr ? dr.realized_now_display : null);
+      if (realV != null && A !== "MOY") {
+        h += '<span class="aw-drift aw-real" title="' + esc(REAL_TIP) + '">' + (r.realized_display != null ? "" : "Now, ")
+          + "eWAR realized " + esc(fmt(realV, d)) + "</span>";
       }
       h += '</div><span class="aw-val" aria-hidden="true"><span class="aw-num ' + ink(v, fam) + '">' + esc(val) +
         '</span> <span class="aw-unit">' + esc(rule.unit) + "</span></span>" + lamps(z, L, g, i, v, fill, zero, width) + "</li>";

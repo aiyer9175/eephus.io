@@ -27,10 +27,10 @@ ENTRY = {
     "module": ["mlbstats"],
     "aliases": ["eABS", "eABS raw", "ABS challenge runs", "challenge runs"],
     "priority": 27,
-    "definition": "What a player's challenges of ball and strike calls were worth this season, in runs, for batters, catchers and pitchers. eABS raw is the runs his overturned challenges won minus what his failed ones cost; eABS compares that with what the league's overturn rate on the same mix of counts would have earned. Descriptive: what happened, not a forecast, and not part of any WAR.",
-    "methodology": "Every ABS zone challenge of the MLB regular season is read from MLB's game feeds, and each club's totals match MLB's own count in every game. An overturned call is worth a ball against a strike at the challenged count, bases and outs, on that season's run expectancy by count (RE288). A batter's win turns a strike into a ball; a catcher's or pitcher's turns a ball into a strike. A call that stands is worth nothing by itself, but it spends one of the club's two challenges (a successful one is kept). That cost is the value of a held challenge at that half-inning, score margin and number of challenges left. It is measured as the extra runs clubs went on to gain from their challenges with one more in hand. eABS weighs each challenge by how far its result sits from the league's overturn rate for the same side of the ball and count, so a player who only challenges full-count pitches is measured against full-count challenges. Season-to-season persistence was tested once on AAA 2022 to 2026 against a shuffled twin; the board says whether it held.",
+    "definition": "What a player's challenges of ball and strike calls were worth this season, in runs, for batters, catchers and pitchers. eABS raw is the runs his overturned challenges won minus what his failed ones cost; eABS compares that with what the league's overturn rate on the same mix of counts would have earned. Descriptive: what happened, not a forecast. From 2026 eWAR carries a challenge part built from the same values (see eWAR).",
+    "methodology": "Every ABS zone challenge of the MLB regular season is read from MLB's game feeds, and each club's totals match MLB's own count in every game. An overturned call is worth a ball against a strike at the challenged count, bases and outs, on that season's run expectancy by count (RE288). A batter's win turns a strike into a ball; a catcher's or pitcher's turns a ball into a strike. A call that stands is worth nothing by itself, but it spends one of the club's two challenges (a successful one is kept). That cost is the value of a held challenge at that half-inning, score margin and number of challenges left. It is measured as the extra runs clubs went on to gain from their challenges with one more in hand. eABS weighs each challenge by how far its result sits from the league's overturn rate for the same side of the ball and count, so a player who only challenges full-count pitches is measured against full-count challenges. eWAR's challenge part uses these values: a catcher's overturned calls against an average catcher's per inning caught, moved from his pitchers, and every failed challenge's cost charged to the challenger.",
     "formula": "eABS raw = runs won - failed-challenge cost; eABS = sum over challenges of (overturned - league rate for the cell) x (run value + failure cost)",
-    "seeAlso": ["abs_challenge", "run_expectancy"],
+    "seeAlso": ["abs_challenge", "run_expectancy", "ewar"],
     "shelf": "ark",
     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
 }
@@ -52,7 +52,7 @@ def _row(stab: dict | None, payload: dict | None) -> dict:
     vals = (payload or {}).get("values") or {}
     return {
         "model_id": "eabs",
-        "summary": "Measured, not a prediction: the run value of each player's ABS challenges this season on RE288, failed challenges charged their option value; display only, in no WAR.",
+        "summary": "Measured, not a prediction: each player's ABS challenge runs this season on RE288, failed challenges charged their option value; eWAR carries a challenge part built from it.",
         "surface": "/mlbstats/ Challenges tab (batters, catchers, pitchers), data/eabs_leaderboards.json",
         "predicts": "Nothing: eABS raw (runs won minus failed-challenge cost) and eABS (against the league overturn rate on the same mix of side and count), descriptive season totals",
         "champion": "none. v = RE288 called-pitch value at the challenged state; failed-challenge cost = the option value of a held challenge by half-inning, challenges held and score margin (gate part 2.3); the constant C0 carried beside it",
@@ -67,7 +67,7 @@ def _row(stab: dict | None, payload: dict | None) -> dict:
             + (f"MLB 2026: {lg.get('n')} zone challenges, {lg.get('won')} overturned, {lg.get('rg')} runs won, failed-challenge cost {lg.get('fc')} runs "
                f"(mean {vals.get('mean_fail_cost')} per failure; the constant C0 is {vals.get('c0')}). " if lg else "")
             + (f"Stability check, run once (data/_labs/eabs/stability.json): {disp}. " if disp else "")
-            + "Not admitted into eWAR: the owner chooses (EW3-19); the reattribution-only part is designed in gate part 7."
+            + "2026-10-21 EWAR_V3_ASSEMBLE: OWNER OVERRIDE EW3-32 (EABS_GATE.md 9.2): the reattribution part enters eWAR v3 and eWAR realized from 2026 although the stability read was NULL for both roles; the site carries no stability caveat and no validated claim; this row stays provisional, never validated. Built in EBR_GATE.md 11.10.2."
         ),
     }
 

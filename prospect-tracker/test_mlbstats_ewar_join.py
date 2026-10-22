@@ -256,8 +256,17 @@ def test_a_failed_war_read_leaves_the_defense_board_blank_and_says_so(monkeypatc
     assert meta["refused"] and not meta.get("available")
 
 
+def _pin_v2(monkeypatch):
+    """These notes describe eWAR v2's artifact; pin the served provider to it
+    (since the eWAR v3 flip the served provider reads data/ewar_v3.json)."""
+    import bullpen_export
+    monkeypatch.setattr(bullpen_export, "served_war_basis",
+                        lambda: {"war_provider": "ewar_v2", "ewar_generated_at": None})
+
+
 def _patch_ewar_meta(monkeypatch, meta):
     import ewar
+    _pin_v2(monkeypatch)
     monkeypatch.setattr(ewar, "load", lambda path=None: {"meta": meta})
 
 
@@ -299,10 +308,26 @@ def test_an_unreadable_artifact_states_the_absence_instead_of_a_frame(monkeypatc
     def _boom(path=None):
         raise OSError("no artifact")
 
+    _pin_v2(monkeypatch)
     monkeypatch.setattr(ewar, "load", _boom)
     note = de._ewar_fielding_note()
     assert "could not be read" in note
     assert "Baseball-Reference" not in note   # never guess a frame
+
+
+def test_under_ewar_v3_the_defense_sentence_is_the_v3_artifacts(monkeypatch):
+    """EBR_GATE.md 11.10.5: with the served provider ewar_v3 the sentence is
+    data/ewar_v3.json's meta.fielding_source, by the same sentence rule."""
+    import bullpen_export
+    import ewar_v3
+    monkeypatch.setattr(bullpen_export, "served_war_basis",
+                        lambda: {"war_provider": "ewar_v3", "ewar_generated_at": None})
+    monkeypatch.setattr(ewar_v3, "meta", lambda payload=None: {"fielding_source": "Its fielding is FanGraphs'."})
+    assert de._ewar_fielding_note() == "Its fielding is FanGraphs'."
+    monkeypatch.setattr(ewar_v3, "meta", lambda payload=None: {"fielding_source": "fangraphs"})
+    assert de._ewar_fielding_note() == "Its fielding comes from fangraphs."
+    monkeypatch.setattr(ewar_v3, "meta", lambda payload=None: {})
+    assert "could not be read" in de._ewar_fielding_note()
 
 
 def test_the_defense_frame_block_carries_the_note_and_not_the_old_line(monkeypatch):

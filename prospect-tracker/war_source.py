@@ -197,7 +197,7 @@ DEFAULT_PROVIDER: str = "fwar"
 #: eWAR v3 serves as THE displayed WAR, plain "eWAR", on every display door,
 #: player pages included (owner answers EBR-Q5 and EW3-19; EBR_GATE.md 11.10.5),
 #: with eWAR v2, fWAR and bWAR as reference columns. Off: the doors show eWAR v2.
-EWAR_V3_LIVE: bool = False
+EWAR_V3_LIVE: bool = True
 
 #: The WAR a visitor SEES. Display doors pass this explicitly
 #: (test_epoch_display_doors.py pins each door to it).
@@ -1268,6 +1268,40 @@ def ewar_vintage(as_of: str | None = None) -> dict:
     return out
 
 
+def _ewar_v3_vintage(v2: dict) -> dict:
+    """ewar_vintage while the displayed eWAR is eWAR v3 (EBR_GATE.md 11.10.5): the
+    served numbers are data/ewar_v3.json's, built on the FROZEN fWAR vintage, so the
+    build stamp names that artifact and nothing drifts under it night to night
+    (no frame revision can move a frozen published value). The eWAR v2 block the
+    receipts measured rides along under `ewar_v2`, as the reference column's."""
+    import ewar_v3
+    try:
+        blob = ewar_v3.load()
+    except Exception as e:   # noqa: BLE001 - absence is a reportable state
+        out = dict(v2)
+        out.update({"series": "ewar_v3", "stale": None,
+                    "reason": f"data/ewar_v3.json unreadable ({type(e).__name__})"})
+        return out
+    gen = blob.get("generated_at")
+    return {
+        "series": "ewar_v3",
+        "artifact_generated_at": gen,
+        "label_build_at": gen,
+        "as_of": v2.get("as_of"),
+        "fwar_vintage_id": blob.get("fwar_vintage_id"),
+        "frames_read": v2.get("frames_read"),
+        "build_command": EWAR_V3_BUILD_CMD,
+        "rebuilds_on_a_schedule": False,
+        "cadence": {"mode": "hand", "live_season": None,
+                    "frozen_through": (blob.get("seasons") or [None, None])[-1]},
+        "stale": False,
+        "note": ("data/ewar_v3.json is FanGraphs' published WAR from the frozen vintage plus the site's "
+                 "named departures; it moves only when it is rebuilt by hand."),
+        "ewar_v2": {k: v2.get(k) for k in ("artifact_generated_at", "label_build_at", "stale",
+                                           "bwar_revised", "build_command")},
+    }
+
+
 def safe_ewar_vintage(as_of: str | None = None) -> dict:
     """ewar_vintage for a served board: the served eWAR build stamp, or a stated
     absence. Never raises: a board that cannot report its vintage must still
@@ -1275,7 +1309,11 @@ def safe_ewar_vintage(as_of: str | None = None) -> dict:
     dates the drift it measured. The six player and eWAR boards import this
     as their module-level _war_source_vintage (tests patch it there)."""
     try:
-        return ewar_vintage(as_of=as_of)
+        out = ewar_vintage(as_of=as_of)
+        # the displayed eWAR's own build stamp (EBR_GATE.md 11.10.5): eWAR v3's
+        # artifact while it is the displayed series; ewar_vintage itself keeps
+        # reporting the eWAR v2 artifact its receipts measure
+        return _ewar_v3_vintage(out) if DISPLAY_PROVIDER == "ewar_v3" else out
     except Exception as e:   # noqa: BLE001 - reporting must not take a board down
         return {"artifact_generated_at": None, "stale": None,
                 "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}

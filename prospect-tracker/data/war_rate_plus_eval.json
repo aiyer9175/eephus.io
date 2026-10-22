@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-03",
+ "generated_at": "2026-10-21",
  "experiment": "WAR-RATE-1",
  "model": "war_pa_plus / war_ip_plus",
  "seed": 20260729,
@@ -17,6 +17,7 @@
    "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
   },
   "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": null,
   "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
   "interpretation_rules": [
    "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
@@ -26,7 +27,7 @@
  },
  "conventions": {
   "scale": "100 + 10z (ARKMETRIC_SCALE_CONVENTIONS convention 3)",
-  "war_source": "ewar_v2 (war_source.stint_frame on the provider the 1-year board columns serve), batting and pitching sides kept SEPARATE; never a summed side. bWAR until the 2026-09-11 re-point (audit F10-01)",
+  "war_source": "ewar_v3 (war_source.stint_frame on the provider the 1-year board columns serve), batting and pitching sides kept SEPARATE; never a summed side. bWAR until the 2026-09-11 re-point (audit F10-01)",
   "denominators": "PA for hitters, IP for pitchers",
   "anchor_pools": "three, never pooled: hitters, starters (GS/G >= 0.50), relievers. A starter-anchored and a reliever-anchored value never share a column.",
   "floors": {
@@ -73,92 +74,92 @@
    ],
    "results_by_convention": {
     "v1": {
-     "rho_primary": 0.3715,
+     "rho_primary": 0.3843,
      "rho_baselines": {
-      "plus_shrunk": 0.3858,
-      "rate": 0.3714,
-      "war_total": 0.4059,
-      "ops_plus": 0.2409,
-      "placebo": 0.0011
+      "plus_shrunk": 0.3959,
+      "rate": 0.3848,
+      "war_total": 0.4133,
+      "ops_plus": 0.2416,
+      "placebo": -0.0111
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.0143,
-       "lo95": -0.019,
-       "hi95": -0.0097
+       "mean": -0.0117,
+       "lo95": -0.0161,
+       "hi95": -0.007
       },
       "rate": {
-       "mean": 0.0001,
-       "lo95": -0.0009,
-       "hi95": 0.001
+       "mean": -0.0005,
+       "lo95": -0.0019,
+       "hi95": 0.0009
       },
       "war_total": {
-       "mean": -0.0345,
-       "lo95": -0.0466,
-       "hi95": -0.0224
+       "mean": -0.0292,
+       "lo95": -0.0413,
+       "hi95": -0.0171
       },
       "ops_plus": {
-       "mean": 0.1302,
-       "lo95": 0.109,
-       "hi95": 0.1523
+       "mean": 0.1426,
+       "lo95": 0.1214,
+       "hi95": 0.1644
       },
       "placebo": {
-       "mean": 0.3707,
-       "lo95": 0.3294,
-       "hi95": 0.4123
+       "mean": 0.3957,
+       "lo95": 0.355,
+       "hi95": 0.4376
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.3858,
+      "rho": 0.3959,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0143,
-       "lo95": 0.0097,
-       "hi95": 0.019
+       "mean": 0.0117,
+       "lo95": 0.007,
+       "hi95": 0.0161
       }
      }
     },
     "v2": {
-     "rho_primary": 0.3711,
+     "rho_primary": 0.3836,
      "rho_baselines": {
-      "plus_shrunk": 0.3859,
-      "rate": 0.3713,
-      "war_total": 0.4058,
-      "ops_plus": 0.2405,
-      "placebo": 0.0011
+      "plus_shrunk": 0.3958,
+      "rate": 0.3841,
+      "war_total": 0.4127,
+      "ops_plus": 0.241,
+      "placebo": -0.011
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.0148,
-       "lo95": -0.0195,
-       "hi95": -0.01
+       "mean": -0.0122,
+       "lo95": -0.0167,
+       "hi95": -0.0073
       },
       "rate": {
-       "mean": -0.0002,
-       "lo95": -0.001,
-       "hi95": 0.0007
+       "mean": -0.0005,
+       "lo95": -0.0018,
+       "hi95": 0.0008
       },
       "war_total": {
-       "mean": -0.0348,
-       "lo95": -0.0479,
-       "hi95": -0.0223
+       "mean": -0.0291,
+       "lo95": -0.0423,
+       "hi95": -0.0159
       },
       "ops_plus": {
-       "mean": 0.1305,
-       "lo95": 0.1017,
-       "hi95": 0.158
+       "mean": 0.1427,
+       "lo95": 0.1171,
+       "hi95": 0.1685
       },
       "placebo": {
-       "mean": 0.3696,
-       "lo95": 0.3183,
-       "hi95": 0.4196
+       "mean": 0.3941,
+       "lo95": 0.3446,
+       "hi95": 0.4426
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.3859,
+      "rho": 0.3958,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0148,
-       "lo95": 0.01,
-       "hi95": 0.0195
+       "mean": 0.0122,
+       "lo95": 0.0073,
+       "hi95": 0.0167
       }
      },
      "cluster": {
@@ -173,9 +174,9 @@
    "g3b_volume_control": {
     "post_hoc": true,
     "rho_with_predictor_denominator": {
-     "plus": 0.3777,
-     "plus_shrunk": 0.3792,
-     "war_total": 0.6515
+     "plus": 0.3697,
+     "plus_shrunk": 0.3659,
+     "war_total": 0.648
     },
     "by_predictor_volume_tercile": {
      "low": {
@@ -184,12 +185,12 @@
        100.0,
        329.0
       ],
-      "rho_unshrunk": 0.1468,
-      "rho_shrunk": 0.1466,
+      "rho_unshrunk": 0.1814,
+      "rho_shrunk": 0.1812,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": -0.0005,
-       "lo95": -0.0095,
-       "hi95": 0.0084
+       "mean": -0.0004,
+       "lo95": -0.0083,
+       "hi95": 0.0086
       }
      },
      "mid": {
@@ -198,12 +199,12 @@
        330.0,
        532.0
       ],
-      "rho_unshrunk": 0.3355,
-      "rho_shrunk": 0.337,
+      "rho_unshrunk": 0.3362,
+      "rho_shrunk": 0.3364,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0014,
-       "lo95": -0.0011,
-       "hi95": 0.0038
+       "mean": 0.0003,
+       "lo95": -0.0025,
+       "hi95": 0.0028
       }
      },
      "high": {
@@ -212,12 +213,12 @@
        533.0,
        753.0
       ],
-      "rho_unshrunk": 0.4932,
-      "rho_shrunk": 0.4961,
+      "rho_unshrunk": 0.5059,
+      "rho_shrunk": 0.5091,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0029,
+       "mean": 0.0032,
        "lo95": 0.0014,
-       "hi95": 0.0045
+       "hi95": 0.005
       }
      }
     }
@@ -227,9 +228,9 @@
     "g1_sanity_vs_placebo": {
      "pass": true,
      "gap": {
-      "mean": 0.3696,
-      "lo95": 0.3183,
-      "hi95": 0.4196
+      "mean": 0.3941,
+      "lo95": 0.3446,
+      "hi95": 0.4426
      }
     },
     "g2_ship_vs_best_baseline": {
@@ -240,23 +241,23 @@
       "rate",
       "war_total"
      ],
-     "rho_primary": 0.3711,
-     "rho_baseline": 0.4058,
+     "rho_primary": 0.3836,
+     "rho_baseline": 0.4127,
      "gap": {
-      "mean": -0.0348,
-      "lo95": -0.0479,
-      "hi95": -0.0223
+      "mean": -0.0291,
+      "lo95": -0.0423,
+      "hi95": -0.0159
      }
     },
     "g3_shrink": {
      "pre_registered_rule_fired": true,
      "gap_shrunk_minus_unshrunk": {
-      "mean": 0.0148,
-      "lo95": 0.01,
-      "hi95": 0.0195
+      "mean": 0.0122,
+      "lo95": 0.0073,
+      "hi95": 0.0167
      },
-     "rho_shrunk": 0.3859,
-     "rho_unshrunk": 0.3711
+     "rho_shrunk": 0.3958,
+     "rho_unshrunk": 0.3836
     },
     "status": "unvalidated_display_index"
    },
@@ -265,21 +266,21 @@
     "window_years": 3,
     "results_by_convention": {
      "v1": {
-      "rho_window": 0.4026,
-      "rho_one_season": 0.3715,
+      "rho_window": 0.4168,
+      "rho_one_season": 0.3843,
       "gap_ci_window_minus_one": {
-       "mean": 0.031,
-       "lo95": 0.013,
-       "hi95": 0.0492
+       "mean": 0.0326,
+       "lo95": 0.0139,
+       "hi95": 0.051
       }
      },
      "v2": {
-      "rho_window": 0.4022,
-      "rho_one_season": 0.3711,
+      "rho_window": 0.4157,
+      "rho_one_season": 0.3836,
       "gap_ci_window_minus_one": {
-       "mean": 0.0309,
-       "lo95": 0.0116,
-       "hi95": 0.0506
+       "mean": 0.0321,
+       "lo95": 0.0137,
+       "hi95": 0.0503
       }
      }
     },
@@ -295,22 +296,22 @@
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
     "displayed_n": 465,
-    "displayed_plus_mean": 101.16,
-    "measured_points_per_displayed_sigma": 9.16,
+    "displayed_plus_mean": 101.24,
+    "measured_points_per_displayed_sigma": 9.11,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
     "shipped": "unshrunk",
     "pre_registered_rule_fired": true,
     "pooled_gap": {
-     "mean": 0.0148,
-     "lo95": 0.01,
-     "hi95": 0.0195
+     "mean": 0.0122,
+     "lo95": 0.0073,
+     "hi95": 0.0167
     },
     "within_volume_tercile_gap_means": {
-     "low": -0.0005,
-     "mid": 0.0014,
-     "high": 0.0029
+     "low": -0.0004,
+     "mid": 0.0003,
+     "high": 0.0032
     },
     "terciles_clearing_zero": [
      "high"
@@ -350,92 +351,92 @@
    ],
    "results_by_convention": {
     "v1": {
-     "rho_primary": 0.4691,
+     "rho_primary": 0.4508,
      "rho_baselines": {
-      "plus_shrunk": 0.4742,
-      "rate": 0.4742,
-      "war_total": 0.4476,
-      "ra9_inv": 0.2825,
-      "placebo": 0.0168
+      "plus_shrunk": 0.454,
+      "rate": 0.4553,
+      "war_total": 0.4144,
+      "ra9_inv": 0.306,
+      "placebo": 0.0219
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.005,
-       "lo95": -0.0103,
-       "hi95": 0.0007
+       "mean": -0.0032,
+       "lo95": -0.0089,
+       "hi95": 0.0023
       },
       "rate": {
-       "mean": -0.005,
-       "lo95": -0.0099,
-       "hi95": 0.0001
+       "mean": -0.0045,
+       "lo95": -0.0088,
+       "hi95": -0.0001
       },
       "war_total": {
-       "mean": 0.0219,
-       "lo95": 0.0043,
-       "hi95": 0.0414
+       "mean": 0.0367,
+       "lo95": 0.0144,
+       "hi95": 0.0594
       },
       "ra9_inv": {
-       "mean": 0.187,
-       "lo95": 0.1497,
-       "hi95": 0.2258
+       "mean": 0.1449,
+       "lo95": 0.1082,
+       "hi95": 0.1828
       },
       "placebo": {
-       "mean": 0.4515,
-       "lo95": 0.3816,
-       "hi95": 0.5187
+       "mean": 0.4277,
+       "lo95": 0.3587,
+       "hi95": 0.494
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.4742,
+      "rho": 0.454,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.005,
-       "lo95": -0.0007,
-       "hi95": 0.0103
+       "mean": 0.0032,
+       "lo95": -0.0023,
+       "hi95": 0.0089
       }
      }
     },
     "v2": {
-     "rho_primary": 0.4726,
+     "rho_primary": 0.4544,
      "rho_baselines": {
-      "plus_shrunk": 0.4775,
-      "rate": 0.4705,
-      "war_total": 0.4496,
-      "ra9_inv": 0.2931,
-      "placebo": 0.0167
+      "plus_shrunk": 0.4573,
+      "rate": 0.4539,
+      "war_total": 0.4183,
+      "ra9_inv": 0.3134,
+      "placebo": 0.0227
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.0048,
-       "lo95": -0.01,
-       "hi95": 0.0006
+       "mean": -0.0028,
+       "lo95": -0.008,
+       "hi95": 0.0025
       },
       "rate": {
-       "mean": 0.0021,
-       "lo95": -0.0027,
-       "hi95": 0.0071
+       "mean": 0.0007,
+       "lo95": -0.0036,
+       "hi95": 0.0048
       },
       "war_total": {
-       "mean": 0.0231,
-       "lo95": 0.0054,
-       "hi95": 0.0421
+       "mean": 0.0359,
+       "lo95": 0.0146,
+       "hi95": 0.0579
       },
       "ra9_inv": {
-       "mean": 0.1788,
-       "lo95": 0.1391,
-       "hi95": 0.2192
+       "mean": 0.1401,
+       "lo95": 0.1024,
+       "hi95": 0.1785
       },
       "placebo": {
-       "mean": 0.4535,
-       "lo95": 0.3761,
-       "hi95": 0.5258
+       "mean": 0.4289,
+       "lo95": 0.3535,
+       "hi95": 0.502
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.4775,
+      "rho": 0.4573,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0048,
-       "lo95": -0.0006,
-       "hi95": 0.01
+       "mean": 0.0028,
+       "lo95": -0.0025,
+       "hi95": 0.008
       }
      },
      "cluster": {
@@ -450,9 +451,9 @@
    "g3b_volume_control": {
     "post_hoc": true,
     "rho_with_predictor_denominator": {
-     "plus": 0.3152,
-     "plus_shrunk": 0.3266,
-     "war_total": 0.5854
+     "plus": 0.3387,
+     "plus_shrunk": 0.3469,
+     "war_total": 0.6724
     },
     "by_predictor_volume_tercile": {
      "low": {
@@ -461,12 +462,12 @@
        40.0,
        127.7
       ],
-      "rho_unshrunk": 0.3645,
-      "rho_shrunk": 0.3627,
+      "rho_unshrunk": 0.3504,
+      "rho_shrunk": 0.3472,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": -0.0019,
-       "lo95": -0.0122,
-       "hi95": 0.0091
+       "mean": -0.0033,
+       "lo95": -0.0144,
+       "hi95": 0.0092
       }
      },
      "mid": {
@@ -475,12 +476,12 @@
        128.0,
        176.3
       ],
-      "rho_unshrunk": 0.4165,
-      "rho_shrunk": 0.4141,
+      "rho_unshrunk": 0.4013,
+      "rho_shrunk": 0.3996,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": -0.0023,
-       "lo95": -0.0066,
-       "hi95": 0.0024
+       "mean": -0.0018,
+       "lo95": -0.0062,
+       "hi95": 0.0028
       }
      },
      "high": {
@@ -489,12 +490,12 @@
        176.7,
        248.3
       ],
-      "rho_unshrunk": 0.5928,
-      "rho_shrunk": 0.5952,
+      "rho_unshrunk": 0.5699,
+      "rho_shrunk": 0.5723,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0024,
-       "lo95": -0.0019,
-       "hi95": 0.0063
+       "mean": 0.0026,
+       "lo95": -0.0022,
+       "hi95": 0.0072
       }
      }
     }
@@ -504,9 +505,9 @@
     "g1_sanity_vs_placebo": {
      "pass": true,
      "gap": {
-      "mean": 0.4535,
-      "lo95": 0.3761,
-      "hi95": 0.5258
+      "mean": 0.4289,
+      "lo95": 0.3535,
+      "hi95": 0.502
      }
     },
     "g2_ship_vs_best_baseline": {
@@ -517,23 +518,23 @@
       "rate",
       "war_total"
      ],
-     "rho_primary": 0.4726,
-     "rho_baseline": 0.4705,
+     "rho_primary": 0.4544,
+     "rho_baseline": 0.4539,
      "gap": {
-      "mean": 0.0021,
-      "lo95": -0.0027,
-      "hi95": 0.0071
+      "mean": 0.0007,
+      "lo95": -0.0036,
+      "hi95": 0.0048
      }
     },
     "g3_shrink": {
      "pre_registered_rule_fired": false,
      "gap_shrunk_minus_unshrunk": {
-      "mean": 0.0048,
-      "lo95": -0.0006,
-      "hi95": 0.01
+      "mean": 0.0028,
+      "lo95": -0.0025,
+      "hi95": 0.008
      },
-     "rho_shrunk": 0.4775,
-     "rho_unshrunk": 0.4726
+     "rho_shrunk": 0.4573,
+     "rho_unshrunk": 0.4544
     },
     "status": "unvalidated_display_index"
    },
@@ -542,21 +543,21 @@
     "window_years": 3,
     "results_by_convention": {
      "v1": {
-      "rho_window": 0.477,
-      "rho_one_season": 0.4691,
+      "rho_window": 0.4653,
+      "rho_one_season": 0.4508,
       "gap_ci_window_minus_one": {
-       "mean": 0.0075,
-       "lo95": -0.0187,
-       "hi95": 0.0343
+       "mean": 0.0142,
+       "lo95": -0.0127,
+       "hi95": 0.0409
       }
      },
      "v2": {
-      "rho_window": 0.4766,
-      "rho_one_season": 0.4726,
+      "rho_window": 0.4671,
+      "rho_one_season": 0.4544,
       "gap_ci_window_minus_one": {
-       "mean": 0.0044,
-       "lo95": -0.0231,
-       "hi95": 0.0321
+       "mean": 0.0129,
+       "lo95": -0.0144,
+       "hi95": 0.04
       }
      }
     },
@@ -572,22 +573,22 @@
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
     "displayed_n": 183,
-    "displayed_plus_mean": 101.17,
-    "measured_points_per_displayed_sigma": 9.11,
+    "displayed_plus_mean": 101.22,
+    "measured_points_per_displayed_sigma": 9.02,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
     "shipped": "unshrunk",
     "pre_registered_rule_fired": false,
     "pooled_gap": {
-     "mean": 0.0048,
-     "lo95": -0.0006,
-     "hi95": 0.01
+     "mean": 0.0028,
+     "lo95": -0.0025,
+     "hi95": 0.008
     },
     "within_volume_tercile_gap_means": {
-     "low": -0.0019,
-     "mid": -0.0023,
-     "high": 0.0024
+     "low": -0.0033,
+     "mid": -0.0018,
+     "high": 0.0026
     },
     "terciles_clearing_zero": [],
     "post_hoc_control": true,
@@ -625,92 +626,92 @@
    ],
    "results_by_convention": {
     "v1": {
-     "rho_primary": 0.2335,
+     "rho_primary": 0.2554,
      "rho_baselines": {
-      "plus_shrunk": 0.2355,
-      "rate": 0.2364,
-      "war_total": 0.2306,
-      "ra9_inv": 0.093,
-      "placebo": -0.0022
+      "plus_shrunk": 0.2589,
+      "rate": 0.2552,
+      "war_total": 0.2516,
+      "ra9_inv": 0.1086,
+      "placebo": 0.0066
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.002,
-       "lo95": -0.0057,
-       "hi95": 0.0016
+       "mean": -0.0036,
+       "lo95": -0.0074,
+       "hi95": 0.0002
       },
       "rate": {
-       "mean": -0.0028,
-       "lo95": -0.0063,
-       "hi95": 0.0009
+       "mean": 0.0002,
+       "lo95": -0.0017,
+       "hi95": 0.0022
       },
       "war_total": {
-       "mean": 0.0026,
-       "lo95": -0.0113,
-       "hi95": 0.0169
+       "mean": 0.0033,
+       "lo95": -0.0092,
+       "hi95": 0.0162
       },
       "ra9_inv": {
-       "mean": 0.1406,
-       "lo95": 0.0989,
-       "hi95": 0.1832
+       "mean": 0.1471,
+       "lo95": 0.1046,
+       "hi95": 0.1902
       },
       "placebo": {
-       "mean": 0.2354,
-       "lo95": 0.1706,
-       "hi95": 0.3007
+       "mean": 0.2487,
+       "lo95": 0.1848,
+       "hi95": 0.315
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.2355,
+      "rho": 0.2589,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.002,
-       "lo95": -0.0016,
-       "hi95": 0.0057
+       "mean": 0.0036,
+       "lo95": -0.0002,
+       "hi95": 0.0074
       }
      }
     },
     "v2": {
-     "rho_primary": 0.2323,
+     "rho_primary": 0.2552,
      "rho_baselines": {
-      "plus_shrunk": 0.2343,
-      "rate": 0.2319,
-      "war_total": 0.2267,
-      "ra9_inv": 0.0798,
-      "placebo": -0.0025
+      "plus_shrunk": 0.2584,
+      "rate": 0.2553,
+      "war_total": 0.2519,
+      "ra9_inv": 0.1047,
+      "placebo": 0.0073
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.002,
-       "lo95": -0.0055,
-       "hi95": 0.0016
+       "mean": -0.0032,
+       "lo95": -0.0068,
+       "hi95": 0.0005
       },
       "rate": {
-       "mean": 0.0003,
-       "lo95": -0.0033,
-       "hi95": 0.004
+       "mean": -0.0002,
+       "lo95": -0.0021,
+       "hi95": 0.0017
       },
       "war_total": {
-       "mean": 0.0055,
-       "lo95": -0.0081,
-       "hi95": 0.0184
+       "mean": 0.0032,
+       "lo95": -0.0094,
+       "hi95": 0.0157
       },
       "ra9_inv": {
-       "mean": 0.152,
-       "lo95": 0.1115,
+       "mean": 0.1495,
+       "lo95": 0.1076,
        "hi95": 0.1946
       },
       "placebo": {
-       "mean": 0.233,
-       "lo95": 0.1574,
-       "hi95": 0.3019
+       "mean": 0.2456,
+       "lo95": 0.1745,
+       "hi95": 0.3158
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.2343,
+      "rho": 0.2584,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.002,
-       "lo95": -0.0016,
-       "hi95": 0.0055
+       "mean": 0.0032,
+       "lo95": -0.0005,
+       "hi95": 0.0068
       }
      },
      "cluster": {
@@ -725,9 +726,9 @@
    "g3b_volume_control": {
     "post_hoc": true,
     "rho_with_predictor_denominator": {
-     "plus": 0.1822,
-     "plus_shrunk": 0.2033,
-     "war_total": 0.3976
+     "plus": 0.1846,
+     "plus_shrunk": 0.2023,
+     "war_total": 0.378
     },
     "by_predictor_volume_tercile": {
      "low": {
@@ -736,12 +737,12 @@
        30.0,
        53.0
       ],
-      "rho_unshrunk": 0.1497,
-      "rho_shrunk": 0.148,
+      "rho_unshrunk": 0.1709,
+      "rho_shrunk": 0.1723,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": -0.0019,
-       "lo95": -0.0068,
-       "hi95": 0.0031
+       "mean": 0.0014,
+       "lo95": -0.0037,
+       "hi95": 0.0068
       }
      },
      "mid": {
@@ -750,12 +751,12 @@
        53.3,
        65.0
       ],
-      "rho_unshrunk": 0.2376,
-      "rho_shrunk": 0.2379,
+      "rho_unshrunk": 0.267,
+      "rho_shrunk": 0.2696,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0004,
-       "lo95": -0.0022,
-       "hi95": 0.0029
+       "mean": 0.0025,
+       "lo95": -0.0001,
+       "hi95": 0.0051
       }
      },
      "high": {
@@ -764,11 +765,11 @@
        65.3,
        137.7
       ],
-      "rho_unshrunk": 0.3062,
-      "rho_shrunk": 0.3068,
+      "rho_unshrunk": 0.3131,
+      "rho_shrunk": 0.3133,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0004,
-       "lo95": -0.0035,
+       "mean": 0.0001,
+       "lo95": -0.0038,
        "hi95": 0.0036
       }
      }
@@ -779,9 +780,9 @@
     "g1_sanity_vs_placebo": {
      "pass": true,
      "gap": {
-      "mean": 0.233,
-      "lo95": 0.1574,
-      "hi95": 0.3019
+      "mean": 0.2456,
+      "lo95": 0.1745,
+      "hi95": 0.3158
      }
     },
     "g2_ship_vs_best_baseline": {
@@ -792,23 +793,23 @@
       "rate",
       "war_total"
      ],
-     "rho_primary": 0.2323,
-     "rho_baseline": 0.2319,
+     "rho_primary": 0.2552,
+     "rho_baseline": 0.2553,
      "gap": {
-      "mean": 0.0003,
-      "lo95": -0.0033,
-      "hi95": 0.004
+      "mean": -0.0002,
+      "lo95": -0.0021,
+      "hi95": 0.0017
      }
     },
     "g3_shrink": {
      "pre_registered_rule_fired": false,
      "gap_shrunk_minus_unshrunk": {
-      "mean": 0.002,
-      "lo95": -0.0016,
-      "hi95": 0.0055
+      "mean": 0.0032,
+      "lo95": -0.0005,
+      "hi95": 0.0068
      },
-     "rho_shrunk": 0.2343,
-     "rho_unshrunk": 0.2323
+     "rho_shrunk": 0.2584,
+     "rho_unshrunk": 0.2552
     },
     "status": "unvalidated_display_index"
    },
@@ -817,21 +818,21 @@
     "window_years": 3,
     "results_by_convention": {
      "v1": {
-      "rho_window": 0.2578,
-      "rho_one_season": 0.2335,
+      "rho_window": 0.2714,
+      "rho_one_season": 0.2554,
       "gap_ci_window_minus_one": {
-       "mean": 0.0252,
-       "lo95": -0.0042,
-       "hi95": 0.0533
+       "mean": 0.0167,
+       "lo95": -0.0123,
+       "hi95": 0.0462
       }
      },
      "v2": {
-      "rho_window": 0.259,
-      "rho_one_season": 0.2323,
+      "rho_window": 0.2715,
+      "rho_one_season": 0.2552,
       "gap_ci_window_minus_one": {
-       "mean": 0.0265,
-       "lo95": -0.0035,
-       "hi95": 0.0564
+       "mean": 0.0161,
+       "lo95": -0.0157,
+       "hi95": 0.0468
       }
      }
     },
@@ -847,22 +848,22 @@
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
     "displayed_n": 263,
-    "displayed_plus_mean": 100.85,
-    "measured_points_per_displayed_sigma": 9.7,
+    "displayed_plus_mean": 100.9,
+    "measured_points_per_displayed_sigma": 9.84,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
     "shipped": "unshrunk",
     "pre_registered_rule_fired": false,
     "pooled_gap": {
-     "mean": 0.002,
-     "lo95": -0.0016,
-     "hi95": 0.0055
+     "mean": 0.0032,
+     "lo95": -0.0005,
+     "hi95": 0.0068
     },
     "within_volume_tercile_gap_means": {
-     "low": -0.0019,
-     "mid": 0.0004,
-     "high": 0.0004
+     "low": 0.0014,
+     "mid": 0.0025,
+     "high": 0.0001
     },
     "terciles_clearing_zero": [],
     "post_hoc_control": true,
@@ -871,8 +872,8 @@
    }
   }
  },
- "war_provider": "ewar_v2",
- "ewar_generated_at": "2026-09-03T12:35:09",
+ "war_provider": "ewar_v3",
+ "ewar_generated_at": "2026-10-22T02:17:24+00:00",
  "verdict": {
   "g1_beats_zero_information_control_by_pool": {
    "hit": true,
@@ -895,7 +896,7 @@
    "RP": false
   },
   "shrink_decision": "UNSHRUNK on every pool. The pre-registered arm-S rule FIRED on ['hit'] and is being overridden, not ignored: see pools[*].shrink_ruling for the argument and the open owner call.",
-  "summary": "NO PASS on the ship gate. The indexes carry real signal (they beat a zero-information control) on hitters, starters, relievers. Hitters (WAR/PA+): index 0.3711 vs plain season WAR on the same series 0.4058 (gap lo95 -0.0479), G2 FAIL. Starters (WAR/IP+): index 0.4726 vs the same rate left unstandardized 0.4705 (gap lo95 -0.0027), G2 FAIL; against season WAR (0.4496) it clears (lo95 +0.0054). Relievers (WAR/IP+): index 0.2323 vs the same rate left unstandardized 0.2319 (gap lo95 -0.0033), G2 FAIL; against season WAR (0.2267) it does not clear (lo95 -0.0081). They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. Where season WAR itself is the binding baseline (hitters), the mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
+  "summary": "NO PASS on the ship gate. The indexes carry real signal (they beat a zero-information control) on hitters, starters, relievers. Hitters (WAR/PA+): index 0.3836 vs plain season WAR on the same series 0.4127 (gap lo95 -0.0423), G2 FAIL. Starters (WAR/IP+): index 0.4544 vs the same rate left unstandardized 0.4539 (gap lo95 -0.0036), G2 FAIL; against season WAR (0.4183) it clears (lo95 +0.0146). Relievers (WAR/IP+): index 0.2552 vs the same rate left unstandardized 0.2553 (gap lo95 -0.0021), G2 FAIL; against season WAR (0.2519) it does not clear (lo95 -0.0094). They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. Where season WAR itself is the binding baseline (hitters), the mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
  },
- "runtime_seconds": 252.4
+ "runtime_seconds": 252.5
 }
