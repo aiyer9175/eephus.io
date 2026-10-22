@@ -49,8 +49,9 @@ def _grid(position_isp=ROLES):
                 yield isp, pos, float(a), k
 
 
-def test_flag_defaults_off():
-    assert btv.TRADE_AGING_PREPEAK_FIX is False
+def test_flag_is_on():
+    # flipped by AG_3_TM_PREPEAK_FIX commit 2 (owner answer AG-Q5 'Fix both now')
+    assert btv.TRADE_AGING_PREPEAK_FIX is True
 
 
 def test_flag_off_matches_the_old_values(monkeypatch):

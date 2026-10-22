@@ -1486,7 +1486,7 @@ def _remaining_control_years(player: dict) -> tuple[float, str]:
 # (peak, decline and floor from this module's aging_curve block, catcher values
 # as configured; the climb from value_framework_config.yaml's aging block), so
 # it rises before the peak and falls after.
-TRADE_AGING_PREPEAK_FIX = False
+TRADE_AGING_PREPEAK_FIX = True
 
 
 def _aging_factor(age_now: float | None, yr_offset: int, is_pitcher: bool,
