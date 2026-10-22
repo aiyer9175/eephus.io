@@ -1,0 +1,1977 @@
+{
+ "generated_at": "2026-10-22T04:31:36Z",
+ "registration": "docs/NULL_COMPARATOR_SWEEP.md",
+ "seed": 20261022,
+ "bootstrap_reps": 2000,
+ "dry_run": false,
+ "census": [
+  {
+   "model_id": "ba_source_classification",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "the hardcoded insufficient-history list",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a data derivation (row counts), no predictive claim"
+  },
+  {
+   "model_id": "c3_proj_trans_recal",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "the clamped band",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a clamp audit judged on monotone invariance; no accuracy claim"
+  },
+  {
+   "model_id": "consensus_contamination",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "zero-information control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement; the leak claim already failed its control"
+  },
+  {
+   "model_id": "consensus_coverage_shrinkage",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "permuted-coverage control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a null result"
+  },
+  {
+   "model_id": "consensus_fv",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "best single source on the same rows, argmax redrawn per draw",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "claims to beat the sources it blends; AUC null 0.5 is analytic (served AUC 0.767)"
+  },
+  {
+   "model_id": "consensus_org_rank_split",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "the label-only guard",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a correctness repair; zero rows of the grade move"
+  },
+  {
+   "model_id": "consensus_rank",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "rank permuted within cell",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement with a permutation null"
+  },
+  {
+   "model_id": "consensus_recency_decay",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "permuted publication dates",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a null result"
+  },
+  {
+   "model_id": "draft_slot_curve",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "the hand-set step table only",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "RUN:S3",
+   "note": "no flat or zero curve was scored on the 2015-18 holdout"
+  },
+  {
+   "model_id": "efv_scoreboard",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "consensus FV on identical rows",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "the comparator is the consensus it is read against"
+  },
+  {
+   "model_id": "eta",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "naive level-to-years table",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "naive table is the null"
+  },
+  {
+   "model_id": "eta_fg_blend",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "CH40 champion",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "FanGraphs ETA alone was registered as NOT scored on the look frame (a source score over 2025-26 debut rows); owner question"
+  },
+  {
+   "model_id": "fa_dpw_series",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "fitted trend and trend plus CBT",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "the winner IS the naive flat carry"
+  },
+  {
+   "model_id": "fa_market",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "nearest-comps median, trend inflated",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "comps median is the naive null"
+  },
+  {
+   "model_id": "fa_projection_marcel",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "5/4/3 carry-forward of actual WAR",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "RUN:S1",
+   "note": "carry-forward is present; a zero or constant prediction was never scored, and MAE on an absent-as-zero label rewards shrinkage"
+  },
+  {
+   "model_id": "fa_war_paths_decay",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "marcel_decay_v2 champion",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "RUN:S2",
+   "note": "challenger vs champion only; no zero or carry path on the horizon frame"
+  },
+  {
+   "model_id": "fv_to_war_anchors",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "public primer table",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "any null needs an FV-cell realized WAR mean: docs/PROSPECT_ANCHOR_GATE.md"
+  },
+  {
+   "model_id": "hem_plus_3yr",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "single-season HEM+ on the same set",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "single-season HEM+ is the naive carry of the same metric"
+  },
+  {
+   "model_id": "dem_plus",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "fielding pct, innings, raw rate; permuted twin",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "ties its raw parent, disclosed"
+  },
+  {
+   "model_id": "mlb_projections_vets",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "inherits Gate 1 and the horizon eval",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "RUN:S2",
+   "note": "row-matched claim h1 0.5846 vs 0.5988 has no zero or carry path"
+  },
+  {
+   "model_id": "phem_marcel_lite",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "1yr HEM+, flat 3yr, textbook Marcel",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "1yr HEM+ is the naive carry"
+  },
+  {
+   "model_id": "plus_metric_recal",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "clamped display",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a clamp audit judged on invariance"
+  },
+  {
+   "model_id": "positional_ladder",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "folklore table, level-corrected; zero-information control; H0 shape simulation",
+   "null_status": "PRESENT",
+   "planted_recovery": true,
+   "action": "COVERED",
+   "note": "control at -5.02 runs; the consumer-level predictive gate is already a NULL"
+  },
+  {
+   "model_id": "proj_def_prior",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "the model without the feature",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "an ablation: the zero-adjustment null"
+  },
+  {
+   "model_id": "prospect_surplus",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "identity calibration",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "re-measure waits for the Prospect Anchor look (row note); its frame is the surplus backtest, never run here"
+  },
+  {
+   "model_id": "pwoba_blend_regate",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "incumbent pWOBA, xwOBA alone",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "xwOBA(Y) alone is a naive carry"
+  },
+  {
+   "model_id": "rem_plus",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "ERA, raw FIP, raw WPA",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "ERA is the naive carry"
+  },
+  {
+   "model_id": "savant_sprint",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "r = 0 (no range read)",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "Fisher CI lower bound vs zero"
+  },
+  {
+   "model_id": "sc_plus_component_diagnostic",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "sem_plus",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "ERA, raw FIP",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "ERA is the naive carry"
+  },
+  {
+   "model_id": "source_cohort_accuracy",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "equal weight, random-cohort control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a null result; no weight ships"
+  },
+  {
+   "model_id": "source_track_record",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "surplus_decomposition_v6",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "zero-information constant board, permuted truth",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "surplus_sensitivity_diagnostic",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "an invariance measurement"
+  },
+  {
+   "model_id": "war_cohort_diagnostic",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "xfv_bughunt2",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "an audit"
+  },
+  {
+   "model_id": "xfv_dist_calibration",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "xfv_dist_recalibration",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "permuted-tier twin, zero-information constant",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a no-ship; the constant reproduced 152.7 percent of the gain"
+  },
+  {
+   "model_id": "xfv_label_censoring",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "n/a",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "xfv_label_replacement",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "level twin, permuted share profile",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a null result"
+  },
+  {
+   "model_id": "xfv_lambda_adjudication",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "null E (frozen stamps)",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "lab artifact"
+  },
+  {
+   "model_id": "xfv_lambda_reselect",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "lambda grid from 0.5 (no consensus-alone arm)",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "scored years 2020-2023 overlap the reserved list-vintage frame R-LV; consensus-vs-eFV v1 is a tie in xfv_hitter and xfv_headtohead_frame"
+  },
+  {
+   "model_id": "xfv_level_rank_fringe",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "the lean set without the feature",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "ablation null; never re-run (its t45 cell is a consensus-FV stratum)"
+  },
+  {
+   "model_id": "xfv_odds_calibration_slope",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "incumbent curve and a constant base rate",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "beats the constant, CI clear of zero"
+  },
+  {
+   "model_id": "xfv_ops_rel_fringe",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "the lean set without the feature",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "ablation null; never re-run (consensus-FV stratum)"
+  },
+  {
+   "model_id": "xfv_rank_objective",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "permuted-weight control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a null result"
+  },
+  {
+   "model_id": "xfv_stale_anchor",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "the raw anchor served as fresh (zero decay)",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "zero adjustment is present; a time-flat discount null needs bust rates by FV band (PROSPECT_ANCHOR_GATE)"
+  },
+  {
+   "model_id": "xhem_plus",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "actual wOBA forward rho",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "actual wOBA(Y) is the naive carry"
+  },
+  {
+   "model_id": "xfv_side_calibration",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "the other side within band",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "an audit; FV-band realized means, never re-run"
+  },
+  {
+   "model_id": "xfv_headtohead_frame",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "consensus FV on identical rows",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "the served copy is a tie"
+  },
+  {
+   "model_id": "xfv_ewar_label_epoch",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "zero-information twin, permutation null",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a measurement"
+  },
+  {
+   "model_id": "hof_induction_ledger",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "the unrepaired ledger",
+   "null_status": "NA",
+   "planted_recovery": false,
+   "action": "NA",
+   "note": "a repair"
+  },
+  {
+   "model_id": "hof_public_bakeoff",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "JAWS reference and the resampled public argmax",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "the served comparison is a loss, said as a loss"
+  },
+  {
+   "model_id": "efv_matrix",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": true,
+   "comparator": "PROSPX consensus on identical rows",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "comparator is the consensus"
+  },
+  {
+   "model_id": "fa_destination",
+   "verdict_at_registration": "validated",
+   "verdict_now": "validated",
+   "served": false,
+   "comparator": "random, payroll, permuted control L_perm",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "not served"
+  },
+  {
+   "model_id": "arb_award",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "MDE95 floor and a zero-information control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "betting_game_prob",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "home-field constant, flat 0.500",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "college_translation",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "predict-the-Single-A-mean",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "college_translation_scorecard",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "predict-the-Single-A-mean",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "control_window_salary_path",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "no price (surplus 0)",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "draft_consensus_weight",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "best single source, equal weight",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "the edge is within noise, said so"
+  },
+  {
+   "model_id": "eta_hazard_lite",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the incumbent path (zero adjustment)",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "farm_grades",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "prospect-count ranking",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "fwdhem_plus",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "xwOBA alone",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "btblend_plus",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the served xHEM+ Blend; xwOBA alone",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "dem_plus_3yr",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "single-season DEM+",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "rem_plus_3yr",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "single-season REM+",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "sem_plus_3yr",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "single-season SEM+",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "leverage_consistency",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "a fixed bar (rho 0.30) above zero",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "mlb_projections_prospects",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "three stat-line challengers",
+   "null_status": "ANALYTIC",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "a rank claim; a constant has rank correlation 0"
+  },
+  {
+   "model_id": "mlb_projections_prospects_statline",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "B0 league-average rookie line",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "overseas_translation",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "published primer factors",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "n 3 KBO hitters; no null can be powered"
+  },
+  {
+   "model_id": "proj_components",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "naive three-season rate",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "spotlights_movement",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "random matched controls",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "statcast_alevel_display",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the stat line alone",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "stuff_plus_aaa",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "r = 0",
+   "null_status": "ANALYTIC",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "statcast_plus",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "publish-the-r",
+   "null_status": "ANALYTIC",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "team_win_projections",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "prior-season wins carry-forward",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_ehit",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_epow",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_esel",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_ebat",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_efb",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "etool_ecmd",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the consensus tool grade",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "trade_machine_surplus",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "consensus FV ordering",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "fantasy_combined_rank",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "vintage consensus FV rank",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "loses to consensus, said so"
+  },
+  {
+   "model_id": "mock_draft",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the raw consensus board",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "grpo_prospect",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "zero-information shuffle, FV-only control",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "scores_mlb_wp",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "home-win base rate",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "rpw_fit",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "FanGraphs closed form",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "milb_fielding_runs",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "zero, fielder shuffle, within-position permutation",
+   "null_status": "PRESENT",
+   "planted_recovery": true,
+   "action": "COVERED",
+   "note": "the reference design: null plus planted recovery"
+  },
+  {
+   "model_id": "efv_v2",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "PROSPX consensus and eFV v1",
+   "null_status": "PRESENT",
+   "planted_recovery": true,
+   "action": "COVERED",
+   "note": "served as a tie"
+  },
+  {
+   "model_id": "xfv_thin_pbust",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "grade-only curve, constant, permuted grade and level",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "xfv_tools",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "consensus tool grade alone",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "xfv_ungraded",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "rank vs zero; constant first-grade MAE",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "loses the level to a constant, said so"
+  },
+  {
+   "model_id": "provisional_first_grade",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "per-set constant, level-rank and younger nulls",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "provisional_v2",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "level-rank and younger nulls, constant",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "ifa_step_prior",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "difference vs zero",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "xfv_statcast_line",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "unadjusted AAA lines",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "xfv_odds_grade_basis",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the re-key and a constant",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": "loses to the constant, said so"
+  },
+  {
+   "model_id": "fa_team_fit",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "random, payroll-only, behavior-only",
+   "null_status": "PRESENT",
+   "planted_recovery": false,
+   "action": "COVERED",
+   "note": ""
+  },
+  {
+   "model_id": "fv_outcome_pooled_grade",
+   "verdict_at_registration": "provisional",
+   "verdict_now": "provisional",
+   "served": true,
+   "comparator": "the side-neutral inversion",
+   "null_status": "MISSING",
+   "planted_recovery": false,
+   "action": "DEFERRED",
+   "note": "an FV-to-outcome curve: PROSPECT_ANCHOR_GATE"
+  }
+ ],
+ "census_counts": {
+  "action:COVERED": 68,
+  "action:DEFERRED": 7,
+  "action:NA": 23,
+  "action:RUN": 4,
+  "planted_recovery_yes": 3,
+  "provisional:ANALYTIC": 3,
+  "provisional:MISSING": 2,
+  "provisional:PRESENT": 42,
+  "validated:MISSING": 6,
+  "validated:NA": 13,
+  "validated:PRESENT": 36
+ },
+ "cache_isolation": {
+  "cache_dir": "C:\\Users\\noah\\AppData\\Local\\Temp\\claude\\c--Users-noah-baseball-projects-BaseballR\\b7a7d3e5-214d-4434-a171-b2b4900b0199\\scratchpad\\wdq\\NULL_COMPARATOR_SWEEP\\cache",
+  "files_copied": 72,
+  "source": "C:\\Users\\noah\\baseball-projects\\wt\\s201\\prospect-tracker\\.cache"
+ },
+ "runs": {
+  "S3": {
+   "frame": "tools/fit_draft_slot_curve.py: first-8 curve fit on 2005-14 picks 1-500, scored on the 2015-18 holdout; metric = the artifact's holdout_mae (unweighted mean over buckets of |bucket prediction - realized bucket mean|); bootstrap stratified by bucket",
+   "label": "fwar",
+   "n_fit": 4628,
+   "n_holdout": 1968,
+   "flat_constant": 1.1555,
+   "reproduction": {
+    "stored": {
+     "artifact": "data/draft_slot_curve.json",
+     "label": "fwar",
+     "holdout_mae_fitted_first8": 2.73
+    },
+    "now": {
+     "holdout_mae_fitted_first8": 2.73
+    },
+    "reproduces": true
+   },
+   "primary_cell": "holdout_bucket_mae",
+   "cells": {
+    "holdout_bucket_mae": {
+     "n": 1968,
+     "metric_model": 2.7299,
+     "secondary_mse_model": 8.12,
+     "nulls": {
+      "FLAT": {
+       "metric_null": 1.7123,
+       "point": -1.0176,
+       "lo95": -2.3103,
+       "hi95": 0.6581,
+       "verdict": "TIES",
+       "secondary_mse_null": 7.6951,
+       "secondary_mse_delta": -0.4249,
+       "secondary_lo95": -1.4382,
+       "secondary_hi95": 0.8385,
+       "secondary_verdict": "TIES"
+      },
+      "ZERO": {
+       "metric_null": 2.3852,
+       "point": -0.3446,
+       "lo95": -1.7112,
+       "hi95": 1.2894,
+       "verdict": "TIES",
+       "secondary_mse_null": 7.9012,
+       "secondary_mse_delta": -0.2188,
+       "secondary_lo95": -1.384,
+       "secondary_hi95": 1.1907,
+       "secondary_verdict": "TIES"
+      }
+     },
+     "instrument": {
+      "planted_better": {
+       "lo95": 0.9192,
+       "hi95": 1.3649
+      },
+      "planted_worse": {
+       "lo95": 1.8074,
+       "hi95": 4.8064
+      },
+      "verdict": "PASS"
+     }
+    }
+   },
+   "disclosed_confound": "the holdout is right-censored (a 2018 pick debuting 2022 has 4 observed seasons by 2025) and every window holds 2020, so its level reads low; the artifact names it a diagnostic, not the ship criterion",
+   "seconds": 12.4
+  },
+  "S1": {
+   "frame": "fa_backtest.run_projection_gate(persist=False) WAR pool, targets [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025], absent target season = 0 for every arm",
+   "label": "fwar",
+   "label_shape": "side_keyed_v1",
+   "reproduction": {
+    "stored": {
+     "artifact": "data/fa_gate1_eval.json",
+     "label": "ewar_v2",
+     "war_mae_model": 0.5156555204307136,
+     "war_mae_base": 0.6242164570411276,
+     "n": 20721
+    },
+    "now": {
+     "war_mae_model": 0.492364893126252,
+     "war_mae_base": 0.5874022151850201,
+     "n": 20721
+    },
+    "note": "the stored artifact is on the retired eWAR v2 label; the frame definition is reproduced on the current training label and every arm is scored on identical rows"
+   },
+   "population_mean_constants": {
+    "2015": 0.5334,
+    "2016": 0.5204,
+    "2017": 0.5078,
+    "2018": 0.4993,
+    "2019": 0.4938,
+    "2021": 0.1816,
+    "2022": 0.4773,
+    "2023": 0.4583,
+    "2024": 0.4299,
+    "2025": 0.4433
+   },
+   "primary_cell": "pooled",
+   "cells": {
+    "pooled": {
+     "n": 20721,
+     "mae_model": 0.4924,
+     "nulls": {
+      "ZERO": {
+       "n": 20721,
+       "clusters": 4434,
+       "point": 0.08608,
+       "lo95": 0.06816,
+       "hi95": 0.10462,
+       "mae_null": 0.5784,
+       "verdict": "BEATS"
+      },
+      "POP_MEAN": {
+       "n": 20721,
+       "clusters": 4434,
+       "point": 0.27365,
+       "lo95": 0.25997,
+       "hi95": 0.28769,
+       "mae_null": 0.766,
+       "verdict": "BEATS"
+      }
+     },
+     "instrument": {
+      "planted_better": {
+       "n": 20721,
+       "clusters": 4434,
+       "point": 0.24618,
+       "lo95": 0.23821,
+       "hi95": 0.25458
+      },
+      "planted_worse": {
+       "n": 20721,
+       "clusters": 4434,
+       "point": 0.43347,
+       "lo95": 0.42449,
+       "hi95": 0.44277
+      },
+      "verdict": "PASS"
+     }
+    },
+    "hit": {
+     "n": 8833,
+     "mae_model": 0.6171,
+     "nulls": {
+      "ZERO": {
+       "n": 8833,
+       "clusters": 1952,
+       "point": 0.16919,
+       "lo95": 0.13552,
+       "hi95": 0.20571,
+       "mae_null": 0.7862,
+       "verdict": "BEATS"
+      },
+      "POP_MEAN": {
+       "n": 8833,
+       "clusters": 1952,
+       "point": 0.32003,
+       "lo95": 0.29499,
+       "hi95": 0.34657,
+       "mae_null": 0.9371,
+       "verdict": "BEATS"
+      }
+     },
+     "instrument": {
+      "planted_better": {
+       "n": 8833,
+       "clusters": 1952,
+       "point": 0.30853,
+       "lo95": 0.29484,
+       "hi95": 0.32341
+      },
+      "planted_worse": {
+       "n": 8833,
+       "clusters": 1952,
+       "point": 0.51238,
+       "lo95": 0.49412,
+       "hi95": 0.53248
+      },
+      "verdict": "PASS"
+     }
+    },
+    "pit": {
+     "n": 11888,
+     "mae_model": 0.3997,
+     "nulls": {
+      "ZERO": {
+       "n": 11888,
+       "clusters": 2803,
+       "point": 0.02433,
+       "lo95": 0.00525,
+       "hi95": 0.04234,
+       "mae_null": 0.424,
+       "verdict": "BEATS"
+      },
+      "POP_MEAN": {
+       "n": 11888,
+       "clusters": 2803,
+       "point": 0.23919,
+       "lo95": 0.22606,
+       "hi95": 0.2527,
+       "mae_null": 0.6389,
+       "verdict": "BEATS"
+      }
+     },
+     "instrument": {
+      "planted_better": {
+       "n": 11888,
+       "clusters": 2803,
+       "point": 0.19986,
+       "lo95": 0.19075,
+       "hi95": 0.20872
+      },
+      "planted_worse": {
+       "n": 11888,
+       "clusters": 2803,
+       "point": 0.33893,
+       "lo95": 0.32853,
+       "hi95": 0.34949
+      },
+      "verdict": "PASS"
+     }
+    }
+   },
+   "seconds": 52.3
+  },
+  "S2": {
+   "frame": "proj_eval row-matched frame, bases [2017, 2018, 2019, 2021], horizons 1-5, label seasons <= 2025, absent target season = 0 for every arm",
+   "label": "fwar",
+   "label_shape": "side_keyed_v1",
+   "n_players_matched": 8053,
+   "reproduction": {
+    "stored": {
+     "artifact": "data/proj_horizon_eval.json",
+     "block": "rowmatch_champion_vs_challenger",
+     "label": "pre-epoch (2026-08-19)",
+     "champion_mae": {
+      "1": 0.5988,
+      "2": 0.5188,
+      "3": 0.4635,
+      "4": 0.3957,
+      "5": 0.3692
+     },
+     "challenger_mae": {
+      "1": 0.5846,
+      "2": 0.4917,
+      "3": 0.4356,
+      "4": 0.3758,
+      "5": 0.3586
+     },
+     "n": 8053
+    },
+    "now": {
+     "1": {
+      "n": 8053,
+      "champion_mae": 0.5142,
+      "challenger_mae": 0.4925
+     },
+     "2": {
+      "n": 8053,
+      "champion_mae": 0.4637,
+      "challenger_mae": 0.428
+     },
+     "3": {
+      "n": 8053,
+      "champion_mae": 0.4103,
+      "challenger_mae": 0.3743
+     },
+     "4": {
+      "n": 8053,
+      "champion_mae": 0.3604,
+      "challenger_mae": 0.3305
+     },
+     "5": {
+      "n": 8053,
+      "champion_mae": 0.3287,
+      "challenger_mae": 0.3128
+     }
+    },
+    "note": "the stored block predates the 2026-09-18 two-way label repair and the fWAR epoch; both models are re-scored on identical rows in this run"
+   },
+   "primary_cell": "h1",
+   "cells": {
+    "challenger_proj_lgbm": {
+     "h1": {
+      "n": 8053,
+      "mae_model": 0.4925,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.12515,
+        "lo95": 0.10445,
+        "hi95": 0.14884,
+        "mae_null": 0.6177,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.13273,
+        "lo95": 0.12048,
+        "hi95": 0.14616,
+        "mae_null": 0.6252,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.24626,
+        "lo95": 0.23428,
+        "hi95": 0.25914
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.51754,
+        "lo95": 0.50175,
+        "hi95": 0.53455
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h2": {
+      "n": 8053,
+      "mae_model": 0.428,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.0403,
+        "lo95": 0.02669,
+        "hi95": 0.05469,
+        "mae_null": 0.4683,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.22074,
+        "lo95": 0.20468,
+        "hi95": 0.23557,
+        "mae_null": 0.6488,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.21402,
+        "lo95": 0.20126,
+        "hi95": 0.2278
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.54268,
+        "lo95": 0.52686,
+        "hi95": 0.55929
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h3": {
+      "n": 8053,
+      "mae_model": 0.3743,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.02907,
+        "lo95": 0.01617,
+        "hi95": 0.04238,
+        "mae_null": 0.4034,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.27168,
+        "lo95": 0.25227,
+        "hi95": 0.29064,
+        "mae_null": 0.646,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.18716,
+        "lo95": 0.17537,
+        "hi95": 0.20051
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.53193,
+        "lo95": 0.51747,
+        "hi95": 0.54653
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h4": {
+      "n": 8053,
+      "mae_model": 0.3305,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.0073,
+        "lo95": -0.00509,
+        "hi95": 0.01977,
+        "mae_null": 0.3378,
+        "verdict": "TIES"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.32271,
+        "lo95": 0.29988,
+        "hi95": 0.34586,
+        "mae_null": 0.6532,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.16524,
+        "lo95": 0.15347,
+        "hi95": 0.17787
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.51998,
+        "lo95": 0.50674,
+        "hi95": 0.53448
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h5": {
+      "n": 8053,
+      "mae_model": 0.3128,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.01452,
+        "lo95": 0.00281,
+        "hi95": 0.02645,
+        "mae_null": 0.3273,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.34411,
+        "lo95": 0.31857,
+        "hi95": 0.36916,
+        "mae_null": 0.6569,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.15639,
+        "lo95": 0.14355,
+        "hi95": 0.17035
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.5362,
+        "lo95": 0.5232,
+        "hi95": 0.55078
+       },
+       "verdict": "PASS"
+      }
+     },
+     "pooled_h1_h5": {
+      "n": 40265,
+      "mae_model": 0.3876,
+      "nulls": {
+       "ZERO": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.04327,
+        "lo95": 0.03089,
+        "hi95": 0.0562,
+        "mae_null": 0.4309,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.25839,
+        "lo95": 0.24054,
+        "hi95": 0.27551,
+        "mae_null": 0.646,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.19381,
+        "lo95": 0.18284,
+        "hi95": 0.20619
+       },
+       "planted_worse": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.5291,
+        "lo95": 0.51933,
+        "hi95": 0.53838
+       },
+       "verdict": "PASS"
+      }
+     }
+    },
+    "champion_decay": {
+     "h1": {
+      "n": 8053,
+      "mae_model": 0.5142,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.10349,
+        "lo95": 0.08108,
+        "hi95": 0.12847,
+        "mae_null": 0.6177,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.11107,
+        "lo95": 0.10004,
+        "hi95": 0.12278,
+        "mae_null": 0.6252,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.25709,
+        "lo95": 0.24607,
+        "hi95": 0.26914
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.4725,
+        "lo95": 0.45676,
+        "hi95": 0.48909
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h2": {
+      "n": 8053,
+      "mae_model": 0.4637,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.00461,
+        "lo95": -0.01175,
+        "hi95": 0.0213,
+        "mae_null": 0.4683,
+        "verdict": "TIES"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.18505,
+        "lo95": 0.17066,
+        "hi95": 0.19865,
+        "mae_null": 0.6488,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.23187,
+        "lo95": 0.21993,
+        "hi95": 0.2446
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.49346,
+        "lo95": 0.47791,
+        "hi95": 0.50988
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h3": {
+      "n": 8053,
+      "mae_model": 0.4103,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": -0.00692,
+        "lo95": -0.02339,
+        "hi95": 0.00972,
+        "mae_null": 0.4034,
+        "verdict": "TIES"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.23569,
+        "lo95": 0.21807,
+        "hi95": 0.25223,
+        "mae_null": 0.646,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.20515,
+        "lo95": 0.19418,
+        "hi95": 0.21726
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.48302,
+        "lo95": 0.46907,
+        "hi95": 0.49784
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h4": {
+      "n": 8053,
+      "mae_model": 0.3604,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": -0.02259,
+        "lo95": -0.03693,
+        "hi95": -0.00736,
+        "mae_null": 0.3378,
+        "verdict": "LOSES"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.29282,
+        "lo95": 0.27084,
+        "hi95": 0.31446,
+        "mae_null": 0.6532,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.18018,
+        "lo95": 0.16849,
+        "hi95": 0.19226
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.48885,
+        "lo95": 0.4756,
+        "hi95": 0.50389
+       },
+       "verdict": "PASS"
+      }
+     },
+     "h5": {
+      "n": 8053,
+      "mae_model": 0.3287,
+      "nulls": {
+       "ZERO": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": -0.00137,
+        "lo95": -0.01594,
+        "hi95": 0.01413,
+        "mae_null": 0.3273,
+        "verdict": "TIES"
+       },
+       "CARRY_543_FLAT": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.32821,
+        "lo95": 0.30495,
+        "hi95": 0.35215,
+        "mae_null": 0.6569,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.16433,
+        "lo95": 0.15259,
+        "hi95": 0.17718
+       },
+       "planted_worse": {
+        "n": 8053,
+        "clusters": 2916,
+        "point": 0.50088,
+        "lo95": 0.4878,
+        "hi95": 0.51513
+       },
+       "verdict": "PASS"
+      }
+     },
+     "pooled_h1_h5": {
+      "n": 40265,
+      "mae_model": 0.4154,
+      "nulls": {
+       "ZERO": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.01544,
+        "lo95": 0.00103,
+        "hi95": 0.03124,
+        "mae_null": 0.4309,
+        "verdict": "BEATS"
+       },
+       "CARRY_543_FLAT": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.23057,
+        "lo95": 0.21412,
+        "hi95": 0.24665,
+        "mae_null": 0.646,
+        "verdict": "BEATS"
+       }
+      },
+      "instrument": {
+       "planted_better": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.20772,
+        "lo95": 0.19716,
+        "hi95": 0.21901
+       },
+       "planted_worse": {
+        "n": 40265,
+        "clusters": 2916,
+        "point": 0.48506,
+        "lo95": 0.47554,
+        "hi95": 0.49394
+       },
+       "verdict": "PASS"
+      }
+     }
+    }
+   },
+   "seconds": 441.5
+  }
+ },
+ "row_findings": [
+  {
+   "model_id": "fa_projection_marcel",
+   "run": "S1",
+   "primary_cell": "pooled",
+   "verdicts": {
+    "ZERO": "BEATS",
+    "POP_MEAN": "BEATS"
+   },
+   "instrument": "PASS",
+   "status": "BEATS_EVERY_NULL"
+  },
+  {
+   "model_id": "fa_war_paths_decay",
+   "run": "S2",
+   "primary_cell": "h1",
+   "verdicts": {
+    "ZERO": "BEATS",
+    "CARRY_543_FLAT": "BEATS"
+   },
+   "instrument": "PASS",
+   "status": "BEATS_EVERY_NULL"
+  },
+  {
+   "model_id": "mlb_projections_vets",
+   "run": "S2",
+   "primary_cell": "h1",
+   "verdicts": {
+    "ZERO": "BEATS",
+    "CARRY_543_FLAT": "BEATS"
+   },
+   "instrument": "PASS",
+   "status": "BEATS_EVERY_NULL"
+  },
+  {
+   "model_id": "draft_slot_curve",
+   "run": "S3",
+   "primary_cell": "holdout_bucket_mae",
+   "verdicts": {
+    "FLAT": "TIES",
+    "ZERO": "TIES"
+   },
+   "instrument": "PASS",
+   "status": "TIES_OR_LOSES_NULL"
+  }
+ ]
+}
