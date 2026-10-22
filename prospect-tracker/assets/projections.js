@@ -1840,6 +1840,64 @@
   // colspan past the painted columns adds phantom columns to a fixed table
   // and crushes the Player column).
   const OPEN = new Set();
+  // The arrival line (TL_18_STATLINE_DISPLAY_FLIP, owner answer TL-Q6 (a)): for a
+  // hitter prospect, the projected rates over his first three MLB seasons if he
+  // reaches the majors, with P10 to P90 bands, for the stats that passed the
+  // spent look (read from the file, never listed here), beside what his grade
+  // implies for the stat. Descriptive of a conditional line: it is not a chance
+  // of reaching the majors and it never moves the WAR cells, which stay the
+  // FV-anchored path. STATLINE_ON mirrors proj_export.SERVE_PROSPECT_STATLINE (a
+  // test pins the two); off, nothing is fetched and nothing prints.
+  const STATLINE_ON = true;
+  let STATLINE = null, STATLINE_LOADING = false;
+  function ensureStatline() {
+    if (!STATLINE_ON || STATLINE || STATLINE_LOADING) return;
+    STATLINE_LOADING = true;
+    fetch("/data/prospect_statline.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        STATLINE = (d && d.rows) ? d : { rows: {}, stats: {} };
+        STATLINE_LOADING = false;
+        refreshOpenDetails();
+      })
+      .catch(() => { STATLINE = { rows: {}, stats: {} }; STATLINE_LOADING = false; });
+  }
+  // Re-paint the detail lines already open when the file lands after them.
+  function refreshOpenDetails() {
+    OPEN.forEach(key => {
+      const m = findRow(key), el = document.getElementById("projd-" + key);
+      if (!m || !el || m.src !== "prospect") return;
+      el.outerHTML = detailRowHtml(m, true);
+      const fresh = document.getElementById("projd-" + key);
+      if (fresh && window.EEPHUS_GL) window.EEPHUS_GL.wire(fresh);
+    });
+  }
+  const slRate = (v, d) => (v == null ? EM_DASH.trim() : Number(v).toFixed(d || 3).replace(/^0\./, "."));
+  function statlineGroups(m) {
+    if (!STATLINE_ON || m.src !== "prospect") return [];
+    ensureStatline();
+    const r = STATLINE && STATLINE.rows && STATLINE.rows[m.key];
+    if (!r) return [];
+    const meta = STATLINE.stats || {};
+    const stats = Object.keys(meta).filter(s => Array.isArray(r[s]));
+    if (!stats.length) return [];
+    const frame = STATLINE.frame || "FanGraphs frame";
+    const cell = s => {
+      const a = r[s], x = meta[s] || {};
+      const tip = `${x.label} over his first three MLB seasons if he reaches the majors, ${frame}. Band: P10 ${slRate(a[0])} to P90 ${slRate(a[2])}. `
+        + `Checked once on ${x.n} hitters who debuted ${(STATLINE.source || {}).holdout_cohorts ? STATLINE.source.holdout_cohorts[0] + " to " + STATLINE.source.holdout_cohorts[STATLINE.source.holdout_cohorts.length - 1] : ""}: `
+        + `mean miss ${slRate(x.mae_model, 4)} against ${slRate(x.mae_best_baseline, 4)} for ${x.best_baseline_name}, and the band held ${Math.round(100 * x.coverage_p10_p90)} percent of them. `
+        + `Accuracy among players who reached the majors, not over all prospects.`;
+      return `<span title="${esc(tip)}">${esc(x.label)} <b>${slRate(a[1])}</b> <span style="color:var(--text-tertiary);">(P10 ${slRate(a[0])}, P90 ${slRate(a[2])})</span></span>`;
+    };
+    const out = [`<span class="proj-dt-g proj-dt-sl"><b data-gl="arrival_line">${esc(STATLINE.heading || "If he reaches the majors, first three seasons")}</b> `
+      + `${stats.map(cell).join(" &middot; ")}</span>`];
+    const tip = stats.filter(s => r.tip && r.tip[s] != null);
+    if (tip.length)
+      out.push(`<span class="proj-dt-g"><b>What his grades imply</b> `
+        + `${tip.map(s => `${esc(meta[s].label)} ${slRate(r.tip[s])}`).join(" &middot; ")}</span>`);
+    return out;
+  }
   function detailRowHtml(m, pros) {
     const first = DATA.first_season, H = DATA.horizon;
     const g = (label, body, gl) => `<span class="proj-dt-g"><b${gl ? ` data-gl="${gl}"` : ""}>${label}</b> ${body}</span>`;
@@ -1862,6 +1920,7 @@
       if (_pr != null)
         parts.push(g(`Prime ${H}y`, `${fmtWar(_pr)} on the prime (talent) anchor &middot; ${fmtWar(warShown(m))} expected, which is the column and the priced path`));
       if (m.warPeak != null) parts.push(g("Peak", fmtWar(m.warPeak)));
+      statlineGroups(m).forEach(h => parts.push(h));
       parts.push(g("P10/P90", bands, "p10_p90_bands"));
     } else {
       parts.push(g("P10/P90", bands, "p10_p90_bands"));

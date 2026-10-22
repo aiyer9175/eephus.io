@@ -382,6 +382,27 @@ ARTIFACTS = (
         "note": "Aggregates only; carries no outcome, grade or consensus-FV cell.",
     },
     {
+        "file": "prospect_statline.json", "group": "prospects",
+        "title": "Prospect arrival line",
+        "what": ("Per hitter prospect, the rates projected over his first three MLB seasons if he "
+                 "reaches the majors, with P10 and P90, for the stats that passed the one-time "
+                 "holdout check, and the tool-implied value of his grade where the stat has one."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_prospect_statline.py",
+        "note": ("Conditional on reaching the majors, checked only on players who did. The WAR "
+                 "projection and eFV do not read it."),
+    },
+    {
+        "file": "prospect_statline_eval.json", "group": "prospects",
+        "title": "Prospect arrival line evaluation",
+        "what": ("The one look on debut classes 2022 to 2024: per stat the model's error against "
+                 "its best baseline with a bootstrap lower bound and band coverage, and the WAR "
+                 "comparison against the FV-anchored path."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_prospect_statline.py",
+        "note": "Accuracy among players who reached the majors, not over all prospects.",
+    },
+    {
         "file": "war_leaderboards.json", "group": "mlb",
         "title": "eWAR leaderboard",
         "what": ("Every player with a season eWAR cell, batting and pitching summed "

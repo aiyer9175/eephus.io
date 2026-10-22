@@ -12587,6 +12587,35 @@
     "war_from_components",
     "projection_gap"
    ]
+  },
+  {
+   "id": "arrival_line",
+   "term": "Arrival line",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx",
+    "projections"
+   ],
+   "aliases": [
+    "arrival line",
+    "prospect stat line",
+    "If he reaches the majors",
+    "first three seasons if he reaches the majors"
+   ],
+   "priority": 47,
+   "definition": "The rates a hitter prospect is projected to post over his first three MLB seasons if he reaches the majors, with a P10 to P90 band, beside what his grade implies for the stat. Shown on /projections/ prospect rows and PROSPX hitter cards for the stats that passed a one-time check on players who debuted 2022 to 2024: AVG and xwOBA. Conditional on reaching MLB: it is not a chance of reaching the majors, and it does not change his eFV or his projected WAR.",
+   "methodology": "Per stat, a ridge regression on the tool-implied value at his consensus grade (tables fit on earlier debut classes only), the same table read at his FanGraphs present grade, and, for xwOBA, the xwOBA prior from his pre-debut profile, with the penalty chosen by forward-chained cross-validation inside the 2016 to 2021 debut classes. The band is the point plus the 10th and 90th percentile of that cross-validation's out-of-sample misses. The served fit is the one the look scored, refit on the same classes and checked against the look's penalties, bands and coefficients before the file is written. Checked once on 2022 to 2024 debuts (docs/proj-prospect-2026-10): AVG mean miss .0191 against .0201 for the tool-implied value of his grade alone (n 230, lower bound of the gain .0004), the P10 to P90 band holding 83 percent; xwOBA mean miss .0192 against .0225 for the league-average rookie line (n 230, lower bound of the gain .0014), the P10 to P90 band holding 82 percent. The other 10 rates (the rest of the hitter and all five pitcher rates) did not pass and are not shown; ISO cleared its bound but its band held 85.2 percent, over the 85 percent limit, so it is not shown. Accuracy among players who reached the majors, not over all prospects. The first-three-season WAR assembled from the same inputs lost to the WAR path the site already serves (mean miss 1.66 against 1.29 WAR, n 694), so the WAR cells are unchanged. A stat is left off a player's line when none of its inputs exists for him.",
+   "formula": "arrival line(stat) = ridge(tool-implied value at his grade, tool-implied value at his present grade, xwOBA prior); P10 and P90 = point + out-of-sample miss quantiles",
+   "seeAlso": [
+    "tool_implied_production",
+    "p10_p90_bands",
+    "rookie_proxy",
+    "proj_buckets",
+    "xfv"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   }
  ]
 }

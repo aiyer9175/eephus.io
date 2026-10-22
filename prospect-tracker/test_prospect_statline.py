@@ -346,3 +346,145 @@ def test_preview_writes_under_cache_only(tmp_path, monkeypatch):
     assert p.exists()
     assert str(PS.PREVIEW_PATH).replace("\\", "/").endswith(".cache/prospect_statline/preview/prospect_statline.json")
     assert not re.search(r"DATA_DIR\s*/\s*\"prospect_statline", inspect.getsource(PS.write_preview))
+
+
+# --- TL_18_STATLINE_DISPLAY_FLIP: the served arrival line ---------------------------
+# docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md Part 12, owner answer TL-Q6 (a).
+
+_SERVED = ROOT / "data" / "prospect_statline.json"
+_EVAL = ROOT / "data" / "prospect_statline_eval.json"
+
+
+def _load(path):
+    import json
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_look_passes_reads_only_pass_verdicts_from_the_artifact():
+    fake = {"role": "look", "spent": True, "results": {"l1": {
+        "hit": {"avg": {"verdict": "PASS"}, "iso": {"verdict": "NULL", "holm_survives": True,
+                                                      "coverage_veto": True}},
+        "pit": {"k_pct": {"verdict": "LOSS"}, "xwoba": {"verdict": "NOT COMPUTABLE"}}}}}
+    got = PS.look_passes(fake)
+    assert set(got["hit"]) == {"avg"} and got["pit"] == {}
+
+
+@pytest.mark.parametrize("doc", [{"role": "development", "spent": True}, {"role": "look", "spent": False},
+                                 {"role": "look"}])
+def test_look_passes_refuses_an_artifact_that_is_not_the_spent_look(doc):
+    with pytest.raises(PS.LookRefused):
+        PS.look_passes(doc)
+
+
+def test_served_stats_are_exactly_the_stats_the_look_passed():
+    served, ev = _load(_SERVED), _load(_EVAL)
+    passed = {s: side for side, sts in PS.look_passes(ev).items() for s in sts}
+    assert passed, "the look passed no stat; there is nothing to serve"
+    assert set(served["stats"]) == set(passed)
+    for stat, meta in served["stats"].items():
+        e = ev["results"]["l1"][passed[stat]][stat]
+        assert meta["side"] == passed[stat] and meta["verdict"] == "PASS"
+        assert meta["n"] == e["n"]
+        assert meta["mae_model"] == pytest.approx(e["mae_model"], abs=1e-5)
+        assert meta["mae_best_baseline"] == pytest.approx(e["mae_best_baseline"], abs=1e-5)
+        assert meta["d_lb95"] == pytest.approx(e["d_lb95"], abs=1e-5) and meta["d_lb95"] > 0
+        assert meta["coverage_p10_p90"] == pytest.approx(e["coverage_p10_p90"], abs=1e-4)
+        assert PS.COVERAGE_BAND[0] <= meta["coverage_p10_p90"] <= PS.COVERAGE_BAND[1]
+
+
+def test_no_row_carries_a_stat_that_did_not_pass():
+    served = _load(_SERVED)
+    allowed = set(served["stats"]) | {"tip", "mlbam"}
+    assert served["n_rows"] == len(served["rows"]) > 0
+    for key, row in served["rows"].items():
+        assert set(row) <= allowed, (key, sorted(set(row) - allowed))
+        for stat in served["stats"]:
+            if stat in row:
+                p10, p50, p90 = row[stat]
+                assert p10 <= p50 <= p90
+        assert set(row.get("tip", {})) <= set(served["stats"])
+
+
+def test_served_fit_is_the_looks_fit_on_the_looks_cohorts():
+    served, ev = _load(_SERVED), _load(_EVAL)
+    assert served["fit"]["cohorts"] == [ev["train_cohorts"][0], ev["train_cohorts"][-1]] == [2016, 2021]
+    assert served["fit"]["aging"] == "v2"
+    assert served["fit"]["fit_matches_look"] and all(served["fit"]["fit_matches_look"].values())
+    assert served["frame"] == PS.FRAME_NAME == "FanGraphs frame"
+    src = inspect.getsource(PS.serve_doc)
+    assert 'guard_years(years, mode="dev")' in src
+    assert "HOLDOUT_FIRST_DEBUT_YEAR" in src and "EARLIEST_COHORT" in src
+
+
+def test_serve_doc_refuses_a_fit_that_does_not_reproduce_the_look(monkeypatch):
+    import fa_projection
+    ev = _load(_EVAL)
+    monkeypatch.setattr(fa_projection, "build_corpus", lambda: {})
+    monkeypatch.setattr(PS, "build_profiles", lambda years, mode: ([], {}))
+    monkeypatch.setattr(PS, "fit_fold", lambda train, last, corpus: {"models": {"hit": {}, "pit": {}}})
+    with pytest.raises(RuntimeError, match="does not reproduce"):
+        PS.serve_doc(["x"], eval_doc=ev)
+
+
+def test_serve_doc_refuses_other_cohorts_than_the_looks(monkeypatch):
+    ev = dict(_load(_EVAL))
+    ev["train_cohorts"] = [2017, 2018, 2019, 2020, 2021]
+    with pytest.raises(PS.LookRefused):
+        PS.serve_doc(["x"], eval_doc=ev)
+
+
+def test_write_served_writes_one_compact_file_at_the_given_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(PS, "serve_doc", lambda keys=None, corpus=None, eval_doc=None: {"a": [1, 2], "b": 3})
+    p = PS.write_served(tmp_path / "out" / "prospect_statline.json")
+    assert p.read_text(encoding="utf-8").strip() == '{"a":[1,2],"b":3}'
+    assert PS.SERVED_PATH.name == "prospect_statline.json"
+    conf = (ROOT / "conftest.py").read_text(encoding="utf-8")
+    assert '("prospect_statline", "SERVED_PATH", "data/prospect_statline.json")' in conf
+
+
+def test_served_file_names_no_fv_cell_and_the_conditional_frame():
+    served = _load(_SERVED)
+    flat = repr(served["stats"]) + repr(sorted(served)) + repr(served["source"])
+    assert not re.search(r"\bfv[_ ]?(cell|band|bin|tier|bucket)\b", flat, re.I)
+    assert served["heading"] == "If he reaches the majors, first three seasons"
+    assert "Conditional on reaching the majors" in served["conditional"]
+    for text in (served["heading"], served["conditional"]):
+        assert chr(8212) not in text and chr(8211) not in text
+
+
+def test_no_translation_stat_is_served_so_the_translated_line_row_is_correctly_absent():
+    """Part 12 names a 'What his minor league line translates to' row. The translation
+    input exists only for K% and BB%; neither passed. If one ever does, the displays
+    owe that row and this test says so."""
+    served = _load(_SERVED)
+    assert not (set(served["stats"]) & set(PS.TRANSLATION_STATS))
+
+
+def test_display_flags_mirror_the_exporter_and_the_displays_name_no_stat():
+    import proj_export
+    pj = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    px = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    on = "true" if proj_export.SERVE_PROSPECT_STATLINE else "false"
+    assert f"const STATLINE_ON = {on};" in pj
+    assert f"const STATLINE_CARD_ON = {on};" in px
+    # the stats shown are whatever the file's stats block lists, never a list in the page
+    fn = pj[pj.index("function statlineGroups"):pj.index("function detailRowHtml")]
+    card = px[px.index("function statlineCard"):px.index("// ===== eTools: the shown grade")]
+    for body in (fn, card):
+        assert not re.search(r"\"(avg|xwoba|iso|k_pct|bb_pct)\"", body)
+        assert "Object.keys(meta)" in body
+    assert "What his grades imply" in fn and "What his grades imply" in card
+    assert "/data/prospect_statline.json" in pj and "/data/prospect_statline.json" in px
+    # the WAR cells are not touched: the group lands in the prospect detail line only
+    assert pj.count("statlineGroups(m).forEach") == 1
+
+
+def test_receipt_spec_reads_the_eval_artifact_and_the_registry_row_names_it():
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert "arrival_line: {" in js and '"/data/prospect_statline_eval.json"' in js
+    reg = _load(ROOT / "data" / "model_registry.json")
+    row = next(m for m in reg["models"] if m["model_id"] == "mlb_projections_prospects_statline")
+    assert row["eval_artifact"] == "data/prospect_statline_eval.json"
+    assert "served 2026-10-21" in row["registration_status"]
+    deploy = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
+    assert "prospect_statline" not in deploy

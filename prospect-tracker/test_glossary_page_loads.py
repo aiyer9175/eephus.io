@@ -812,6 +812,39 @@ def test_tool_tab_entries_render_their_receipt(server, browser, slug):
     assert "among players who reached the majors" in text
 
 
+# TL_18_STATLINE_DISPLAY_FLIP (round 4, R4r): the arrival line's served numbers carry a
+# receipt read from the registry row's eval artifact, data/prospect_statline_eval.json
+# (the one look on debut classes 2022 to 2024).
+def test_arrival_line_entry_renders_its_receipt(server, browser):
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(m for m in reg["models"] if m["model_id"] == "mlb_projections_prospects_statline")
+    assert row["eval_artifact"] == "data/prospect_statline_eval.json"
+    ev = json.loads((ROOT / "data" / "prospect_statline_eval.json").read_text(encoding="utf-8"))
+    passed = [(side, stat) for side in ("hit", "pit") for stat, e in ev["results"]["l1"][side].items()
+              if e["verdict"] == "PASS"]
+    assert passed
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + "glossary/index.html#g=arrival_line", wait_until="load", timeout=15_000)
+        page.wait_for_selector('#gl-entry .gl-entry-card[data-slug="arrival_line"]', timeout=10_000)
+        page.wait_for_function(
+            "() => { const el = document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"arrival_line\"]');"
+            " return !!el && el.textContent.includes('Receipt'); }", timeout=10_000)
+        text = page.evaluate(
+            "() => document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"arrival_line\"]').textContent")
+    finally:
+        page.close()
+    assert not page_errors, "JS errors:\n  " + "\n  ".join(page_errors)
+    labels = {"avg": "AVG", "xwoba": "xwOBA", "iso": "ISO", "k_pct": "K%", "bb_pct": "BB%", "babip": "BABIP",
+              "woba": "wOBA", "hr_bf": "HR per BF"}
+    for side, stat in passed:
+        assert ("Hitter " if side == "hit" else "Pitcher ") + labels[stat] + ", mean miss" in text, text[:600]
+    assert "First-three-season WAR" in text and "the FV-anchored path" in text
+    assert "prospect_statline_eval.json" in text
+    assert "among players who reached the majors" in text
+
+
 def test_btblend_entry_renders_its_served_reread_receipt(server, browser):
     """The BT Blend entry types no measured figure; its receipt reads the one
     served-construction re-read (rung D4) and carries the xwOBA-alone

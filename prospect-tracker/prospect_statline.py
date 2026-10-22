@@ -8,8 +8,11 @@ rates for a prospect, conditional on reaching the majors, plus WAR assembled thr
 LANE A's component framework on FanGraphs' frame. Built by TL_11_STATLINE_BUILD_DARK
 to docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md (Plan Part 9 section 9.4.6
 'Prospect stat-line projections'; LANE_C.md section 2.6), which this module follows
-part by part. Class 2, dark: nothing served reads it while
-proj_export.SERVE_PROSPECT_STATLINE is False.
+part by part. Class 2: nothing served reads it while
+proj_export.SERVE_PROSPECT_STATLINE is False; TL_18_STATLINE_DISPLAY_FLIP turned it
+on after the spent look (gate Part 13) and serve_doc / write_served write the served
+file data/prospect_statline.json for the stats whose L1 verdict in
+data/prospect_statline_eval.json is PASS (gate Part 12), from the fit the look scored.
 
 THE UNIT (gate 2.1). One row per debuted player at his last snapshot strictly before
 his MLB debut (efv_dataset._asof_point at efv_dataset.resolved_debut_date); the side
@@ -94,6 +97,15 @@ BOOT_SEED = 20261210
 HOLM_ALPHA = 0.05
 COVERAGE_BAND = (0.75, 0.85)
 SEASON_FLAGS = {2020: "60-game season inside the window"}
+
+#: The served file (TL_18_STATLINE_DISPLAY_FLIP, gate Part 12) and its copy.
+SERVED_PATH = DATA_DIR / "prospect_statline.json"
+SERVED_HEADING = "If he reaches the majors, first three seasons"
+STAT_LABEL = {"k_pct": "K%", "bb_pct": "BB%", "iso": "ISO", "avg": "AVG", "babip": "BABIP",
+              "woba": "wOBA", "xwoba": "xwOBA", "hr_bf": "HR per BF"}
+BASELINE_NAME = {"B0": "the league-average rookie line", "B1": "the translated minor league rate alone",
+                 "B2": "the tool-implied value of his grade alone", "B3": "the xwOBA prior alone"}
+SERVED_ROUND = 4
 
 HIT_STATS = ("k_pct", "bb_pct", "iso", "avg", "babip", "woba", "xwoba")
 PIT_STATS = ("k_pct", "bb_pct", "hr_bf", "babip", "xwoba")
@@ -1608,14 +1620,14 @@ def _live_profiles(prospect_keys) -> list[dict]:
     grades); arrival age = age now plus the eFV ETA years."""
     from efv_dataset import live_matrix_path
     from efv_model import _feature_spec, _vec
-    keys = set(prospect_keys)
+    keys = None if prospect_keys is None else set(prospect_keys)
     try:
         ts = json.loads((DATA_DIR / "timeseries.json").read_text(encoding="utf-8")).get("players") or []
     except (OSError, ValueError):
         ts = []
     latest_point = {}
     for p in ts:
-        if p.get("player_key") in keys:
+        if p.get("player_key") and (keys is None or p.get("player_key") in keys):
             pts = [q for q in (p.get("points") or []) if q.get("snapshot_date")]
             if pts:
                 latest_point[p["player_key"]] = max(pts, key=lambda q: q["snapshot_date"])
@@ -1628,7 +1640,7 @@ def _live_profiles(prospect_keys) -> list[dict]:
         fkeys, _m = _feature_spec(side)
         for r in rows:
             pk = r.get("player_key")
-            if pk not in keys:
+            if pk is None or (keys is not None and pk not in keys):
                 continue
             tools = {k[5:]: _f(v) for k, v in r.items() if k.startswith("tool_") and _f(v) is not None}
             milb = r.get("milb") or {}
@@ -1685,6 +1697,123 @@ def write_preview(prospect_keys, path: Path | None = None) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = preview(prospect_keys)
     path.write_text(json.dumps(doc, indent=1, default=_json_default) + "\n", encoding="utf-8")
+    return path
+
+
+# ---------------------------------------------------------------------------
+# the served file (TL_18_STATLINE_DISPLAY_FLIP, gate Part 12)
+# ---------------------------------------------------------------------------
+
+def look_passes(eval_doc: dict | None = None) -> dict:
+    """{side: {stat: L1 entry}} for the stats whose L1 verdict in the spent look is
+    PASS. Read from the artifact, never typed: a NULL, a LOSS or a coverage veto is
+    not in it, and the WAR leg (L2) is not read at all (gate Part 12)."""
+    doc = eval_doc if eval_doc is not None else json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    if doc.get("role") != "look" or not doc.get("spent"):
+        raise LookRefused("the served stat line reads the spent look's artifact (role look, spent true)")
+    l1 = (doc.get("results") or {}).get("l1") or {}
+    return {side: {stat: e for stat, e in (l1.get(side) or {}).items() if e.get("verdict") == "PASS"}
+            for side in ("hit", "pit")}
+
+
+def _fit_matches_look(fits: dict, eval_doc: dict, passes: dict) -> dict:
+    """{'side:stat': bool}: the served fit reproduces the fit the look scored (same
+    penalty, rows, bands and coefficients to 1e-6) for every stat that passed."""
+    pen = (((eval_doc.get("results") or {}).get("folds") or [{}])[0]).get("penalties") or {}
+    out = {}
+    for side, stats in passes.items():
+        for stat in stats:
+            m = fits["models"][side].get(stat)
+            ref = pen.get(f"{side}:{stat}")
+            ok = bool(m and ref and m["lam"] == ref["lambda"] and m["n_train"] == ref["n_train"]
+                      and abs(m["q10"] - ref["band_q10"]) <= 1e-6
+                      and abs(m["q90"] - ref["band_q90"]) <= 1e-6
+                      and abs(m["intercept"] - ref["intercept"]) <= 1e-6
+                      and all(abs(m["coef"].get(k, 0.0) - v) <= 1e-6 for k, v in ref["coef"].items()))
+            out[f"{side}:{stat}"] = ok
+    return out
+
+
+def _stat_receipt(side: str, stat: str, e: dict) -> dict:
+    best = e.get("best_baseline")
+    return {"label": STAT_LABEL.get(stat, stat), "side": side, "verdict": e.get("verdict"),
+            "n": e.get("n"), "mae_model": round(e["mae_model"], 5),
+            "best_baseline": best, "best_baseline_name": BASELINE_NAME.get(best, best),
+            "mae_best_baseline": round(e["mae_best_baseline"], 5),
+            "d": round(e["d"], 5), "d_lb95": round(e["d_lb95"], 5),
+            "coverage_p10_p90": round(e["coverage_p10_p90"], 4)}
+
+
+def serve_doc(prospect_keys=None, *, corpus=None, eval_doc: dict | None = None) -> dict:
+    """The served arrival line: for every live prospect on a side with a passed stat,
+    {stat: [p10, p50, p90]} from the fit the look scored (debut cohorts 2016 to 2021,
+    aging v2), plus the tool-implied value of his grade where the stat has one. A
+    stat is left out of a player's row when none of its inputs exists for him (the
+    model would print its intercept). Reads no holdout row and no R-VM row; the
+    served payload is never touched. Raises when the fit does not reproduce the
+    look's penalties, bands and coefficients."""
+    import fa_projection as fp
+    doc = eval_doc if eval_doc is not None else json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    passes = look_passes(doc)
+    stats_by_side = {s: list(v) for s, v in passes.items() if v}
+    years = tuple(range(EARLIEST_COHORT, HOLDOUT_FIRST_DEBUT_YEAR))
+    if list(doc.get("train_cohorts") or []) != list(years):
+        raise LookRefused(f"the look fit cohorts {doc.get('train_cohorts')}, not {list(years)}")
+    guard_years(years, mode="dev")
+    corpus = corpus or fp.build_corpus()
+    train, _acct = build_profiles(years, mode="dev")
+    fits = fit_fold(train, max(years), corpus)
+    check = _fit_matches_look(fits, doc, passes)
+    if not all(check.values()):
+        raise RuntimeError("the served fit does not reproduce the look's fit: "
+                           + ", ".join(k for k, v in check.items() if not v))
+    rows: dict = {}
+    left_out = {f"{s}:{st}": 0 for s, sts in stats_by_side.items() for st in sts}
+    for prof in _live_profiles(prospect_keys):
+        side = prof["side"]
+        if side not in stats_by_side:
+            continue
+        sf = _side_fits(fits, side)
+        row: dict = {}
+        tip: dict = {}
+        for stat in stats_by_side[side]:
+            p = predict_stat(fits["models"][side].get(stat), prof, sf)
+            if p is None or not any(v is not None for k, v in p["inputs"].items() if k != "age_delta"):
+                left_out[f"{side}:{stat}"] += 1
+                continue
+            row[stat] = [round(p["p10"], SERVED_ROUND), round(p["p50"], SERVED_ROUND),
+                         round(p["p90"], SERVED_ROUND)]
+            if p["inputs"].get("tip_first") is not None:
+                tip[stat] = round(p["inputs"]["tip_first"], SERVED_ROUND)
+        if row:
+            if tip:
+                row["tip"] = tip
+            row["mlbam"] = prof["mlbam"]
+            rows[prof["player_key"]] = row
+    return {
+        "generated_at": date.today().isoformat(), "role": "served", "heading": SERVED_HEADING,
+        "frame": FRAME_NAME,
+        "conditional": ("Conditional on reaching the majors: every figure here is a projected rate over "
+                        "his first three MLB seasons if he debuts, checked on players who did debut. It is "
+                        "not a chance of reaching the majors and not a projection of all prospects."),
+        "source": {"eval_artifact": "data/prospect_statline_eval.json",
+                   "gate": "docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md",
+                   "look_generated_at": doc.get("generated_at"), "holdout_cohorts": doc.get("holdout_cohorts"),
+                   "gate_sha": doc.get("gate_sha")},
+        "fit": {"cohorts": [years[0], years[-1]], "n_train": len(train), "aging": "v2",
+                "fit_matches_look": check},
+        "stats": {stat: _stat_receipt(side, stat, e)
+                  for side, sts in passes.items() for stat, e in sts.items()},
+        "n_rows": len(rows), "left_out": left_out, "rows": dict(sorted(rows.items())),
+    }
+
+
+def write_served(path: Path | None = None, prospect_keys=None, *, corpus=None,
+                 eval_doc: dict | None = None) -> Path:
+    path = Path(path) if path else SERVED_PATH
+    doc = serve_doc(prospect_keys, corpus=corpus, eval_doc=eval_doc)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, separators=(",", ":"), default=_json_default) + "\n", encoding="utf-8")
     return path
 
 
