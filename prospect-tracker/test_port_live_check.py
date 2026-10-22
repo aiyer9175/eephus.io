@@ -74,3 +74,74 @@ def test_each_defect_class_fails(tmp_path):
     res = plc.check("https://x", root, fetch=_fake(root, {"assets/site.css": (200, b"b{}")}),
                     stripped=True, workers=1)
     assert res["ok"], "a stripped asset is checked for presence only"
+
+# --------------------------------------------------------------------------- #
+# Pacing and the 36-hour bundle heartbeat
+# --------------------------------------------------------------------------- #
+import datetime as _dt  # noqa: E402
+import json  # noqa: E402
+
+_NOW = _dt.datetime(2026, 10, 22, 12, 0, 0, tzinfo=_dt.timezone.utc)
+
+
+def test_pacer_spaces_request_starts():
+    t = [0.0]
+    slept: list = []
+
+    def sleep(s):
+        slept.append(round(s, 3))
+        t[0] += s
+
+    p = plc.Pacer(0.5, sleep=sleep, clock=lambda: t[0])
+    for _ in range(3):
+        p.wait()
+    assert slept == [0.5, 0.5]
+    t[0] += 2.0
+    p.wait()
+    assert slept == [0.5, 0.5], "no wait once the gap has passed"
+    plc.Pacer(0).wait()
+
+
+def test_check_paces_every_request(tmp_path, monkeypatch):
+    root = _tree(tmp_path)
+    waits: list = []
+    monkeypatch.setattr(plc.Pacer, "wait", lambda self: waits.append(1))
+    res = plc.check("https://x", root, fetch=_fake(root, {}), workers=1, pace=0.1)
+    assert res["ok"] and len(waits) == 1 + sum(len(v) for v in plc.targets(root).values())
+
+
+def _hb_origin(docs: dict):
+    def fetch_raw(url):
+        rel = url.split("://x/", 1)[1]
+        assert rel != "data/build_info.json", "the Go Build heartbeat is never read"
+        if rel in docs:
+            val = docs[rel]
+            if isinstance(val, tuple):
+                return val
+            return 200, json.dumps(val).encode("utf-8"), {}
+        return 404, b"", {}
+    return fetch_raw
+
+
+def test_heartbeat_reads_the_receive_time():
+    res = plc.heartbeat("https://x", now=_NOW, fetch_raw=_hb_origin({
+        plc.RECEIPT: {"received_at": "2026-10-21T02:00:00Z", "bundle_id": "b1"},
+        plc.BUNDLE_INFO: {"built_at": "2026-10-10T00:00:00Z"}}))
+    assert res["ok"] and res["source"] == plc.RECEIPT
+    assert res["age_hours"] == 34.0 and res["bundle_id"] == "b1"
+
+
+def test_heartbeat_alarms_past_36_hours():
+    res = plc.heartbeat("https://x", now=_NOW, fetch_raw=_hb_origin({
+        plc.RECEIPT: {"received_at": "2026-10-20T23:59:00Z"}}))
+    assert not res["ok"] and res["age_hours"] == 36.02 and "36.0 h" in res["reason"]
+
+
+def test_heartbeat_falls_back_to_built_at_and_alarms_on_nothing():
+    res = plc.heartbeat("https://x", now=_NOW, fetch_raw=_hb_origin({
+        plc.BUNDLE_INFO: {"built_at": "2026-10-22T02:00:00Z", "bundle_id": "b2"}}))
+    assert res["ok"] and res["source"] == plc.BUNDLE_INFO and res["age_hours"] == 10.0
+    res = plc.heartbeat("https://x", now=_NOW, fetch_raw=_hb_origin({
+        plc.RECEIPT: (403, b"<title>Just a moment...</title>", {"cf-mitigated": "challenge"})}))
+    assert not res["ok"] and res["source"] is None
+    assert res[f"{plc.RECEIPT}_code"] == "403 (challenge)"

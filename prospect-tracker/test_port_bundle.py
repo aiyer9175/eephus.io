@@ -132,3 +132,149 @@ def test_build_then_verify_and_positive_control(tmp_path, monkeypatch):
     assert not res["ok"]
     assert res["mismatched_sample"] == [".cache/proj_ml_pit_v1.joblib"]
     assert res["missing_sample"] == ["data/timeseries.json"]
+
+# --------------------------------------------------------------------------- #
+# The served bundle (port Strategy D, docs/port/PORT_BUNDLE.md)
+# --------------------------------------------------------------------------- #
+import datetime as _dt  # noqa: E402
+import hashlib  # noqa: E402
+import json  # noqa: E402
+
+import port_equivalence as pe  # noqa: E402
+
+_T0 = _dt.datetime(2026, 10, 22, 7, 0, 0, tzinfo=_dt.timezone.utc)
+
+
+def _site_tree(tmp_path: Path) -> Path:
+    root = tmp_path / "site_mod"
+    (root / "deploy").mkdir(parents=True)
+    (root / "deploy" / "publish_paths.txt").write_text(
+        "# pages\nindex.html\nfa\nassets\nprospx\n", encoding="utf-8")
+    (root / "deploy" / "data_exclude.txt").write_text("# x\nsecret.json\n", encoding="utf-8")
+    (root / "index.html").write_text("<p>home</p>", encoding="utf-8")
+    (root / "fa").mkdir()
+    (root / "fa" / "index.html").write_text("<p>fa</p>", encoding="utf-8")
+    (root / "assets").mkdir()
+    (root / "assets" / "site.css").write_text("/* note */\na{color:red}\n", encoding="utf-8")
+    (root / "prospx").mkdir()
+    (root / "prospx" / "index.html").write_text(
+        "<html><body>\n<!-- dev note -->\n<p>x</p>\n</body></html>\n", encoding="utf-8")
+    (root / "data" / "pitch_plots").mkdir(parents=True)
+    (root / "data" / "_labs").mkdir()
+    (root / "data" / "a.json").write_text('{"x": 1}', encoding="utf-8")
+    (root / "data" / "b.js").write_text("var b=1;", encoding="utf-8")
+    (root / "data" / "secret.json").write_text("{}", encoding="utf-8")
+    (root / "data" / "build_info.json").write_text('{"mode": "daily"}', encoding="utf-8")
+    (root / "data" / "notes.txt").write_text("not served", encoding="utf-8")
+    (root / "data" / "_labs" / "lab.json").write_text("{}", encoding="utf-8")
+    (root / "data" / "pitch_plots" / "1.json").write_text('{"v": [1]}', encoding="utf-8")
+    return root
+
+
+_SERVED = ["assets/site.css", "data/a.json", "data/b.js", "data/pitch_plots/1.json",
+           "fa/index.html", "index.html", "prospx/index.html"]
+
+
+def _no_strip(site):
+    return {}
+
+
+def test_served_set_is_the_nightly_rsync_set_minus_the_publisher_heartbeat(tmp_path):
+    root = _site_tree(tmp_path)
+    assert pb.served_files(root) == _SERVED
+    both = set(pe.page_files(root)) | set(pe.payload_files(root))
+    assert set(_SERVED) == both - {"data/build_info.json"}
+
+
+def test_served_bundle_layout_and_verify(tmp_path):
+    root = _site_tree(tmp_path)
+    info = pb.build_served(root, tmp_path / "out", strip=False, now=_T0, strips=_no_strip)
+    bundle = Path(info["path"])
+    assert pb.BUNDLE_ID_RE.match(info["bundle_id"])
+    assert info["bundle_id"].startswith("20261022T070000Z-")
+    assert bundle.name == info["bundle_id"]
+    assert info["files"] == len(_SERVED) + 1 and info["withheld"] == ["secret.json"]
+    rows = (bundle / "MANIFEST.tsv").read_text(encoding="utf-8").splitlines()
+    assert rows[0] == "relpath\tbytes\tsha256"
+    assert [r.split("\t")[0] for r in rows[1:]] == sorted(_SERVED + [pb.BUNDLE_INFO])
+    for line in (bundle / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
+        digest, rel = line.split("  ", 1)
+        assert hashlib.sha256((bundle / rel).read_bytes()).hexdigest() == digest
+    bi = json.loads((bundle / "site" / pb.BUNDLE_INFO).read_text(encoding="utf-8"))
+    assert bi["bundle_id"] == info["bundle_id"] and bi["built_at"] == "2026-10-22T07:00:00Z"
+    ready = (bundle / "READY").read_text(encoding="utf-8").strip().split("\t")
+    assert ready == [info["bundle_id"], info["manifest_sha256"]]
+    assert not (bundle / "site" / "data" / "secret.json").exists()
+    assert not (bundle / "site" / "data" / "build_info.json").exists()
+    assert not (bundle / "site" / "data" / "_labs").exists()
+    res = pb.verify_served(bundle)
+    assert res["ok"] and res["checked"] == len(_SERVED) + 1, res
+
+
+def test_verify_served_positive_controls(tmp_path):
+    root = _site_tree(tmp_path)
+    bundle = Path(pb.build_served(root, tmp_path / "out", strip=False, now=_T0,
+                                  strips=_no_strip)["path"])
+    site = bundle / "site"
+    (site / pb.RECEIPT).write_text('{"received_at": "2026-10-22T08:00:00Z"}', encoding="utf-8")
+    assert pb.verify_served(bundle)["ok"], "the receipt is the one allowed extra file"
+    (site / "data" / "a.json").write_text('{"x": 2}', encoding="utf-8")
+    (site / "data" / "stray.json").write_text("{}", encoding="utf-8")
+    (site / "data" / "secret.json").write_text("{}", encoding="utf-8")
+    (site / "fa" / "index.html").unlink()
+    res = pb.verify_served(bundle)
+    assert not res["ok"]
+    assert res["mismatched_sample"] == ["data/a.json"]
+    assert res["missing_sample"] == ["fa/index.html"]
+    assert res["extra_sample"] == ["data/secret.json", "data/stray.json"]
+    assert res["withheld_present"] == ["data/secret.json"]
+
+
+def test_verify_served_catches_a_tampered_manifest_or_no_ready(tmp_path):
+    root = _site_tree(tmp_path)
+    bundle = Path(pb.build_served(root, tmp_path / "out", strip=False, now=_T0,
+                                  strips=_no_strip)["path"])
+    man = bundle / "MANIFEST.tsv"
+    assert pb.verify_served(bundle)["ok"]
+    rows = man.read_bytes().split(b"\n")
+    man.write_bytes(b"\n".join(rows[:-2]) + b"\n")   # drop the last row, keep LF
+    res = pb.verify_served(bundle)
+    assert not res["ok"] and any("manifest" in p for p in res["problems"])
+    (bundle / "READY").unlink()
+    res = pb.verify_served(bundle)
+    assert not res["ok"] and res["problems"] == ["READY is missing"]
+
+
+def test_same_bytes_share_the_content_suffix_and_prune_keeps_the_newest(tmp_path):
+    root = _site_tree(tmp_path)
+    out = tmp_path / "out"
+    ids = [pb.build_served(root, out, strip=False, now=_T0 + _dt.timedelta(days=d),
+                           strips=_no_strip)["bundle_id"] for d in range(3)]
+    assert len({i.split("-")[1] for i in ids}) == 1
+    (out / ".building-1").mkdir()
+    (out / "keep_me").mkdir()
+    gone = pb.prune_served(out, keep=2)
+    assert sorted(gone) == sorted([ids[0], ".building-1"])
+    assert sorted(p.name for p in out.iterdir()) == sorted(ids[1:] + ["keep_me"])
+
+
+def test_strips_run_on_the_bundle_copy_never_the_source(tmp_path):
+    root = _site_tree(tmp_path)
+    before = {r: (root / r).read_bytes() for r in _SERVED}
+    info = pb.build_served(root, tmp_path / "out", strip=True, now=_T0)
+    bundle = Path(info["path"])
+    assert info["strips"]["prospx/index.html"] == "stripped"
+    assert info["strips"]["assets/site.css"].startswith("stripped")
+    assert b"dev note" not in (bundle / "site" / "prospx" / "index.html").read_bytes()
+    assert b"note" not in (bundle / "site" / "assets" / "site.css").read_bytes()
+    assert {r: (root / r).read_bytes() for r in _SERVED} == before
+    assert pb.verify_served(bundle)["ok"]
+
+
+def test_served_bundle_cli_builds_verifies_and_prunes(tmp_path, capsys):
+    root = _site_tree(tmp_path)
+    rc = pb.main(["--root", str(root), "--served-bundle", str(tmp_path / "out"),
+                  "--no-strip", "--keep", "1"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and out["verify"]["ok"] and out["pruned"] == []
+    assert pb.main(["--verify-served", out["path"]]) == 0

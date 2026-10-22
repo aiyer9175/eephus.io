@@ -108,3 +108,137 @@ def test_diff_is_exact_with_no_tolerance(tmp_path):
     b.write_text('{"x": 0.3, "y": [1, 2]}', encoding="utf-8")
     rows = pe.diff_files(a, b)
     assert [r[0] for r in rows] == ["$.x", "$.y.length"]
+
+# --------------------------------------------------------------------------- #
+# compare-http: the published webroot against the frozen snapshot, offline
+# --------------------------------------------------------------------------- #
+import datetime as _dt  # noqa: E402
+
+import port_bundle as pb  # noqa: E402
+import port_live_check as plc  # noqa: E402
+
+_CF_BEACON = (b'<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8" '
+              b'data-cf-beacon=\'{"token": "t"}\'></script>\n')
+_CF_INLINE = (b"<script>(function(){var s=document.createElement('script');"
+              b"s.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';})();</script>")
+
+
+def _bundle(tmp_path: Path) -> Path:
+    root = tmp_path / "bmod"
+    (root / "deploy").mkdir(parents=True)
+    (root / "deploy" / "publish_paths.txt").write_text("index.html\nfa\nassets\n", encoding="utf-8")
+    (root / "deploy" / "data_exclude.txt").write_text("secret.json\n", encoding="utf-8")
+    (root / "index.html").write_bytes(b"<html><body><script src=\"/assets/a.js\"></script>"
+                                      b"<p>home</p></body></html>\n")
+    (root / "fa").mkdir()
+    (root / "fa" / "index.html").write_bytes(b"<p>fa</p>\n<p>two</p>\n")   # LF bytes
+    (root / "assets").mkdir()
+    (root / "assets" / "a.js").write_bytes(b"var a = 1;\n")
+    (root / "data" / "player_detail").mkdir(parents=True)
+    (root / "data" / "a.json").write_text('{"generated_at": "x", "rows": [{"v": 1.5}]}',
+                                          encoding="utf-8")
+    (root / "data" / "b.json").write_text('{"v": 2}', encoding="utf-8")
+    (root / "data" / "c.json").write_text('{"v": 3}', encoding="utf-8")
+    (root / "data" / "d.json").write_text('{"v": 4}', encoding="utf-8")
+    (root / "data" / "player_detail" / "p.json").write_text('{"v": 5}', encoding="utf-8")
+    info = pb.build_served(root, tmp_path / "out", strip=False,
+                           now=_dt.datetime(2026, 10, 22, tzinfo=_dt.timezone.utc),
+                           strips=lambda site: {})
+    return Path(info["path"])
+
+
+def _origin(site: Path, override: dict, calls: list | None = None):
+    def fetch_raw(url):
+        rel = url.split("://x/", 1)[1]
+        if calls is not None:
+            calls.append(rel)
+        if rel in override:
+            return override[rel]
+        p = site / rel
+        return (200, p.read_bytes(), {}) if p.is_file() else (404, b"", {})
+    return fetch_raw
+
+
+def test_strip_cdn_drops_only_the_injected_scripts():
+    page = (b"<html><head><script src=\"/assets/a.js\"></script></head><body><p>x</p>"
+            + _CF_INLINE + _CF_BEACON + b"</body></html>")
+    out = pe.strip_cdn(page)
+    assert out == (b"<html><head><script src=\"/assets/a.js\"></script></head>"
+                   b"<body><p>x</p></body></html>")
+
+
+def test_http_faithful_origin_is_identical(tmp_path):
+    bundle = _bundle(tmp_path)
+    calls: list = []
+    res = pe.compare_http("https://x", bundle=bundle, pace=0,
+                          fetch_raw=_origin(bundle / "site", {}, calls))
+    assert res["ok"] and set(res["counts"]) == {"IDENTICAL"}
+    assert res["checked"] == len(pe.read_bundle_manifest(bundle)) == len(calls)
+    assert "data/bundle_info.json" in calls and "data/bundle_receipt.json" not in calls
+
+
+def test_http_names_each_difference(tmp_path):
+    bundle = _bundle(tmp_path)
+    site = bundle / "site"
+    idx = (site / "index.html").read_bytes()
+    over = {
+        "index.html": (200, idx.replace(b"</body>", _CF_BEACON + b"</body>"), {}),
+        "fa/index.html": (200, b"<p>fa</p>\n<p>TWO</p>\n", {}),
+        "assets/a.js": (200, b"var a = 1;\r\n", {}),
+        "data/a.json": (200, b'{"generated_at": "y", "rows": [{"v": 1.5}]}', {}),
+        "data/b.json": (200, b'{"v": 2.5}', {}),
+        "data/c.json": (404, b"", {}),
+        "data/d.json": (403, b"<html><title>Just a moment...</title></html>",
+                        {"cf-mitigated": "challenge"}),
+        "data/player_detail/p.json": (200, b'{"v": 6}', {}),
+    }
+    explained = [("data/player_detail/*", "headshot URLs through the box's proxy")]
+    res = pe.compare_http("https://x", bundle=bundle, pace=0, explained=explained,
+                          fetch_raw=_origin(site, over))
+    f = res["files"]
+    assert f["CDN_INJECTED"] == ["index.html"]
+    assert f["LINE_ENDINGS"] == ["assets/a.js"]
+    assert f["TIMESTAMP"] == ["data/a.json"]
+    assert f["DIFFERENT"] == ["data/b.json", "fa/index.html"]
+    assert res["details"]["data/b.json"] == [{"leaf": "$.v", "ref": "2", "live": "2.5"}]
+    assert res["details"]["fa/index.html"] == {"line": 2, "ref": "<p>two</p>",
+                                               "live": "<p>TWO</p>"}
+    assert f["MISSING"] == ["data/c.json"] and res["codes"]["data/c.json"] == 404
+    assert f["BLOCKED"] == ["data/d.json"]
+    assert f["EXPLAINED"] == ["data/player_detail/p.json"]
+    assert res["explained"]["data/player_detail/p.json"].startswith("headshot")
+    assert not res["ok"]
+
+
+def test_http_filters_and_paces(tmp_path):
+    bundle = _bundle(tmp_path)
+    calls: list = []
+    waits: list = []
+
+    class _P:
+        def wait(self):
+            waits.append(1)
+
+    res = pe.compare_http("https://x", bundle=bundle, only=("data/",), every=2,
+                          pacer=_P(), fetch_raw=_origin(bundle / "site", {}, calls))
+    data_rows = [r for r in pe.read_bundle_manifest(bundle) if r.startswith("data/")]
+    assert calls == data_rows[::2] and len(waits) == len(calls) == res["checked"]
+
+
+def test_http_against_a_snapshot(tmp_path):
+    root = _mod(tmp_path, "ref", '{"x": 1}')
+    ref = pe.snapshot(root)
+    over = {"data/a.json": (200, b'{"x": 1.0}', {}), "index.html": (200, b"<p>y</p>", {})}
+    res = pe.compare_http("https://x", ref_doc=ref, pace=0, fetch_raw=_origin(root, over))
+    assert res["files"]["FLOAT_REPR"] == ["data/a.json"]
+    assert res["files"]["IDENTICAL"] == ["data/pitch_plots/p.json"]
+    assert res["files"]["DIFFERENT"] == ["index.html"] and not res["ok"]
+
+
+def test_compare_http_cli_reads_an_explained_file(tmp_path):
+    p = tmp_path / "explained.tsv"
+    p.write_text("# named differences\nforums/*\tthe accounts layer\n\nno tab line\n",
+                 encoding="utf-8")
+    assert pe.read_explained(p) == [("forums/*", "the accounts layer")]
+    assert plc.is_challenge(503, {}, b"<title>Just a moment...</title>")
+    assert not plc.is_challenge(404, {}, b"not found")
