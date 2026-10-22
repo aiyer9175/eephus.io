@@ -10,13 +10,14 @@ tools/ebr_gate.py as an OWNER-WAIVED EARLY READ (owner EW3-5). Part 12.2 holds t
 eWAR v3 skill look (parts 9.5 and 9.6, as amended by part 11), run once on
 2026-10-19 by tools/swar_lab.py, also an OWNER-WAIVED EARLY READ, with its
 machine-readable record in the TRACKED file docs/ebr-2026-09-30/swar_eval.json.
-This file pins both results so they cannot be edited after the fact, and asserts
-that the tracked record's dispositions and admissions equal the part 12.2 text.
-It lives apart from test_ebr_gate_registration.py on purpose: a result pin that
-lives beside a criterion pin invites editing the criterion to match the result
-(the reason test_arb_gate_c2_registration.py gives). Part 12.3 (the skill
-holdout) stays asserted EMPTY by the registration pin until its own run, which
-extends this file.
+Part 12.3 holds the skill holdout (part 9.5, the 2025 to 2026 pairs), run once on
+2026-10-21 by tools/swar_lab.py --holdout, also an OWNER-WAIVED EARLY READ, its
+block appended to that record beside the look and never merged into it.
+This file pins the three results so they cannot be edited after the fact, and
+asserts that the tracked record's dispositions and admissions equal the part 12.2
+and part 12.3 text. It lives apart from test_ebr_gate_registration.py on purpose:
+a result pin that lives beside a criterion pin invites editing the criterion to
+match the result (the reason test_arb_gate_c2_registration.py gives).
 
 No correlation against runs or wins is pinned here; those stay in parts 12.1 and
 12.2, the preview look block and the tracked record's look block only (EBR_GATE.md
@@ -160,7 +161,7 @@ def test_part_12_2_holds_exactly_one_run_dated_with_its_commit_and_the_waiver():
 def test_the_tracked_record_is_the_one_scored_look():
     rec = _record()
     assert rec["status"] == "SCORED" and rec["mode"] == "look" and rec["date"] == "2026-10-19"
-    assert rec["holdout"] is None, "the holdout appends its own block in its own commit"
+    assert rec["holdout"]["mode"] == "holdout", "the holdout appends its own block in its own commit"
     assert rec["fwar_vintage_id"] == "2026-10-02-a020cf64844a"
     assert rec["params"]["seed"] == 20261008 and rec["params"]["boot"] == 2000
     assert rec["params"]["predictor_seasons"] == [2021, 2022, 2023, 2024]
@@ -260,3 +261,122 @@ def test_the_skill_look_owner_waived_early_read_note_follows_the_last_section():
     assert "part 7.3 item 3 (on or after 2026-11-17)" in flat
     assert "part 7.5's own-day clause under EWV3-Q3 (a)" in flat
     assert "The look ran once and is not rerun whatever it printed (part 9.5)" in flat
+
+
+# ---- part 12.3: the skill holdout ---------------------------------------------
+
+HOLDOUT_HEADER = ("**2026-10-21, `python -u tools/swar_lab.py --holdout` at `ad5b6e30`, OWNER-WAIVED EARLY READ "
+                  "(owner EW3-5, 2026-10-14).**")
+
+
+def _part_12_3() -> str:
+    doc = _doc()
+    i = doc.index("### 12.3 The skill holdout (part 9.5)")
+    return doc[i:doc.index("No identity receipt of the final build", i)]
+
+
+def test_part_12_3_holds_exactly_one_holdout_run_dated_with_its_commit_and_the_waiver():
+    sec = _part_12_3()
+    assert sec.count(HOLDOUT_HEADER) == 1
+    assert sec.count("`python -u tools/swar_lab.py --holdout` at") == 1, "the holdout runs once"
+    assert "EMPTY." not in sec
+    v = _verbatim(sec)
+    assert v.count("swar_lab swar_lab/2 holdout on 2026-10-21: preview vintage 2026-10-02-a020cf64844a") == 1
+    assert "[look]" not in v, "the look is not rerun in the holdout"
+    assert "  assembled 2025: 765 hitters, 873 pitchers, corpus True" in v
+    assert "  assembled 2026: 751 hitters, 868 pitchers, corpus True" in v
+
+
+def test_the_tracked_record_holds_one_scored_holdout_beside_the_look():
+    rec = _record()
+    assert rec["status"] == "SCORED" and rec["mode"] == "look" and rec["date"] == "2026-10-19"
+    ho = rec["holdout"]
+    assert ho["status"] == "SCORED" and ho["mode"] == "holdout" and ho["date"] == "2026-10-21"
+    assert ho["note"] == "reported beside the verdict, never merged into it; changes no admission"
+    assert ho["fwar_vintage_id"] == rec["fwar_vintage_id"] == "2026-10-02-a020cf64844a"
+    assert ho["params"]["seed"] == 20261008 and ho["params"]["boot"] == 2000
+    assert ho["params"]["holdout_seasons"] == [2025] and ho["block"]["seasons"] == [2025]
+    assert ho["params"]["floors"] == rec["params"]["floors"]
+    assert ho["params"]["b1_k_primary"] == rec["params"]["b1_k_primary"]
+    assert ho["block"]["hr_arm_clause"] == rec["hr_arm_clause"], "the home-run term is the look's"
+    assert ho["block"]["hr_arm_clause"]["variant"] == "hr_fwar"
+    assert ho["block"]["n_pairs"]["bat"] == 263 and ho["block"]["n_pairs"]["pit"] == 207
+    sec = _part_12_3()
+    assert ho["preview_generated_at"] in sec and ho["inputs"]["preview_sha256"] in sec
+
+
+def test_inputs_and_floors_print_before_any_holdout_gap():
+    v = _verbatim(_part_12_3())
+    gaps = v.index("[holdout] GAPS AND DISPOSITIONS, primary")
+    assert v.index("inputs (sha256, read only, never fetched)") < v.index("[holdout] FLOORS, primary") < gaps
+    assert v.index("[holdout] home-run term carried from the look: hr_fwar") < gaps
+
+
+def test_every_holdout_cell_disposition_in_the_record_equals_the_part_12_3_text():
+    sec = _part_12_3()
+    v = _verbatim(sec)
+    primary = v[v.index("[holdout] GAPS AND DISPOSITIONS, primary"):v.index("[holdout] POSITION PART")]
+    lines = primary.splitlines()
+    rec = _record()
+    n = 0
+    for part, fam in rec["holdout"]["block"]["cells"].items():
+        for cell, c in fam.items():
+            n += 1
+            disp = c["disposition"]
+            pat = re.compile(rf"^\s+{re.escape(part)}\s+{re.escape(cell)}\s+n\s+{c['n_pairs']}\s.*=> "
+                             rf"{re.escape(disp)}\s*$")
+            assert sum(bool(pat.match(ln)) for ln in lines) == 1, (part, cell, disp)
+            rows = [ln for ln in sec.splitlines() if ln.startswith("| ") and f" | {cell} | " in ln]
+            assert len(rows) == 1, (part, cell)
+            ship = "n/a (not a WIN) |" if not disp.startswith("WIN") else f"{bool(c['ship_flag_no_weight'])} |"
+            look_disp = rec["look"]["cells"][part][cell]["disposition"]
+            assert f"| {disp} | {c['counts_as']} | {ship} {look_disp} (" in rows[0], rows[0]
+    assert n == 18, "parts 4, 5, 6 (with S2b, S3t and S3c), PE-P and PE-H: 18 cells"
+
+
+def test_the_holdout_changes_no_admission():
+    sec = _part_12_3()
+    v = _verbatim(sec)
+    flat = _flat(sec)
+    rec = _record()
+    for part, a in rec["look"]["admission"].items():
+        assert a["admitted"] is False, part
+    adm = rec["holdout"]["block"]["admission"]
+    assert set(adm) == {"batting", "pitching", "fielding", "pe_p", "pe_h", "position"}
+    for part, a in adm.items():
+        assert a["admitted"] is False, part
+        assert re.search(rf"ADMIT {re.escape(part)}\s*: False \({re.escape(a['reason'])}", v), part
+        assert a["reason"] in flat, part
+    assert "reported only: the holdout changes no admission" in v
+    assert ("**Reported beside the verdict of part 12.2, never merged into it; it changes no admission.** "
+            "The admissions stay part 12.2's: no candidate part is admitted, and eWAR v3 equals fWAR on every "
+            "row.") in flat
+    assert "The holdout licenses no sentence" in flat
+
+
+def test_the_holdout_team_guard_matches_the_record():
+    sec = _part_12_3()
+    v = _verbatim(sec)
+    assert "[holdout] TEAM GUARD dT" in v
+    for key, g in _record()["holdout"]["block"]["team_guard"].items():
+        verdict = "NON-INFERIOR" if g["non_inferior"] else "NOT NON-INFERIOR"
+        assert re.search(rf"^  {re.escape(key)}\s+guard: {verdict}\b", v, re.M), key
+        assert g["n_club_seasons"] == 30, key
+
+
+def test_the_holdout_descriptive_legs_are_labelled_descriptive():
+    sec = _part_12_3()
+    assert "[holdout] DESCRIPTIVE LEGS (descriptive: no verdict weight; claims nothing (part 8))" in sec
+    desc = _record()["holdout"]["block"]["descriptive"]
+    assert desc["label"].startswith("descriptive")
+    assert "team_wins" not in desc and "split_half_calibration" not in desc, "look-only legs"
+
+
+def test_the_skill_holdout_owner_waived_early_read_note_follows_the_last_section():
+    doc = _doc()
+    note = "**Dated note, 2026-10-21: the skill holdout of part 12.3 is an OWNER-WAIVED EARLY READ.**"
+    assert doc.count(note) == 1
+    assert doc.index(note) > doc.index("**Dated note, 2026-10-19: the skill look of part 12.2")
+    flat = _flat(doc[doc.index(note):])
+    assert "part 7.4's date (not before 2026-11-17)" in flat
+    assert "The holdout ran once and is not rerun whatever it printed (part 9.5)" in flat
