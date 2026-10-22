@@ -3,16 +3,26 @@
  * Proprietary and confidential
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
-/* The homepage scoreboard strip (SCORES_7d; owner SC7-6 and SC7-7): a pure
-   reader of the files /scores/ reads under /data/scores/, the job's latest
-   file and the date files it names. It computes no number of its own.
-   Order: live games, then today's games still to start (first pitch in the
-   reader's own time), then the latest day's finals. With nothing live or to
-   come it shows the latest finals; it stays hidden (no space held) when the
-   files are missing or the latest final is more than MAX_FINAL_AGE_DAYS old.
-   It polls every 60 s while a game is live and every 300 s while a game is
-   still to start today, and never while the tab is hidden. Club marks come
-   from the hub (EEPHUS_HUB.teamLogo), loaded only once the strip will show. */
+/* The Scores / Standings slot at the top of the homepage MLB band (SCORES_7d,
+   then HOME_6): a pure reader of the files /scores/ reads under /data/scores/,
+   the job's latest file, the date files it names, the season index and the
+   standings file. It computes no number of its own. One state at a time:
+     games       live games, then today's games still to start (first pitch in
+                 the reader's own time), then the latest day's finals;
+     postseason  while the season index carries a bracket that is not over (or
+                 ended within MAX_FINAL_AGE_DAYS): the current round's series
+                 with their wins, then any live or still-to-start game;
+     off season  nothing live, to come or recently final: the six division
+                 leaders from the standings file, with its as-of date;
+     unmeasured  the job's file is missing, not the job's, or older than
+                 MAX_FINAL_AGE_DAYS: the pixel unmeasured box, with the date
+                 of the last update when there is one.
+   The MLB band's count line reads the same state. It polls every 60 s while a
+   game is live and every 300 s while a game is still to start, and never while
+   the tab is hidden. The season index is read only from September through
+   November (or when the window holds no final) and the standings file only in
+   the off-season state. Club marks come from the hub (EEPHUS_HUB.teamLogo),
+   loaded only once the strip will show. */
 (function () {
   "use strict";
 
@@ -129,6 +139,78 @@
     return 0;
   }
 
+  // ---- the slot's state (games, postseason, off season, unmeasured)
+  var DIV_NAME = { ALE: "AL East", ALC: "AL Central", ALW: "AL West", NLE: "NL East", NLC: "NL Central", NLW: "NL West" };
+  var DIV_ORDER = ["ALE", "ALC", "ALW", "NLE", "NLC", "NLW"];
+
+  function fresh(L, nowMs) {
+    var g = Date.parse(L.generated_at || "");
+    return !isNaN(g) && nowMs - g <= MAX_FINAL_AGE_DAYS * DAY_MS;
+  }
+  function dataDate(L) {
+    var g = Date.parse(L.generated_at || "");
+    return isNaN(g) ? L.today : localDate(g);
+  }
+  // The round the series row shows: the first with an undecided series, else the last.
+  function currentRound(bracket) {
+    var rounds = (bracket && bracket.rounds) || [];
+    for (var i = 0; i < rounds.length; i++) {
+      if ((rounds[i].series || []).some(function (s) { return s && !s.over; })) return rounds[i];
+    }
+    return rounds.length ? rounds[rounds.length - 1] : null;
+  }
+  function bracketLive(bracket, nowMs) {
+    if (!currentRound(bracket)) return false;
+    if (validDate(bracket.last) && daysBetween(bracket.last, localDate(nowMs)) > MAX_FINAL_AGE_DAYS) return false;
+    return true;
+  }
+  // Does the reader's date call for the season index (bracket) read?
+  function wantsIndex(L, nowMs) {
+    var m = localDate(nowMs).slice(5, 7);
+    return m === "09" || m === "10" || m === "11" || !windowFinalDate(L);
+  }
+  // The six division leaders, in league then division order, from the standings file.
+  function leaders(st) {
+    var by = {};
+    ((st && st.rows) || []).forEach(function (r) {
+      if (r && r.ranks && r.ranks.div === 1 && DIV_NAME[r.div] && !by[r.div]) by[r.div] = r;
+    });
+    return DIV_ORDER.filter(function (d) { return by[d]; }).map(function (d) { return by[d]; });
+  }
+  // ctx: { docs, index, standings }. kind is one of games, postseason, offseason, unmeasured.
+  function slotState(L, ctx, nowMs) {
+    ctx = ctx || {};
+    if (!valid(L)) return { kind: "unmeasured", date: null, plan: null };
+    if (!fresh(L, nowMs)) return { kind: "unmeasured", date: dataDate(L), plan: null };
+    var p = plan(L, ctx.docs, nowMs);
+    var br = ctx.index && ctx.index.bracket;
+    if (bracketLive(br, nowMs)) {
+      return { kind: "postseason", plan: p, round: currentRound(br), season: (ctx.index && ctx.index.season) || L.today.slice(0, 4) };
+    }
+    if (p.show) return { kind: "games", plan: p };
+    var lead = leaders(ctx.standings);
+    if (lead.length) return { kind: "offseason", plan: p, leaders: lead, asOf: ctx.standings.as_of, final: !!ctx.standings.final };
+    return { kind: "unmeasured", date: dataDate(L), plan: null };
+  }
+  // Is the standings file needed to settle the state?
+  function needsStandings(L, ctx, nowMs) {
+    if (!valid(L) || !fresh(L, nowMs)) return false;
+    ctx = ctx || {};
+    if (bracketLive(ctx.index && ctx.index.bracket, nowMs)) return false;
+    return !plan(L, ctx.docs, nowMs).show;
+  }
+  // The text after the clubs in the MLB band's count line.
+  function countSuffix(S, L, nowMs) {
+    if (!S) return "";
+    if (S.kind === "postseason") return S.round ? String(S.round.name || "") : "";
+    if (S.kind === "offseason") return S.final ? "final standings" : "standings";
+    if (S.kind === "games" && valid(L) && daysBetween(L.today, localDate(nowMs)) <= 1) {
+      var w = L.window && L.window[L.today], n = w && isNum(w.n) ? w.n : 0;
+      return n > 0 ? n + (n === 1 ? " game today" : " games today") : "";
+    }
+    return "";
+  }
+
   // ---- text
   function clock(t) {
     var d = new Date(t), h = d.getHours(), m = d.getMinutes();
@@ -214,6 +296,66 @@
     return h;
   }
 
+  function shortRound(r, ser) {
+    var n = String((r && r.name) || "");
+    if (!/^World/.test(n)) n = n.replace(/ Series$/, "");
+    return (ser.lg ? ser.lg + " " : "") + n;
+  }
+  function seriesRow(ser, c, hub) {
+    var won = ser.over && ser.winner_id != null && c.team_id === ser.winner_id;
+    var lost = ser.over && ser.winner_id != null && c.team_id !== ser.winner_id;
+    var cls = won ? " is-w" : lost ? " is-l" : "";
+    var name = c.code ? mark(c, hub) + esc(c.code) : "TBD";
+    return '<span class="sp-strip-tm' + cls + '">' + name + "</span>" +
+      '<span class="sp-strip-r' + cls + '">' + (c.code && isNum(c.wins) ? c.wins : "") + "</span>";
+  }
+  function seriesHTML(r, ser, season, hub) {
+    var cl = ser.clubs || [], a = cl[0] || {}, b = cl[1] || {};
+    return '<li class="sp-strip-g is-series ' + (ser.over ? "is-final" : "is-pre") + '">' +
+      '<a href="/scores/#bracket=' + encodeURIComponent(String(season)) + '"' + (ser.text ? ' title="' + esc(ser.text) + '"' : "") + ">" +
+      '<span class="sp-kicker sp-strip-k">' + esc(shortRound(r, ser)) + "</span>" +
+      '<span class="sp-strip-sit">' + (ser.over ? "Final" : (isNum(ser.best_of) ? "Best of " + ser.best_of : "")) + "</span>" +
+      seriesRow(ser, a, hub) + seriesRow(ser, b, hub) + "</a></li>";
+  }
+  function monthDay(ds) {
+    var d = new Date(noon(ds));
+    return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate();
+  }
+  function leaderHTML(r, final, hub) {
+    return '<li class="sp-strip-g is-final is-lead"><a href="/standings/">' +
+      '<span class="sp-kicker sp-strip-k">' + esc(DIV_NAME[r.div]) + "</span>" +
+      '<span class="sp-strip-sit">' + (r.qualified === "division" || final ? "Winner" : "Leads") + "</span>" +
+      '<span class="sp-strip-tm">' + mark(r, hub) + esc(r.code) + "</span>" +
+      '<span class="sp-strip-r">' + esc(r.w + "-" + r.l) + "</span></a></li>";
+  }
+  // The list the strip draws for a state (unmeasured draws no list).
+  function stateTrackHTML(S, hub) {
+    var h = "";
+    if (S.kind === "games") return trackHTML(S.plan, hub);
+    if (S.kind === "postseason") {
+      (S.round.series || []).forEach(function (ser) { h += seriesHTML(S.round, ser, S.season, hub); });
+      // a game still to start is already in its series card: only live games add a card
+      var open = S.plan ? S.plan.live : [];
+      open.forEach(function (c) { h += gameHTML(c, S.plan, hub); });
+      return h;
+    }
+    if (S.kind === "offseason") {
+      h += '<li class="sp-strip-day"><span>' + (S.final ? "Final" : "As of") + "</span><span>" +
+        esc(validDate(S.asOf) ? monthDay(S.asOf) : "") + "</span></li>";
+      S.leaders.forEach(function (r) { h += leaderHTML(r, S.final, hub); });
+    }
+    return h;
+  }
+  // The pixel unmeasured box: the module's name from the page, the date of the last update.
+  function unmeasuredHTML(S, name) {
+    var nm = esc(name || "Scores");
+    var msg = nm + " has no current data" + (S && validDate(S.date) ? " (last updated " + esc(monthDay(S.date)) + ")" : "") +
+      '. <a href="/scores/">Open ' + nm + "</a>";
+    var ST = window.EephusState;
+    if (ST && ST.html) return ST.html("unmeasured", msg, "home-scores-unmeasured");
+    return '<div class="px-state is-unmeasured home-scores-unmeasured"><div class="px-state-msg">' + msg + "</div></div>";
+  }
+
   // ---- loading
   function loadHub(src) {
     if (window.EEPHUS_HUB) return Promise.resolve(window.EEPHUS_HUB);
@@ -236,8 +378,18 @@
   function mount(root) {
     var track = root.querySelector(".sp-strip-track");
     if (!track) return;
-    var docs = {}, hubP = null, timer = null, dueAt = 0, busy = false;
+    var stateEl = document.getElementById("home-scores-state");
+    var countEl = document.getElementById("home-mlb-count");
+    var name = root.getAttribute("data-name") || "";
+    var docs = {}, hubP = null, timer = null, dueAt = 0, busy = false, drawn = false;
+    var idx = { rev: null, p: null }, stn = { rev: null, p: null };
 
+    function memo(slot, rev, path) {
+      if (slot.p && slot.rev === rev) return slot.p;
+      slot.rev = rev;
+      slot.p = getJSON(path + (rev ? "?v=" + encodeURIComponent(rev) : "")).catch(function () { slot.p = null; return null; });
+      return slot.p;
+    }
     function readDates(L) {
       var want = datesToRead(L), jobs = [];
       Object.keys(want).forEach(function (d) {
@@ -250,7 +402,7 @@
       // index names the latest earlier date with games.
       if (!windowFinalDate(L)) {
         var first = Object.keys(L.window).sort()[0] || L.today;
-        jobs.push(getJSON("index-" + L.today.slice(0, 4) + ".json").then(function (sd) {
+        jobs.push(memo(idx, L.index_rev, "index-" + L.today.slice(0, 4) + ".json").then(function (sd) {
           var r = indexDateBefore(sd, first);
           if (!r || !r.rev || daysBetween(r.d, localDate(Date.now())) > MAX_FINAL_AGE_DAYS) return null;
           if (docs[r.d] && docs[r.d].rev === r.rev) return null;
@@ -265,13 +417,45 @@
         return keep;
       });
     }
-    function draw(p, hub) {
-      if (!p.show) { root.hidden = true; return; }
+    // Everything the state needs, read once per tick: the date files, the
+    // season index in the bracket months, the standings file off season.
+    function resolve(L) {
+      var now = Date.now();
+      return readDates(L).then(function (docsNow) {
+        var ctx = { docs: docsNow, index: null, standings: null };
+        var idxP = wantsIndex(L, now) ? memo(idx, L.index_rev, "index-" + L.today.slice(0, 4) + ".json") : Promise.resolve(null);
+        return idxP.then(function (ix) {
+          ctx.index = ix;
+          if (!needsStandings(L, ctx, now) || !L.standings || !L.standings.season) return ctx;
+          return memo(stn, L.standings.rev, "standings/" + encodeURIComponent(L.standings.season) + ".json").then(function (st) {
+            ctx.standings = st;
+            return ctx;
+          });
+        });
+      }).then(function (ctx) { return { L: L, S: slotState(L, ctx, now) }; });
+    }
+    function setCount(S, L) {
+      if (!countEl) return;
+      var base = countEl.getAttribute("data-base");
+      if (base == null) { base = countEl.textContent; countEl.setAttribute("data-base", base); }
+      var suf = countSuffix(S, L, Date.now());
+      countEl.textContent = base + (suf ? " \u00b7 " + suf : "");
+    }
+    function draw(r, hub) {
+      var S = r.S;
+      setCount(S, r.L);
+      if (S.kind === "unmeasured") {
+        root.hidden = true;
+        if (stateEl) { stateEl.innerHTML = unmeasuredHTML(S, name); stateEl.hidden = false; }
+        return;
+      }
+      if (stateEl) { stateEl.hidden = true; stateEl.innerHTML = ""; }
       var act = document.activeElement, href = act && root.contains(act) ? act.getAttribute("href") : null;
       var x = track.scrollLeft;
-      track.innerHTML = trackHTML(p, hub);
+      track.innerHTML = stateTrackHTML(S, hub);
       root.hidden = false;
       track.scrollLeft = x;
+      drawn = true;
       if (href) {
         var again = track.querySelector('a[href="' + href + '"]');
         if (again) again.focus({ preventScroll: true });
@@ -288,19 +472,20 @@
       getJSON("latest.json").then(function (L) {
         if (!valid(L)) throw new Error("schema");
         // The hub loads beside the date files when the window names a date to
-        // read, else only once the plan says the strip will show.
+        // read, else only once the state says the strip will show.
         var hubSrc = root.getAttribute("data-hub");
         if (!hubP && Object.keys(datesToRead(L)).length) hubP = loadHub(hubSrc);
-        return readDates(L).then(function (docsNow) {
-          var p = plan(L, docsNow, Date.now());
-          if (!p.show) return draw(p, null);
+        return resolve(L).then(function (r) {
+          if (r.S.kind === "unmeasured") { draw(r, null); return r.S; }
           if (!hubP) hubP = loadHub(hubSrc);
-          return hubP.then(function (hub) { draw(p, hub); return p; });
-        }).then(function (p) { schedule(pollMs(p)); });
+          return hubP.then(function (hub) { draw(r, hub); return r.S; });
+        }).then(function (S) { schedule(pollMs(S.plan)); });
       }).catch(function () {
-        // Missing files or a fetch error: a strip never drawn stays hidden; a
-        // drawn one keeps its last rows and tries again on its own cadence.
-        schedule(root.hidden ? 0 : (dueAt ? POLL_LIVE_MS : 0));
+        // Missing files or a fetch error: a strip already drawn keeps its last
+        // rows and tries again on its own cadence; none yet draws the
+        // unmeasured box without a date.
+        if (!drawn) draw({ L: null, S: { kind: "unmeasured", date: null, plan: null } }, null);
+        schedule(drawn ? (dueAt ? POLL_LIVE_MS : 0) : 0);
       }).then(function () { busy = false; });
     }
     document.addEventListener("visibilitychange", function () {
@@ -311,7 +496,9 @@
   }
 
   window.EephusHomeScores = { plan: plan, pollMs: pollMs, datesToRead: datesToRead, kicker: kicker,
-    situation: situation, trackHTML: trackHTML, indexDateBefore: indexDateBefore, windowFinalDate: windowFinalDate };
+    situation: situation, trackHTML: trackHTML, indexDateBefore: indexDateBefore, windowFinalDate: windowFinalDate,
+    slotState: slotState, needsStandings: needsStandings, wantsIndex: wantsIndex, countSuffix: countSuffix,
+    stateTrackHTML: stateTrackHTML, unmeasuredHTML: unmeasuredHTML, leaders: leaders, currentRound: currentRound };
 
   function init() {
     var root = document.getElementById("home-scoreboard");

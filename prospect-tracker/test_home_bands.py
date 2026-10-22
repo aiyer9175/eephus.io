@@ -433,3 +433,161 @@ def test_first_news_row_is_in_the_page_at_390(browser_runs):
 def test_tab_order_reaches_main_within_ten_stops(browser_runs):
     stops = browser_runs["tab"]
     assert stops[-1] is True and len(stops) <= 10, stops
+
+
+# ---- HOME_6: the Scores / Standings slot at the top of the MLB band ---------
+# assets/home-scores.js run in V8 with no DOM (the test_scores_client.py
+# harness) over a fixture of each state: games, postseason, off season and
+# missing (plus a stale file). The strip links /scores/ in every drawn state.
+
+import json
+
+HS_SRC = (ROOT / "assets" / "home-scores.js").read_text(encoding="utf-8")
+HS_DAY = 86_400_000
+HS_NOW = 1791460800000 + 2 * 3_600_000   # 2026-10-08T14:00:00Z
+
+
+@pytest.fixture(scope="module")
+def hs():
+    mr = pytest.importorskip("py_mini_racer")
+    ctx = mr.MiniRacer()
+    ctx.eval('var document = { readyState: "complete", getElementById: function () { return null; },'
+             ' addEventListener: function () {} }; var window = {};')
+    ctx.eval(HS_SRC)
+    ctx.eval("""var HUB = { club: function (x) { return x ? { code: String(x) } : null; },
+      teamLogo: function (code, cls, o) { return '<img class="' + cls + '" src="/x/' + code + '.png?s=' + o.size +
+        '" alt="">'; } };""")
+    return ctx
+
+
+def _js(ctx, expr):
+    return json.loads(ctx.eval(f"JSON.stringify({expr})"))
+
+
+def _gen(ms):
+    import datetime as dt
+    return dt.datetime.fromtimestamp(ms / 1000, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _latest(gen_ms=HS_NOW - 60_000, today="2026-10-08", n=2):
+    return {"schema": 1, "generated_at": _gen(gen_ms), "today": today, "index_rev": "r",
+            "job": {"down_after_s": 1800}, "live": [],
+            "window": {today: {"n": n, "final": 0, "live": 0, "pre": n, "rev": "x"}}}
+
+
+def _side(code, r=None):
+    return {"code": code, "team_id": code, "short": code, "r": r, "wl": {"w": 1, "l": 0}}
+
+
+def _game(pk, state, away="AAA", home="HHH"):
+    return {"pk": pk, "state": state, "start": "2026-10-08T23:00:00Z", "tbd": False, "line": [], "flags": {},
+            "away": _side(away, 3 if state != "scheduled" else None),
+            "home": _side(home, 2 if state != "scheduled" else None),
+            "sit": {"inning": 5, "half": "top", "outs": 1, "bases": [1, 0, 0]} if state == "live" else None}
+
+
+BRACKET = {"done": False, "first": "2026-09-29", "last": "2026-10-31", "rounds": [
+    {"name": "Division Series", "series": [{"id": "D_1", "lg": "AL", "over": True, "best_of": 5, "winner_id": 1,
+        "text": "AAA wins 3-0", "clubs": [{"code": "AAA", "team_id": 1, "wins": 3}, {"code": "BBB", "team_id": 2, "wins": 0}]}]},
+    {"name": "World Series", "series": [{"id": "W_1", "lg": "", "over": False, "best_of": 7, "winner_id": None,
+        "text": "MIL leads 1-0", "clubs": [{"code": "MIL", "team_id": 158, "wins": 1}, {"code": "TBR", "team_id": 139, "wins": 0}]}]}]}
+STANDINGS = {"as_of": "2026-09-27", "final": True, "rows": [
+    {"code": "TBR", "div": "ALE", "w": 98, "l": 64, "qualified": "division", "ranks": {"div": 1}},
+    {"code": "NYY", "div": "ALE", "w": 90, "l": 72, "qualified": "wc", "ranks": {"div": 2}},
+    {"code": "MIL", "div": "NLC", "w": 103, "l": 59, "qualified": "division", "ranks": {"div": 1}}]}
+
+
+def _state(ctx, L, ctx_in, now=HS_NOW):
+    return _js(ctx, f"window.EephusHomeScores.slotState({json.dumps(L)}, {json.dumps(ctx_in)}, {now})")
+
+
+def _html(ctx, S):
+    return ctx.eval(f"window.EephusHomeScores.stateTrackHTML({json.dumps(S)}, HUB)")
+
+
+def _suffix(ctx, S, L):
+    return ctx.eval(f"window.EephusHomeScores.countSuffix({json.dumps(S)}, {json.dumps(L)}, {HS_NOW})")
+
+
+def test_games_state_draws_line_scores_that_link_the_scores_page(hs):
+    L = _latest()
+    docs = {"2026-10-08": {"games": [_game(1, "live"), _game(2, "scheduled", "CCC", "DDD")]}}
+    S = _state(hs, L, {"docs": docs})
+    assert S["kind"] == "games"
+    h = _html(hs, S)
+    assert h.count('<li class="sp-strip-g') == 2
+    assert re.findall(r'href="(/scores/#game=\d+)"', h) == ["/scores/#game=1", "/scores/#game=2"]
+    assert "Top 5" in h and "<img" in h
+    assert _suffix(hs, S, L) == "2 games today"
+
+
+def test_postseason_state_draws_the_current_round_series(hs):
+    L = _latest()
+    S = _state(hs, L, {"docs": {}, "index": {"season": 2026, "bracket": BRACKET}})
+    assert S["kind"] == "postseason" and S["round"]["name"] == "World Series"
+    h = _html(hs, S)
+    assert h.count('<li class="sp-strip-g') == 1
+    assert 'href="/scores/#bracket=2026"' in h and "World Series" in h and "Best of 7" in h
+    assert "MIL" in h and "TBR" in h and "Division" not in h
+    assert _suffix(hs, S, L) == "World Series"
+    # a finished bracket more than a week old is no longer the state
+    old = dict(BRACKET, done=True, last="2026-09-20")
+    S2 = _state(hs, L, {"docs": {}, "index": {"season": 2026, "bracket": old}, "standings": STANDINGS})
+    assert S2["kind"] == "offseason"
+
+
+def test_off_season_state_draws_the_division_leaders(hs):
+    L = _latest(n=0)
+    L["window"] = {"2026-10-08": {"n": 0, "final": 0, "live": 0, "pre": 0, "rev": None}}
+    assert _js(hs, f"window.EephusHomeScores.needsStandings({json.dumps(L)}, {{}}, {HS_NOW})") is True
+    S = _state(hs, L, {"docs": {}, "index": {"season": 2026, "bracket": None}, "standings": STANDINGS})
+    assert S["kind"] == "offseason"
+    h = _html(hs, S)
+    assert h.count('<li class="sp-strip-g') == 2          # one leader per division in the file
+    assert ">AL East<" in h and ">NL Central<" in h and "98-64" in h and "103-59" in h
+    assert "Final" in h and "Sep 27" in h and 'href="/standings/"' in h
+    assert _suffix(hs, S, L) == "final standings"
+
+
+@pytest.mark.parametrize("why", ["missing", "wrong_schema", "stale", "no_standings"])
+def test_missing_or_old_files_draw_the_unmeasured_state(hs, why):
+    L = _latest(gen_ms=HS_NOW - 9 * HS_DAY) if why == "stale" else _latest(n=0)
+    if why == "wrong_schema":
+        L["schema"] = 2
+    if why == "no_standings":
+        L["window"] = {"2026-10-08": {"n": 0, "final": 0, "live": 0, "pre": 0, "rev": None}}
+    arg = "null" if why == "missing" else json.dumps(L)
+    S = _js(hs, f"window.EephusHomeScores.slotState({arg}, {{}}, {HS_NOW})")
+    assert S["kind"] == "unmeasured"
+    box = hs.eval(f"window.EephusHomeScores.unmeasuredHTML({json.dumps(S)}, 'Scores / Standings')")
+    assert "is-unmeasured" in box and "Scores / Standings has no current data" in box
+    assert 'href="/scores/"' in box
+    if why == "stale":
+        assert S["date"] == "2026-09-29" and "last updated Sep 29" in box
+    if why in ("missing", "wrong_schema"):
+        assert "last updated" not in box
+
+
+def test_the_slot_sits_first_in_the_mlb_band_and_reads_the_name_constant(home):
+    import scores_core
+    if not scores_core.SCORES_LIVE:
+        pytest.skip("SCORES_LIVE is False")
+    mlb = _band(home, "mlb")
+    body = mlb.split('<div class="band-head">', 1)[1].split("</div></div>", 1)[1]
+    assert body.index('id="home-scores-slot"') < body.index('<nav class="club-logos"')
+    slot = body.split('id="home-scores-slot">', 1)[1]
+    assert slot.startswith("<link") and 'id="home-scoreboard"' in slot[:400]
+    assert f'data-name="{B.SCORES_DISPLAY_NAME}"' in slot and 'href="/scores/"' in slot
+    assert 'id="home-scores-state"' in slot
+    assert 'id="home-mlb-count">' in mlb
+    # the strip is no longer in the masthead block, and the script holds no literal module name
+    assert 'id="home-scoreboard"' not in home.split('<nav class="home-jump"', 1)[0]
+    assert "Scores / Standings" not in HS_SRC.split("(function () {", 1)[1]
+
+
+def test_the_slot_is_absent_while_the_scores_module_is_off(monkeypatch):
+    import scores_core
+    monkeypatch.setattr(scores_core, "SCORES_LIVE", False)
+    out = B.build_home([], {})
+    assert "home-scoreboard" not in out and "home-mlb-count" not in out
+    assert re.search(r'band-count">\d+ clubs<', out)
