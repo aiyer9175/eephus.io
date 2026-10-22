@@ -95,6 +95,10 @@
   .sp-strip-g { flex-grow: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .sp-strip-track { scroll-behavior: auto; } }
+/* HOME_6: the slot sits at the top of the homepage MLB band. Its state box is the
+   pixel unmeasured state, drawn in place of the strip when the files are missing or old. */
+.home-scores-state[hidden] { display: none; }
+.home-scores-state .px-state.home-scores-unmeasured { width: auto; margin: 8px 0 2px; }
 
 /* ---- the October bracket (SCORES_4b), drawn by the lazy assets/scores-bracket.js.
    Not scoped to .scores-app, so /standings/ mounts it unchanged. Rounds sit in

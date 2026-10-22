@@ -428,6 +428,11 @@ def _headshot_url(mlbam, box_w: int = 84, box_h: int | None = None) -> str | Non
 # reads this constant, never a literal.
 GLOSSARY_DISPLAY_NAME = "Library"
 
+# The Scores / Standings module's name (STANDINGS_PLAN section 3, the rename). The
+# nav leaf, the module masthead and the homepage slot read this constant, never a
+# literal.
+SCORES_DISPLAY_NAME = "Scores / Standings"
+
 # /scouting/, the public 20-80 explainer (TL_22_SCOUTING_PAGE_BUILD_DARK; spec
 # docs/scouting-2026-10/SCOUTING_PAGE.md section 7). Default False: the page and
 # its payload render only under .cache/scouting/preview/, and the nav entry and
@@ -455,7 +460,7 @@ NAV_ITEMS = [
         # 2026-10-02 Standings plan). One leaf: /standings/ passes
         # active="scores". The hand-kept static copies carry the same entry in
         # the same slot (test_collegesavant_nav_in_sync).
-        ("scores",      "Scores / Standings", "/scores/"),
+        ("scores",      SCORES_DISPLAY_NAME, "/scores/"),
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
@@ -5447,23 +5452,36 @@ def _home_article_age(a: dict, today: date) -> int | None:
         return None
 
 
+def _scoreboard_on() -> bool:
+    """True while the /scores/ page the homepage slot links exists."""
+    import scores_core
+    return bool(scores_core.SCORES_LIVE)
+
+
 def _home_scoreboard() -> str:
-    """The homepage scoreboard strip (SCORES_7d; owner SC7-6, SC7-7), under the
-    masthead: live games, then today's games still to start, then the latest
-    finals, each linking its /scores/ game page. The shell is a hidden mount
-    (the 'Scores' tag and an empty track) that assets/home-scores.js fills
-    from /data/scores/ at runtime and reveals only once it has rows, so a
-    missing file or a stale season holds no space. The hub runtime that draws
-    the pixel club marks is named by data-hub and loaded by the strip only
-    when it will show. Present only while scores_core.SCORES_LIVE is True
-    (the /scores/ page it links exists)."""
+    """The Scores / Standings slot at the top of the MLB band (SCORES_7d, owner
+    SC7-6, SC7-7; HOME_6): live games, then today's games still to start, then
+    the latest finals in season; the current round's series in the
+    postseason; the division leaders out of season. Each card links /scores/
+    (or /standings/ for a leader). The shell is a hidden strip (the 'Scores'
+    tag and an empty track) plus a hidden state box that
+    assets/home-scores.js fills from /data/scores/ at runtime: the strip is
+    revealed only once it has rows, and the state box draws the pixel
+    unmeasured state, with the date of the last update, when the files are
+    missing or too old. The module's name rides data-name from
+    SCORES_DISPLAY_NAME. The hub runtime that draws the pixel club marks is
+    named by data-hub and loaded by the strip only when it will show. Present
+    only while scores_core.SCORES_LIVE is True (the /scores/ page it links
+    exists)."""
     import scores_core
     if not scores_core.SCORES_LIVE:
         return ""
     return (f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
             f'<section class="sp-strip" id="home-scoreboard" aria-label="Scores" hidden'
-            f' data-hub="/assets/eephus-hub.js?v={_HUB_VER}">'
-            '<a class="sp-strip-tag" href="/scores/">Scores</a><ul class="sp-strip-track"></ul></section>'
+            f' data-hub="/assets/eephus-hub.js?v={_HUB_VER}" data-name="{html.escape(SCORES_DISPLAY_NAME)}">'
+            '<a class="sp-strip-tag" href="/scores/">Scores</a>'
+            '<ul class="sp-strip-track"></ul></section>'
+            '<div class="home-scores-state" id="home-scores-state" hidden></div>'
             f'<script src="/assets/home-scores.js?v={_HOME_SCORES_VER}" defer></script>')
 
 
@@ -5549,8 +5567,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="dateline">'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
-    # The scoreboard strip (SCORES_7d) follows the masthead in the head block;
-    # assets/home-scores.js fills it at runtime (_home_scoreboard).
+    # The scoreboard strip (SCORES_7d) sits at the top of the MLB band (HOME_6).
     here = ' class="is-here"'
     jump = ('<nav class="home-jump" aria-label="Homepage bands">'
             + "".join(f'<a href="#{_HOME_BANDS[b][0]}"{here if i == 0 else ""}>'
@@ -5665,7 +5682,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     cards = _xmod_cards()
 
     # ---- the MLB band (LANE_HOME 3.2 rows 11, 21; new blocks) ----
-    # The Scores / Standings strip slot is empty until HOME_6 fills it.
+    # The Scores / Standings slot (HOME_6) is the first block under the callout:
+    # assets/home-scores.js fills it and reads the same state into the count line.
     mlb_cells = [c for c in (
         _xmod_card_html(cards["fa"]) if "fa" in cards else "",
         _xmod_card_html(cards["projections"]) if "projections" in cards else "",
@@ -5675,9 +5693,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     ) if c]
     n_clubs = len(_club_table()["rows"])
     mlb_band = _home_band(
-        "mlb", f"{n_clubs} clubs",
+        "mlb", f'<span id="home-mlb-count">{n_clubs} clubs</span>' if _scoreboard_on() else f"{n_clubs} clubs",
         _date_callout("mlb", today_d)
-        + '<div class="home-scores-slot" id="home-scores-slot" hidden></div>'
+        + f'<div class="home-scores-slot" id="home-scores-slot">{_home_scoreboard()}</div>'
         + _home_club_logos()
         + tx_mod
         + f'<div class="band-grid">{"".join(mlb_cells)}</div>'
@@ -5750,7 +5768,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = (f'{ticker}{_nav("home")}<div class="home-shell">'
-             f'<div class="home-head">{masthead}{_home_scoreboard()}</div>{jump}{rail}{main}</div>')
+             f'<div class="home-head">{masthead}</div>{jump}{rail}{main}</div>')
     return page_home("eephus.io - sabermetrics", inner,
                      "Prospect board graded by eFV, plus MLB free agency, projections, leaderboards, "
                      "fantasy and betting models.")
@@ -7475,10 +7493,10 @@ def _scores_module_head(active: str) -> str:
         for key, label, href in (("scores", "Scores", "/scores/"), ("standings", "Standings", "/standings/")):
             cur = ' aria-current="page"' if key == active else ""
             links.append(f'<a class="mlbstats-sectionbtn{" active" if cur else ""}" href="{href}"{cur}>{label}</a>')
-        nav = f'<nav class="mlbstats-sectionnav" aria-label="Scores / Standings">{"".join(links)}</nav>'
+        nav = f'<nav class="mlbstats-sectionnav" aria-label="{SCORES_DISPLAY_NAME}">{"".join(links)}</nav>'
     return (
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
-        f'<h1>{_masthead_icon("scores")}Scores / Standings {_stage_chip("scores")}</h1></div>'
+        f'<h1>{_masthead_icon("scores")}{SCORES_DISPLAY_NAME} {_stage_chip("scores")}</h1></div>'
         f'<span class="section-sub">{STANDINGS_SUB if active == "standings" else SCORES_SUB}</span></div>'
         + nav
     )

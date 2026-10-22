@@ -15,7 +15,7 @@ start, never otherwise. Each game is a real link to its /scores/ game page,
 nothing in the strip is aria-hidden, and the club marks are the hub's
 decorative pixel chips beside the printed code.
 
-build_home: the mount sits in the masthead block, hidden, with the 'Scores'
+build_home: the mount sits in the MLB band's slot (HOME_6), hidden, with the 'Scores'
 tag linking /scores/, the hub named by a stamped data-hub, and the strip
 script stamped and deferred; none of it renders while SCORES_LIVE is False.
 """
@@ -207,7 +207,7 @@ def test_every_game_is_a_real_link_to_its_game_page(v8):
     # the pixel chip, decorative beside the printed code, removed on error
     imgs = re.findall(r"<img [^>]+>", html)
     assert len(imgs) == 6 and all('class="sp-logo"' in i and 'alt=""' in i and "onerror" in i for i in imgs)
-    assert all("?s=16" in i for i in imgs)
+    assert all("?s=40" in i for i in imgs)   # SC7-8: fetched at twice the 20 px box, never pixelated
     for code in ("CLE", "CHW", "LAD", "ATL", "TBR", "NYY"):
         assert f">{code}</span>" in html
     # the finals' day carries its own label; the winner is set bold, the loser dim
@@ -231,7 +231,7 @@ def _mount(page: str) -> str:
     return m.group(0)
 
 
-def test_the_shell_is_a_hidden_mount_under_the_masthead():
+def test_the_shell_is_a_hidden_mount_at_the_top_of_the_mlb_band():
     import scores_core
     if not scores_core.SCORES_LIVE:
         pytest.skip("SCORES_LIVE is False")
@@ -243,8 +243,11 @@ def test_the_shell_is_a_hidden_mount_under_the_masthead():
     assert f'data-hub="/assets/eephus-hub.js?v={B._asset_ver("assets/eephus-hub.js")}"' in mount
     assert f'<script src="/assets/home-scores.js?v={B._asset_ver("assets/home-scores.js")}" defer></script>' in out
     assert f'href="/assets/sports-page.css?v={B._asset_ver("assets/sports-page.css")}"' in out
+    # HOME_6: the strip left the masthead block for the first slot of the MLB band
     head = out.split('<div class="home-head">', 1)[1].split('<nav class="home-jump"', 1)[0]
-    assert head.index('class="masthead"') < head.index('id="home-scoreboard"')
+    assert 'id="home-scoreboard"' not in head
+    band = out.split('id="band-mlb"', 1)[1]
+    assert band.index('id="home-scores-slot"') < band.index('id="home-scoreboard"') < band.index('<nav class="club-logos"')
     # the news ticker is untouched and still first
     assert out.index('<div class="home-ticker"') < out.index('id="home-scoreboard"')
 
