@@ -91,7 +91,8 @@ def build(v3: dict | None = None, fwar_vintage_id: str | None = None, log=print)
       3. per season and side, the headline departures sum to zero (amendment 9.1: the
          artifact's pre-rounding sum within TOL_ROW, the stored 6-decimal departures within
          the rounding bound n x 0.5e-6);
-      4. no headline departure falls in a season before FIRST_HEADLINE_SEASON."""
+      4. no headline departure falls in a season before FIRST_HEADLINE_SEASON.
+    The headline read excludes the xHEM+ part (data/ewar_v3.json `dx`; EBR_GATE.md 11.11.3)."""
     import ewar_v3
     pay = ewar_v3.load() if v3 is None else v3
     if fwar_vintage_id is None:
@@ -101,7 +102,12 @@ def build(v3: dict | None = None, fwar_vintage_id: str | None = None, log=print)
     if not fwar_vintage_id or have != fwar_vintage_id:
         raise EwarHeadlineLabelRefusal(
             f"identity 1: data/ewar_v3.json is on fWAR vintage {have!r}, the site serves {fwar_vintage_id!r}")
-    deps = {name: ewar_v3.departures(pay, series=name) for name in SERIES}
+    # The label's headline is eWAR without the provisional xHEM+ part (EBR_GATE.md 11.11.3,
+    # owner decision EW3-51): the frozen vintage never carries it, so a build with the part
+    # on reproduces the frozen file and the fingerprint's label term does not move.
+    deps = {name: ewar_v3.departures(pay, series=name,
+                                     exclude=("xhem",) if name == "headline" else ())
+            for name in SERIES}
     block: dict[str, dict] = {}
     for name in SERIES:
         for (mid, season), cell in deps[name].items():

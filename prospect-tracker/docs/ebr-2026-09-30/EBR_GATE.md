@@ -2342,6 +2342,154 @@ pitcher j:  eWAR realized_j = fWAR_j + Delta_r,j + h_abs,j / RPW_s      Delta_r:
 - Committed alone, docs only, before any number of the assembled series exists. No served number moves
   at this commit.
 
+### 11.11 2026-10-22: xHEM+ in eWAR's batting at half weight, by owner decision while the registered admission rule was not met (clause (i), owner decision EW3-51)
+
+- **Owner answer, as recorded** (`DECISIONS_FOR_OWNER.md`, EW3-51, 2026-10-22): asked to incorporate
+  the EM+ family into eWAR, xHEM+ specifically, the owner answered "Half weight + 2027 check": xHEM+
+  enters the headline (predictive) eWAR's batting at a fixed LAMBDA 0.5, on the Statcast seasons,
+  disclosed as provisional; eWAR realized and the frozen eFV label vintage stay as they are; task
+  EWAR_XHEM_HALF builds it dark and the orchestrator flips it on this authorization; task
+  EWAR_XHEM_2027_READ keeps it on a pass and removes it otherwise (11.11.5). The copy decision of the
+  same day (EW3-51 copy): site copy states the evidence only, never the word "override". Part 1 gains
+  this row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-51 | Whether xHEM+ enters eWAR | yes, the xHEM+ arm of candidate part 4 (S1x) at half weight, LAMBDA 0.5 fixed in advance, in the headline eWAR only, 2016 on, provisional until EWAR_XHEM_2027_READ (11.11.1 to 11.11.5) | answered 2026-10-22 (`DECISIONS_FOR_OWNER.md`, EW3-51); recorded by queue task EWAR_XHEM_HALF |
+
+- **What this amendment departs from, disclosed.** Amendment 11.2.6 admits a candidate part 4 only
+  when its rate cell is WIN (components), its total cell is not LOSS AND its team guard (11.2.4) is
+  NON-INFERIOR. The skill look (part 12.2) read the xHEM+ arm WIN (components) on both cells (H-rate
+  gap +0.06475, 95 percent interval +0.03094 to +0.09934, 1,071 pairs; H-cum +0.04199, +0.00737 to
+  +0.07670) and its team guard NOT NON-INFERIOR, underpowered (a half-width above 0.02), so no arm was
+  admitted. The holdout (part 12.3) read both cells UNRESOLVED (H-rate +0.06805, -0.00271 to +0.14105,
+  263 pairs; H-cum +0.06241, -0.01457 to +0.14215) and the guard NOT NON-INFERIOR, underpowered. The
+  registered admission rule is therefore NOT met: the team guard did not read NON-INFERIOR in either
+  run and the holdout interval spans zero. The owner enters the part at half weight anyway. This is
+  recorded as an owner decision taken while the registered admission rule was not met, for this item
+  alone, as 11.10 recorded EW3-32 for the ABS part. It lands after both looks: nothing they read
+  changes, parts 12.1 to 12.3 stand as written, `meta.admitted_by_look` stays empty, and no look's
+  frame, statistic, threshold, margin, guard, twin, date or claim moves. Unchanged: eWAR realized
+  (11.10.3), the ABS part (11.10.2), the runs-per-win form (11.10.4), `data/ewar.json`, every
+  training label, driver and fitted consumer (part 9.1's never-read list), and the eFV training label
+  (11.11.3).
+
+#### 11.11.1 The part: definition
+
+```
+season s, 2016 on (the Statcast seasons the S1x source covers; part 9.4)
+d_batx,i  = candidate part 4's xHEM+ arm, re-centred: part 9.4's S1x and "Each candidate part alone"
+            (d_c,i with c = batx), in runs, read from the swar preview the looks read
+            (.cache/swar/preview/swar.json) on the same fWAR vintage id as the build
+RPW*_s    = league_constants.league_totals(s)["rpw"], the conversion of the skill look's test values
+            (the preview's per-season rpw)
+LAMBDA    = 0.5, fixed in advance by EW3-51, never tuned
+x_i       = LAMBDA * d_batx,i / RPW*_s                                    wins, hitting side only
+
+headline eWAR_i (hitting side)  = fWAR_i + g_abs,i / RPW_s + x_i
+eWAR realized_i (hitting side)  = fWAR_i + g_abs,i / RPW_s                 unchanged (11.10.3)
+pitching side                   = unchanged in both series
+```
+
+  Read as the owner put it: the predictive eWAR's batting part = fWAR batting + LAMBDA x (xHEM+
+  batting part - fWAR batting part), where the xHEM+ batting part is the S1x test value's
+  (fWAR_i + d_batx,i / RPW*_s, the object the look and the holdout scored).
+
+- **Rows: S1x as scored.** A hitter-season at 200 PA or more with a Savant xwOBA takes the xHEM+ arm;
+  every other hitter-season carries the HEM+ arm's value g_bat, as part 9.4 defines the arm; a
+  pitcher-batter carries 0. No other subset was scored, so no other subset is carried.
+- **Zero-sum.** The preview stores d_batx at 6 decimals; the build re-centres the stored values once
+  more per season over the same rows (pitcher-batters outside the rule, per PA), so the part sums to
+  zero per season within 1e-9 wins and each side's league total stays FanGraphs'.
+- **Seasons.** 2016 to the last season the preview and the frozen vintage both carry. Statcast's first
+  season, 2015, carries no part: the S1x source (the Savant expected-stats cache) and the preview begin
+  in 2016 (part 9.4; `tools/build_swar.py` FIRST_SEASON), the source is never refetched for this
+  build, and no 2015 value was ever scored, so 2015 stays fWAR's with every earlier season. A vintage
+  season of 2016 or later missing from the preview stops the build.
+- **Conversion.** x converts at RPW*_s, not at the series' RPW_s, so the part is half of the scored
+  test value's departure in the units it was scored. 11.10.4's guard identity is unchanged: the
+  candidate's series and the incumbent's still differ only in the ABS part, which has no row on the
+  predictor seasons 2021 to 2024.
+- **Identities, tested at every build with the part on:** the part sums to zero per season within
+  1e-9 wins; every listed row's stored headline departure equals the ABS part plus x within storage
+  rounding; eWAR realized is the same with the part on and off; data/ewar.json's sha256 does not
+  move; the label-basis departures (11.11.3) equal the build without the part, row for row.
+
+#### 11.11.2 The flag, the artifact and the surfaces
+
+- `ewar_v3.XHEM_HALF_LIVE` (default False until the orchestrator's flip). Off, the build writes
+  exactly the artifact it wrote before this amendment. On, `tools/build_ewar_v3.py --write` adds the
+  part to `data/ewar_v3.json`: `parts.xhem` per listed hitter-season (runs, wins, the arm), the
+  headline departure `dh` carrying it, and `dx`, the headline departure without it, on every block
+  that carries the part. `--xhem-preview` writes the part-on build to
+  `.cache/ewar_v3/preview/ewar_v3_xhem.json` whatever the flag says, for the census and the tests.
+- Every display door that reads the headline series moves with it (11.10.5's list); eWAR realized,
+  the eWAR v2, FanGraphs and Baseball-Reference reference columns do not. The player pages' eWAR
+  parts table gains the part's column, labelled "xHEM+ (expected batting, half weight)".
+- **Copy (EW3-51 copy).** Where the part is shown, the site carries this sentence and no other claim
+  for it: "Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the
+  same way on 2025-26 (+0.068, range -0.003 to +0.141). A 2027 read decides whether it stays." Its
+  three numbers are the holdout block's xHEM+ H-rate gap and 95 percent interval
+  (`data/swar_eval.json`, rounded to three decimals) and are derived from that file. The site never
+  says "override"; part 8's may-not list stands; no sentence calls the part validated or a skill.
+- **Registry.** A row `ewar_xhem_half`: verdict provisional, `provisional_kind`
+  `shipped_partial_measurement`, a `remeasure_pending` naming EWAR_XHEM_2027_READ, its notes recording
+  this amendment as an owner decision taken while the registered admission rule was not met (team
+  guard underpowered in the look and the holdout, holdout interval spanning zero). The `ewar_v3` row's
+  notes gain one sentence naming the part. Written in the flip commit with the glossary entries.
+
+#### 11.11.3 The eFV training label does not move
+
+- The eFV training label stays on its frozen headline vintage,
+  `ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d` (`data/ewar_headline_label.json`,
+  `docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md`). It is not refrozen. The label's build reads the
+  headline departures without this part (`ewar_v3.departures(..., exclude=("xhem",))`, the `dx`
+  field), so with the part on it reproduces the frozen file's content hash exactly, and the board
+  fingerprint's label term does not move. The core label (`data/ewar_core_label.json`) reads no
+  headline batting departure and does not move.
+
+#### 11.11.4 What the flip moves, measured before it
+
+The build's census (`--xhem-preview`) lists, before the flip, every surface whose numbers move, the
+largest per-player change, the count of players moved and the club totals. It is recorded in the task
+report and the flip commit, never as an accuracy claim.
+
+#### 11.11.5 The 2027 read, registered now (task EWAR_XHEM_2027_READ)
+
+The queue's rule, verbatim: "hitters with 200+ PA in 2026 and 2027, predictive eWAR batting with
+LAMBDA 0.5 vs fWAR batting on Y+1 (2027) wRAA + W per PA, the look's statistic and team guard. KEEP if
+the gap's one-sided 95 percent lower bound is above 0 and the team guard is non-inferior; otherwise
+set the flag False and record the removal (dated amendment, registry, glossary, copy). Never re-tune
+LAMBDA."
+
+Registered reading, fixed now:
+
+| Item | Registered value |
+|---|---|
+| Runs | once, not before 2027-11-10, after the 2027 fWAR vintage season is frozen (FWAR_VINTAGE_FREEZE_2027) and the swar preview is rebuilt on that vintage |
+| Pairs | (2026, 2027); hitters with 200 PA or more in both seasons, MLB player-seasons by MLBAM |
+| B0 | wRAA_i(2026), the batting base of 11.2.1 (FanGraphs' batting runs from actual events) |
+| Test value | B0 + LAMBDA * d_batx,i, LAMBDA 0.5 (the part as served, in runs) |
+| Target (deciding) | 11.2.1's batting target in 2027: batting runs above average from actual PA events on 2027's solved weights, per PA (the target the xHEM+ arm's evidence was scored on) |
+| Reported beside, no weight | the same gap on wRAA(2027) + W(2027) per PA (11.4.4's PE-H target, the queue's wording); the total cell in runs |
+| Statistic | part 9.5's: Spearman gap rho(test, target) - rho(B0, target), convention v2 (player-clustered, season-stratified bootstrap, within-outcome-season z target), v1 reported; B = 2,000; seed 20261008 |
+| Lower bound | the one-sided 95 percent lower bound of the gap: the 5th percentile of the convention-v2 bootstrap distribution |
+| Team guard | 11.2.4 unchanged, on outcome season 2027 (30 club-seasons): the series fWAR + x against fWAR on runs scored, run differential and wins, player-clustered and club-clustered bootstraps, B = 2,000, seed 20261024; NON-INFERIOR when dT - 1.645 sd is above -0.02 under both, for every outcome |
+| KEEP | the lower bound is above 0 AND the team guard is NON-INFERIOR |
+| REMOVE | anything else, including a guard that is not NON-INFERIOR because it is underpowered: the flag is set False and the removal recorded (a dated amendment here, the registry row, the glossary entries and the copy) |
+| Never | LAMBDA re-tuned; a second run; another subset, season or target substituted after the read |
+
+- **Power, stated before the read.** On one season pair the holdout's xHEM+ H-rate cell had MDE95
+  0.06126 on 263 pairs, and its team guard's half-widths ran 0.0996 to 0.1295 (player-clustered) and
+  0.1078 to 0.1616 (club-clustered) on 30 club-seasons, all above 0.02. A one-season guard reads
+  NON-INFERIOR only when dT is well above 0, so the rule as written can remove the part for lack of
+  power alone; the record of the read says so when it happens.
+- **Crash protocol** as part 9.5: a dry run on fixtures with nulls first; stdout and stderr teed
+  before scoring; on an exception after scoring began, STOP, no rerun, an owner question.
+
+- Committed alone, docs and its pin test only, before any number of the part exists. No served number
+  moves at this commit.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**

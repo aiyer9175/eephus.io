@@ -64,6 +64,7 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
+import ewar_v3 as _ewar_v3_mod
 import milb_history as mh
 from scrapers import normalize_key
 
@@ -391,16 +392,22 @@ def _war_maps() -> tuple[dict, dict]:
     return served, war_source.side_war_by_season(provider="bwar")
 
 
-#: The career note while the displayed eWAR is eWAR v3 (EBR_GATE.md 11.10.5).
+#: The career note while the displayed eWAR is eWAR v3 (EBR_GATE.md 11.10.5); the
+#: xHEM+ part's words ride only while ewar_v3.XHEM_HALF_LIVE is on (11.11.2).
 _CAREER_NOTE_V3 = (
     "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v3, the displayed "
-    "eWAR (FanGraphs' published WAR from the frozen vintage plus the ABS challenge part from 2026, "
+    "eWAR (FanGraphs' published WAR from the frozen vintage plus the ABS challenge part from 2026"
+    + _ewar_v3_mod.xhem_suffix() + ", "
     "data/ewar_v3.json); war_real = eWAR realized (the same frame, pitchers on runs allowed adjusted for "
-    "park, defense and inherited runners from 2016); war_ewar2 = eWAR v2, a reference; war_fwar = "
+    "park, defense and inherited runners from 2016"
+    + ("; hitters keep FanGraphs' batting" if _ewar_v3_mod.XHEM_HALF_LIVE else "") + "); "
+    "war_ewar2 = eWAR v2, a reference; war_fwar = "
     "FanGraphs' published WAR, a reference; war_bwar = Baseball-Reference's WAR where it differs from "
     "eWAR at 1dp, absent means equal; war_parts = eWAR v3's named parts on the row's side in wins "
     "(eabs: the ABS challenge part, in eWAR and eWAR realized; r2: realized pitching, in eWAR "
-    "realized only), absent when no part departs at 2dp; every reference is display only")
+    "realized only"
+    + ("; xhem: half of the xHEM+ batting part, in eWAR only, provisional" if _ewar_v3_mod.XHEM_HALF_LIVE else "")
+    + "), absent when no part departs at 2dp; every reference is display only")
 
 
 def _war_ref_maps() -> dict[str, dict]:
@@ -433,8 +440,10 @@ def _war_parts_map(payload: dict | None = None) -> dict[int, dict[int, dict[str,
     """{mlbam: {season: {"bat"|"pit": {part id: wins}}}}: eWAR v3's named parts
     per player-season and side, read from data/ewar_v3.json (`payload` is the
     test seam). Part ids are ewar_v3.PART_LABELS' keys: "eabs" (the ABS part,
-    parts.abs.<side>.wins, in eWAR and eWAR realized) and "r2" (realized
-    pitching, parts.r2, pitchers, in eWAR realized only). A part that rounds to
+    parts.abs.<side>.wins, in eWAR and eWAR realized), "r2" (realized
+    pitching, parts.r2, pitchers, in eWAR realized only) and "xhem" (half of
+    the xHEM+ batting part, parts.xhem.wins, hitters, in eWAR only; EBR_GATE.md
+    11.11, present only when the artifact carries it). A part that rounds to
     0.00 wins is left out. Empty (logged) when the artifact cannot serve, so a
     missing file drops the parts table and never the card."""
     import ewar_v3
@@ -460,6 +469,10 @@ def _war_parts_map(payload: dict | None = None) -> dict[int, dict[int, dict[str,
                 w = round(float(parts["r2"]), 2)
                 if w:
                     cell.setdefault("pit", {})["r2"] = w
+            if (parts.get("xhem") or {}).get("wins") is not None:
+                w = round(float(parts["xhem"]["wins"]), 2)
+                if w:
+                    cell.setdefault("bat", {})["xhem"] = w
             if cell:
                 out.setdefault(int(mid_s), {})[int(season_s)] = cell
     return out

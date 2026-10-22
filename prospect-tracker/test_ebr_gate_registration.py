@@ -840,6 +840,34 @@ def test_amendment_11_10_the_assembled_series_and_the_display_flip():
     assert doc.index("### 11.9 2026-10-19") < doc.index("### 11.10 2026-10-21") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_11_xhem_at_half_weight_by_owner_decision():
+    flat = _flat(_section(_doc(), "### 11.11 2026-10-22", RESULTS_HEADING))
+    assert ("### 11.11 2026-10-22: xHEM+ in eWAR's batting at half weight, by owner decision while the "
+            "registered admission rule was not met (clause (i), owner decision EW3-51)") in flat
+    assert "| EW3-51 | Whether xHEM+ enters eWAR |" in flat
+    assert "The registered admission rule is therefore NOT met" in flat
+    assert ("recorded as an owner decision taken while the registered admission rule was not met, for this "
+            "item alone") in flat
+    assert "parts 12.1 to 12.3 stand as written, `meta.admitted_by_look` stays empty" in flat
+    assert "x_i = LAMBDA * d_batx,i / RPW*_s" in flat
+    assert "LAMBDA = 0.5, fixed in advance by EW3-51, never tuned" in flat
+    assert "eWAR realized_i (hitting side) = fWAR_i + g_abs,i / RPW_s unchanged (11.10.3)" in flat
+    assert "2015, carries no part" in flat
+    assert "`ewar_v3.XHEM_HALF_LIVE` (default False until the orchestrator's flip)" in flat
+    assert ("\"Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the "
+            "same way on 2025-26 (+0.068, range -0.003 to +0.141). A 2027 read decides whether it stays.\"") in flat
+    assert "The site never says \"override\"" in flat
+    assert "`ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d`" in flat
+    assert "It is not refrozen." in flat
+    assert "#### 11.11.5 The 2027 read, registered now (task EWAR_XHEM_2027_READ)" in flat
+    assert "| KEEP | the lower bound is above 0 AND the team guard is NON-INFERIOR |" in flat
+    assert "LAMBDA re-tuned; a second run" in flat
+    assert ("Committed alone, docs and its pin test only, before any number of the part exists. No served "
+            "number moves at this commit.") in flat
+    doc = _doc()
+    assert doc.index("### 11.10 2026-10-21") < doc.index("### 11.11 2026-10-22") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (

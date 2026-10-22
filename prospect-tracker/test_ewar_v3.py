@@ -144,7 +144,9 @@ def built(monkeypatch):
     import fwar_vintage
     monkeypatch.setattr(B, "_sha", lambda p: "x")
     monkeypatch.setattr(fwar_vintage, "available", lambda: True)
-    return B.build(FixtureInputs(), log=lambda *a: None)
+    # xhem=False: the ABS and R2 assembly as 11.10 registered it, whatever
+    # ewar_v3.XHEM_HALF_LIVE says (the xHEM+ part has its own tests, test_ewar_xhem_half.py)
+    return B.build(FixtureInputs(), log=lambda *a: None, xhem=False)
 
 
 def test_build_carries_abs_from_2026_and_r2_in_realized_only(built):
@@ -174,15 +176,15 @@ def test_rpw_guard_is_an_identity_and_falls_back_when_it_is_not(built, monkeypat
     # a departure in a guard season breaks the identity: the incumbent stands
     import league_constants as LCM
     monkeypatch.setattr(LCM, "league_totals", lambda s: {"rpw": 9.9})
-    p = B.build(FixtureInputs(abs_seasons=(2024, 2026)), log=lambda *a: None)
+    p = B.build(FixtureInputs(abs_seasons=(2024, 2026)), log=lambda *a: None, xhem=False)
     # 2024 is below ABS_FIRST_SEASON, so no ABS term exists there and the guard still holds
     assert p["meta"]["rpw"]["form"] == "c"
     monkeypatch.setattr(V3, "ABS_FIRST_SEASON", 2024)
-    p1 = B.build(FixtureInputs(abs_seasons=(2024, 2026)), log=lambda *a: None)
+    p1 = B.build(FixtureInputs(abs_seasons=(2024, 2026)), log=lambda *a: None, xhem=False)
     assert p1["meta"]["rpw"]["form"] == "incumbent"
     assert p1["meta"]["rpw"]["guard"]["status"] == "NOT AN IDENTITY" and p1["checks"]["2026"]["rpw"] == 9.9
     monkeypatch.setattr(V3, "ABS_FIRST_SEASON", 2026)
-    p2 = B.build(FixtureInputs(rpw_status="INCUMBENT HOLDS"), log=lambda *a: None)
+    p2 = B.build(FixtureInputs(rpw_status="INCUMBENT HOLDS"), log=lambda *a: None, xhem=False)
     assert p2["meta"]["rpw"]["form"] == "incumbent" and p2["checks"]["2026"]["rpw"] == 9.9
 
 
@@ -195,7 +197,7 @@ def test_build_refuses_a_preview_on_another_vintage(monkeypatch):
         def r2(self):
             return {}, {"fwar_vintage_id": "another"}
     with pytest.raises(V3.EwarV3Refusal):
-        B.build(Other(), log=lambda *a: None)
+        B.build(Other(), log=lambda *a: None, xhem=False)
 
 
 # --------------------------------------------------------------------------- #
@@ -267,7 +269,9 @@ def test_served_artifact_departures_are_listed_parts_only():
             parts = b.get("parts") or {}
             for side, d in (b.get("dh") or {}).items():
                 w = ((parts.get("abs") or {}).get(side) or {}).get("wins", 0.0)
-                assert d == pytest.approx(w, abs=2e-6), (mid, s, side)
+                # the xHEM+ part (EBR_GATE.md 11.11), headline and hitting side only, when built
+                x = (parts.get("xhem") or {}).get("wins", 0.0) if side == "bat" else 0.0
+                assert d == pytest.approx(w + x, abs=2e-6), (mid, s, side)
             for side, d in (b.get("dr") or {}).items():
                 w = ((parts.get("abs") or {}).get(side) or {}).get("wins", 0.0)
                 r2 = parts.get("r2", 0.0) if side == "pit" else 0.0

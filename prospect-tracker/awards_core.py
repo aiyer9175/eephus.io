@@ -94,6 +94,8 @@ import re
 import sys
 from pathlib import Path
 
+import ewar_v3 as _ewar_v3_mod
+
 ROOT = Path(__file__).resolve().parent
 
 #: The module flag (AWARDS_PLAN 3 'The flag'). Only AWARDS_11_FLIP_RENAME sets it True,
@@ -279,7 +281,8 @@ CREDIT_LINES = {
     "mlb": "Rosters and the writers' award results come from MLB's public StatsAPI feed. {mlb_copyright}",
     "bref": "eWAR starts from Baseball-Reference's WAR file, with pitching re-priced by the site.",
     "bref_v3": ("Rosters by league and club come from Baseball-Reference's WAR file; eWAR starts from "
-                "FanGraphs' published WAR, with the site's ABS challenge part from 2026."),
+                "FanGraphs' published WAR, with the site's ABS challenge part from 2026"
+                + _ewar_v3_mod.xhem_suffix() + "."),
     "fangraphs": "The {fwar} reference column and the fielding inputs to DEM+ are FanGraphs' published values.",
     "savant": "Expected-stat inputs to xHEM+ and xSEM+ come from Baseball Savant (MLB).",
     "eephus": "Every selection, superlative and percentile is computed by eephus.io.",

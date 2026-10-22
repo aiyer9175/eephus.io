@@ -58,10 +58,11 @@ def test_identities(frozen):
         for side in ("bat", "pit"):
             tot = sum(blk[side].values())
             assert abs(tot) <= 5e-7 * len(blk[side]) + 1e-9, (s, side, tot)
-    # identity 2 against the artifact, both series
+    # identity 2 against the artifact, both series; the label's headline is the artifact's
+    # without the provisional xHEM+ part (EBR_GATE.md 11.11.3)
     import ewar_v3
     for name in H.SERIES:
-        want = ewar_v3.departures(series=name)
+        want = ewar_v3.departures(series=name, exclude=("xhem",) if name == "headline" else ())
         got = H.departures(series=name)
         assert set(got) <= set(want)
         for k, cell in want.items():
@@ -108,11 +109,30 @@ def _a_departing_player(frozen) -> int:
     return int(next(iter(blk["bat"] or blk["pit"])))
 
 
+def _without_xhem(pay: dict) -> dict:
+    """The artifact as the freeze read it: each block that carries the xHEM+ part
+    (EBR_GATE.md 11.11) takes its `dx` as the headline departure."""
+    import copy
+    out = copy.deepcopy(pay)
+    for by in (out.get("players") or {}).values():
+        for blk in by.values():
+            if "xhem" in (blk.get("parts") or {}):
+                blk["dh"] = dict(blk.get("dx") or {})
+                blk["parts"].pop("xhem")
+                blk.pop("dx", None)
+    return out
+
+
 def test_label_series_equals_the_displayed_transform_at_the_freeze(frozen):
+    import ewar_v3
     mid = _a_departing_player(frozen)
     row = _fwar_row(mid)
     lab = H.label_series(row)
-    shown = war_source.row_on_provider(row, "ewar_v3")["seasons"]
+    ewar_v3.set_payload(_without_xhem(ewar_v3.load()))
+    try:
+        shown = war_source.row_on_provider(row, "ewar_v3")["seasons"]
+    finally:
+        ewar_v3.set_payload(None)
     assert lab == shown
     d = sum((H.departures(series="headline").get((mid, 2026)) or {}).values())
     assert lab["2026"] == round(2.25 + d, 2) and d != 0.0

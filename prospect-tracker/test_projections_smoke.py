@@ -611,6 +611,34 @@ def test_ewar_parts_table_names_each_part_with_its_delta():
     assert 'data-mlbp-section="value-ewar-parts"' not in _render("#player=ace_arm")
 
 
+def test_the_xhem_part_column_carries_the_owner_sentence():
+    """EBR_GATE.md 11.11 (owner EW3-51): a hitting row that carries the xHEM+ part gets
+    its column, the owner's sentence in the column's tooltip, a sub-line saying eWAR adds
+    half of xHEM+ while eWAR realized keeps FanGraphs' batting, and the realized column's
+    tooltip says the same; a card without the part prints none of it."""
+    import ewar_v3
+    global DETAIL
+    base = DETAIL
+    try:
+        d = json.loads(base)
+        for r in d["players"]["two_way"]["career"]:
+            r["war_real"] = 1.0
+        d["players"]["two_way"]["career"][-1]["war_parts"] = {"eabs": 0.12, "xhem": -0.31}
+        DETAIL = json.dumps(d)
+        html = _render("#player=two_way")
+        parts = _section(html, "value-ewar-parts")
+        assert ">xHEM+ (half weight)</th>" in parts and "<td>+0.12</td><td>-0.31</td>" in parts
+        assert ewar_v3.xhem_copy() in parts
+        assert "+ half of xHEM+" in parts
+        assert "keeps FanGraphs&#39; batting" in parts or "keeps FanGraphs' batting" in parts
+        assert "override" not in parts.lower()
+        assert "without the xHEM+ part eWAR carries" in html
+    finally:
+        DETAIL = base
+    plain = _render("#player=two_way")
+    assert "xHEM+ (half weight)" not in plain and "without the xHEM+ part eWAR carries" not in plain
+
+
 def test_ewar_parts_labels_are_the_assembler_card_labels():
     """The card's part labels are ewar_v3.PART_LABELS verbatim (EBR_GATE.md
     11.10.2 and 11.10.3), so the card and the artifact name each part alike."""
