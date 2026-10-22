@@ -198,7 +198,7 @@ def test_a_provisional_row_without_an_artifact_says_why():
         xrem_plus, xsem_plus ("descriptive; no forward gate by design",
         "realized WPA is an outcome, not a forecast").
       * INHERITS A GATED PARENT, a composition or re-expression rather than a
-        new estimator: draft_war_room (composes the validated
+        new estimator: draft_war_room (composes the provisional
         draft_slot_curve), prospect_greeks and surplus_downside_risk
         (re-expressions of the validated prospect_surplus curve),
         xfv_backgrade (inherits the eFV forward-chained OOS gate).
