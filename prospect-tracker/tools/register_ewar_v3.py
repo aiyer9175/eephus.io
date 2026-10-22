@@ -123,7 +123,12 @@ def glossary_entries(art: dict) -> list[dict]:
             "under zero."),
         "methodology": (
             "Base: FanGraphs' published WAR per player and season, read from a frozen copy of MLB's sabermetrics "
-            "feed (2000 to 2026), never refetched. Seasons before 2000 show eWAR v2 or bWAR and say so.\n\n"
+            "feed (2000 to 2026), never refetched. Each season carries the parts FanGraphs published for it, "
+            "measured per season (docs/ewar/EWAR_HISTORY_GATE.md): baserunning is steals only in 2000 and 2001 "
+            "(no UBR or double-play runs), catcher framing starts in 2008, eWAR realized prices pitchers on runs "
+            "allowed from 2016 and equals eWAR before it, and the ABS part starts in 2026. The MLB Stats eWAR "
+            "board (2000 on) and the player pages' season lines state each season's parts. There is no eWAR "
+            "before 2000; a career total that reaches back past it carries those seasons as bWAR.\n\n"
             "Candidate departures: each one is admitted only by its own pre-registered test. The site's baserunning "
             "metric eBR, its positional ladder, the shrunk batting (HEM+ and xHEM+), pitching (SEM+ and REM+) and "
             "fielding (DEM+, the triangulated fielding and Statcast catcher runs) parts and the two pitch-economy "

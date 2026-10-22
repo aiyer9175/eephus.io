@@ -29,7 +29,7 @@
   "metric": "rem_plus",
   "war_provider": "ewar_v3",
   "ewar_generated_at": "2026-10-22T02:17:24+00:00",
-  "generated_at": "2026-10-21",
+  "generated_at": "2026-10-22",
   "season": 2026,
   "window": [
    2024,
@@ -37,7 +37,7 @@
    2026
   ],
   "window_key": "l3",
-  "panel_built_at": "2026-10-21",
+  "panel_built_at": "2026-10-22",
   "n_in_artifact": 511,
   "pool": {
    "n": 511,
@@ -46,7 +46,7 @@
   },
   "uncoloured": true,
   "gate_record": "rem_plus_multiyear_eval.json",
-  "note": "3-year REM+ is the Last 3 window's index read from mlbstats_window_l3.json (built 2026-10-21), the same value the Last 3 view prints. The percentile is inside the window's pool; no value ruler is carried onto it. Arms the window does not publish have no value."
+  "note": "3-year REM+ is the Last 3 window's index read from mlbstats_window_l3.json (built 2026-10-22), the same value the Last 3 view prints. The percentile is inside the window's pool; no value ruler is carried onto it. Arms the window does not publish have no value."
  },
  "war_rate": {
   "available": true,

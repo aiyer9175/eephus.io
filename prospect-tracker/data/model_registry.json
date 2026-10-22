@@ -1211,6 +1211,19 @@
    "notes": "Assembled by tools/build_ewar_v3.py (task EWAR_V3_ASSEMBLE, folding EBR_3_EWAR_V3) on fWAR vintage 2026-10-02-a020cf64844a, build 2026-10-22T02:17:24+00:00; registered in docs/ebr-2026-09-30/EBR_GATE.md parts 9.2, 9.7 and 11.10 (11.10 committed alone before any number). After the outcome look (12.1), the skill look (12.2) and the holdout (12.3) no look-decided part is admitted. R2 source: {\"fwar_vintage_id\": \"2026-10-02-a020cf64844a\", \"generated_at\": \"2026-10-22T01:32:40+00:00\", \"path\": \".cache/swar/preview/swar.json\", \"seasons\": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026], \"sha256\": \"fc640b0117ef07fd9e43fb16a428912231132d32ae450103e13cead1a05cd97d\", \"zero_sum\": {\"2016\": -2.1697053875779915e-15, \"2017\": 3.3042145408668233e-15, \"2018\": -1.8995222061946038e-16,. The ABS part (candidate part 8) is carried by OWNER OVERRIDE EW3-32 of a NULL stability read, from 2026: 10,558 zone challenges, 592.5 catcher-won runs moved against an average catcher per inning at C and charged to pitchers per IP, 198.4 runs of failure cost charged to challengers and re-centred per side; hitters move -0.507 to +0.422 wins (662 rows), pitchers -0.214 to +0.189 (868 rows). "
   },
   {
+   "model_id": "ewar_history",
+   "summary": "Measured, not a prediction: the displayed eWAR shown for every season 2000 to 2026, each season stamped with the parts its eWAR carries.",
+   "surface": "/mlbstats/ eWAR board year selector and windows (data/war_seasons.json components), MLB player pages' season lines (careerHist, ewarParts in the per-card shard), the league averages' eWAR rows; data/ewar_history.json",
+   "predicts": "Nothing forward: which parts each season's eWAR carries, and how far the later parts move it",
+   "champion": "ewar_history_v1 (ewar_history.py, tools/build_ewar_history.py): stamps measured on the frozen fWAR vintage 2026-10-02-a020cf64844a and data/ewar_v3.json; groups 2000 to 2001; 2002 to 2007; 2008 to 2015; 2016 to 2025; 2026",
+   "baseline": "CORE: eWAR from the parts present in every season (batting, wSB, fielding, positional, league and replacement, pitching), re-centred per PA at FanGraphs' own per-season RPW",
+   "metric": "Refusing identities, no forward claim: FULL minus CORE equals the named parts per row; CORE and FULL side totals equal fWAR's; a season with no later part has CORE equal to FULL. The per-part gap is reported, never scored",
+   "eval_artifact": "data/ewar_history.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Built by tools/build_ewar_history.py (task EWAR_BACKGRADE_HISTORY, owner EW3-17) on fWAR vintage 2026-10-02-a020cf64844a and the eWAR artifact built 2026-10-22T02:17:24+00:00; registered in docs/ewar/EWAR_HISTORY_GATE.md (committed alone before any number; amendments 9.1 and 9.2 fix two identity definitions before any gap number). It admits no part and moves no served eWAR number of 2011 to 2026: it adds seasons 2000 to 2010 to the displayed eWAR's history and stamps every season. eWAR starts in 2000, the first season of the frozen FanGraphs WAR copy it is built on; that copy is never refetched, so an earlier season would need a new copy or another frame. Gap per part (descriptive, deciding nothing): catcher framing 2008 to 2026: sd 0.06 to 0.32 wins, Spearman CORE vs FULL 0.960 to 0.996; the rest of baserunning 2002 to 2026: sd 0.06 to 0.17 wins, Spearman CORE vs FULL 0.982 to 0.994; realized pitching 2016 to 2026: sd 0.37 to 0.69 wins, Spearman CORE vs FULL 0.731 to 0.845. CORE is recorded as per-season summaries only and never displayed."
+  },
+  {
    "model_id": "swar_bat",
    "summary": "Measured, not adopted: eWAR v3's batting candidate part; the skill look of 2026-10-19 did not admit it.",
    "surface": "None served as a number: data/swar_eval.json (the filtered record) and EBR_GATE.md part 12.2",

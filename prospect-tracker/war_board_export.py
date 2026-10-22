@@ -842,6 +842,87 @@ def _season_share(league_war: dict, seasons: list) -> dict:
             for y in seasons if league_war.get(int(y))}
 
 
+def _display_is_ewar() -> bool:
+    """True when the displayed WAR is eWAR (provider ewar_v3), the series whose
+    history reaches 2000 (docs/ewar/EWAR_HISTORY_GATE.md part 5)."""
+    try:
+        import war_source
+        return war_source.DISPLAY_PROVIDER == "ewar_v3"
+    except Exception:   # noqa: BLE001 - no provider, no history window
+        return False
+
+
+def _history_clubs_names(seasons: list, blocks: dict, *, log=print) -> tuple[dict, dict]:
+    """({(mlbam, season): [team_IDs in stint order]}, {mlbam: name}) from the
+    war_daily stint frames (_stint_frame, the frames the Earned rollup reads), for
+    the seasons the eWAR v2 artifact has no block for, and a name for every player.
+
+    The clubs follow the artifact's own rule (ewar.export_payload: batting stints,
+    then pitching stints, each club once, ewar._fold_team), so a season before 2011
+    names its clubs the way a season after it does. The name is the frame's
+    name_common on the player's latest row; the board's own name wins where the
+    player is on it. Best effort, and it never opens a frame itself: it reads
+    only the frames this process already holds (the Earned rollup reads both in
+    build(), before the substrate), so a run whose frames were not read, or
+    failed, ships those rows with no club and no name, as before, and says so."""
+    try:
+        from ewar import _fold_team
+    except Exception:   # noqa: BLE001
+        def _fold_team(t):
+            return str(t or "").strip().upper()
+    first = int(min(seasons)) if seasons else None
+    tm: dict = {}
+    names: dict = {}
+    latest: dict = {}
+    for side in ("bat", "pit"):
+        df, err = _FRAME_CACHE.get(side) or (None, None)
+        if df is None:
+            log(f"  ewar seasons: the {side} stint frame was not read in this run"
+                + (f" ({type(err).__name__})" if err is not None else "")
+                + "; seasons the eWAR v2 artifact does not cover ship without its clubs, "
+                "and players off the board without its names")
+            continue
+        cols = [c for c in ("mlb_ID", "year_ID", "team_ID", "name_common") if c in df.columns]
+        if "mlb_ID" not in cols or "year_ID" not in cols:
+            continue
+        sub = df[df["mlb_ID"].notna()][cols]
+        for r in sub.itertuples(index=False):
+            try:
+                mid, yr = int(r.mlb_ID), int(r.year_ID)
+            except (TypeError, ValueError):
+                continue
+            if first is not None and yr < first:
+                continue
+            nm = getattr(r, "name_common", None)
+            if isinstance(nm, str) and nm and yr >= latest.get(mid, -1):
+                latest[mid] = yr
+                names[mid] = nm
+            if (blocks.get(str(mid)) or {}).get(str(yr)):
+                continue            # the artifact names this season's clubs
+            team = getattr(r, "team_ID", None)
+            if not isinstance(team, str) or not team:
+                continue
+            lst = tm.setdefault((mid, yr), [])
+            club = _fold_team(team)
+            if club not in lst:
+                lst.append(club)
+    return tm, names
+
+
+def _components_block(groups: list) -> dict:
+    """The season groups the page states (docs/ewar/EWAR_HISTORY_GATE.md part 2),
+    or {} when the displayed WAR is not eWAR."""
+    if not groups:
+        return {}
+    import ewar_history
+    return {"source": "ewar_history.season_groups (data/ewar_history.json)",
+            "first_season": groups[0]["first"],
+            "why_it_stops": ewar_history.WHY_IT_STOPS,
+            "groups": [{"first": g["first"], "last": g["last"], "text": g["text_headline"],
+                        "missing": [m for m in g["missing"] if m != "r2"],
+                        "short": g["short_headline"]} for g in groups]}
+
+
 def build_seasons(war_by: dict, players: list, *, live_season: int,
                   season_lines: Optional[dict] = None, log=print) -> dict:
     """The per-season substrate a year range folds: one row per player-season
@@ -886,6 +967,21 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
                 "players": {}}
     seasons = list(range(int(rng[0]), int(rng[1]) + 1))
     blocks = doc.get("players") or {}
+    # THE HISTORY WINDOW (docs/ewar/EWAR_HISTORY_GATE.md part 5, owner EW3-17). On
+    # eWAR (provider ewar_v3) the substrate reaches back to the first season of the
+    # frozen fWAR vintage, 2000, every season of it the displayed eWAR already
+    # serves through the same side map. The eWAR v2 artifact above starts in 2011,
+    # so the clubs and names of an earlier season come from the war_daily stint
+    # frame the Earned rollup reads (_history_clubs_names). eWAR v2 keeps its own
+    # window.
+    groups = []
+    if _display_is_ewar():
+        import ewar_history
+        hist = ewar_history.seasons()
+        if hist:
+            seasons = list(range(min(hist[0], seasons[0]), seasons[-1] + 1))
+        groups = ewar_history.season_groups()
+    frame_tm, frame_names = _history_clubs_names(seasons, blocks, log=log)
 
     dialect = _club_dialect(players)
     try:
@@ -944,7 +1040,7 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
             feed = (feeds.get(y) or {}).get(int(mid)) or {}
             pa, ip = _num(feed.get("pa")), _num(feed.get("ip"))
             named = []
-            for c in (blk.get("tm") or []):
+            for c in (blk.get("tm") or frame_tm.get((int(mid), int(y))) or []):
                 if not c:
                     continue
                 canon = canonical_org(str(c)) if canonical_org else None
@@ -968,7 +1064,8 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
             league[int(y)] = league.get(int(y), 0.0) + (bat or 0.0) + (pit or 0.0)
             n_rows += 1
         if rows:
-            out_players[str(int(mid))] = [names.get(int(mid)) or "", rows]
+            out_players[str(int(mid))] = [names.get(int(mid)) or frame_names.get(int(mid)) or "",
+                                          rows]
     league_r = {str(y): round(v, 1) for y, v in sorted(league.items())}
     log(f"  ewar seasons: {len(out_players)} players, {n_rows} player-seasons, "
         f"{seasons[0]}-{seasons[-1]}")
@@ -981,6 +1078,9 @@ def build_seasons(war_by: dict, players: list, *, live_season: int,
         "league_war": league_r,
         "season_share": _season_share({int(k): v for k, v in league_r.items()},
                                       seasons),
+        # What each season's eWAR carries, measured (ewar_history.season_groups,
+        # docs/ewar/EWAR_HISTORY_GATE.md part 2): the page states a window's groups.
+        "components": _components_block(groups),
         "qualified_rule_window": {"min_pa": int(QUAL_MIN_PA),
                                   "min_ip": int(QUAL_MIN_IP)},
         "players": out_players,

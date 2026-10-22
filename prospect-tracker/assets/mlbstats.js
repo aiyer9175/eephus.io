@@ -2170,10 +2170,29 @@
     }
     bits.push("League eWAR over this window: " + fold.league.war + " from " + fold.league.n
       + " players.");
+    var stamp = warStamp(win.lo, win.hi);
+    if (stamp.text.length) bits.push("<b>What eWAR carries:</b> " + esc(stamp.text.join(" ")));
+    if (stamp.why) bits.push(esc(stamp.why));
     var head = "<b>" + esc(lbl) + ", " + n + (n === 1 ? " season" : " seasons") + ".</b> Every column is"
       + " a count summed over it, or a count over its own denominator."
       + ' <span class="proj-dim">' + rows.length + " of " + fold.players.length + " rows shown.</span>";
-    return winNoteShell(head, bits, "");
+    return winNoteShell(head, bits, stamp.short.length
+      ? '<div class="mlbstats-note mlbstats-winstamp">' + esc(stamp.short.join(" ")) + "</div>" : "");
+  }
+  // The season stamp (docs/ewar/EWAR_HISTORY_GATE.md part 2): what each season's
+  // eWAR carries, measured by the exporter and grouped into runs of seasons with
+  // the same parts. A window states every group it spans; the parts a group lacks
+  // against the newest season are printed outside the fold, so an older season's
+  // smaller set of parts is never a tap away.
+  function warStamp(lo, hi) {
+    var c = (SEASONS && SEASONS.components) || {}, out = { text: [], short: [], why: "" };
+    (c.groups || []).forEach(function (g) {
+      if (g.last < lo || g.first > hi) return;
+      if (g.text) out.text.push(g.text);
+      if (g.short) out.short.push(g.short);
+    });
+    if (c.first_season != null && lo <= c.first_season && c.why_it_stops) out.why = c.why_it_stops;
+    return out;
   }
 
   // ---- the per-season expander ----------------------------------------------

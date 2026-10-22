@@ -2648,6 +2648,13 @@
   // `fgA` and `fgB` are FanGraphs' published WAR, a reference only (absent = no
   // published value), shown in the bar's tooltip and never drawn or summed into
   // the eWAR bar.
+  // eWAR history (docs/ewar/EWAR_HISTORY_GATE.md part 5): the card's shard
+  // carries the season lines before its `career` floor as careerHist and
+  // careerPitHist, oldest first; every reader of the lines reads them through
+  // here so the table, the bars and the trend show one set of seasons.
+  const histRows = (rows, hist) => (hist && hist.length ? hist.concat(rows || []) : (rows || []));
+  const careerOf = p => histRows(p.career, p.careerHist);
+  const careerPitOf = p => histRows(p.careerPit, p.careerPitHist);
   function warSeasons(p) {
     const by = {};
     const add = (rows, side) => (rows || []).forEach(r => {
@@ -2657,8 +2664,8 @@
       if (r.war_bwar != null) c[side === "a" ? "refA" : "refB"] = r.war_bwar;
       if (r.war_fwar != null) c[side === "a" ? "fgA" : "fgB"] = r.war_fwar;
     });
-    add(p.career, "a");
-    if (p.twoWay) add(p.careerPit, "b");
+    add(careerOf(p), "a");
+    if (p.twoWay) add(careerPitOf(p), "b");
     return Object.values(by).sort((x, y) => x.y - y.y);
   }
   const warTot = s => (s.a || 0) + (s.b || 0);
@@ -3011,7 +3018,7 @@
   // published value; a row without one prints the null marker. eWAR stays the
   // site's WAR: the reference column never sorts, sums or bands anything.
   const IP_TIP = "Innings pitched in baseball notation: .1 and .2 are one and two outs";
-  function seasonLines(rows, isPit, sid, sub) {
+  function seasonLines(rows, isPit, sid, sub, parts) {
     const c = rows || [];
     if (!c.length) return "";
     const hasFg = c.some(r => r && r.war_fwar != null);
@@ -3036,8 +3043,12 @@
     const body = c.slice().reverse().map(r => isPit
       ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${pct1(r.kPct)}</td><td>${pct1(r.bbPct)}</td>${warTd(r)}</tr>`
       : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${pct1(r.bbPct)}</td><td>${pct1(r.kPct)}</td><td>${rate3(r.iso)}</td>${warTd(r)}</tr>`).join("");
+    // The season stamp (EWAR_HISTORY_GATE.md part 2): the parts an older season's
+    // eWAR lacks against the newest season, measured by the exporter.
+    const stamp = (parts && parts.length)
+      ? `<div class="fa-sub mlbp-block-foot" data-mlbp-ewar-parts>${term("ewar", "eWAR")} by season: ${parts.map(esc).join(" ")}</div>` : "";
     return section(sid, "Season lines", sub,
-      `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
+      `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${stamp}`);
   }
   function hittingIndexBlock(p) {
     const h = (p.skills || {}).hem;
@@ -3127,7 +3138,7 @@
     const sc = sliders(p.sc, "hitting-statcast");
     const br = baserunningBlock(p);
     const ctx = gameContextBlock(p, "hit");
-    const lines = seasonLines(p.career, false, "hitting-lines", "MLB · hitting");
+    const lines = seasonLines(careerOf(p), false, "hitting-lines", "MLB · hitting", (p.ewarParts || {}).hit);
     return { content: idx + swing + bs + sc + br + ctx + lines, html: head + idx + bat + sc + br + ctx + lines };
   }
 
@@ -3248,7 +3259,7 @@
         p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "", { gl: "stuff_plus_aaa" }) : "";
     const ars = arsenalTable(p.arsenal, astuff);
     const ctx = gameContextBlock(p, "pit");
-    const lines = seasonLines(p.twoWay ? p.careerPit : p.career, true, "pitching-lines", "MLB · pitching");
+    const lines = seasonLines(p.twoWay ? careerPitOf(p) : careerOf(p), true, "pitching-lines", "MLB · pitching", (p.ewarParts || {}).pit);
     return { content: idx + sc + ars + ctx + lines, html: head + slotHTML("pitchlb", idx) + sc + ars + ctx + lines };
   }
 

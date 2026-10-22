@@ -1,12 +1,12 @@
 {
- "generated_at": "2026-10-21",
+ "generated_at": "2026-10-22",
  "season": 2026,
- "as_of": "2026-10-21",
+ "as_of": "2026-10-22",
  "ewar_vintage": {
   "series": "ewar_v3",
   "artifact_generated_at": "2026-10-22T02:17:24+00:00",
   "label_build_at": "2026-10-22T02:17:24+00:00",
-  "as_of": "2026-10-21",
+  "as_of": "2026-10-22",
   "fwar_vintage_id": "2026-10-02-a020cf64844a",
   "frames_read": true,
   "build_command": "python tools/build_ewar_v3.py --write",

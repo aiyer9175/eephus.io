@@ -134,7 +134,7 @@ STAT_DEFS = {
         {"key": "sb_pct", "label": "SB%", "formula": "SB / (SB + CS)", "from": "summed counts", "first": 2000, "nd": 3},
         {"key": "hem", "label": "HEM+", "formula": "PA-weighted mean of the per-player HEM+", "from": "the window lab panels and the live board (every scored hitter); 2021 the qualified history rows", "first": 2021, "nd": 2, "index": True},
         {"key": "dem", "label": "DEM+", "formula": "fielding-innings-weighted mean of the per-player DEM+", "from": "the window lab panels and the live board (every fielder); 2016 to 2021 the qualified history rows", "first": 2016, "nd": 2, "index": True},
-        {"key": "war_600", "label": "{war} per 600 PA", "formula": "summed batting {war} / summed PA x 600", "from": "war_seasons.json", "first": 2011, "nd": 2},
+        {"key": "war_600", "label": "{war} per 600 PA", "formula": "summed batting {war} / summed PA x 600", "from": "war_seasons.json", "first": 2000, "nd": 2},
     ],
     "pit": [
         {"key": "era", "label": "ERA", "formula": "ER x 9 / IP", "from": _D, "first": 2000, "nd": 2},
@@ -152,7 +152,7 @@ STAT_DEFS = {
         {"key": "p_per_bf", "label": "P/BF", "formula": "pitches / BF, over rows with a pitch count", "from": "pitch_rates.p_bf", "first": 2000, "nd": 3},
         {"key": "sem", "label": "SEM+", "formula": "IP-weighted mean of the per-player SEM+", "from": "the window lab panels and the live starter board; 2021 the qualified history rows", "first": 2021, "nd": 2, "index": True},
         {"key": "rem", "label": "REM+", "formula": "IP-weighted mean of the per-player REM+", "from": "the window lab panels and the live bullpen board; 2021 the qualified history rows", "first": 2021, "nd": 2, "index": True},
-        {"key": "war_200", "label": "{war} per 200 IP", "formula": "summed pitching {war} / summed IP x 200", "from": "war_seasons.json", "first": 2011, "nd": 2},
+        {"key": "war_200", "label": "{war} per 200 IP", "formula": "summed pitching {war} / summed IP x 200", "from": "war_seasons.json", "first": 2000, "nd": 2},
     ],
     "team": [
         {"key": "rs_g", "label": "RS/G", "formula": "runs scored / games", "from": "mlb_team_season hitting lines", "first": 2000, "nd": 2},
