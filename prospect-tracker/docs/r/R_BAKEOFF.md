@@ -249,6 +249,40 @@ random-effect SDs per fold and stage; the number of fold-stages that fell back.
 - (c): X3's ridge staged model as the fixed part (X3 itself mixes in LightGBM, which takes no
   offset GLMM on top cleanly); side-specific groups; entry class from the acquisition record.
 
+## 7a. Amendment A-1 (2026-10-22, before any read): item (c)'s group sources
+
+**What was found.** Building item (c), a one-fold smoke (fold lv_dev 2017: the X3-ridge parity,
+max difference 3.5e-13, and the R timing; no test row scored, no statistic computed) printed the
+random-effect SDs of the stage R training fit: 2.34 on the logit scale for org. That size sent
+the writer to a coverage audit of the registered group sources, by instance kind and with no
+label: the board records behind `efv_dataset.asof_records()` (and the source-backtest universe,
+checked as an alternative) hold only debuted players and players still on a board, so 2,743 of
+5,962 LV instances and 1,449 of 2,887 MTX instances have no record at all, against 0 of 1,025
+PIN instances (debut cohorts, all debuted). The universe's acquisition record has the same
+coverage. A missing org or entry class there encodes "never debuted and not active", which is
+the reach outcome itself. The registered sources leak the label; read as registered, item (c)
+could pass on the leak.
+
+**What changes (section 5 only).** Both groups are read through the instance's INPUT-side MLBAM
+id (the list frame row's outcome-blind id for LV, the matrix row's id for MTX and PIN: the ids
+X3's own inputs read through), from books that cover every player whatever his outcome:
+- org: the parent organization (`efv_x2_revealed.team_info`) of the destination club of the
+  player's latest league transaction dated strictly before the read
+  (`efv_x2_revealed.TxBook`, the X2 development books loaded through 2024), else UNK;
+- entry_class: `draft|Y` for the latest draft year in `.cache/draft_history` before the read (a
+  draft year equal to the read year counts only for a read in August or later), else `milb|Y`
+  for the player's first MiLB season before the read year (`MilbBook.first_season`), else UNK.
+- lvl_season, the statistic, the comparators, the pass rule, the seeds and the planted check
+  are unchanged.
+
+Coverage of the amended sources, by kind and with no label: org UNK on 258 of 5,962 LV, 1,016
+of 2,887 MTX (979 of them have no input id, the same rows whose X3 inputs are missing) and 2 of
+1,025 PIN instances; entry class UNK on 253, 1,032 and 5. The latest transaction any instance
+reads is dated 2023-04-26. LIVE instances are never trained on or scored here (UNK).
+
+Nothing of items (a) and (b) changed, and no number of any item's statistic existed when this
+amendment was written.
+
 ## 8. Results
 
 (Appended by the reads. Nothing below this line exists at registration.)
