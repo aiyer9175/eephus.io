@@ -586,6 +586,40 @@ def test_ewar_v3_cards_carry_realized_v2_and_bwar_beside_ewar():
     assert "eWAR realized" not in plain and ">bWAR</th>" not in plain and ">eWAR v2</th>" not in plain
 
 
+def test_ewar_parts_table_names_each_part_with_its_delta():
+    """Owner answer SWAR-Q4 (EBR_3_EWAR_V3): the Value tab names eWAR's parts per
+    season with their delta in wins (war_parts); a column only for a part some
+    row carries; a two-way card adds a Side column; no war_parts, no section."""
+    global DETAIL
+    base = DETAIL
+    try:
+        d = json.loads(base)
+        d["players"]["ace_arm"]["career"][-1]["war_parts"] = {"eabs": -0.09, "r2": 2.11}
+        d["players"]["two_way"]["career"][-1]["war_parts"] = {"eabs": 0.12}
+        DETAIL = json.dumps(d)
+        parts = _section(_render("#player=ace_arm"), "value-ewar-parts")
+        assert ">eABS (ABS challenges)</th>" in parts and ">Realized pitching</th>" in parts
+        assert parts.index("eABS (ABS challenges)") < parts.index("Realized pitching")
+        assert "<td>-0.09</td><td>+2.11</td>" in parts
+        assert "wins beyond FanGraphs WAR" in parts and "also takes realized pitching" in parts
+        assert "regressed" not in parts and "validated" not in parts
+        two = _section(_render("#player=two_way"), "value-ewar-parts")
+        assert "<th>Side</th>" in two and "<td>hitting</td><td>+0.12</td>" in two
+        assert "Realized pitching" not in two
+    finally:
+        DETAIL = base
+    assert 'data-mlbp-section="value-ewar-parts"' not in _render("#player=ace_arm")
+
+
+def test_ewar_parts_labels_are_the_assembler_card_labels():
+    """The card's part labels are ewar_v3.PART_LABELS verbatim (EBR_GATE.md
+    11.10.2 and 11.10.3), so the card and the artifact name each part alike."""
+    import ewar_v3
+    block = JS.split("const EWAR_PARTS = [", 1)[1].split("];", 1)[0]
+    found = dict(re.findall(r'\{ id: "([a-z0-9]+)", label: "([^"]+)"', block))
+    assert found == ewar_v3.PART_LABELS
+
+
 def test_fangraphs_war_rides_as_a_reference_column_beside_ewar():
     """Owner answer EPOCH-Q4 (task EPOCH_FWAR_REFERENCE_COLUMN): war_fwar is a
     REFERENCE column after eWAR, labelled FanGraphs WAR with its tooltip; the
