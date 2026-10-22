@@ -1617,7 +1617,7 @@ def build() -> dict:
     # xm_export.XM_DISPLAY_ON flips; while it is False nothing is read and the
     # board does not change.
     import xm_export as _xm
-    _xmb = _xm.club_blocks(DATA)
+    _xmb = _xm.club_blocks(DATA, surface="franchise")
     if _xmb:
         for cd in doc["clubs"]:
             if cd.get("code") in _xmb:

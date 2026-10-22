@@ -12,6 +12,13 @@ and the guarantee, the counterfactual flag false exactly on the free-agent rows,
 every priced row in at most one club block, and every club figure equal to the
 sum of its listed player rows (roster, market-rate surplus, farm, and each
 Fair $ counterpart). Nothing here reads or computes anything by consensus FV.
+
+Gate section 16 (task XM_2C_PROSPECT_FAIR_ONLY, owner answers XM2B-Q1 and
+XM2-Q2): a prospect shows Fair $ only, the NPV of his eFV WAR path at the
+market rate with no reach weight, and his xM$ is withheld (every xM$ column
+null); the farm block holds every board prospect and carries Fair $ only,
+reconciled to its rows; the Ledger is handed the roster and farm blocks only,
+so the Club Ledger never-list holds.
 """
 from __future__ import annotations
 
@@ -54,6 +61,29 @@ def test_clip_scales_down_and_flags_but_never_scales_up():
     assert (a, wy, f, out) == (30.0, [2.0, 2.0], 1.0, False)
     a, wy, f, out = X.clip_to_support(30, [-1.0, 0.5], box)
     assert out and wy == [-1.0, 0.5]                # below the floor: flagged, kept
+
+
+def test_arrival_year_is_the_eta_and_never_before_the_winter():
+    assert X.arrival_year(2029, 2027) == 2029
+    assert X.arrival_year(2025, 2027) == 2027
+    assert X.arrival_year(None, 2027) == 2027
+
+
+def test_prospect_fair_is_the_linear_npv_of_the_path_with_no_reach_weight():
+    wy = [0.0, 1.0, 2.0]
+    idx, disc = [1.0, 1.04, 1.04 ** 2], [1.0, 1 / 1.07, 1 / 1.07 ** 2]
+    dpw = 10_000_000
+    assert X.prospect_fair_usd(wy, dpw, idx, disc) == round(
+        dpw * (1.0 * 1.04 / 1.07 + 2.0 * 1.04 ** 2 / 1.07 ** 2))
+    # linear in WAR (no tier curve on an expectation): twice the path, twice the value
+    assert abs(X.prospect_fair_usd([2 * w for w in wy], dpw, idx, disc)
+               - 2 * X.prospect_fair_usd(wy, dpw, idx, disc)) <= 1
+    assert X.prospect_fair_usd([0.0] * 3, dpw, idx, disc) == 0
+    with pytest.raises(ValueError):
+        X.prospect_fair_usd(wy, dpw, idx[:2], disc)
+    # the bust risk is counted once: no reach machinery is left in the export
+    for gone in ("reach_prob", "arrival_factor", "scale_pred", "REACH_FLOOR"):
+        assert not hasattr(X, gone), gone
 
 
 def test_ordered_band():
@@ -101,13 +131,67 @@ def test_club_blocks_read_nothing_while_display_is_off(monkeypatch, tmp_path):
     blk = X.club_blocks(tmp_path)
     assert blk["AAA"]["roster"] == {"n": 1, "xm_aav_usd": 5}
     assert "ids" not in blk["AAA"]["farm"] and blk["AAA"]["model_id"] == "fa_market"
+    assert "market_surplus" in blk["AAA"]                 # Franchise gets the surplus
+    led = X.club_blocks(tmp_path, surface="ledger")
+    assert set(led["AAA"]) == {"as_of", "model_id", "roster", "farm"}
+    with pytest.raises(ValueError):
+        X.club_blocks(tmp_path, surface="nowhere")
 
 
-@pytest.mark.parametrize("mod", ["ledger_export.py", "franchise_export.py"])
-def test_the_boards_attach_the_block_only_through_the_flagged_reader(mod):
+@pytest.mark.parametrize("mod,surface", [("ledger_export.py", "ledger"),
+                                         ("franchise_export.py", "franchise")])
+def test_the_boards_attach_the_block_only_through_the_flagged_reader(mod, surface):
     src = (ROOT / mod).read_text(encoding="utf-8")
-    assert src.count("_xm.club_blocks(DATA)") == 1
+    assert src.count("_xm.club_blocks(") == 1
+    assert src.count(f'_xm.club_blocks(DATA, surface="{surface}")') == 1
     assert '["xm"] = _xmb[' in src
+
+
+# The Club Ledger never-list (owner answer XM2-Q2): no single projected payroll
+# line, no club surplus total, no cap-space cell, no ladder on a salary cell, no
+# style z-score. The xM$ block the Ledger is handed must carry none of them.
+LEDGER_FORBIDDEN_TOKENS = ("surplus", "cap", "space", "ladder", "z", "projected", "forecast",
+                           "revenue", "attendance", "tv", "valuation")
+
+
+def _keys(obj, path=""):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield f"{path}.{k}", str(k)
+            yield from _keys(v, f"{path}.{k}")
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from _keys(v, f"{path}[{i}]")
+
+
+def test_the_ledger_never_list_holds_for_the_xm_block(monkeypatch, tmp_path):
+    assert X.SURFACE_BLOCKS["ledger"] == ("roster", "farm")
+    assert "market_surplus" in X.SURFACE_BLOCKS["franchise"]
+    src = DATA / "xm_clubs.json"
+    if src.is_file():
+        (tmp_path / "xm_clubs.json").write_bytes(src.read_bytes())
+    else:
+        doc = {"as_of": "2026-10-22", "model_id": "fa_market", "clubs": {"AAA": {
+            "roster": {"n": 1, "xm_aav_usd": 5, "fair_aav_usd": 4, "ids": ["1"],
+                       "payroll_spotrac": {"total_2026_usd": 9, "committed_2027_usd": 3,
+                                           "note": X.PAYROLL_NOTE}},
+            "market_surplus": {"n": 1, "xm_usd": 7, "fair_usd": 6, "ids": ["1"]},
+            "farm": {"n": 0, "n_on40": 0, "fair_usd": 0, "ids": []}}}}
+        (tmp_path / "xm_clubs.json").write_text(json.dumps(doc), encoding="utf-8")
+    monkeypatch.setattr(X, "XM_DISPLAY_ON", True)
+    led = X.club_blocks(tmp_path, surface="ledger")
+    assert led
+    for c, blk in led.items():
+        assert set(blk) == {"as_of", "model_id", "roster", "farm"}, c
+        for path, k in _keys(blk):
+            toks = k.lower().split("_")
+            assert not any(t in LEDGER_FORBIDDEN_TOKENS for t in toks), (c, path)
+        # payroll on file sits beside the roster sum, labelled, never netted
+        pay = blk["roster"]["payroll_spotrac"]
+        assert pay["note"] == "not a payroll projection", c
+        assert set(pay) <= {"total_2026_usd", "committed_2027_usd", "note"}, c
+        # the farm shows Fair $ only (gate section 16): no xM$ figure at all
+        assert not any(k.startswith("xm_") for k in blk["farm"]), c
 
 
 def test_the_served_boards_carry_no_xm_block_while_dark():
@@ -138,6 +222,12 @@ def test_served_rows_have_points_and_ordered_bands():
     players, _, rows = _served()
     assert players["columns"] == X.COLUMNS and players["n"] == len(rows) > 0
     for k, r in rows.items():
+        assert isinstance(r["fair"], int), k
+        if r["xm_withheld"]:
+            # gate section 16: a prospect's xM$ is withheld, never extrapolated
+            assert all(r[c] is None for c in X.XM_COLUMNS), k
+            assert r["fair"] >= 0, k
+            continue
         for c in ("years", "aav", "total", "fair", "years_p10", "years_p90", "aav_p10",
                   "aav_p90", "total_p10", "total_p90"):
             v = r[c]
@@ -163,8 +253,32 @@ def test_served_flags_and_keys():
         assert r["bucket"] in ("roster", "farm", "fa"), k
         if r["msur_xm"] is not None:
             assert r["bucket"] == "roster" and r["ctrl"] > 0 and r["msur_fair"] is not None, k
+        # gate section 16: a prospect shows Fair $ only, sits in the farm block
+        # and carries the first season of his path; his xM$ is withheld
+        if r["pop"] == "prospect":
+            assert r["xm_withheld"] is True and r["bucket"] == "farm", k
+            assert isinstance(r["arrive"], int) and r["arrive"] >= players["class_year"], k
+            assert r["ctrl"] == 0 and r["msur_xm"] is None and r["clip"] is False, k
+        else:
+            assert r["xm_withheld"] is False and r["arrive"] is None, k
     # the support-clip report is by population only (docs/PROSPECT_ANCHOR_GATE.md)
-    assert set(players["support_clip_by_population"]) <= {"fa", "mlb", "prospect"}
+    # and covers the rows the market model priced, never a withheld prospect
+    assert set(players["support_clip_by_population"]) <= {"fa", "mlb"}
+    assert players["prospect_pricing"]["xm_withheld_note"] == "outside the market model's range"
+    by_arr = players["prospect_pricing"]["by_arrival_year"]
+    assert sum(by_arr.values()) == sum(1 for r in rows.values() if r["pop"] == "prospect")
+    assert players["counterfactual_note_prospect"] == X.CF_NOTE_PROSPECT
+
+
+def test_served_gate_verdict_is_read_off_the_eval_artifact():
+    players, clubs, _ = _served()
+    ev = DATA / "xm_eval.json"
+    if not ev.is_file():
+        pytest.skip("xm_eval.json absent")
+    verdict = (json.loads(ev.read_text(encoding="utf-8")).get("holdout") or {}).get("verdict")
+    for doc in (players, clubs):
+        assert doc["gate"]["verdict"] == verdict
+        assert doc["gate"]["eval_artifact"] == "data/xm_eval.json"
 
 
 def test_free_agent_rows_copy_the_fa_class_board():
@@ -204,11 +318,19 @@ def test_every_club_figure_is_the_sum_of_its_rows():
         assert ms["xm_usd"] == sum(rows[k]["msur_xm"] for k in ms["ids"]), c
         assert ms["fair_usd"] == sum(rows[k]["msur_fair"] for k in ms["ids"]), c
         assert ms["seasons"] == sum(rows[k]["ctrl"] for k in ms["ids"]), c
-        assert fm["xm_aav_usd"] == sum(rows[k]["aav"] for k in fm["ids"]), c
-        assert fm["xm_total_usd"] == sum(rows[k]["total"] for k in fm["ids"]), c
+        assert not any(key.startswith("xm_") for key in fm), c
         assert fm["fair_usd"] == sum(rows[k]["fair"] for k in fm["ids"]), c
+        assert fm["n_on40"] == sum(1 for k in fm["ids"] if rows[k]["on40"]), c
+        assert ro["n_on40_prospects_in_farm"] == fm["n_on40"], c
+        assert all(rows[k]["pop"] == "prospect" for k in fm["ids"]), c
+        assert ro["payroll_spotrac"]["note"] == X.PAYROLL_NOTE, c
         # every roster row with a priced control window is in the surplus sum
         assert set(ms["ids"]) == {k for k in ro["ids"] if rows[k]["msur_xm"] is not None}, c
     # every roster and farm row is in its club's block
     assert seen == {k for k, r in rows.items() if r["bucket"] in ("roster", "farm")}
     assert len(clubs["clubs"]) == clubs["n_clubs"] == 30
+    assert clubs["surfaces"]["ledger"] == ["roster", "farm"]
+    # the league farm total reconciles to the farm rows (gate section 16)
+    farm_rows = [r for r in rows.values() if r["bucket"] == "farm"]
+    assert sum(cd["farm"]["fair_usd"] for cd in clubs["clubs"].values()) == sum(
+        r["fair"] for r in farm_rows)

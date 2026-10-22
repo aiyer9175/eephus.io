@@ -3229,9 +3229,11 @@ def build_all() -> tuple:
 
     # xM$ club block (XM_2_EXPORT_ROLLUPS_DARK): attached only once
     # xm_export.XM_DISPLAY_ON flips; while it is False nothing is read and the
-    # board does not change.
+    # board does not change. The Ledger takes the roster and farm blocks only:
+    # the market-rate surplus is a club surplus total, on the never-list
+    # (owner answer XM2-Q2).
     import xm_export as _xm
-    _xmb = _xm.club_blocks(DATA)
+    _xmb = _xm.club_blocks(DATA, surface="ledger")
     if _xmb:
         for c in club_docs:
             if c in _xmb:

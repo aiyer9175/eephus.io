@@ -371,3 +371,143 @@ write-up `docs/xm/RESULTS.md`.
   Extension anchor: median bought-FA AAV over xM$ AAV 1.034 (n 101, 95
   percent interval 0.813 to 1.352), inconclusive. Posting anchor: NOT
   MEASURABLE (48 rows, median AAV $3.112M).
+
+## 16. Amendment 2026-10-22: prospects show Fair $ only (owner XM2B-Q1) and the club roll-ups (owner XM2-Q2)
+
+Written before any code or data of task XM_2C_PROSPECT_FAIR_ONLY changed.
+Owner answers XM2-Q2 ('Franchise only') and XM2B-Q1 ('Fair $ only for
+prospects'), 2026-10-22, `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, section
+'2026-10-22 owner answers'. XM2B-Q1 replaces the earlier answer XM2-Q1 ('FA
+at arrival, discounted') for prospects. Sections 1 to 15 are unchanged; this
+section replaces the prospect bullet of section 11 and the prospect half of
+its FAIR $ paragraph for the served export (`xm_export.py`), and adds the
+roll-up rule. The model, its verdict (INCUMBENT, section 15), the registry
+verdict and every gate constant stay as they are.
+
+WHY. Section 11 priced a prospect as a free agent THIS winter on a path that
+is zero before his ETA season, so the market model saw a year-1 WAR of 0 for
+almost every prospect: in the served `data/xm_players.json` (built
+2026-10-22) 4,668 of 4,671 board prospects were priced as one-year deals,
+the median at $2.27M, and the farm xM$ total ($10.67B over 4,647 farm rows)
+was close to a head count times a near-minimum price. The market model is
+fit on free-agent signings, nearly all of them by players 29 or older, and
+it gives one-year terms at the ages prospects arrive. A prospect is outside
+the market model's range, so his market price is withheld rather than
+extrapolated.
+
+THE RULE (every priced player with no 2027 MLB WAR path: every board
+prospect with an eFV row, on a 40-man or not):
+
+* xM$ is WITHHELD. The row's years, AAV, total guarantee and their P10 and
+  P90 are null, it carries `xm_withheld` true, and a surface shows the note
+  "outside the market model's range" where xM$ would be. It is never
+  extrapolated, clipped or imputed. The support clip of section 11 does not
+  apply (nothing is passed to the market model), so the row's clip flag is
+  false.
+* Fair $ only: the NPV of the served eFV WAR path (the section 11 shape:
+  `xfv_war_6yr` spread evenly over the six seasons from the ETA season, zero
+  before it, held to age 30, then 0.5 WAR a season down, floored at 0; the
+  same 15 seasons from 2027 the export already builds) times the market
+  $/WAR index: Fair $ = SUM over t of WAR_t x D x I(t) x (1 + r)^-t, t = 0
+  for 2027. D is this winter's market $/WAR (the /fa/ pricing level the
+  export already reads, `MarketContext.dpw`). I(t) is the $/WAR index the
+  export already uses for control seasons (`MarketContext.index_and_discount`:
+  value_framework's unified price level when that path serves, else the /fa/
+  carry rate `fa_market._destale_rate`), and r is value_framework's discount
+  rate (the unified nominal rate when that path serves, else `discount_rate`
+  in the value framework config, 0.07 today). Each season is priced at the
+  linear market rate, not through the tier curve, because the path is an
+  expectation over outcomes and value_framework's tier curve is never read
+  on an averaged WAR.
+* Bust risk is counted ONCE: `xfv_war_6yr` is the eFV grade's expected
+  value and already carries the bust outcome, so no reach weight or P(bust)
+  multiplies the result.
+* Each prospect row keeps `arrive` (the first season of the path: the ETA
+  season, never before 2027) and the label "counterfactual: Fair $ only, the
+  NPV of his eFV WAR path; xM$ withheld, outside the market model's range".
+  It carries no accuracy claim under any verdict (section 9).
+* MLB and free-agent rows are not re-priced by this rule. A 40-man player
+  with no MLB history and no eFV row stays unpriced and counted.
+
+FARM. A club's farm block holds every board prospect it owns, on its 40-man
+or off it (the count on a 40-man is reported), and carries Fair $ only: the
+farm Fair $ total equals the sum of its listed rows, asserted before writing
+and pinned by `test_xm_export.py` on the served files. No farm xM$ total
+exists. The roster block's xM$ AAV sum covers the 40-man rows with an MLB WAR
+path or a /fa/ price, and names how many 40-man prospects sit in the farm
+block instead.
+
+THE TWO REJECTED VARIANTS (disclosed; both were built once in the
+XM_2B_FARM_AND_CLUB worktree, never committed, and looked at only through
+league and club totals, quantiles by population and the top ten rows; no
+realized MLB statistic was computed and nothing was summarized by consensus
+FV level):
+
+* PATH x REACH (the literal reading of XM2-Q1): each prospect priced by the
+  market model as a free agent in his arrival year on the eFV path, the
+  price weighted by reach p = 1 - the served P(bust) and discounted to
+  today. The eFV path already carries the bust outcome, so the reach weight
+  counted the bust risk twice. Farm xM$ total $2.11B; every prospect got a
+  one or two-year term (4,661 one-year, 10 two-year); the top prospect
+  (Jesus Made, $40.78M) sat 18 times below the top MLB-ready young player
+  ($739.90M), against the registered expectation of the same order of
+  magnitude.
+* PATH GIVEN ARRIVAL (`xfv_war_6yr` / p, weighted by p): the two inputs sit
+  on different bases (`p_bust` follows the consensus FV odds, `xfv_war_6yr`
+  the eFV grade), so 10 percent of board prospects came to 50 WAR or more
+  over six seasons (the most, 279), the farm xM$ total came to $17.74B, and
+  the top ten were all rows with a placeholder consensus FV and no board
+  overall rank.
+
+CLUB ROLL-UPS (XM2-Q2). The Ledger's block shows only the roster xM$ AAV sum
+(Spotrac's payroll on file quoted beside it, labelled "not a payroll
+projection", never summed with it or netted against it) and the farm Fair $.
+The market-rate surplus over control is a club surplus total, which the Club
+Ledger never-list forbids, so it appears only on Franchise (per club) and in
+the Trade Machine (per side, over that side's players with a priced control
+window). `data/xm_clubs.json` keeps all three blocks; `xm_export.club_blocks`
+hands the Ledger the roster and farm blocks only, and a test walks every key
+of every Ledger block against the never-list. `XM_DISPLAY_ON` stays False;
+the flip is an owner question.
+
+REPORTED, never gated: the league and per-club farm Fair $ totals before and
+after, the prospect Fair $ quantiles, the counts by arrival year, and the
+top ten prospects by Fair $. Never by consensus FV level.
+
+RESULTS (2026-10-22, task XM_2C_PROSPECT_FAIR_ONLY; `xm_export.export()` in
+cache-only mode; before = the served build of 2026-10-22 at the lane's base,
+after = this rule; market $/WAR $16.86M, carry 0.0402, discount 0.07).
+Descriptive, never gated, never by consensus FV level.
+
+* Board prospects (4,671): every one has xM$ withheld and Fair $ only. Fair
+  $ P10 / P25 / median / P75 / P90 / P99 before $0.00M / $0.00M / $0.00M /
+  $0.00M / $0.37M / $5.21M (the section 11 Fair $ at a one-year term on a
+  path that is zero before the ETA), after $0.00M / $0.00M / $5.80M /
+  $21.91M / $43.71M / $112.40M. 1,774 prospects have Fair $ 0 (an eFV
+  six-season WAR of 0). First season of the path: 2027 862, 2028 889, 2029
+  1,036, 2030 924, 2031 193, 2032 302, 2033 359, 2034 105, 2035 1.
+* League farm: 4,647 rows before (off the 40-man), 4,671 after (every board
+  prospect; 24 sit on a 40-man). Farm Fair $ $1,277.95M before, $73,452.52M
+  after. The farm xM$ totals ($10,615.04M AAV and $10,665.90M total before)
+  no longer exist. Every club's farm Fair $ equals the sum of its rows
+  (asserted and tested). Club farm Fair $ after: highest MIL $3,759.21M,
+  lowest SDP $1,534.82M, median $2,386.09M.
+* For scale only: the served eFV surplus of the same 4,671 prospects
+  (`trade_values.json` posterior_surplus_mm, net of the salary they are
+  expected to draw) sums to $16.64B. Fair $ is gross of salary and runs over
+  the whole 15-season path, so it sits above that figure; the same Fair $
+  over only the six seasons from the ETA would be $59.44B.
+* Top 10 prospects by Fair $: Jesus Made (MIL) $329.76M, Franklin Arias
+  (BOS) $270.87M, Leo De Vries (ATH) $250.04M, Eli Willits (WSN) $246.09M,
+  Grady Emerson (TBR) $244.58M, Juneiker Caceres (CLE) $211.50M, Luis Pena
+  (MIL) $206.55M, Vahn Lackey (MIN) $200.29M, Rainiel Rodriguez (STL)
+  $184.56M, Dax Kilby (NYY) $174.85M.
+* Roster block: the 24 prospects on a 40-man move to the farm block, so the
+  league roster rows go from 1,106 to 1,082, the roster xM$ AAV sum from
+  $10,597.70M to $10,529.54M and the roster Fair $ per year from $14,966.15M
+  to $14,924.04M (17 clubs move). Not moved: the 1,332 MLB and free-agent
+  rows (every field equal), the market-rate surplus of all 30 clubs
+  ($17,209.68M xM$ in all) and the support-clip shares of the fa and mlb
+  populations (0 of 196 and 52 of 1,136). The prospect population leaves
+  the support-clip report (2,866 of 4,671 were clipped before), since no
+  prospect is passed to the market model.

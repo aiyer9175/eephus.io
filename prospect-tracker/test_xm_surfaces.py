@@ -160,3 +160,33 @@ def test_glossary_entries_are_present_short_and_clean():
     assert "fa_market" in ids["xm_dollars"]["methodology"]
     assert "fa_rational_value" in ids["fair_dollars"]["methodology"]
     assert "no gap column" in ids["fair_dollars"]["methodology"]
+
+
+def test_the_ledger_block_never_draws_the_market_surplus():
+    # owner answer XM2-Q2: roster and farm on the Ledger, the market-rate surplus
+    # on Franchise and in the Trade Machine only
+    assert "clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>', \"ledger\")" in JS
+    assert "clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>', \"franchise\")" in JS
+    assert 'var withSurplus = surface === "franchise";' in JS
+    i = JS.index('row("Market-rate surplus over control')
+    assert JS[i - 20:i].strip().endswith("(withSurplus ?")
+    assert JS.count('row("Market-rate surplus over control') == 1
+    # the payroll on file is quoted beside the roster sum and labelled
+    assert 'var PAYROLL_NOTE = "not a payroll projection";' in JS
+    assert "data-xm-payroll" in JS
+
+
+def test_the_trade_machine_sums_the_market_surplus_per_side():
+    i = JS.index("function tradeMachine()")
+    body = JS[i:JS.index("function clubBlockHtml(")]
+    assert "r.msur_xm" in body and "r.msur_fair" in body and "data-xm-msur" in body
+
+
+def test_a_prospect_shows_fair_only_with_xm_withheld():
+    # gate section 16 (owner answer XM2B-Q1)
+    assert 'var XM_WITHHELD = "outside the market model\'s range";' in JS
+    assert "r.xm_withheld" in JS and "r.reach" not in JS
+    assert "reach probability" not in JS
+    for col in ("arrive", "xm_withheld", "msur_xm", "msur_fair", "ctrl", "pop"):
+        assert col in X.COLUMNS, col
+    assert "reach" not in X.COLUMNS

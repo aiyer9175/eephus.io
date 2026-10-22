@@ -16,20 +16,31 @@
 //   boards            /prospx/ row chip and two sort options, /mlbstats/ sortable
 //                     xM$ column, /fa/ xM$ column beside the predicted contract,
 //                     /arbitration/ projected next-rung salary as a share of xM$
-//   club roll-ups     /ledger/ and /franchise/ one block per club
-//   Trade Machine     each side's xM$ and Fair $ totals beside the surplus
+//   club roll-ups     /ledger/ roster xM$ and farm Fair $ only (payroll on file
+//                     beside the roster sum, not a payroll projection);
+//                     /franchise/ roster, market-rate surplus over control and farm
+//   Trade Machine     each side's xM$ and Fair $ totals and its market-rate
+//                     surplus over control
 //
 // xM$ is what the market would pay (AAV, years and the NPV guarantee, with a
 // P10 to P90 band). Fair $ is what the projected production is worth over the
 // same term. They are shown side by side and never subtracted. A player who is
 // not a free agent is priced as if he were one this winter and is labelled so.
+// A prospect shows Fair $ only, the NPV of his eFV WAR path; his xM$ is withheld
+// as outside the market model's range (gate section 16, owner answer XM2B-Q1).
+// The market-rate surplus is never drawn on the Ledger: a club surplus total is
+// on the Club Ledger never-list (owner answer XM2-Q2).
 (function () {
   "use strict";
 
   var PLAYERS_URL = "/data/xm_players.json";
   var CLUBS_URL = "/data/xm_clubs.json";
   var COUNTERFACTUAL = "Priced as if a free agent this winter. No such contract exists; this is a counterfactual price.";
-  var CLIP_NOTE = "Outside the model's training range: the production path was clipped to the range, so read the price as an approximation.";
+  var XM_WITHHELD = "outside the market model's range";
+  var WITHHELD_NOTE = "xM$ withheld: " + XM_WITHHELD + ". The market model is fit on free-agent signings, nearly all by players 29 or older, so it does not price a prospect.";
+  var PROSPECT_FAIR = "Fair $ only: the NPV of his eFV WAR path at the winter's market $/WAR and a 7% discount. The path already carries the bust risk, so nothing else is taken off. A counterfactual value, not a contract.";
+  var PAYROLL_NOTE = "not a payroll projection";
+  var CLIP_NOTE ="Outside the model's training range: the production path was clipped to the range, so read the price as an approximation.";
   var FAIR_NOTE = "Fair $: what the projected production is worth over the same term, at the winter's market $/WAR and a 7% discount. Shown beside xM$, never subtracted from it.";
 
   var X = { doc: null, clubs: null, byId: {}, byKey: {}, byMlbam: {}, rows: [], cols: null };
@@ -82,26 +93,41 @@
   }
 
   // ---- text builders ------------------------------------------------------
+  function withheld(r) { return !!(r && r.xm_withheld); }
+  function cfText(r) { return withheld(r) ? PROSPECT_FAIR : COUNTERFACTUAL; }
+  function cfShort(r) { return withheld(r) ? "Fair $ only" : "as if FA"; }
   function xmTip(r) {
+    if (withheld(r)) return WITHHELD_NOTE;
     var t = "xM$ (Expected Market $): what the free-agent market would pay. "
       + "AAV " + usd(r.aav) + " (P10 " + usd(r.aav_p10) + " to P90 " + usd(r.aav_p90) + ") for "
       + yrs(r.years) + " (P10 " + r.years_p10 + " to P90 " + r.years_p90 + "), total guarantee "
       + usd(r.total) + " (P10 " + usd(r.total_p10) + " to P90 " + usd(r.total_p90) + ").";
-    if (r.cf) t += " " + COUNTERFACTUAL;
+    if (r.cf) t += " " + cfText(r);
     if (r.clip) t += " " + CLIP_NOTE;
     return t;
   }
   function fairTip(r) {
+    if (withheld(r)) return PROSPECT_FAIR + " Here " + usd(r.fair) + (r.arrive != null ? ", on a path from " + r.arrive : "") + ".";
     var t = FAIR_NOTE + " Here " + usd(r.fair) + " over " + yrs(r.years) + ".";
-    if (r.cf) t += " " + COUNTERFACTUAL;
+    if (r.cf) t += " " + cfText(r);
     return t;
   }
   // "$8.5M x 2 yrs = $17M"
   function xmLine(r) {
     return usd(r.aav) + " x " + yrs(r.years) + " = " + usd(r.total);
   }
+  // The two card tiles: xM$ and Fair $, or for a prospect the withheld note and
+  // Fair $ alone.
+  function cardTiles(r, tile) {
+    if (withheld(r)) {
+      return tile("xM$", "Withheld", XM_WITHHELD, xmTip(r)) +
+        tile("Fair $", usd(r.fair), "eFV WAR path, NPV", fairTip(r));
+    }
+    return tile("xM$", usd(r.aav) + " AAV", xmLine(r) + (r.cf ? " (" + cfShort(r) + ")" : ""), xmTip(r)) +
+      tile("Fair $", usd(r.fair), "over " + yrs(r.years) + (r.cf ? " (" + cfShort(r) + ")" : ""), fairTip(r));
+  }
   function cfTag(r) {
-    return r.cf ? ' <span class="xm-cf" title="' + esc(COUNTERFACTUAL) + '">as if FA</span>' : "";
+    return r.cf ? ' <span class="xm-cf" title="' + esc(cfText(r)) + '">' + esc(cfShort(r)) + "</span>" : "";
   }
 
   // ---- styles (tokens only, so the page's own themes apply) ----------------
@@ -142,8 +168,7 @@
     tiles.setAttribute("data-xm", key);
     var r = X.byKey[key];
     if (!r) return;
-    tiles.insertAdjacentHTML("beforeend", projTile("xM$", usd(r.aav) + " AAV", xmLine(r) + (r.cf ? " (as if FA)" : ""), xmTip(r)) +
-      projTile("Fair $", usd(r.fair), "over " + yrs(r.years) + (r.cf ? " (as if FA)" : ""), fairTip(r)));
+    tiles.insertAdjacentHTML("beforeend", cardTiles(r, projTile));
   }
   function projTile(label, val, sub, tip) {
     return '<div class="mlbp-tile" data-xm-tile title="' + esc(tip) + '"><span class="mlbp-tile-label">' + esc(label) +
@@ -162,8 +187,7 @@
       grid.setAttribute("data-xm", key);
       var r = X.byKey[key] || X.byId[key];
       if (!r) continue;
-      grid.insertAdjacentHTML("beforeend", pxTile("xM$", usd(r.aav) + " AAV", xmLine(r) + (r.cf ? " (as if FA)" : ""), xmTip(r)) +
-        pxTile("Fair $", usd(r.fair), "over " + yrs(r.years) + (r.cf ? " (as if FA)" : ""), fairTip(r)));
+      grid.insertAdjacentHTML("beforeend", cardTiles(r, pxTile));
     }
   }
   function pxTile(label, val, sub, tip) {
@@ -184,7 +208,7 @@
       var host = row.querySelector(".player-name-stack");
       if (!r || !host) continue;
       host.insertAdjacentHTML("beforeend",
-        '<div class="xm-chip"><span title="' + esc(xmTip(r)) + '">xM$ <b>' + esc(usd(r.aav)) + "</b> x " + esc(r.years) + "y" + cfTag(r) + "</span>" +
+        '<div class="xm-chip"><span title="' + esc(xmTip(r)) + '">' + (withheld(r) ? "xM$ withheld" : "xM$ <b>" + esc(usd(r.aav)) + "</b> x " + esc(r.years) + "y") + cfTag(r) + "</span>" +
         '<span title="' + esc(fairTip(r)) + '">Fair $ <b>' + esc(usd(r.fair)) + "</b></span></div>");
     }
   }
@@ -282,7 +306,10 @@
       var td = document.createElement("td");
       td.className = "xm-col mlbstats-cv-grp";
       td.setAttribute("data-xm", "1");
-      if (rec) {
+      if (rec && withheld(rec)) {
+        td.title = xmTip(rec);
+        td.textContent = "withheld";
+      } else if (rec) {
         td.setAttribute("data-xm-v", rec.aav);
         td.title = xmTip(rec);
         td.textContent = usd(rec.aav);
@@ -366,7 +393,7 @@
         if (!gTd) continue;
         var r = X.byKey[k], td = document.createElement("td");
         td.className = "fc-xm";
-        if (r) {
+        if (r && !withheld(r)) {
           td.title = xmTip(r);
           td.textContent = usd(r.aav) + " x " + r.years + "y";
         } else td.textContent = " - ";
@@ -430,47 +457,62 @@
       if (old) old.parentNode.removeChild(old);
       side.setAttribute("data-xm", sig);
       if (!rows.length) continue;
-      var tot = 0, fair = 0, n = 0, cf = 0, miss = 0, clip = 0;
+      var tot = 0, fair = 0, n = 0, nx = 0, cf = 0, wh = 0, miss = 0, clip = 0, ms = 0, mf = 0, nm = 0, ns = 0;
       for (var i = 0; i < rows.length; i++) {
         var m = /#player=([^&]+)/.exec(rows[i].getAttribute("href") || "");
         var r = m ? (X.byKey[decodeURIComponent(m[1])] || X.byId[decodeURIComponent(m[1])]) : null;
         if (!r) { miss++; continue; }
-        n++; tot += r.total; fair += r.fair; if (r.cf) cf++; if (r.clip) clip++;
+        n++; fair += r.fair; if (r.clip) clip++;
+        if (withheld(r)) wh++;
+        else { nx++; tot += r.total; if (r.cf) cf++; }
+        // market-rate surplus over control: only rows with a priced control window
+        if (isNum(r.msur_xm)) { nm++; ms += r.msur_xm; mf += isNum(r.msur_fair) ? r.msur_fair : 0; ns += r.ctrl || 0; }
       }
       if (!n) continue;
-      var tip = "xM$ total: the summed market guarantee the free-agent market would pay these players this winter (NPV basis). Fair $ total: the summed worth of their projected production over the same terms. Side by side, never subtracted."
+      var tip = "xM$ total: the summed market guarantee the free-agent market would pay these players (NPV basis). Fair $ total: the summed worth of their projected production over the same terms. Side by side, never subtracted."
         + (cf ? " " + cf + " of " + n + " priced as if a free agent this winter (counterfactual)." : "")
+        + (wh ? " " + wh + " of " + n + " are prospects: Fair $ only (the NPV of the eFV WAR path), xM$ withheld as " + XM_WITHHELD + ", so the xM$ total covers " + nx + " of " + n + "." : "")
         + (clip ? " " + clip + " outside the model's training range." : "")
         + (miss ? " " + miss + " not priced." : "");
-      var html = '<div class="xm-tm" title="' + esc(tip) + '"><span>xM$ <b>' + esc(usd(tot)) + '</b></span><span>Fair $ <b>' + esc(usd(fair)) + "</b></span>" +
-        (cf ? '<span class="xm-cf">' + cf + " as if FA</span>" : "") + "</div>";
+      var msTip = "Market-rate surplus over control: each controlled season priced at the xM$ market rate (and, beside it, at Fair $), less the salary on the books, discounted and summed over the "
+        + nm + " of " + n + " players with a priced control window (" + ns + " seasons). The others are not summed.";
+      var html = '<div class="xm-tm" title="' + esc(tip) + '"><span>xM$ <b>' + esc(nx ? usd(tot) : "withheld") + "</b>" + (wh && nx ? " (" + nx + " of " + n + ")" : "") + '</span><span>Fair $ <b>' + esc(usd(fair)) + "</b></span>" +
+        (cf ? '<span class="xm-cf">' + cf + " as if FA</span>" : "") +
+        (wh ? '<span class="xm-cf">' + wh + " Fair $ only</span>" : "") +
+        (nm ? '<span data-xm-msur title="' + esc(msTip) + '">Market-rate surplus over control: xM$ <b>' + esc(usd(ms)) + "</b>, Fair $ <b>" + esc(usd(mf)) + "</b> (" + nm + " of " + n + ")</span>" : "") +
+        "</div>";
       var head = side.querySelector(".tm-side-head");
       if (head) head.insertAdjacentHTML("afterend", html);
     }
   }
 
   // ---- surfaces: club roll-ups (Ledger, Franchise) ----------------------------------
-  function clubBlockHtml(code, heading) {
+  // surface "ledger": the roster and farm rows only. The market-rate surplus
+  // over control is a club surplus total, on the Club Ledger never-list (owner
+  // answer XM2-Q2), so it is drawn on Franchise alone.
+  function clubBlockHtml(code, heading, surface) {
     var c = X.clubs && X.clubs.clubs && X.clubs.clubs[code];
     if (!c) return "";
+    var withSurplus = surface === "franchise";
     var R = c.roster || {}, M = c.market_surplus || {}, F = c.farm || {}, P = R.payroll_spotrac || {};
     function row(label, a, b, tip) {
-      return "<tr><th scope=\"row\"" + (tip ? ' title="' + esc(tip) + '"' : "") + ">" + label + '</th><td class="xm-n">' + (a == null ? "" : esc(usd(a))) +
+      return "<tr><th scope=\"row\"" + (tip ? ' title="' + esc(tip) + '"' : "") + ">" + label + '</th><td class="xm-n">' + (a == null ? "" : typeof a === "string" ? esc(a) : esc(usd(a))) +
         '</td><td class="xm-n">' + (b == null ? "" : esc(usd(b))) + "</td></tr>";
     }
-    var out = '<div class="xm-block" data-xm-club="' + esc(code) + '">' + heading +
+    var out = '<div class="xm-block" data-xm-club="' + esc(code) + '" data-xm-surface="' + esc(surface) + '">' + heading +
       '<table class="xm-table"><thead><tr><th scope="col">Figure</th><th scope="col" class="xm-n">xM$</th><th scope="col" class="xm-n">Fair $</th></tr></thead><tbody>' +
-      row("40-man roster, AAV sum (" + esc(R.n) + " players" + (R.n_free_agents_excluded ? ", " + esc(R.n_free_agents_excluded) + " free agents left out" : "") + ")", R.xm_aav_usd, R.fair_aav_usd,
-        "Each player priced as if a free agent this winter. The two sums are separate figures and are not subtracted.") +
-      row("Market-rate surplus over control (" + esc(M.n) + " players, " + esc(M.seasons) + " seasons)", M.xm_usd, M.fair_usd,
+      row("40-man roster, AAV sum (" + esc(R.n) + " players" + (R.n_free_agents_excluded ? ", " + esc(R.n_free_agents_excluded) + " free agents left out" : "") +
+        (R.n_on40_prospects_in_farm ? ", " + esc(R.n_on40_prospects_in_farm) + (R.n_on40_prospects_in_farm === 1 ? " prospect" : " prospects") + " counted in the farm" : "") + ")", R.xm_aav_usd, R.fair_aav_usd,
+        "Each player priced as if a free agent this winter. A prospect on the 40-man is counted in the farm row, at Fair $ only. The two sums are separate figures and are not subtracted.") +
+      '<tr data-xm-payroll><td colspan="3" class="xm-note">Beside it, payroll on file (Spotrac): ' + esc(usd(P.total_2026_usd)) + " in 2026 and " + esc(usd(P.committed_2027_usd)) +
+      " committed for 2027; " + PAYROLL_NOTE + ". The xM$ roster sum prices players as if free agents and is never netted against it.</td></tr>" +
+      (withSurplus ? row("Market-rate surplus over control (" + esc(M.n) + " players, " + esc(M.seasons) + " seasons)", M.xm_usd, M.fair_usd,
         "Each controlled season priced at the market rate, less the salary on the books, summed over the listed players. A player with no salary path is not summed" +
-        (M.n_not_summed && M.n_not_summed.no_salary_path ? " (" + M.n_not_summed.no_salary_path + " here)" : "") + ".") +
-      row("Farm, board prospects (" + esc(F.n) + ")", F.xm_total_usd, F.fair_usd,
-        "Every board prospect priced as if a free agent this winter. A counterfactual; prospects do not sign as free agents, and most prospect paths sit outside the range the market model was fitted on, so read the figure as an approximation.") +
+        (M.n_not_summed && M.n_not_summed.no_salary_path ? " (" + M.n_not_summed.no_salary_path + " here)" : "") + ".") : "") +
+      row("Farm, board prospects (" + esc(F.n) + ")", "withheld", F.fair_usd,
+        "Fair $ only: the sum over every board prospect, on the 40-man or off it, of the NPV of his eFV WAR path at the winter's market $/WAR and a 7% discount. xM$ is withheld: " + XM_WITHHELD + ".") +
       "</tbody></table>" +
-      '<p class="xm-note">For comparison, payroll on file: ' + esc(usd(P.total_2026_usd)) + " in 2026 and " + esc(usd(P.committed_2027_usd)) +
-      " committed for 2027 (Spotrac). The xM$ roster sum prices players as if free agents this winter; it is not a payroll projection. " +
-      "<a href=\"/glossary/#g=xm_dollars\">xM$</a> and <a href=\"/glossary/#g=fair_dollars\">Fair $</a> are separate numbers.</p></div>";
+      '<p class="xm-note"><a href="/glossary/#g=xm_dollars">xM$</a> and <a href="/glossary/#g=fair_dollars">Fair $</a> are separate numbers.</p></div>';
     return out;
   }
   function ledgerBlock() {
@@ -483,7 +525,7 @@
     if (!code) { if (cur) cur.parentNode.removeChild(cur); return; }
     if (cur && cur.getAttribute("data-xm-club") === code) return;
     if (cur) cur.parentNode.removeChild(cur);
-    var inner = clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>');
+    var inner = clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>', "ledger");
     if (!inner) return;
     var sec = document.createElement("section");
     sec.id = "ledger-block-xm";
@@ -501,7 +543,7 @@
     var cur = sect.querySelector(":scope > .xm-block");
     if (cur && cur.getAttribute("data-xm-club") === code) return;
     if (cur) cur.parentNode.removeChild(cur);
-    var inner = clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>');
+    var inner = clubBlockHtml(code, '<h3>Expected market $ (xM$) and Fair $</h3>', "franchise");
     if (inner) sect.insertAdjacentHTML("beforeend", inner);
   }
 
