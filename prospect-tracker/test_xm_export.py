@@ -194,14 +194,15 @@ def test_the_ledger_never_list_holds_for_the_xm_block(monkeypatch, tmp_path):
         assert not any(k.startswith("xm_") for k in blk["farm"]), c
 
 
-def test_the_served_boards_carry_no_xm_block_while_dark():
+def test_the_served_boards_carry_the_xm_block_iff_the_flag_is_on():
+    # owner XM-FLIP 2026-10-22: the club block rides the display flag
     for name, get in (("ledger_board.json", lambda d: d["clubs"].values()),
                       ("franchise_board.json", lambda d: d["clubs"])):
         p = DATA / name
         if not p.is_file():
             continue
         doc = json.loads(p.read_text(encoding="utf-8"))
-        assert not any("xm" in c for c in get(doc)), name
+        assert any("xm" in c for c in get(doc)) is X.XM_DISPLAY_ON, name
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +242,7 @@ def test_served_rows_have_points_and_ordered_bands():
 def test_served_flags_and_keys():
     players, _, rows = _served()
     assert players["model_id"] == "fa_market" and players["fair_model_id"] == "fa_rational_value"
-    assert players["class_year"] == 2027 and players["display_on"] is False
+    assert players["class_year"] == 2027 and players["display_on"] is X.XM_DISPLAY_ON
     for k, r in rows.items():
         assert r["pop"] in ("fa", "mlb", "prospect"), k
         assert r["cf"] is (r["pop"] != "fa"), k

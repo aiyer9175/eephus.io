@@ -55,16 +55,21 @@ def test_every_surface_page_is_listed_once():
 
 
 @pytest.mark.parametrize("rel,fn", sorted(BUILDERS.items()))
-def test_flag_off_the_built_page_is_unchanged(rel, fn):
+def test_flag_off_the_built_page_is_unchanged(monkeypatch, rel, fn):
+    monkeypatch.setattr(X, "XM_DISPLAY_ON", False)
     html = getattr(B, fn)()
     assert "xm-surfaces" not in html
     assert B.xm_surfaces_inject(rel, html) == html
 
 
-def test_flag_off_the_hand_page_is_unchanged():
+def test_flag_off_the_hand_page_is_unchanged(monkeypatch):
+    # the served hand page carries the tag while the flag is on; off strips it
     html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
-    assert "xm-surfaces" not in html
-    assert B.xm_surfaces_inject("prospx/index.html", html) == html
+    assert html.count("xm-surfaces.js") == (1 if X.XM_DISPLAY_ON else 0)
+    monkeypatch.setattr(X, "XM_DISPLAY_ON", False)
+    off = B.xm_surfaces_inject("prospx/index.html", html)
+    assert "xm-surfaces" not in off
+    assert B.xm_surfaces_inject("prospx/index.html", off) == off
 
 
 def test_a_page_outside_the_list_is_never_touched(monkeypatch):
@@ -88,6 +93,7 @@ def test_flag_on_adds_one_stamped_tag_and_off_restores_the_bytes(monkeypatch, re
 
 def test_write_routes_through_the_injector(monkeypatch, tmp_path):
     monkeypatch.setattr(B, "ROOT", tmp_path)
+    monkeypatch.setattr(X, "XM_DISPLAY_ON", False)
     page = "<html><body>x</body></html>"
     B._write("fa/index.html", page)
     assert (tmp_path / "fa" / "index.html").read_text(encoding="utf-8") == page
@@ -96,11 +102,11 @@ def test_write_routes_through_the_injector(monkeypatch, tmp_path):
     assert "xm-surfaces.js" in (tmp_path / "fa" / "index.html").read_text(encoding="utf-8")
 
 
-def test_the_data_files_carry_the_dark_lock():
+def test_the_data_files_carry_the_display_lock():
     for name in ("xm_players.json", "xm_clubs.json"):
         p = DATA / name
         if p.is_file():
-            assert json.loads(p.read_text(encoding="utf-8"))["display_on"] is False, name
+            assert json.loads(p.read_text(encoding="utf-8"))["display_on"] is X.XM_DISPLAY_ON, name
     assert "doc.display_on" in JS and "xm_players.json" in JS and "xm_clubs.json" in JS
 
 
