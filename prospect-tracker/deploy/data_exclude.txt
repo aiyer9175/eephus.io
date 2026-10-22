@@ -85,6 +85,11 @@ fielding_census_ids.json
 # EPOCH_D9_FREEZE). A pipeline input read by war_source's fwar provider and
 # the career_war rebase; no page fetches it.
 fwar_vintage.json
+# ewar_core_label.json: the frozen core eWAR label vintage (departures from the
+# fWAR vintage; docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md part 3), written
+# once by tools/build_ewar_core_label.py. A pipeline input read by war_source's
+# ewar_core provider and the career_war rebase; no page fetches it.
+ewar_core_label.json
 # X05-20: Cot's Contracts (Baseball Prospectus) deferral check; carries the sheet's own
 # note wording, a private coverage list, no page fetches it.
 cots_deferral_check.json

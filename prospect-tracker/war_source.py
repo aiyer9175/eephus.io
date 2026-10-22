@@ -100,6 +100,20 @@ owner decisions 2026-09-17 and EPOCH-Q4 2026-09-30, flipped 2026-10-03).
              label; refused on the arb_spine door (refuse_on_door).
              DataUnavailable when the vintage, the incumbent's artifact or
              data/ewar_v3.json is absent.
+  'ewar_core'  The CORE eWAR LABEL (task EFV_LABEL_EPOCH_EWAR, owner decisions
+             EW3-17 and EW3-20; docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md):
+             the 'fwar' series plus the departures of the frozen label vintage
+             data/ewar_core_label.json (ewar_core_label.py; written once by
+             tools/build_ewar_core_label.py), which remove from each hitting row
+             the re-centred rest of baserunning and framing, the parts not present
+             in every season 2000 to 2026. Pitching equals fWAR on the headline
+             series; series="realized" adds R2, the realized-core sensitivity.
+             Built exactly as 'ewar_v3' is: every door computes the 'fwar' answer,
+             then adds the listed departures. A stored 'ewar_core' row keeps
+             `seasons_fwar`, and row_on_provider re-expresses it on any other
+             provider from that kept series, so display doors print what they
+             printed on an fwar row. NOT the default until LABEL_EWAR_CORE flips
+             at the epoch run's step D + U (gate part 8); never a display door.
 
 THE BASIS DECISION IS NOT AN ACCURACY CLAIM. The eval record
 (data/ewar_eval.json) is: gate 1 team wins r 0.8595 vs bWAR 0.8803 (a
@@ -182,7 +196,7 @@ class DataUnavailable(RuntimeError):
 
 #: Every provider id this facade recognises. Declared != servable. 'bwar'
 #: stays first: it is the INPUT frame the others are built on.
-PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged", "fwar", "ewar_v3")
+PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged", "fwar", "ewar_v3", "ewar_core")
 
 #: The LABEL WAR site-wide: published fWAR from the frozen vintage (owner
 #: decisions O1 and O2 of 2026-09-17; docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md,
@@ -192,7 +206,12 @@ PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged", "fwar", "ewar_v3
 #: answer EPOCH-Q4, "Keep eWAR v2 shown", 2026-09-30; orchestrator ruling
 #: EPOCH-Q4-IMPL R1a): every display door names provider="ewar_v2" explicitly
 #: and never reads this default (test_epoch_display_doors.py pins each one).
-DEFAULT_PROVIDER: str = "fwar"
+#: The core eWAR label epoch's flag (docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md
+#: part 3): off, the label stays published fWAR. It flips only at the epoch run's step
+#: D + U, in the main tree, after the gate's circularity guard holds (part 4).
+LABEL_EWAR_CORE: bool = False
+
+DEFAULT_PROVIDER: str = "ewar_core" if LABEL_EWAR_CORE else "fwar"
 
 #: eWAR v3 serves as THE displayed WAR, plain "eWAR", on every display door,
 #: player pages included (owner answers EBR-Q5 and EW3-19; EBR_GATE.md 11.10.5),
@@ -205,6 +224,9 @@ DISPLAY_PROVIDER: str = "ewar_v3" if EWAR_V3_LIVE else "ewar_v2"
 
 #: How to (re)build the artifact 'ewar_v3' serves from.
 EWAR_V3_BUILD_CMD: str = "python tools/build_ewar_v3.py --write"
+
+#: How to freeze the label vintage 'ewar_core' serves from (written once).
+EWAR_CORE_BUILD_CMD: str = "python tools/build_ewar_core_label.py --write"
 
 #: Doors a provider is refused on: the arbitration model's WAR spine is a fitted
 #: consumer's input, which eWAR v3 never is (EBR_GATE.md part 9.1, kept by 11.10).
@@ -320,6 +342,14 @@ def _require(provider: str) -> None:
                 f"WAR provider 'ewar_v3' is declared but its artifact is missing: "
                 f"{ewar_v3.OUT} (data/ewar_v3.json). Build it: {EWAR_V3_BUILD_CMD} "
                 f"(with EWAR_V3_LIVE on). Nothing falls back to another provider on its own.")
+    if provider == "ewar_core":
+        _require("fwar")
+        import ewar_core_label
+        if not ewar_core_label.available():
+            raise DataUnavailable(
+                f"WAR provider 'ewar_core' is declared but its frozen label vintage is missing: "
+                f"{ewar_core_label.OUT} (data/ewar_core_label.json). Freeze it once: "
+                f"{EWAR_CORE_BUILD_CMD}. Nothing falls back to another provider on its own.")
 
 
 def refuse_on_door(provider: str, door: str) -> None:
@@ -416,13 +446,13 @@ def career_war_bulk(targets: list[tuple[str, int, bool]],
     # last target wins per key, mirroring stats' result[player_key] overwrite
     mlbam_by_key = {key: mid for key, mid, _ in targets}
     blob = _payload()
-    if provider in ("fwar", "ewar_v3"):
+    if provider in ("fwar", "ewar_v3", "ewar_core"):
         idx = fwar_index()
         out = {key: _fwar_aggregate(_ewar_aggregate(agg, mlbam_by_key.get(key), blob),
                                     mlbam_by_key.get(key), idx)
                for key, agg in base.items()}
-        if provider == "ewar_v3":
-            out = {key: row_on_provider(row, "ewar_v3") for key, row in out.items()}
+        if provider in ("ewar_v3", "ewar_core"):
+            out = {key: row_on_provider(row, provider) for key, row in out.items()}
         return out
     return {key: _ewar_aggregate(agg, mlbam_by_key.get(key), blob)
             for key, agg in base.items()}
@@ -582,6 +612,13 @@ def row_on_provider(row: dict | None, provider: str = DISPLAY_PROVIDER) -> dict:
                  `seasons_ewar_realized` the realized series beside it; a season
                  the vintage did not serve (fwar_coverage fallback years) keeps
                  its stored value. Any other row is returned as stored.
+      'ewar_core' an fwar row with each season the vintage served moved by the
+                 core label's departure (data/ewar_core_label.json, 2dp), source
+                 "ewar_core", `seasons_fwar` keeping the stored series and
+                 `seasons_ewar_core_realized` the realized-core sensitivity beside
+                 it. An 'ewar_core' row asked for on ANY other provider is first
+                 turned back into its fwar row from `seasons_fwar`, so every door
+                 prints what it printed before the label flip.
 
     Exposure maps (`seasons_pa`, `seasons_ip`) and every other key ride along
     unchanged: they describe the same stints whatever the series. The input is
@@ -593,6 +630,14 @@ def row_on_provider(row: dict | None, provider: str = DISPLAY_PROVIDER) -> dict:
     if not row:
         return row
     src = str(row.get("source") or "")
+    if src == "ewar_core":
+        if provider == "ewar_core":
+            return row
+        # the core label row back to the fwar row it was built on (its kept series)
+        row = _core_to_fwar_row(row)
+        src = str(row.get("source") or "")
+    if provider == "ewar_core":
+        return _ewar_core_row(row, src)
     if provider == "fwar" or provider == "ewar_merged":
         return row
     if provider == "ewar_v3":
@@ -758,6 +803,8 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER, series: str = "headl
         return _fwar_side_map()
     if provider == "ewar_v3":
         return _ewar_v3_side_map(series)
+    if provider == "ewar_core":
+        return _ewar_core_side_map(series)
     import mlb_player_export
     # pinned for both providers: _war_daily reads stint_frame on the default
     with _frames_pinned("bwar"):
@@ -895,6 +942,8 @@ def condensed_frame(side: str, *, provider: str = DEFAULT_PROVIDER):
         return _fwar_frame(raw, side, door="condensed")
     if fp == "ewar_v3":
         return _ewar_v3_frame(raw, side, door="condensed")
+    if fp == "ewar_core":
+        return _ewar_core_frame(raw, side, door="condensed")
     return _ewar_frame(raw, side, door="condensed")
 
 
@@ -958,6 +1007,8 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
         return _fwar_frame(raw, side, door="stint")
     if fp == "ewar_v3":
         return _ewar_v3_frame(raw, side, door="stint")
+    if fp == "ewar_core":
+        return _ewar_core_frame(raw, side, door="stint")
     return _ewar_frame(raw, side, door="stint")
 
 
@@ -1601,6 +1652,141 @@ def _ewar_v3_frame(df, side: str, *, door: str):
                 rec.update({"covered_rows": int(len(cov_idx)), "unplaced": len(deps) - n_ps,
                             "delta_sum": float(new.sum())})
         _EWAR_V3_DIAG[f"{door}:{side}:{series}"] = rec
+    return out
+
+
+# --- the core eWAR label transforms (provider 'ewar_core', label epoch gate part 3) ---
+
+#: {door: receipt} for the last 'ewar_core' read per door and side in this process.
+_EWAR_CORE_DIAG: dict[str, dict] = {}
+
+#: The keys an 'ewar_core' row adds on top of the fwar row it was built on.
+_CORE_ROW_KEYS = ("seasons_fwar", "seasons_ewar_core_realized", "ewar_core_coverage", "incumbent_of")
+
+
+def ewar_core_frame_diagnostics() -> dict[str, dict]:
+    """Receipts from the last 'ewar_core' reads: per "<door>:<side>:<series>" the
+    rows that took a departure, the listed departures with no cell or row to land
+    on, the departure sum, and the label vintage's id."""
+    return {k: dict(v) for k, v in _EWAR_CORE_DIAG.items()}
+
+
+def _ewar_core_side_map(series: str = "headline") -> dict[int, dict[int, dict[str, float]]]:
+    """side_war_by_season for provider 'ewar_core': the 'fwar' map plus each listed
+    departure on the side cell it belongs to (the blank-row rule as 'ewar_v3')."""
+    import ewar_core_label
+    base = _fwar_side_map()
+    out = {mid: {s: dict(c) for s, c in by.items()} for mid, by in base.items()}
+    rec = {"door": "side_map", "series": series, "applied": 0, "absent_cell": 0, "delta_sum": 0.0,
+           "vintage_id": ewar_core_label.vintage_id()}
+    for (mid, season), cell_d in ewar_core_label.departures(series=series).items():
+        cell = (out.get(mid) or {}).get(season)
+        for side, d in cell_d.items():
+            if cell is None or side not in cell:
+                rec["absent_cell"] += 1
+                continue
+            cell[side] = float(cell[side]) + float(d)
+            rec["applied"] += 1
+            rec["delta_sum"] += float(d)
+    _EWAR_CORE_DIAG["side_map:" + series] = rec
+    return out
+
+
+def _ewar_core_row(row: dict, src: str) -> dict:
+    """row_on_provider(row, 'ewar_core'): see its docstring. Any row but an fwar
+    row is returned as stored (nothing to re-express)."""
+    if src != "fwar" or not isinstance(row.get("seasons"), dict):
+        return row
+    import ewar_core_label
+    if not ewar_core_label.available():
+        return row
+    fcov = row.get("fwar_coverage") or {}
+    mid = fcov.get("mlbam")
+    keep = {int(y) for y in (fcov.get("fallback_pre_years") or [])} | {
+        int(y) for y in (fcov.get("fallback_post_years") or [])}
+    stored = dict(row["seasons"])
+    moved = {"headline": 0, "realized": 0}
+
+    def _series(name: str) -> dict:
+        deps = ewar_core_label.departures(series=name)
+        out_s = {}
+        for yr_s, v in stored.items():
+            d = deps.get((int(mid), int(yr_s))) if (mid and int(yr_s) not in keep) else None
+            if d:
+                out_s[yr_s] = round(float(v) + sum(d.values()), 2)
+                moved[name] += 1
+            else:
+                out_s[yr_s] = v
+        return out_s
+
+    head, real = _series("headline"), _series("realized")
+    vals = [float(v) for v in head.values()]
+    career = round(sum(vals), 2)
+    n = len(vals)
+    out = dict(row)
+    out.update({
+        "seasons": head,
+        "career_war": career,
+        "war_per_yr": round(career / n, 2) if n else 0.0,
+        "war_seasons_count": n,
+        "source": "ewar_core",
+        "incumbent_of": src,
+        "seasons_fwar": stored,
+        "seasons_ewar_core_realized": real,
+        "ewar_core_coverage": {"vintage_id": ewar_core_label.vintage_id(),
+                               "mlbam": int(mid) if mid else None,
+                               "seasons_moved": moved["headline"],
+                               "seasons_moved_realized": moved["realized"]},
+    })
+    return out
+
+
+def _core_to_fwar_row(row: dict) -> dict:
+    """An 'ewar_core' row turned back into the fwar row it was built on: `seasons`
+    from the kept `seasons_fwar`, the derived totals re-summed (2dp) and source
+    "fwar"; the core keys dropped. A core row without its kept series is returned
+    as stored (it cannot be re-expressed)."""
+    kept = row.get("seasons_fwar")
+    if not isinstance(kept, dict):
+        return row
+    vals = [float(v) for v in kept.values()]
+    career = round(sum(vals), 2)
+    n = len(vals)
+    out = {k: v for k, v in row.items() if k not in _CORE_ROW_KEYS}
+    out.update({"seasons": dict(kept), "career_war": career,
+                "war_per_yr": round(career / n, 2) if n else 0.0,
+                "war_seasons_count": n, "source": "fwar"})
+    return out
+
+
+def _ewar_core_frame(df, side: str, *, door: str):
+    """A war_daily frame on provider 'ewar_core': the 'fwar' frame plus WAR_fwar :=
+    that fWAR, then WAR := WAR_fwar plus the label's departure and WAR_realized :=
+    WAR_fwar plus the realized-core departure, each spread over the player-season's
+    stints in proportion to PA or IPouts (_exposure_split)."""
+    import pandas as pd
+    import ewar_core_label
+
+    out = _fwar_frame(df, side, door=door)
+    out["WAR_fwar"] = out["WAR"]
+    out["WAR_realized"] = out["WAR"]
+    vid = ewar_core_label.vintage_id()
+    for series, col in (("headline", "WAR"), ("realized", "WAR_realized")):
+        deps = {k: (float(v[side]), None)
+                for k, v in ewar_core_label.departures(series=series).items() if side in v}
+        rec = {"door": door, "side": side, "series": series, "rows": int(len(out)), "covered_rows": 0,
+               "listed": len(deps), "unplaced": len(deps), "delta_sum": 0.0, "vintage_id": vid}
+        if len(out) and deps:
+            zero = pd.Series(0.0, index=out.index)
+            split = _exposure_split(out, side, zero, deps)
+            if split is not None:
+                cov_idx, w, grp, new = split
+                base = pd.to_numeric(out.loc[cov_idx, col], errors="coerce").fillna(0.0)
+                out.loc[cov_idx, col] = base.values + new
+                n_ps = int(w["g"].nunique())
+                rec.update({"covered_rows": int(len(cov_idx)), "unplaced": len(deps) - n_ps,
+                            "delta_sum": float(new.sum())})
+        _EWAR_CORE_DIAG[f"{door}:{side}:{series}"] = rec
     return out
 
 

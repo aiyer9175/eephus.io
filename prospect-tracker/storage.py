@@ -6031,6 +6031,11 @@ def board_basis_fingerprint() -> str:
         if label == "fwar":
             import fwar_vintage as _fv
             label += f"@{str(_fv.load().get('vintage_id') or 'nobuild')}"
+        elif label == "ewar_core":
+            # the core eWAR label epoch (docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md
+            # part 3): the frozen label vintage's id, ewar-core-<fWAR vintage id>-<sha12>
+            import ewar_core_label as _ecl
+            label += f"@{_ecl.vintage_id() or 'nobuild'}"
         elif label != "bwar":
             import ewar as _ew
             _p = _ew.load()

@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Rebase the career_war sqlite table onto a WAR provider (ewar_v2 or fwar).
+"""Rebase the career_war sqlite table onto a WAR provider (ewar_v2, fwar or ewar_core).
 
     python tools/rebase_career_war.py --provider fwar              # DRY RUN: receipt, no write
     python tools/rebase_career_war.py --provider fwar --apply      # backup + write, once
@@ -57,6 +57,13 @@ incumbent (`seasons_ewar_v2` for fwar, `seasons_bwar` for ewar_v2), never from
 its served `seasons`, so apply twice equals apply once. Plain --apply REFUSES
 when any row already carries the provider's source; --reapply is the way.
 
+THE CORE LABEL (provider ewar_core; docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md
+part 8, step C of the core label epoch run). Each row is first rebased to its fwar row
+exactly as `--provider fwar` does (from the kept `seasons_ewar_v2`), then re-expressed
+on the frozen core label through war_source.row_on_provider(row, 'ewar_core'), which
+keeps that fwar series as `seasons_fwar`. The incumbent of this provider is the fwar
+series, and incumbent_breaks() asserts it reconstructs bit for bit.
+
 SAFETY. --apply first copies prospects.db to prospects.db.bak-<provider>-<date>
 through sqlite3's backup API (WAL-safe). Dry run is the default. The deploy box
 must run the same --apply on its own copy of the database. Nothing here
@@ -81,15 +88,15 @@ import storage                                   # noqa: E402
 import war_source                                # noqa: E402
 import rebase_career_war_to_ewar as L1           # noqa: E402
 
-PROVIDERS: tuple[str, ...] = ("ewar_v2", "fwar")
+PROVIDERS: tuple[str, ...] = ("ewar_v2", "fwar", "ewar_core")
 RECEIPT_SCHEMA = "career_war_rebase/1"
 
 #: The kept series a provider's row is re-derived from (and the incumbent it
 #: must keep reconstructible).
-INCUMBENT_KEY = {"ewar_v2": "seasons_bwar", "fwar": "seasons_ewar_v2"}
+INCUMBENT_KEY = {"ewar_v2": "seasons_bwar", "fwar": "seasons_ewar_v2", "ewar_core": "seasons_fwar"}
 
 #: The per-row receipt key each provider writes.
-COVERAGE_KEY = {"ewar_v2": "ewar_coverage", "fwar": "fwar_coverage"}
+COVERAGE_KEY = {"ewar_v2": "ewar_coverage", "fwar": "fwar_coverage", "ewar_core": "fwar_coverage"}
 
 
 class RebaseAbort(RuntimeError):
@@ -123,7 +130,7 @@ def served_incumbent(row: dict, provider: str) -> dict:
     """The incumbent series as the table carries it NOW, for the reconstruct
     check: the kept map on a row already on the provider, else `seasons`."""
     key = INCUMBENT_KEY[provider]
-    if row.get("source") == provider or (provider == "fwar" and row.get(key)):
+    if row.get("source") == provider or (provider in ("fwar", "ewar_core") and row.get(key)):
         return dict(row.get(key) or {})
     return dict(row.get("seasons") or {})
 
@@ -137,7 +144,7 @@ def rebase_row_fwar(row: dict, mlbam: int, idx: dict) -> dict | None:
     seasons, rec = war_source.fwar_seasons_from_incumbent(inc, mlbam, idx)
     # the incumbent's own source survives a re-derivation (idempotency)
     inc_src = ((row.get("fwar_coverage") or {}).get("incumbent_source")
-               if row.get("source") == "fwar" else row.get("source"))
+               if row.get("source") in ("fwar", "ewar_core") else row.get("source"))
     vals = list(seasons.values())
     n = len(vals)
     out = {
@@ -159,9 +166,17 @@ def rebase_row_fwar(row: dict, mlbam: int, idx: dict) -> dict | None:
     return out
 
 
+def rebase_row_core(row: dict, mlbam: int, idx: dict) -> dict | None:
+    """One stored row -> its ewar_core payload: the fwar row, then the core label."""
+    base = rebase_row_fwar(row, mlbam, idx)
+    if base is None:
+        return None
+    return war_source.row_on_provider(base, "ewar_core")
+
+
 def _row_counts(provider: str, new: dict) -> dict:
     cov = new[COVERAGE_KEY[provider]]
-    if provider == "fwar":
+    if provider in ("fwar", "ewar_core"):
         return {"n_provider": cov["n_fwar"], "n_fallback_pre": cov["n_fallback_pre"],
                 "n_fallback_post": cov["n_fallback_post"], "war_basis": cov["war_basis"]}
     pre, post = cov["n_fallback_pre"], cov["n_fallback_post"]
@@ -191,6 +206,8 @@ def incumbent_breaks(before: dict[str, dict], after: dict[str, dict],
     the incumbent BEFORE bit for bit (note 2). Only rows present before count."""
     bad: list[str] = []
     for key in sorted(before):
+        if provider == "ewar_core" and before[key].get("source") not in ("fwar", "ewar_core"):
+            continue    # no fwar series existed before to reconstruct
         want = served_incumbent(before[key], provider)
         row = after.get(key)
         got = served_incumbent(row, provider) if row is not None else None
@@ -212,6 +229,10 @@ def receipt_keys() -> tuple[str, ...]:
 
 
 def _artifact(provider: str, blob: dict) -> dict:
+    if provider == "ewar_core":
+        return {"provider": "ewar_core", "id": blob.get("vintage_id"),
+                "seasons": [blob.get("first_season"), blob.get("last_season")],
+                "fwar_vintage_id": blob.get("fwar_vintage_id"), "schema": blob.get("schema")}
     if provider == "fwar":
         import fwar_vintage
         return {"provider": "fwar", "id": blob.get("vintage_id"),
@@ -228,6 +249,9 @@ def load_source(provider: str, payload: dict | None = None) -> dict:
     if payload is not None:
         return payload
     war_source._require(provider)
+    if provider == "ewar_core":
+        import ewar_core_label
+        return ewar_core_label.load()
     if provider == "fwar":
         import fwar_vintage
         return fwar_vintage.load()
@@ -273,7 +297,8 @@ def plan(rows: dict[str, dict], provider: str, payload: dict | None = None
     if provider not in PROVIDERS:
         raise ValueError(f"unknown provider {provider!r}; use one of {PROVIDERS}")
     blob = load_source(provider, payload)
-    idx = war_source.fwar_index(blob) if provider == "fwar" else None
+    idx = (war_source.fwar_index(blob) if provider == "fwar"
+           else war_source.fwar_index() if provider == "ewar_core" else None)
     durable = L1.durable_ids_by_key()
     overrides = L1.override_ids()
     label_join = label_join_ids()
@@ -302,7 +327,12 @@ def plan(rows: dict[str, dict], provider: str, payload: dict | None = None
             rep["override_disagrees_with_photos"].append((key, durable[key], overrides[key]))
         rep[{"photos": "id_from_photos", "override": "id_from_override"}.get(
             how, "id_from_label_join")] += 1
-        if provider == "fwar":
+        if provider == "ewar_core":
+            new = rebase_row_core(row, mid, idx)
+            if new is not None and new.get("source") != "ewar_core":
+                new = None    # no fwar row to build the label on
+            inc = new["seasons_fwar"] if new else None
+        elif provider == "fwar":
             new = rebase_row_fwar(row, mid, idx)
             inc = new["seasons_ewar_v2"] if new else None
         else:
@@ -328,7 +358,7 @@ def plan(rows: dict[str, dict], provider: str, payload: dict | None = None
         out[key] = new
     planned = {**rows, **out}
     rep["neither_value"] = neither_value(planned)
-    if provider == "fwar":
+    if provider in ("fwar", "ewar_core"):
         rep["incumbent_breaks"] = incumbent_breaks(rows, planned, provider)
     if rep["neither_value"] or rep["incumbent_breaks"]:
         raise RebaseAbort(_abort_text(rep))
@@ -442,7 +472,8 @@ def main(argv: list[str] | None = None, *, payload: dict | None = None) -> int:
     print(f"wrote {n} rows through storage.upsert_career_war (source {args.provider})")
     after = storage.load_career_war()
     nv = neither_value(after)
-    br = incumbent_breaks(rows, after, args.provider) if args.provider == "fwar" else []
+    br = (incumbent_breaks(rows, after, args.provider)
+          if args.provider in ("fwar", "ewar_core") else [])
     if nv or br:
         print(_abort_text({"provider": args.provider, "neither_value": nv,
                            "incumbent_breaks": br}))
