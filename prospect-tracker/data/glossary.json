@@ -5012,6 +5012,76 @@
    "origin": "Arkmetric, original to eephus.io."
   },
   {
+   "id": "xm_dollars",
+   "term": "xM$ (Expected Market $)",
+   "category": "fa",
+   "section": "Value & Contracts",
+   "aliases": [
+    "xM$",
+    "xM",
+    "Expected Market $",
+    "expected market dollars"
+   ],
+   "priority": 58,
+   "definition": "What the free-agent market would pay a player this winter: average annual value, years and the total guarantee, each with a P10 to P90 band. A player who is not a free agent is priced as if he were one this winter and the figure is labelled counterfactual.",
+   "methodology": "xM$ is the model behind the /fa/ predicted contract (registry row fa_market, verdict validated on signed free agents), so a free agent's xM$ equals his predicted contract. It is a positive model fitted on real signings and keeps the market's own biases; it measures what the market pays, not what a player is worth. A 40-man player is priced on his projected WAR path and a board prospect on his eFV path, both clipped to the range the model was fitted on. A row marked outside range was clipped and reads as an approximation. The registry verdict covers signed free agents only: counterfactual rows carry no accuracy claim. The gate for a dedicated xM$ model (docs/xm/XM_GATE.md) stopped before its holdout read, so no verdict specific to xM$ exists.",
+   "formula": "xM$ = AAV x years = total guarantee (NPV basis, deferrals adjusted)\ntwo stages: log years, then log NPV guarantee given years, from projected WAR path, age, position and the winter's market $/WAR\nband: P10 and P90 of the model's residuals, on AAV, years and total",
+   "example": "A 2B projected at $8.4M AAV for 2 years reads xM$ $8.4M x 2 yrs = $16.9M, with an AAV band of $2.2M to $23.3M.",
+   "caveat": "A counterfactual price for anyone under contract or in the minors. No club offers it and no contract exists. It is shown beside Fair $ and never subtracted from it.",
+   "seeAlso": [
+    "fair_dollars",
+    "rational_value",
+    "deal_plus",
+    "m_aav",
+    "aav"
+   ],
+   "module": [
+    "fa",
+    "prospx",
+    "ledger",
+    "franchise",
+    "trademachine",
+    "mlbstats",
+    "arbitration",
+    "projections"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "fair_dollars",
+   "term": "Fair $",
+   "category": "fa",
+   "section": "Value & Contracts",
+   "aliases": [
+    "Fair $",
+    "fair dollars"
+   ],
+   "priority": 59,
+   "definition": "What a player's projected production is worth over the same term as his xM$: the NPV of the projected WAR path, priced through the tier curve at the winter's market $/WAR and discounted at 7%. It is the rational value of the xM$ term.",
+   "methodology": "Fair $ is rational value (registry row fa_rational_value, verdict provisional) read at xM$'s years. It does not read the market model, so the two numbers are independent. They sit side by side and there is no gap column: the difference of two models is not a measured overpay or underpay. Prospects and players under contract are priced as if free agents this winter, so their Fair $ is counterfactual too.",
+   "formula": "Fair $ = SUM over the xM$ years of tiered_war_value(WAR_t) x winter level x (1 + infl)^t / (1 + r)^t\nr = the platform's 7% net discount rate",
+   "example": "A path of 3.0, 2.6 and 2.2 WAR at a $16.9M winter level prices each season through the convex tier curve and discounts the three; the sum is the Fair $ for a three-year term.",
+   "seeAlso": [
+    "xm_dollars",
+    "rational_value",
+    "contract_surplus",
+    "winter_dpw"
+   ],
+   "module": [
+    "fa",
+    "prospx",
+    "ledger",
+    "franchise",
+    "trademachine",
+    "mlbstats",
+    "arbitration",
+    "projections"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
    "id": "p10_p90_bands",
    "term": "P10-P90 bands",
    "category": "fa",
