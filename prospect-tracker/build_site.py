@@ -11401,7 +11401,39 @@ def _clean_line(d: dict) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# xM$ / Fair $ surfaces (task XM_3_SURFACES_DARK). The one script that draws
+# them, assets/xm-surfaces.js, is named by a page only while
+# xm_export.XM_DISPLAY_ON is True; with the flag False xm_surfaces_inject()
+# returns the page it was given, so every page is byte for byte what it was.
+XM_SURFACE_PAGES = (
+    "prospx/index.html", "projections/index.html", "mlbstats/index.html", "fa/index.html",
+    "arbitration/index.html", "trademachine/index.html", "ledger/index.html", "franchise/index.html",
+)
+_XM_TAG_RE = re.compile(r'<script src="/assets/xm-surfaces\.js[^"]*" defer></script>')
+
+
+def xm_display_on() -> bool:
+    import xm_export
+    return bool(xm_export.XM_DISPLAY_ON)
+
+
+def xm_surfaces_inject(rel: str, html: str) -> str:
+    """Add (flag on) or remove (flag off) the xm-surfaces script tag on a page
+    in XM_SURFACE_PAGES, just before </body>; every other page, and every page
+    with the flag off and no tag, comes back unchanged."""
+    if rel not in XM_SURFACE_PAGES:
+        return html
+    if not xm_display_on():
+        return _XM_TAG_RE.sub("", html)
+    tag = '<script src="/assets/xm-surfaces.js?v=' + _asset_ver("assets/xm-surfaces.js") + '" defer></script>'
+    if _XM_TAG_RE.search(html):
+        return _XM_TAG_RE.sub(lambda m: tag, html, count=1)
+    i = html.rfind("</body>")
+    return html[:i] + tag + html[i:] if i >= 0 else html + tag
+
+
 def _write(rel: str, content: str) -> None:
+    content = xm_surfaces_inject(rel, content)
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
@@ -11600,7 +11632,7 @@ def restamp_hand_authored_pages() -> None:
             print(f"  skipped {rel} (absent)")
             continue
         original = path.read_text(encoding="utf-8")
-        stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(original)))
+        stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(xm_surfaces_inject(rel, original))))
         if rel.startswith("collegesavant/"):
             stamped = _restamp_cs(stamped, "collegesavant")
         if PIXEL_BRAND:
