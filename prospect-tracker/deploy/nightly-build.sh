@@ -109,16 +109,26 @@ if [ -f "$WEBROOT/index.html" ] && [ -n "$(find "$WEBROOT/index.html" -mtime +2 
   echo "!!! WEBROOT STALE: $WEBROOT/index.html is older than 48h - previous nightlies did not publish. Check this log's history for the first failure."
 fi
 
+# Publish-only mode (EEPHUS_SKIP_PIPELINE=1, docs/port/PORT_RUNBOOK.md): no
+# checkout, no pull, no pip and no pipeline run, so a freshly seeded box can
+# publish the tree it was given exactly as built; build_site.py, the test gate,
+# the heartbeat, the rsync, the strips and the precompress all run as usual.
+SKIP_PIPELINE="${EEPHUS_SKIP_PIPELINE:-}"
+
 # The pipeline (below) rewrites TRACKED artifacts (data/xfv.json et al.) in place, so
 # the tree is dirty when this run ends. Restore tracked files before pulling so the
 # fast-forward can't abort on a dirty tree. Untracked state we deliberately keep
 # (prospects.db, .cache/, data/pitch_plots/) is not touched by `checkout -- .`.
-git -C "$REPO" checkout -- .
-git -C "$REPO" pull --ff-only
+if [ "$SKIP_PIPELINE" != "1" ]; then
+  git -C "$REPO" checkout -- .
+  git -C "$REPO" pull --ff-only
+fi
 
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
-pip install -q -r requirements.txt
+if [ "$SKIP_PIPELINE" != "1" ]; then
+  pip install -q -r requirements.txt
+fi
 
 # A missing DB is NOT a normal cold start: prospects.db carries the 2021+
 # snapshot history (grade lists, tool grades, Arkmetric/metric snapshots,
@@ -163,7 +173,10 @@ if [ "$DISK_MIN_GB" != "0" ]; then
   fi
 fi
 
-if [ "$(date +%d)" = "01" ] || [ "${EEPHUS_FULL:-}" = "1" ] || [ ! -f prospects.db ]; then
+if [ "$SKIP_PIPELINE" = "1" ]; then
+  echo "--- publish-only: pipeline skipped (EEPHUS_SKIP_PIPELINE=1)"
+  MODE=publish-only
+elif [ "$(date +%d)" = "01" ] || [ "${EEPHUS_FULL:-}" = "1" ] || [ ! -f prospects.db ]; then
   echo "--- FULL monthly pipeline"
   MODE=full
   python run_monthly.py
