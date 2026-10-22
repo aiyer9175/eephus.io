@@ -361,6 +361,29 @@ ARTIFACTS = (
         "note": "Carries no correlation against runs or wins.",
     },
     {
+        "file": "ewar_v3.json", "group": "mlb",
+        "title": "eWAR parts",
+        "what": ("Per player-season and side, the parts by which eWAR and eWAR realized depart "
+                 "from FanGraphs' published WAR (the ABS challenge part from 2026 in both; "
+                 "realized pitching from 2016 in eWAR realized only), with each season's "
+                 "identity checks and runs per win. A player-season not listed equals "
+                 "FanGraphs WAR."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ewar_v3.py",
+        "note": "Every part sums to zero per season and side; descriptive, no forward claim.",
+    },
+    {
+        "file": "swar_eval.json", "group": "mlb",
+        "title": "eWAR skill-part evaluation",
+        "what": ("The registered skill look's record for eWAR's candidate skill parts "
+                 "(batting, pitching, fielding and the positional ladder): its frame, "
+                 "parameters, cells, floors, the holdout block and the guard flags."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "",
+        "note": ("A filtered copy of the tracked record in docs/ebr-2026-09-30/; carries no "
+                 "correlation against club runs or wins."),
+    },
+    {
         "file": "ebr_milb.json", "group": "prospects",
         "title": "Level-relative eBR",
         "what": ("Per player, one row per minor-league level and season at 150 or more plate "
