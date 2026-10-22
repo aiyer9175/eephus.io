@@ -1185,11 +1185,12 @@ def _side_war_by_season() -> dict:
     Cached for the process: the three exporters each ask for it once.
 
     DISPLAY DOOR (owner answer EPOCH-Q4 "Keep eWAR v2 shown", 2026-09-30; fWAR
-    label epoch step D + U, 2026-10-03): the boards show eWAR v2, so the
-    provider is named explicitly and never follows war_source.DEFAULT_PROVIDER,
-    which is the training label (fWAR)."""
+    label epoch step D + U, 2026-10-03; owner answers EBR-Q5 and EW3-19, EBR_GATE.md
+    11.10.5): the boards show the displayed eWAR, war_source.DISPLAY_PROVIDER
+    (eWAR v3 once EWAR_V3_LIVE is on), and never follow
+    war_source.DEFAULT_PROVIDER, which is the training label (fWAR)."""
     import war_source
-    return war_source.side_war_by_season(provider="ewar_v2")
+    return war_source.side_war_by_season(provider=war_source.DISPLAY_PROVIDER)
 
 
 def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
@@ -1629,15 +1630,25 @@ def served_war_basis() -> dict:
     tools/war_rate_plus_lab.py stamps exactly this dict on both artifacts, so
     the lab and the join read the basis from one place.
 
+    Under provider ewar_v3 (EWAR_V3_LIVE, EBR_GATE.md 11.10.5) `ewar_generated_at`
+    is data/ewar_v3.json's generated_at, the build of that series.
+
     Since the fWAR label epoch (step D + U, 2026-10-03) `war_provider` is the
     DISPLAYED series, "ewar_v2", named here explicitly (owner answer EPOCH-Q4
     "Keep eWAR v2 shown"; orchestrator ruling EPOCH-Q4-IMPL R1a names this
     function). war_source.DEFAULT_PROVIDER is the training label (fWAR) and is
     deliberately not read: the WAR-rate columns, the 3-year artifacts and
     tools/war_rate_plus_lab.py all follow this value."""
-    prov = "ewar_v2"
+    import war_source
+    prov = war_source.DISPLAY_PROVIDER
     gen = None
-    if prov != "bwar":
+    if prov == "ewar_v3":
+        try:
+            import ewar_v3
+            gen = (ewar_v3.load() or {}).get("generated_at")
+        except Exception:   # noqa: BLE001 - absence is a reportable state
+            gen = None
+    elif prov != "bwar":
         try:
             import ewar
             gen = (ewar.load() or {}).get("generated_at")

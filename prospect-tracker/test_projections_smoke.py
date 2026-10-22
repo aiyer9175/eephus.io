@@ -559,7 +559,31 @@ def test_season_lines_carry_the_ewar_column_again():
 
 
 FG_WAR_TIP = ("FanGraphs' published WAR, as MLB's StatsAPI publishes it. "
-              "A reference only: the site's WAR is eWAR v2.")
+              "A reference only: the site's WAR is eWAR.")
+
+
+def test_ewar_v3_cards_carry_realized_v2_and_bwar_beside_ewar():
+    """EBR_GATE.md 11.10.5 (owner answers EW3-19 and EW3-20): once the displayed
+    eWAR is eWAR v3 the season lines print eWAR, eWAR realized, then eWAR v2,
+    FanGraphs WAR and bWAR as references; a card without war_real prints none of
+    the new columns."""
+    global DETAIL
+    base = DETAIL
+    try:
+        d = json.loads(base)
+        for r in d["players"]["ace_arm"]["career"]:
+            r["war_real"] = 5.8
+            r["war_ewar2"] = 6.3
+        DETAIL = json.dumps(d)
+        lines = _section(_render("#player=ace_arm"), "pitching-lines")
+        order = [lines.index(s) for s in ('<span data-gl="ewar">eWAR</span>', "eWAR realized</",
+                                          ">eWAR v2</th>", ">FanGraphs WAR</th>", ">bWAR</th>")]
+        assert order == sorted(order), order
+        assert '<td>6.1</td><td class="mlbp-realwar">5.8</td><td class="mlbp-fgwar">6.3</td>' in lines
+    finally:
+        DETAIL = base
+    plain = _section(_render("#player=ace_arm"), "pitching-lines")
+    assert "eWAR realized" not in plain and ">bWAR</th>" not in plain and ">eWAR v2</th>" not in plain
 
 
 def test_fangraphs_war_rides_as_a_reference_column_beside_ewar():

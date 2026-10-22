@@ -156,7 +156,7 @@ MGMT_ADMISSION = {"weight": 0.05, "taken_from": "results"}
 
 #: Display names of the war_source provider ids the served boards stamp.
 PROVIDER_LABEL = {"ewar_v2": "eWAR v2", "fwar": "fWAR", "bwar": "bWAR",
-                  "ewar_merged": "eWAR (merged)"}
+                  "ewar_merged": "eWAR (merged)", "ewar_v3": "eWAR"}
 
 #: Key names the writer refuses anywhere in the payload (fscore.md 2.12 item 9).
 FORBIDDEN_KEYS = {"revenue", "revenues", "valuation", "valuations", "decision_quality",

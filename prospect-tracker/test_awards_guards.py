@@ -618,7 +618,7 @@ def test_awards_core_never_reads_the_training_default():
         A.league_split({"bat": [], "pit": []}, season=2026, war_provider=None)
     with pytest.raises(ValueError):
         A.war_unit_label("")
-    assert A.war_unit_label("ewar_v2") == "eWAR v2" and A.war_unit_label("ewar_v3") == "eWAR v3"
+    assert A.war_unit_label("ewar_v2") == "eWAR v2" and A.war_unit_label("ewar_v3") == "eWAR"
 
 
 def test_the_flip_serves_awards_in_one_commit():

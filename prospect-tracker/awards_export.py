@@ -239,7 +239,7 @@ def _display_provider() -> str:
 # --- small helpers -----------------------------------------------------------------
 
 _KEEP_COLS = ("name_common", "age", "mlb_ID", "year_ID", "team_ID", "stint_ID", "lg_ID",
-              "PA", "IPouts", "WAR")
+              "PA", "IPouts", "WAR", "WAR_realized")
 
 
 def _season_records(frame, seasons: set) -> dict:
@@ -1254,7 +1254,7 @@ def _credits(ctx: _Ctx, current: bool, copyright_: str | None) -> list:
     shows = ["mlb", "bref", "fangraphs", "eephus"]
     if current:
         shows.append("savant")
-    return A.credit_lines(shows, mlb_copyright=copyright_)
+    return A.credit_lines(shows, mlb_copyright=copyright_, war_provider=ctx.provider)
 
 
 def _seasons_index(ctx: _Ctx, built: dict, frozen_seasons: set) -> list:

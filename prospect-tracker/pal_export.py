@@ -136,6 +136,9 @@ _WAR_SERIES = {
                 "re-priced on FIP within role (fielding unchanged pending SDR; "
                 "position players match bWAR except in seasons they also pitched)"),
     "ewar_merged": "eWAR merged (declared, not servable)",
+    "fwar": "fWAR: FanGraphs' published WAR from the frozen vintage, pitchers priced on FIP",
+    "ewar_v3": ("eWAR: FanGraphs' published WAR from the frozen vintage plus the site's named "
+                "departures (the ABS challenge part from 2026)"),
 }
 
 #: The provider load_bref_pitcher_war() actually READ in this process. None
@@ -293,8 +296,8 @@ def load_bref_pitcher_war() -> dict:
         # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the history's WAR
         # column is the displayed series, eWAR v2, named explicitly (owner answer
         # EPOCH-Q4); war_source.DEFAULT_PROVIDER is the training label (fWAR).
-        provider = "ewar_v2"
-        df = war_source.stint_frame("pit", provider="ewar_v2")
+        provider = war_source.DISPLAY_PROVIDER
+        df = war_source.stint_frame("pit", provider=provider)
     except Exception as e:  # noqa: BLE001
         _log.warning("bref pitcher WAR unavailable: %s", e)
         return {}
@@ -541,7 +544,7 @@ def _war_basis(war_by_year: dict, stamped: str) -> dict:
     return {
         "provider": provider,
         "series": _WAR_SERIES.get(provider),
-        "source": "war_source.stint_frame('pit', provider='ewar_v2'), the displayed WAR (owner answer EPOCH-Q4)",
+        "source": f"war_source.stint_frame('pit', provider='{_WAR_PROVIDER or 'ewar_v2'}'), the displayed WAR",
         "stamped": stamped,
         "n_seasons": len(war_by_year),
         "available": bool(war_by_year),

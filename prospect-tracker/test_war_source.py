@@ -319,8 +319,8 @@ def test_fwar_is_the_default_provider_everywhere():
     every display door (test_epoch_display_doors.py). 'bwar' stays first in
     PROVIDERS because it is the input frame."""
     assert war_source.DEFAULT_PROVIDER == "fwar"
-    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
-    assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged", "fwar")
+    assert war_source.DISPLAY_PROVIDER == ("ewar_v3" if war_source.EWAR_V3_LIVE else "ewar_v2")
+    assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged", "fwar", "ewar_v3")
     for fn in _PUBLIC_FNS:
         sig = inspect.signature(fn)
         assert sig.parameters["provider"].default == "fwar", fn.__name__

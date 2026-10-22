@@ -249,9 +249,10 @@ def _stint_frame(side: str):
         import war_source
         try:
             # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the Earned board
-            # shows eWAR v2, named explicitly (owner answer EPOCH-Q4), never the
-            # training label war_source.DEFAULT_PROVIDER now serves.
-            _FRAME_CACHE[side] = (war_source.stint_frame(side, provider="ewar_v2"), None)
+            # shows the displayed eWAR, war_source.DISPLAY_PROVIDER (eWAR v3 once
+            # EWAR_V3_LIVE is on, EBR_GATE.md 11.10.5), never the training label
+            # war_source.DEFAULT_PROVIDER serves.
+            _FRAME_CACHE[side] = (war_source.stint_frame(side, provider=war_source.DISPLAY_PROVIDER), None)
         except Exception as e:   # noqa: BLE001 - the caller decides what a failure means
             _FRAME_CACHE[side] = (None, e)
     df, err = _FRAME_CACHE[side]

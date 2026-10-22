@@ -256,8 +256,9 @@ def test_the_war_map_source_names_the_displayed_basis_explicitly():
     assert '"source": "bbref"' not in src
     assert '"source": war_source.DEFAULT_PROVIDER' not in src
     body = src.split("def _resolve_signed_via_war_daily", 1)[1].split("\ndef ", 1)[0]
-    assert 'war_source.stint_frame(side, provider="ewar_v2")' in body
-    assert '"source": "ewar_v2"' in body
+    # EBR_GATE.md 11.10.5: the displayed eWAR is war_source.DISPLAY_PROVIDER
+    assert 'war_source.stint_frame(side, provider=war_source.DISPLAY_PROVIDER)' in body
+    assert '"source": war_source.DISPLAY_PROVIDER' in body
 
 
 def test_served_archive_labels_follow_its_war_basis():

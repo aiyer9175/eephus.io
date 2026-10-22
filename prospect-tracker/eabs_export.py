@@ -22,7 +22,10 @@ part 4 invariant.
 
 DESCRIPTIVE. What a player's challenges were worth this season. No year-to-year or
 forward statistic is computed here (tools/eabs_stability.py alone does that, once),
-nothing here enters a WAR, a label, a fitted model, a price or a betting input.
+nothing here enters a label, a fitted model, a price or a betting input. eWAR v3
+carries a challenge part built from this frame (owner override EW3-32,
+docs/ebr-2026-09-30/EBR_GATE.md 11.10.2, tools/build_ewar_v3.py); the board says
+so through the payload's ewar_part block while war_source.EWAR_V3_LIVE is on.
 
 Run:  python eabs_export.py
 """
@@ -168,6 +171,24 @@ def stability_block(path: Path = STABILITY) -> dict | None:
             "mde95": {k: _r((v.get("real") or {}).get("mde95"), 4) for k, v in prim.items()}}
 
 
+def ewar_part_block() -> dict:
+    """{"in_ewar": bool, ...}: whether the displayed eWAR carries the challenge part
+    (EBR_GATE.md 11.10.2), read from war_source.EWAR_V3_LIVE and data/ewar_v3.json's
+    meta, never typed on the page."""
+    try:
+        import war_source
+        if not war_source.EWAR_V3_LIVE:
+            return {"in_ewar": False}
+        import ewar_v3
+        part = ((ewar_v3.meta() or {}).get("parts") or {}).get("eabs")
+    except Exception:   # noqa: BLE001 - absence is a reportable state
+        return {"in_ewar": False}
+    if not part:
+        return {"in_ewar": False}
+    return {"in_ewar": True, "first_season": part.get("first_season"), "label": part.get("label"),
+            "series": part.get("series"), "registration": "docs/ebr-2026-09-30/EBR_GATE.md 11.10.2"}
+
+
 def build(ledger_path: Path = LEDGER, count_value_path: Path = COUNT_VALUE,
           plays_path: Path = CORPUS_PLAYS, out_path: Path | None = None, *, write: bool = True,
           halves: dict | None = None, stability_path: Path = STABILITY) -> dict:
@@ -261,7 +282,8 @@ def build(ledger_path: Path = LEDGER, count_value_path: Path = COUNT_VALUE,
         "as_of": dates[-1] if dates else None,
         "frame": ("MLB 2026 regular season zone challenges from the ABS challenge ledger "
                   "(data/_labs/abs_ledger/mlb_2026.json), valued on RE288 (data/count_value.json)"),
-        "descriptive": "what a player's challenges were worth this season; not a forecast, not part of any WAR",
+        "descriptive": "what a player's challenges were worth this season; not a forecast",
+        "ewar_part": ewar_part_block(),
         "values": {"c0": _r(c0, 4), "k_opt": E.K_OPT, "club_games": club_games,
                    "option_points": model.n_points, "games_without_plays": len(games_without_plays),
                    "margin_buckets": list(E.MARGIN_BUCKETS),

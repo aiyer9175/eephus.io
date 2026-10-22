@@ -17,7 +17,12 @@ keeps eWAR v2 and its label consumer gets its own fwar path.
 
 This file pins each door BY SOURCE, so a refactor that quietly drops a
 provider= argument (and lets a display fall through to the label default)
-fails here with the door's name. It also pins the fingerprint's `label=` term
+fails here with the door's name.
+
+THE eWAR v3 FLIP (owner answers EBR-Q5 and EW3-19; docs/ebr-2026-09-30/EBR_GATE.md
+11.10.5): every display door reads war_source.DISPLAY_PROVIDER, which is eWAR v3
+while war_source.EWAR_V3_LIVE is on and eWAR v2 otherwise. F-DEF's input file
+reads only Baseball-Reference's decomposition columns and stays on ewar_v2. It also pins the fingerprint's `label=` term
 to the frozen vintage's id, which is what the gate's part 7 row D + U and part
 8 name as the training label build.
 """
@@ -44,10 +49,11 @@ def _file(rel: str) -> str:
 # --------------------------------------------------------------------------- #
 # the two providers
 # --------------------------------------------------------------------------- #
-def test_the_label_default_is_fwar_and_the_display_provider_is_ewar_v2():
+def test_the_label_default_is_fwar_and_the_display_provider_follows_the_v3_flag():
     import war_source
     assert war_source.DEFAULT_PROVIDER == "fwar"
-    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
+    assert war_source.DISPLAY_PROVIDER == ("ewar_v3" if war_source.EWAR_V3_LIVE else "ewar_v2")
+    assert "ewar_v3" in war_source.PROVIDERS and war_source.DEFAULT_PROVIDER != "ewar_v3"
 
 
 def test_the_label_term_names_the_frozen_vintage_build():
@@ -72,59 +78,78 @@ def test_the_label_term_names_the_frozen_vintage_build():
 # --------------------------------------------------------------------------- #
 # D1 and D2: every display door names eWAR v2
 # --------------------------------------------------------------------------- #
-def test_the_mlbstats_boards_side_war_reads_ewar_v2_by_name():
+DP = "provider=war_source.DISPLAY_PROVIDER"
+
+
+def test_the_mlbstats_boards_side_war_reads_the_display_provider():
     import bullpen_export as be
-    assert 'war_source.side_war_by_season(provider="ewar_v2")' in _src(be._side_war_by_season)
+    import war_source
+    assert f"war_source.side_war_by_season({DP})" in _src(be._side_war_by_season)
     basis = be.served_war_basis()
-    assert basis["war_provider"] == "ewar_v2"
+    assert basis["war_provider"] == war_source.DISPLAY_PROVIDER
     body = _src(be.served_war_basis).split('"""', 2)[2]
     assert "DEFAULT_PROVIDER" not in body, "served_war_basis must not follow the label default"
-    assert be._served_war_provider() == "ewar_v2"
+    assert be._served_war_provider() == war_source.DISPLAY_PROVIDER
 
 
-def test_the_player_pages_served_war_reads_ewar_v2_by_name():
+def test_the_player_pages_served_war_reads_the_display_provider():
     import mlb_player_export as mpe
     body = _src(mpe._war_maps)
-    assert 'war_source.side_war_by_season(provider="ewar_v2")' in body
+    assert f"war_source.side_war_by_season({DP})" in body
     assert 'war_source.side_war_by_season(provider="bwar")' in body   # the reference read
     assert "DEFAULT_PROVIDER" not in body.split('"""', 2)[2]
+    refs = _src(mpe._war_ref_maps)
+    assert '"provider": "ewar_v3", "series": "realized"' in refs and '"provider": "ewar_v2"' in refs
 
 
-def test_the_pal_history_war_reads_ewar_v2_by_name():
+def test_the_pal_history_war_reads_the_display_provider():
     src = _file("pal_export.py")
-    assert 'war_source.stint_frame("pit", provider="ewar_v2")' in src
-    assert 'provider = "ewar_v2"' in src
-    assert "stint_frame('pit', provider='ewar_v2')" in src   # the served stamp names it too
+    assert "provider = war_source.DISPLAY_PROVIDER" in src
+    assert 'war_source.stint_frame("pit", provider=provider)' in src
+    assert "stint_frame('pit', provider='{_WAR_PROVIDER" in src   # the served stamp names it too
 
 
-def test_the_earned_board_frames_read_ewar_v2_by_name():
+def test_the_earned_board_frames_read_the_display_provider():
     import war_board_export as wbe
-    assert 'war_source.stint_frame(side, provider="ewar_v2")' in _src(wbe._stint_frame)
+    assert f"war_source.stint_frame(side, {DP})" in _src(wbe._stint_frame)
 
 
-def test_the_trade_lookup_reads_ewar_v2_by_name():
+def test_the_trade_lookup_reads_the_display_provider():
     src = _file("mlb_trade_lookup.py")
-    assert 'provider="ewar_v2"' in src
+    assert DP in src
     assert "war_source.condensed_frame(" in src
 
 
-def test_f_def_input_file_reads_ewar_v2_by_name():
+def test_f_def_input_file_stays_on_ewar_v2_by_name():
+    # decomposition columns only, an input to a Franchise grade (EBR_GATE.md 11.10.5)
     src = _file("tools/build_def_history.py")
     assert 'war_source.run_value_frame("bat", provider="ewar_v2")' in src
 
 
-def test_the_identity_helpers_read_ewar_v2_by_name():
+def test_the_identity_helpers_read_the_display_provider():
     import fa_ident
     import proj_export
-    assert 'war_source.stint_frame(side, provider="ewar_v2")' in _src(fa_ident.war_daily_index)
-    assert 'war_source.stint_frame(side, provider="ewar_v2")' in _src(proj_export._display_names)
+    assert f"war_source.stint_frame(side, {DP})" in _src(fa_ident.war_daily_index)
+    assert f"war_source.stint_frame(side, {DP})" in _src(proj_export._display_names)
 
 
-def test_the_fa_archive_frames_read_ewar_v2_by_name():
+def test_the_fa_archive_frames_read_the_display_provider():
     import fa_pipeline
     body = _src(fa_pipeline._resolve_signed_via_war_daily)
-    assert 'war_source.stint_frame(side, provider="ewar_v2")' in body
-    assert '"source": "ewar_v2"' in body
+    assert f"war_source.stint_frame(side, {DP})" in body
+    assert '"source": war_source.DISPLAY_PROVIDER' in body
+
+
+def test_no_display_door_names_ewar_v2_as_its_provider():
+    """Every door above reads DISPLAY_PROVIDER; only F-DEF's input names ewar_v2
+    (and the player pages' eWAR v2 reference column, which is not the served WAR)."""
+    for rel in ("bullpen_export.py", "pal_export.py", "war_board_export.py", "mlb_trade_lookup.py",
+                "fa_ident.py", "proj_export.py", "fa_pipeline.py", "overseas_export.py"):
+        src = _file(rel)
+        assert 'provider="ewar_v2")' not in src, rel
+        assert 'row_on_provider(cw, "ewar_v2")' not in src, rel
+    import mlb_player_export as mpe
+    assert 'provider="ewar_v2")' not in _src(mpe._war_maps)
 
 
 def test_the_hall_of_fame_line_stays_pinned_to_bwar():
@@ -144,7 +169,7 @@ def test_the_ewar_nightly_prices_on_the_bwar_input_frames():
 def test_the_timeseries_career_war_block_is_the_displayed_series():
     import storage
     body = _src(storage._served_career_war)
-    assert 'war_source.row_on_provider(row, "ewar_v2")' in body
+    assert "war_source.row_on_provider(row, war_source.DISPLAY_PROVIDER)" in body
     export_src = _src(storage.export_timeseries_json)
     assert '"career_war": _served_career_war(' in export_src
     assert '"career_war_label": _label_career_war(' in export_src
@@ -184,9 +209,9 @@ def test_the_label_consumers_of_the_payload_read_career_war_label():
     assert 'p.get("career_war_label")' in _src(source_backtest._outcome)
 
 
-def test_overseas_signings_show_ewar_v2_and_grade_on_the_label():
+def test_overseas_signings_show_the_displayed_ewar_and_grade_on_the_label():
     src = _file("overseas_export.py")
-    assert '_ws.row_on_provider(cw, "ewar_v2")' in src
+    assert "_ws.row_on_provider(cw, _ws.DISPLAY_PROVIDER)" in src
     assert '"career_war_label": cw' in src
     assert 'entry.get("career_war_label") or cw' in src
 

@@ -177,6 +177,7 @@ def test_does_not_claim_and_credits_are_clean():
 
 
 # --- the provider case: frozen on eWAR v2, live on eWAR v3 -----------------------------------
+# eWAR v3 prints as plain "eWAR" (owner answer EW3-19; EBR_GATE.md 11.8 and 11.10.5).
 
 def test_every_war_unit_label_names_its_blocks_provider(ballots):
     frozen = {award: A.rules_block(award, 2026, "ewar_v2") for award in A.AWARDS}
@@ -184,30 +185,30 @@ def test_every_war_unit_label_names_its_blocks_provider(ballots):
     for award in ("MVP", "CY", "ROY"):
         f, l = frozen[award], live[award]
         assert f["unit"] == "eWAR v2" and f["war_provider"] == "ewar_v2"
-        assert l["unit"] == "eWAR v3" and l["war_provider"] == "ewar_v3"
+        assert l["unit"] == "eWAR" and l["war_provider"] == "ewar_v3"
         for key in ("label", "two_way_label"):
             if f[key] is None or (award == "CY" and key == "two_way_label"):
                 continue        # 'Pitching side only.' prints no unit
             assert "eWAR v2" in f[key] and "eWAR v3" not in f[key], (award, key)
-            assert "eWAR v3" in l[key] and "eWAR v2" not in l[key], (award, key)
+            assert "eWAR" in l[key] and "eWAR v2" not in l[key] and "eWAR v3" not in l[key], (award, key)
     assert frozen["MOY"]["unit"] == "wins" and "eWAR v2" in frozen["MOY"]["label"]
-    assert "eWAR v3" in live["MOY"]["label"]
-    assert A.drift_unit_label("ewar_v3") == "Now, eWAR v3"
+    assert "eWAR" in live["MOY"]["label"] and "eWAR v" not in live["MOY"]["label"]
+    assert A.drift_unit_label("ewar_v3") == "Now, eWAR"
     assert A.drift_unit_label("ewar_v2") == "Now, eWAR v2"
     line5 = A.does_not_claim_lines("ewar_v2", frozen_at="2026-09-28", now_provider="ewar_v3")[4]
-    assert line5 == "The selection reads eWAR v2, as frozen 2026-09-28; Now values read eWAR v3."
-    assert A.does_not_claim_lines("ewar_v3")[4] == "The selection reads eWAR v3 on today's files."
+    assert line5 == "The selection reads eWAR v2, as frozen 2026-09-28; Now values read eWAR."
+    assert A.does_not_claim_lines("ewar_v3")[4] == "The selection reads eWAR on today's files."
     assert A.does_not_claim_lines("ewar_v2", frozen_at="2026-09-28")[4] == (
         "The selection reads eWAR v2, as frozen 2026-09-28.")
     top = ballots[("MVP", "AL")]["top"]
     assert A.lead_sentence("MVP", top, "ewar_v2").endswith(" eWAR v2.")
-    assert A.lead_sentence("MVP", top, "ewar_v3").endswith(" eWAR v3.")
+    assert A.lead_sentence("MVP", top, "ewar_v3").endswith(" eWAR.")
     skubal = next(r for r in ballots[("CY", "AL")]["top"] if r.get("share"))
-    assert A.split_label(skubal, "ewar_v3").count("eWAR v3") == 2
+    assert A.split_label(skubal, "ewar_v3").count("eWAR") == 2 and "eWAR v" not in A.split_label(skubal, "ewar_v3")
     nrow = [{"mlbam": 1, "name": "A", "club_code": "BOS", "war_realized": 1.0, "war_next": 2.0,
              "pa": 600, "ip": 0}]
     live_next = A.next_rise(nrow, 2026, bundle_provider="ewar_v3", realized_provider="ewar_v3")
-    assert live_next["war_provider"] == "ewar_v3" and "eWAR v3" in live_next["definition"]
+    assert live_next["war_provider"] == "ewar_v3" and "eWAR" in live_next["definition"]
     assert "eWAR v2" not in json.dumps(live_next)
     prow = [{"mlbam": 1, "name": "A", "club_code": "BOS", "player_key": "a", "debut_season": 2017,
              "efv_at_debut": 40.0, "war": 4.0, "pa": 600, "ip": 0}]

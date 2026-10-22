@@ -37,7 +37,7 @@ DETAIL = ROOT / "data" / "mlb_player_detail.json"
 NOTE = ("war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a "
         "reference beside the displayed eWAR v2; absent means no published value")
 TIP = ("FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: "
-       "the site's WAR is eWAR v2.")
+       "the site's WAR is eWAR.")
 
 # StatsAPI season lines for the fixture players (milb_history.player_index shape).
 _LINES = {
@@ -117,10 +117,10 @@ def test_a_missing_vintage_drops_the_reference_not_the_card(monkeypatch):
     assert mpe._fwar_reference_map() == {}
 
 
-def test_the_served_war_door_is_still_ewar_v2_by_name():
+def test_the_served_war_door_reads_the_display_provider():
     import inspect
     body = inspect.getsource(mpe._war_maps)
-    assert 'war_source.side_war_by_season(provider="ewar_v2")' in body
+    assert 'war_source.side_war_by_season(provider=war_source.DISPLAY_PROVIDER)' in body
     ref = inspect.getsource(mpe._fwar_reference_map)
     assert 'side_war_by_season(provider="fwar")' in ref
     assert "fwar_vintage.side_targets(" in ref

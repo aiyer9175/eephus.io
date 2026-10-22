@@ -463,6 +463,8 @@
     if (num(rows[0].score_display) >= 0) lead = Math.max(lead, lit[0]);
     return { lit: lit, neg: neg, lead: lead };
   }
+  var REAL_TIP = "eWAR realized: the same frame as eWAR, with pitchers priced on the runs they allowed, " +
+    "adjusted for park, defense and inherited runners. Printed beside the score; the ballot ranks on eWAR.";
   function ladder(doc, A, LG, b, rule) {
     var top = b.top.slice(0, 3), pl = places(b.top);
     var unit = num(rule.lamp_unit) || 1, d = rule.decimals == null ? 1 : rule.decimals;
@@ -496,6 +498,12 @@
       if (dr && dr.score_now_display != null) {
         h += '<span class="aw-drift" title="' + esc(dr.tooltip || "") + '">' + esc(dr.unit_label) + " " +
           esc(fmt(dr.score_now_display, d)) + "</span>";
+      }
+      // eWAR realized beside the score (owner EW3-20): the same rule on the realized
+      // series, printed only when the payload carries it; it never ranks a row.
+      if (r.realized_display != null && A !== "MOY") {
+        h += '<span class="aw-drift aw-real" title="' + esc(REAL_TIP) + '">eWAR realized ' +
+          esc(fmt(r.realized_display, d)) + "</span>";
       }
       h += '</div><span class="aw-val" aria-hidden="true"><span class="aw-num ' + ink(v, fam) + '">' + esc(val) +
         '</span> <span class="aw-unit">' + esc(rule.unit) + "</span></span>" + lamps(z, L, g, i, v, fill, zero, width) + "</li>";

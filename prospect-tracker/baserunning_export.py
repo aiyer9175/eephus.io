@@ -593,6 +593,16 @@ def _ewar_baserunning_note() -> str:
             return ("Its baserunning is Baseball-Reference's (runs_br and runs_dp carried inside "
                     "bWAR), a different frame from eBR and BsR.")
         return "The frame behind eWAR's baserunning could not be read from data/ewar.json this run."
+    if prov == "ewar_v3":
+        # eWAR v3 (EBR_GATE.md 11.10): the sentence its artifact's meta carries
+        try:
+            import ewar_v3 as _v3
+            s = str((_v3.meta() or {}).get("baserunning_source") or "").strip()
+        except Exception:  # noqa: BLE001
+            s = ""
+        if s:
+            return s if (s[:1].isupper() and s.endswith(".")) else "Its baserunning comes from " + s + "."
+        return "The frame behind eWAR's baserunning could not be read from data/ewar_v3.json this run."
     if prov == "fwar":
         return "Its baserunning is FanGraphs' published BsR, the column beside eBR here."
     if prov:
