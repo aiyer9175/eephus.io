@@ -53,7 +53,9 @@
 }
 .parks-app .pk-fac-fill { position: absolute; top: 0; bottom: 0; opacity: .85; }
 .parks-app .pk-hot { color: var(--accent-red); }
-.parks-app .pk-cold { color: var(--accent-cyan); }
+/* Cold cells read in the cyan reading ink (owner answer Q4, 2026-10-22): accent
+   cyan was 4.35:1 on the paper; --text-cyan aliases accent cyan in dark. */
+.parks-app .pk-cold { color: var(--text-cyan); }
 .parks-app .pk-flat { color: var(--text-secondary); }
 .parks-app .pk-fill-hot { background: var(--accent-red); }
 .parks-app .pk-fill-cold { background: var(--accent-cyan); }

@@ -341,6 +341,21 @@ def _isolate_game_intensity_capture(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _isolate_mlb_people_status(monkeypatch):
+    """No test reaches StatsAPI or writes .cache/mlb_people_status/status.json through the
+    projections retiree read (owner answer Q3): refresh reads the cache as it
+    stands and fetches nothing. A test of the fetcher calls its own saved copy of
+    the real function with a tmp path and a fake transport."""
+    try:
+        import mlb_people_status
+        monkeypatch.setattr(mlb_people_status, "refresh",
+                            lambda mlbams, **k: mlb_people_status.load(k.get("path")))
+    except Exception:                                     # noqa: BLE001
+        pass
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _isolate_starter_workload_capture(tmp_path_factory, monkeypatch):
     """No test writes the real starter-workload tally memo or scans a season of
     feeds through the schema-7 capture (the section "Starter workload: expected

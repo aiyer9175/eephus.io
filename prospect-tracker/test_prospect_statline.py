@@ -479,6 +479,24 @@ def test_display_flags_mirror_the_exporter_and_the_displays_name_no_stat():
     assert pj.count("statlineGroups(m).forEach") == 1
 
 
+def test_older_xwoba_panel_steps_aside_for_hitters_with_an_arrival_line():
+    # Owner answer TL18-Q1 (2026-10-22, 'Hide the older panel'): a hitter whose
+    # arrival line is served no longer shows 'Proj. first-MLB xwOBA'; pitchers and
+    # hitters with no arrival line keep the panel.
+    px = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    panel = px[px.index("function efvProxyPanel"):px.index("// PAL role-conversion cross-link")]
+    gate = 'if (side === "hit" && typeof _arrivalLineHides === "function" && _arrivalLineHides(p)) return "";'
+    assert gate in panel
+    # the gate runs before the label is chosen, and only on the hitter side
+    assert panel.index(gate) < panel.index('"Proj. first-MLB xwOBA"')
+    assert "_arrivalLineHides" not in panel.replace(gate, "")
+    helper = px[px.index("function _arrivalLineHides"):px.index("function statlineCard")]
+    assert "if (!_STATLINE_UI" in helper          # flag off: the old panel stays
+    assert "_slStatsFor(p).length > 0" in helper  # only a line that prints hides it
+    stats_for = px[px.index("function _slStatsFor"):px.index("function _arrivalLineHides")]
+    assert "Object.keys(meta).filter(s => Array.isArray(r[s]))" in stats_for
+
+
 def test_receipt_spec_reads_the_eval_artifact_and_the_registry_row_names_it():
     js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
     assert "arrival_line: {" in js and '"/data/prospect_statline_eval.json"' in js

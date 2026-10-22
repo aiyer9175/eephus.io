@@ -1,19 +1,19 @@
 {
- "generated_at": "2026-10-21",
+ "generated_at": "2026-10-22",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 937.8,
-  "remainder_recenter_wins_per_team": 0.15,
-  "roster_war_sum_y1": 937.8,
+  "roster_war_sum": 933.8,
+  "remainder_recenter_wins_per_team": 0.34,
+  "roster_war_sum_y1": 933.8,
   "league_war_benchmark": 1000,
   "benchmark_basis": "a league WAR pool of 1000 per season: bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily), and the projections' training label since the 2026-10 epoch, published fWAR, fixes its own league pool at 1000 per season by construction (57/43 split)",
-  "raw_wins_sum": 2369.1,
-  "raw_wins_sum_y1": 2369.1,
+  "raw_wins_sum": 2365.1,
+  "raw_wins_sum_y1": 2365.1,
   "target_wins_sum": 2430,
   "depth_pool": {
-   "n_depth_players": 437,
-   "depth_war_y1": 56.4,
-   "depth_war_5y": 200.6,
+   "n_depth_players": 415,
+   "depth_war_y1": 54.9,
+   "depth_war_5y": 199.1,
    "n_unassigned": 0,
    "war_unassigned_y1": 0.0,
    "war_unassigned_5y": 0.0
@@ -21,14 +21,14 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 937.8,
+    "roster_war_sum": 933.8,
     "wins_sum": 2429.8,
-    "remainder_recenter_wins_per_team": 0.15
+    "remainder_recenter_wins_per_team": 0.34
    },
    {
     "season": 2028,
-    "roster_war_sum": 648.2,
-    "wins_sum": 2430.1,
+    "roster_war_sum": 648.0,
+    "wins_sum": 2430.3,
     "remainder_recenter_wins_per_team": 10.24
    },
    {
@@ -46,7 +46,7 @@
    {
     "season": 2031,
     "roster_war_sum": 307.2,
-    "wins_sum": 2430.0,
+    "wins_sum": 2430.1,
     "remainder_recenter_wins_per_team": 22.15
    }
   ],

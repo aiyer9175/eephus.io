@@ -10445,6 +10445,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
     contracts_by_key = dict(contracts_by_key or {})
+    # Q2 (owner answer 2026-10-22, 'Exclude for debuted'): a debuted player's
+    # consensus points voted only by a constant anchor (the FV 35 auto-discovery
+    # stamp) leave his series before anything below reads his latest grade, low
+    # or range. The debut test is the graduation cascade's own (a snapshot
+    # status, the MLB API debut date, or an outright), because a debut first
+    # known here never reached consensus.build_timeseries' copy of the rule.
+    import consensus as _consensus_q2
+    if _consensus_q2.DROP_DEBUTED_PLACEHOLDER_POINTS:
+        for _p_q2 in timeseries:
+            if (_p_q2.status == "debuted"
+                    or (roster_status.get(_p_q2.player_key) or {}).get("mlb_debut_date")
+                    or any((tx.get("kind") or "").lower() == "outrighted" and tx.get("date")
+                           for tx in (transactions_by_player.get(_p_q2.player_key) or []))):
+                _consensus_q2.strip_placeholder_points(_p_q2)
     source_events_by_key = load_source_events()
     player_news_by_key = load_player_news()
 
