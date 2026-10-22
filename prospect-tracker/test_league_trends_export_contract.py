@@ -13,7 +13,7 @@ covers_through and a game date not after generated_at, the coverage keys
 bannerHTML reads, false_per_day equal to the tail times the tests, every
 number in a sentence a field, the pitches per PA and starter innings cards
 holding no live-season value, no series_ref on the stolen-base card, and the
-60 KB raw budget. The FIXTURE half always runs on a synthetic frame
+100 KB raw and 15 KB gzip budgets. The FIXTURE half always runs on a synthetic frame
 (test_trend_frames' fixture games): the stale frame refuses and keeps the last
 good file, the off-season does not refuse, a missing eval artifact, a bar that
 differs from the artifact and club identity under the floor refuse, a failed
@@ -219,8 +219,10 @@ def test_own_cards_carry_no_series_ref(doc):
 
 
 def test_size_within_budget(doc):
+    import gzip
     raw = PAYLOAD.read_bytes()
-    assert len(raw) <= X.BUDGET_RAW == 60_000
+    assert len(raw) <= X.BUDGET_RAW == 100_000
+    assert len(gzip.compress(raw, mtime=0)) <= X.BUDGET_GZIP == 15_000
 
 
 # --------------------------------------------------------------------------- #
