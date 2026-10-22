@@ -617,8 +617,11 @@ def test_the_clock():
 # 8. no served path reads a workload column, by AST and by string
 # ---------------------------------------------------------------------------
 #: The modules allowed to name a workload column or symbol: the store and the builder,
-#: and betting_model's two DARK7 tuples (checked node by node below).
-ALLOWED = {"leaderboard_vintages.py", "betting_usage.py"}
+#: and betting_model's two DARK7 tuples (checked node by node below). The section's own
+#: stage-2 look tool (tools/betting_workload_gate.py, the one registered reader, which
+#: refuses before 2027-07-01 and is imported by no served module, pinned in
+#: test_betting_workload_gate.py) reads the columns too.
+ALLOWED = {"leaderboard_vintages.py", "betting_usage.py", "betting_workload_gate.py"}
 NAMES = COLUMNS + ("sw_basis",)
 SYMBOLS = ("SW_PITCHER_COLUMNS", "SW_TEAM_COLUMNS", "SW_BASIS_KEY", "SW_PRIORS",
            "build_schema7_workload_columns", "starter_workload_xouts_candidate",
