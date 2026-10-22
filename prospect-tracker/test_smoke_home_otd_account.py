@@ -104,7 +104,15 @@ def test_sho02_otd_body_title_and_phone_wrap(monkeypatch):
     built += B.build_this_day({"players": [g], "graduates": []})
     rows += [("builder", t, x) for t, x in _bodies(built)]
     assert sum(r[0] == "builder" for r in rows) >= 7
-    bad = [r for r in rows if r[1] != r[2]]
+    # An MLB ledger row (mlb_events.MLB_EVENTS_LIVE, test_mlb_events_rows) carries
+    # MLB's own transaction sentence in its title; it names the player the text
+    # leads with. Every other row's title is its text.
+    def _ok(title, text):
+        if title == text:
+            return True
+        names = [w.strip(",.") for w in text.split() if w[:1].isupper()]
+        return bool(title) and title.endswith(".") and bool(names) and all(n in title for n in names)
+    bad = [r for r in rows if not _ok(r[1], r[2])]
     css = (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
     phone = _rule(_media_block(css, "max-width: 480px"), r"(?<![\w-])\.otd-body")
     assert not bad and re.search(r"white-space:\s*normal", phone), (bad[:5], phone)

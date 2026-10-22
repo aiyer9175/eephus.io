@@ -268,7 +268,7 @@ def _history(monkeypatch, live: bool) -> str:
 
 def test_history_flag_off_is_the_prospect_page(monkeypatch):
     html = _history(monkeypatch, live=False)
-    h1 = re.search(r"<h1>(.*?)</h1>", html, re.S).group(1)
+    h1 = re.search(r'<h1(?: class="mh-px")?>(.*?)</h1>', html, re.S).group(1)
     assert "Today in Prospect History - " in h1 and "On This Day" not in h1
     assert "<title>Today in Prospect History - eephus.io</title>" in html
     assert "<h2>Signings &amp; free agency on this day</h2>" in html
@@ -279,7 +279,7 @@ def test_history_flag_off_is_the_prospect_page(monkeypatch):
 def test_history_flag_on_is_on_this_day_with_the_mlb_rows(monkeypatch):
     html = _history(monkeypatch, live=True)
     assert "<title>On This Day - eephus.io</title>" in html
-    assert re.search(r"</svg>On This Day - [A-Z][a-z]+ \d+</h1>", html)
+    assert re.search(r'</svg>(?:<span class="mh-title">)?On This Day - [A-Z][a-z]+ \d+(?:</span>)?</h1>', html)
     heads = re.findall(r'<div class="kicker"><h2>([^<]+)</h2>', html)
     assert heads == ["Trades", "Signings"], heads
     # The ledger's TR row rides the MLB deal (same transaction id) and the
@@ -414,7 +414,9 @@ def test_on_this_day_names_the_page_on_every_built_page():
         assert "Today in Prospect History" not in html, p.relative_to(ROOT)
         named += '<a href="/history/">On This Day</a>' in html
     assert named >= 20, named
-    assert '<div class="kicker"><h2>On This Day</h2>' in (ROOT / "index.html").read_text(encoding="utf-8")
+    # the kicker leads with the calendar glyph (PX-15) and keeps the page's name
+    assert re.search(r'<div class="kicker"><h2>(?:<span class="otd-cal"[^>]*>.*?</span>)?On This Day',
+                     (ROOT / "index.html").read_text(encoding="utf-8"))
     gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     ids = {e["id"] for e in gl["entries"]}
     assert {"mlb_transaction_log", "il_days_3y"} <= ids

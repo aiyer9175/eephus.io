@@ -113,7 +113,7 @@ def test_every_badge_key_resolves_to_a_sprite_symbol():
 
 def test_page_is_the_masthead(team_html):
     assert "<title>Masthead - eephus.io</title>" in team_html
-    assert re.search(r"<h1>.*Masthead</h1>", team_html)
+    assert re.search(r'<h1(?: class="mh-px")?>.*Masthead(?:</span>)?</h1>', team_html)
     assert "who builds, runs and writes the site" in team_html
     assert "Created by" not in team_html and "Developers - eephus.io" not in team_html
 

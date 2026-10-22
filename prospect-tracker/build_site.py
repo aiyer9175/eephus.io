@@ -1024,7 +1024,7 @@ MODULE_STAGE = {
     # word: the shell writes sigil plus word itself, as the legacy shells do.
     "ledger": ("β", "Beta. Descriptive ledger: no payroll forecast, no revenue"),
     # Franchises (2026-09-23). Slot 0 is the sigil, as the rows above.
-    "franchise": ("β", "Beta. Franchise Index is a descriptive rank, not a forecast"),
+    "franchise": ("β", "Beta. F-SCORE is a descriptive score, not a forecast"),
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
@@ -2811,7 +2811,7 @@ _NEWS_FILTER_JS = """<script>
       day.style.display=any?'':'none';
     });
     // PA7 (HOME_7): a family with no rows draws the pixel empty state
-    // (EephusState); a StatsAPI family on a stale log draws the unmeasured
+    // (EephusState); an MLB ledger family on a stale log draws the unmeasured
     // state the server wrote (#news-stale) instead.
     var stale=document.getElementById('news-stale');
     var staleOn=!!(stale&&(' '+(stale.getAttribute('data-fams')||'')+' ').indexOf(' '+f+' ')>=0);

@@ -386,6 +386,16 @@
             c.setAttribute("colspan", String(Number(c.getAttribute("colspan")) + 1));
             c.setAttribute("data-xm-cs", "1");
           }
+          // A detail row paints one pad per column past its colspan cell, so it
+          // keeps exactly the header's cell count (fa.js faDetailRow); the xM$
+          // column takes a pad of its own right after that cell.
+          var dt = tr.querySelector("td.fa-dt-cell");
+          if (dt && !tr.querySelector("td.fc-xm")) {
+            var pad = document.createElement("td");
+            pad.className = "fc-xm fa-dt-pad";
+            pad.setAttribute("aria-hidden", "true");
+            dt.parentNode.insertBefore(pad, dt.nextSibling);
+          }
           continue;
         }
         if (tr.querySelector("td.fc-xm")) continue;

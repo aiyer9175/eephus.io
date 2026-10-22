@@ -215,7 +215,8 @@ def test_hof_is_its_committed_bytes_except_stamps_and_the_flag_off_head_is_the_s
     assert _unstamped(B.build_hof()) == _unstamped(served)
     monkeypatch.setattr(A, "AWARDS_LIVE", False)
     built = B.build_hof()
-    assert "hof-modstrip" not in built and "<h1>" in built
+    # the plain h1, or PB-06's grid masthead under the committed PIXEL_BRAND
+    assert "hof-modstrip" not in built and re.search(r'<h1(?: class="mh-px")?>', built)
     assert '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">' in built
     head = B._hof_module_head("hof")
     assert "<h1>" in head and "Hall of Fame" in head and "<nav" not in head and "Awards / HoF" not in head
@@ -240,7 +241,8 @@ def test_the_served_pages_carry_the_rename():
     for key, page in pages.items():
         leaves = _LEAF.findall(page)
         assert leaves == [("/awards/", ' class="is-active"', "Awards / HoF")], (key, leaves)
-        assert re.search(r'<h1><svg class="ico" width="32"[^>]*>.*?</svg>Awards / HoF <span class="eephus-beta"',
+        assert re.search(r'<h1(?: class="mh-px")?><svg class="ico" width="32"[^>]*>.*?</svg>'
+                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)? <span class="eephus-beta"',
                          page), key
         nav = re.search(r'<nav class="mlbstats-sectionnav hof-modstrip" aria-label="Awards / HoF">(.*?)</nav>',
                         page, re.S)
@@ -269,7 +271,8 @@ def test_with_the_flag_true_the_strip_marks_the_current_page(monkeypatch, tmp_pa
         on = [a for a in links if 'aria-current="page"' in a]
         assert len(on) == 1 and f'href="{cur}"' in on[0] and "active" in on[0]
         assert any(f'href="{other}"' in a and "aria-current" not in a for a in links)
-        assert re.search(r"<h1><svg class=\"ico\" width=\"32\"[^>]*>.*?</svg>Awards / HoF <span class=\"eephus-beta\"", page)
+        assert re.search(r'<h1(?: class="mh-px")?><svg class="ico" width="32"[^>]*>.*?</svg>'
+                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)? <span class="eephus-beta"', page)
     assert "#i-aw-podium" in aw and "#i-hof" in aw
     row = re.search(r'<div class="mlbstats-tabs" role="tablist" aria-label="Hall of Fame sections">(.*?)</div>', hof)
     assert row, "the /hof/ section row moves to the underline tab row"
