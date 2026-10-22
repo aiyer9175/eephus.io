@@ -121,6 +121,17 @@
       --wire-trd-panel: #FFA94D;
       --wire-inj-panel: #FF7AC0;
       --upside-pink: #F4A6C8; /* v29 - soft pink (lightened from #FF1493): '+' upside chip + chart dot. Hot pink read too aggressive/"warning" at a glance. */
+      /* Reading inks for light-mode accent TEXT (owner answer Q4, 2026-10-22,
+         'Darken to 4.5:1'). As text on the paper the accents read 1.4 to 2.4:1;
+         each ink keeps its hue and reads 4.5:1 or better on the three paper fills
+         and on its own chip tint. Fills, borders and chart marks keep the accent.
+         The dark block aliases each ink back to its accent, so dark does not move.
+         test_light_accent_contrast.py pins the values. */
+      --upside-ink:    #BA175E; /* '+ upside' driver tag text */
+      --draft-r1-ink:  #855A0E; /* draft projected-round chip R1 (gold) */
+      --draft-r2-ink:  #5B616F; /* R2 (silver) */
+      --draft-r35-ink: #7C4E2B; /* R3 to R5 (bronze) */
+      --grade-ink-mix: 68%;     /* farm grade letters: the grade hue mixed with black */
       /* Polish v1.0 (B2) - promoted from inlined literals. Column-header cream
          reads on the navy/near-black header band in both themes (theme-agnostic,
          so :root only). Byline lilac is theme-specific (dark lifts it). */
@@ -378,6 +389,12 @@
       --wire-trd: #FF9D42;
       --wire-inj: #FF6EB4;
       --upside-pink: #F8B4D2; /* v29 - soft pink for dark theme '+' upside (lightened from #FF3DA0 to read as supportive, not warning) */
+      /* The light reading inks (Q4) alias their accents here: dark is unchanged. */
+      --upside-ink:    var(--upside-pink);
+      --draft-r1-ink:  #E8A020;
+      --draft-r2-ink:  #A8ADB8;
+      --draft-r35-ink: #C28250;
+      --grade-ink-mix: 100%;
       --spend-ifa: #F5A623; /* amber - IFA */
       --spend-draft: #E040A0; /* magenta - Draft (v7 - was cyan, conflicted with neon-cyan accent) */
 
@@ -4252,7 +4269,7 @@
        FV badges + the upside event dots on the FV history chart. */
     .driver-tag.is-upside {
       background: color-mix(in srgb, var(--upside-pink) 18%, transparent);
-      color: var(--upside-pink);
+      color: var(--upside-ink);
       border-color: var(--upside-pink);
     }
     /* v30.7 - Breakout driver chip ("★ breakout" on spotlight rows for
@@ -22433,7 +22450,7 @@ function renderInjured() {
         </div>
         <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || " - ")}</div>
-        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
+        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--text-gold)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
         <div style="text-align:center;">${efvBadgeHTML(p)}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
@@ -25324,10 +25341,10 @@ function _renderDraftCard(p) {
     const r = String(p.projected_round || "").toUpperCase();
     if (!r || r === " - ") return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)" };
     if (r === "1" || r === "1A" || r === "1B")
-      return { bg: "rgba(245, 200, 66, 0.18)",  fg: "#E8A020" };  // gold
-    if (r === "2") return { bg: "rgba(190, 195, 205, 0.20)", fg: "#A8ADB8" };  // silver
+      return { bg: "rgba(245, 200, 66, 0.18)",  fg: "var(--draft-r1-ink)" };  // gold
+    if (r === "2") return { bg: "rgba(190, 195, 205, 0.20)", fg: "var(--draft-r2-ink)" };  // silver
     if (r === "3" || r === "4" || r === "5")
-      return { bg: "rgba(184, 115, 51, 0.18)", fg: "#C28250" };  // bronze
+      return { bg: "rgba(184, 115, 51, 0.18)", fg: "var(--draft-r35-ink)" };  // bronze
     return { bg: "var(--bg-tertiary)", fg: "var(--text-tertiary)" };  // late rounds
   })();
 
@@ -42326,6 +42343,12 @@ function gradeColor(letter) {
   if (!letter) return 'var(--text-tertiary)';
   return _GRADE_PALETTE[letter] || 'var(--text-secondary)';
 }
+// Farm grade letter TEXT (owner answer Q4): the grade hue mixed with black by
+// --grade-ink-mix (68% in light, 4.6:1 or better on the paper; 100% in dark, so
+// dark keeps the hue and its brightness lift).
+function farmLetterInk(tone) {
+  return `color-mix(in srgb, ${tone} var(--grade-ink-mix, 100%), #000)`;
+}
 
 // Farm report card - four component grades + the overall. Renders on the
 // farm-detail page right under the header so the user sees at a glance
@@ -46227,7 +46250,7 @@ function makeComponentGrades(org) {
     const tone = gradeColor(letter);
     return `<div class="fg-comp" title="${escapeHtml(lbl)} grade: ${escapeHtml(letter)}">
       <span class="fg-comp-label">${escapeHtml(lbl)}</span>
-      <span class="fg-comp-letter" style="color:${tone};">${escapeHtml(letter)}</span>
+      <span class="fg-comp-letter" style="color:${farmLetterInk(tone)};">${escapeHtml(letter)}</span>
     </div>`;
   }).join("");
   return `<div class="fg-components">${chips}</div>`;
@@ -46581,7 +46604,7 @@ function renderFarmSystems() {
           ${_farmSortPill(org)}
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}/100">
-          <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>${tbHtml}
+          <span class="fg-letter" style="color:${farmLetterInk(gradeColorVal)};font-size:28px;">${escapeHtml(overall)}</span>${tbHtml}
         </div>
       </div>`;
     const metricsHtml = `
@@ -46604,7 +46627,7 @@ function renderFarmSystems() {
           </div>
         </div>
         <div class="farm-grade-cell fc-grade" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}/100">
-          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>${tbHtml}
+          <span class="fg-letter" style="color:${farmLetterInk(gradeColorVal)};">${escapeHtml(overall)}</span>${tbHtml}
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : ' - '}${confDot}</span>
           ${makeComponentGrades(org)}
           ${makeOrgTierBar(org)}
@@ -52970,7 +52993,7 @@ function renderPlayerDetail(key) {
     const headlineColor = hp.is_post_tj || stints >= 3 || days >= 200
       ? "var(--down)"
       : (stints >= 1 || days >= 30)
-        ? "var(--neon-amber)"
+        ? "var(--text-gold)"
         : "var(--up)";
     // FG-sourced TJ date - surfaces when MLB-API path didn't catch
     // the surgery. Provides a backup data source for older surgeries
