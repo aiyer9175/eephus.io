@@ -98,10 +98,11 @@ def _players(corpus, n_side=15):
     return out
 
 
-def test_config_flag_ships_off():
-    assert fa_class.get_config()["projection"]["pt_cap_enabled"] is False
-    assert fp._pt_cap_on() is False
-    assert fp._pt_cap_on(True) is True
+def test_config_flag_is_on_after_the_flip():
+    # flipped by AG_4's second commit (owner answer AG-Q5 'Fix both now')
+    assert fa_class.get_config()["projection"]["pt_cap_enabled"] is True
+    assert fp._pt_cap_on() is True
+    assert fp._pt_cap_on(False) is False
 
 
 def test_fit_stores_the_995th_percentile_by_side_and_base_role(fits):
@@ -136,6 +137,23 @@ def test_a_capped_call_on_curves_without_the_cap_raises():
         fp.pt_cap_value({"meta": {}}, "hit", "H")
     with pytest.raises(ValueError):
         fm._decay_path(3.0, 650.0, "hit", "H", 22, {"meta": {}}, pt_cap=True)
+
+
+def test_config_on_with_hand_built_curves_runs_uncapped_and_every_fit_carries_the_cap(
+        fits, tmp_path, monkeypatch):
+    """None reads the config; curves with no fitted cap (hand-built) have
+    nothing to clamp at, so the call equals pt_cap=False. A fit through
+    fitted_models always stores the cap, so a served call is never in that
+    case."""
+    _flag(monkeypatch, True)
+    bare = {"hit": {}, "pit": {}}
+    assert fp.resolve_pt_cap(bare) is False
+    assert fm._decay_path(3.0, 650.0, "hit", "H", 22, bare) ==         fm._decay_path(3.0, 650.0, "hit", "H", 22, bare, pt_cap=False)
+    monkeypatch.setattr(fp, "CACHE_DIR", tmp_path)
+    corpus = make_corpus(n_hit=40, n_pit=40)
+    for kw in ({}, {"use_cache": False}, {"pt_cap": True}):
+        c, _ = fp.fitted_models(corpus, 2014, **kw)
+        assert fp.resolve_pt_cap(c) is True and c["meta"]["pt_cap"]["hit"]["H"] > 0
 
 
 def _flat_rate(curves):
@@ -189,7 +207,8 @@ def test_year1_pt_never_above_the_cap(fits):
                 assert on["ip_proj"] <= cap / 4.3
 
 
-def test_flag_off_contract_war_path_matches_the_pre_change_goldens(fits):
+def test_flag_off_contract_war_path_matches_the_pre_change_goldens(fits, monkeypatch):
+    _flag(monkeypatch, False)
     corpus, curves, war_map = fits
     league = corpus["league"]
     out, tot = [], {}
@@ -221,7 +240,7 @@ def test_config_on_equals_explicit_true_and_explicit_false_wins(fits, monkeypatc
 def test_cache_suffix_only_when_on(fits, tmp_path, monkeypatch):
     corpus = make_corpus(n_hit=40, n_pit=40)
     monkeypatch.setattr(fp, "CACHE_DIR", tmp_path)
-    fp.fitted_models(corpus, 2014)
+    fp.fitted_models(corpus, 2014, pt_cap=False)
     fp.fitted_models(corpus, 2014, pt_cap=True)
     names = sorted(p.name for p in tmp_path.glob("fa_fits_*.pkl"))
     assert len(names) == 2
@@ -235,6 +254,7 @@ def test_ml_feature_vector_byte_identical_with_the_flag_on(fits, monkeypatch):
     corpus, curves, war_map = fits
     league = corpus["league"]
     players = _players(corpus)
+    _flag(monkeypatch, False)
     off = [proj_ml.build_features(h, s, 2015, a, curves, war_map, league)
            for s, _, h, a in players]
     # the live dispatch: contract_war_path hands build_features the champion;
@@ -278,6 +298,7 @@ def test_fantasy_and_hitter_projection_do_not_move_with_the_flag(fits, monkeypat
     pt_cap=False returns the flag-off projection with the flag on."""
     corpus, curves, _ = fits
     league = corpus["league"]
+    _flag(monkeypatch, False)
     base = [fp.project_player(h, s, 2015, curves, league, a, pt_cap=False)
             for s, _, h, a in _players(corpus)]
     _flag(monkeypatch, True)

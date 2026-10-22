@@ -2686,6 +2686,8 @@
       '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p></div></details>" +
       // O12 (owner answer "Both, disclosed"): the one-line changelog for the fWAR label epoch.
       '<p class="bt-note">Changelog, 2026-10-03: the projected win totals now come from projections retrained on published fWAR (the fWAR label epoch). That is a change of definition, not a claim of better accuracy.</p>' +
+      // AG_4 (owner answer AG-Q5): the changelog row for the veteran playing-time cap.
+      '<p class="bt-note">Changelog, 2026-10-21: the veteran playing-time cap. The projected PA or BF of a veteran in any season now stops at the 99.5th percentile of one season for his role. No 2026 or 2027 club win total moved with it.</p>' +
       // THE FORWARD RECORD, STATED AT ITS TRUE LENGTH. The paragraph above says
       // this simulator has no validated forward record, which will stay true
       // until one accrues, and one cannot accrue while every night overwrites

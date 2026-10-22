@@ -1127,6 +1127,29 @@ def pt_cap_value(curves: dict, side: str, role: str) -> float:
     return float(caps[side][_pt_cap_base_role(side, role)])
 
 
+_PT_CAP_WARNED = False
+
+
+def resolve_pt_cap(curves: dict, pt_cap: bool | None = None) -> bool:
+    """Whether THIS call clamps. An explicit value wins (True on curves without
+    meta["pt_cap"] then raises in pt_cap_value). None reads the config; curves
+    that carry no fitted cap (hand-built test curves; every fit through
+    fitted_models stores one) run uncapped, logged once, since there is no cap
+    to clamp at."""
+    global _PT_CAP_WARNED
+    if pt_cap is not None:
+        return bool(pt_cap)
+    if not _pt_cap_on(None):
+        return False
+    if ((curves or {}).get("meta") or {}).get("pt_cap"):
+        return True
+    if not _PT_CAP_WARNED:
+        log.warning("pt_cap_enabled is on but these curves carry no meta['pt_cap']; "
+                    "the call runs uncapped")
+        _PT_CAP_WARNED = True
+    return False
+
+
 # ============================================================================
 # P-TJPT: pitcher playing time discounted for a RECENT Tommy John surgery
 # ============================================================================
@@ -1801,7 +1824,7 @@ def project_player(history: list[dict], side: str, target_season: int,
             else:
                 pt += _adj * 4.3
                 out["ip_proj"] = round(max(0.0, ip + _adj), 1)
-    if _pt_cap_on(pt_cap):
+    if resolve_pt_cap(curves, pt_cap):
         # pt_proj and ip_proj are stored to 0.1, so the year-1 cap is the
         # fitted cap rounded DOWN to that precision (never above it).
         _cap = pt_cap_value(curves, side, role)

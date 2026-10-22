@@ -84,7 +84,7 @@ projection:
   # side and base role (meta.pt_cap) in the year-1 PT and every decay step.
   # Call-scoped override: pt_cap= on fitted_models / project_player /
   # contract_war_path / _decay_path.
-  pt_cap_enabled: false
+  pt_cap_enabled: true
   min_exposure_pair: { pa: 100, bf: 70 }   # aging-curve season pairs
   survivorship_lambda: 1.0           # correction strength (documented v1)
   age_range: [21, 42]                # curve support; clamped outside

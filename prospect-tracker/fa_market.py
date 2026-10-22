@@ -312,7 +312,7 @@ def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
     ``pt_cap`` (call-scoped; None reads projection.pt_cap_enabled): when on,
     the exposure is clamped at the fitted meta["pt_cap"] in every step."""
     per = 600.0 if side == "hit" else 250.0
-    _cap = fp.pt_cap_value(curves, side, role) if fp._pt_cap_on(pt_cap) else None
+    _cap = fp.pt_cap_value(curves, side, role) if fp.resolve_pt_cap(curves, pt_cap) else None
     rate = (war1 / expo * per) if expo > 0 else 0.0
     _v3 = None
     if aging == "v3":
@@ -527,7 +527,7 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     exposure at the fitted cap in the year-1 PT and every decay step; the ML
     heads' stack features stay on the uncapped champion (train/serve parity
     with the shipped bundle)."""
-    _ptc = fp._pt_cap_on(pt_cap)
+    _ptc = fp.resolve_pt_cap(curves, pt_cap)
     proj = fp.project_player(hist, side, class_year, curves, league, age,
                              in_progress=in_progress, p20=p20, pt_cap=_ptc)
     if proj is None:

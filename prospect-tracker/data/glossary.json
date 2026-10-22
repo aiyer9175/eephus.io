@@ -11196,6 +11196,30 @@
    ]
   },
   {
+   "id": "veteran_pt_cap",
+   "term": "Veteran playing-time cap",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "projections",
+    "fa",
+    "ledger",
+    "franchise"
+   ],
+   "aliases": [
+    "PT cap",
+    "playing-time cap"
+   ],
+   "priority": 44,
+   "definition": "The ceiling on a veteran's projected playing time in any season: the 99.5th percentile of one season's plate appearances (hitters) or batters faced (pitchers) for his role. Without it, the aging curve added the league's average playing-time gain to a young regular every year, so a 22-year-old with 650 PA was walked past 800 PA by 26.",
+   "methodology": "The projection engine fits the cap from the same corpus as its aging curves, by side and base role (catcher and other hitters; starters and relievers), over the seasons before the projected one; it is never tuned. The year-1 projection and every later season of the aging path are clamped at it. It touches only the WAR path behind team totals, contract tails and surplus; the displayed WAR and wOBA lines, the fantasy and hitter boards and the FA Fit's team baseline do not move with it.",
+   "seeAlso": [
+    "projected_playing_time"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (fa_projection.fit_pt_cap, task AG_4_CHAMPION_PT_CAP)."
+  },
+  {
    "id": "fip_based_war",
    "term": "FIP-based WAR (projected)",
    "category": "custom-index",

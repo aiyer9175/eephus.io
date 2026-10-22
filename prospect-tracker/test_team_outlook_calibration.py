@@ -219,11 +219,15 @@ def test_the_served_rows_carry_no_candidate_key_while_the_flags_are_off():
     and TEAM_RUNS_LIVE False no Team Outlook row carries a candidate key
     (winsFaFit, ptBudget, runs); the candidates live under
     .cache/team_projection/preview/ only."""
+    import fa_projection as fp
     import proj_export as pe
     assert not (pe.TEAM_TALENT_RANGE_LIVE or pe.TEAM_PT_BUDGET_LIVE or pe.TEAM_RUNS_LIVE)
     rows = _load("mlb_projections.json")["team_outlook"]
+    # AG_4 (PLAN 9.7 R4a fallback): while the veteran PT cap is on, every
+    # byYear row carries winsFaFit, the uncapped frame's wins fa_fit reads.
+    cap_on = fp._pt_cap_on()
     for r in rows:
         for k in ("winsFaFit", "ptBudget", "runs"):
             assert k not in r, (r["team"], k)
         for b in r.get("byYear") or []:
-            assert "winsFaFit" not in b, r["team"]
+            assert ("winsFaFit" in b) == cap_on, r["team"]
