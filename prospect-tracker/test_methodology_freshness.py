@@ -1056,6 +1056,53 @@ MODEL_GLOSSARY = {
     # the eTool composite (ETOOLS_ALL_CALCS, 2026-10-15): the composites built from the
     # shown grades; documented by its own entry and the Tool entry.
     "etool_composite": ["etool_composite", "tool"],
+    # PORT_RED_TESTS_TRIAGE (2026-10-22): the rows registered between the eTools
+    # composite and the port, each with its documentation decision. Served rows
+    # point at the glossary entry that explains the number; rows that serve
+    # nothing (labs, dark challengers, off-webroot label files, gate records)
+    # take the "internal" decision the rest of this map uses for them.
+    "awards_selection": ["awards_rule_mvp", "awards_rule_cy", "awards_rule_roy"],
+    "bat_tracking_nov_a": "internal",
+    "bullpen_plus": ["bullpen_plus"],
+    "club_fa_spend_profile": ["fa_dollar_share", "fa_spend_bands"],
+    "cots_deferral_check": "internal",
+    "count_value": "internal",
+    "dpw_path": "internal",
+    "dvm_difficulty": "internal",
+    "efv_matrix": ["xfv"],
+    "efv_surplus_from_served_odds": "internal",
+    "etools_plus": ["etools_plus"],
+    "ewar_core_label": "internal",
+    "ewar_headline_label": "internal",
+    "ewar_history": ["ewar"],
+    "ewar_v3": ["ewar"],
+    "ewar_v3_realized": ["ewar_realized"],
+    "ewar_v3_valuation_input": "internal",
+    "fa_destination": "internal",
+    "fantasy_prospect_leg_blend": "internal",
+    "fielding_triangulation": "internal",
+    "franchise_score": ["franchise_score"],
+    "league_trends": ["league_trends"],
+    "leverage_deploy_plus": ["leverage_deploy_plus"],
+    "milb_fielding_runs": ["milb_fielding_runs"],
+    "offense_plus": ["offense_plus"],
+    "power_composite_v2": "internal",
+    "prospect_anchor": "internal",
+    "rotation_plus": ["rotation_plus"],
+    "rpw_fit": "internal",
+    "scores_biggest_plays_rule": ["biggest_plays"],
+    "scores_mlb_wp": ["mlb_win_probability"],
+    "scores_stars_rule": ["stars_of_the_game"],
+    "service_time": ["service_time"],
+    "statcast_catcher_runs": ["statcast_catcher_runs"],
+    "steal_runner_split": "internal",
+    "swar_bat": "internal",
+    "swar_fld": "internal",
+    "swar_pit": "internal",
+    "swar_pos": "internal",
+    "team_dem_plus": ["team_dem_plus"],
+    "trade_partner_screen": ["trade_partner_screen"],
+    "xm": ["xm_dollars", "fair_dollars"],
 }
 
 
