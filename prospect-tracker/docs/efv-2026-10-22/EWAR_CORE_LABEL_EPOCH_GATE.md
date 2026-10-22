@@ -400,3 +400,23 @@ accuracy.
 **Not run, because the flip did not happen:** the reads of part 6 (R1 to R5), the epoch run of
 part 8 and every consumer move of part 9. The circularity guard is the condition in front of
 them, and part 4.4 stops there.
+
+### 2026-10-22 (later): EWLE-Q2 answered; this epoch closes without a flip
+
+**The owner's answer (2026-10-22, DECISIONS_FOR_OWNER.md):** "'Headline eWAR, after a check':
+EFV_LABEL_HEADLINE_EWAR_CHECK registers and runs the check for fWAR + ABS as eFV's label; switch only on
+pass." That is option (b) of part 10. So the core label is NOT adopted, and this registration closes
+here with its guard's failure as its result:
+
+- `war_source.LABEL_EWAR_CORE` stays False permanently under this registration; `DEFAULT_PROVIDER` stays
+  `"fwar"`. Re-opening the core label is a new registration with a new owner answer.
+- The frozen core label vintage (`data/ewar_core_label.json`), the dark provider `ewar_core`, the guard
+  tool and both records stay on record, unchanged, for the audit trail. Nothing of part 6, part 8 or part
+  9 runs, and no task EWAR_CORE_EPOCH_RUN is owed.
+- The headline label's check is its own registration:
+  `docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md` (task EFV_LABEL_HEADLINE_EWAR_CHECK). Its switch is
+  scoped to eFV's label and reads no part of this registration's label.
+- The registry row `ewar_core_label` keeps its verdict (provisional, measurement_only) and its notes now
+  name the answer and the closure.
+
+Nothing served moves in this entry. Clause (l) binds it.

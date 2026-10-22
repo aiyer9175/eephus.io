@@ -1234,7 +1234,7 @@
    "eval_artifact": "docs/efv-2026-10-22/ewar_core_label_guard.json",
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
-   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_EPOCH_EWAR, owner EW3-17 and EW3-20): G-1 gap -0.0285 (5th percentile -0.0386, n 2416 pairs), not non-inferior; permuted twin gap -0.0055; G-2 runs_scored dT +0.0021; runs_allowed dT -0.0321; run_differential dT -0.0144; wins dT -0.0165; guard holds: False. The label stays published fWAR; the switch waits on owner question EWLE-Q2. No accuracy claim is made for any label."
+   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_EPOCH_EWAR, owner EW3-17 and EW3-20): G-1 gap -0.0285 (5th percentile -0.0386, n 2416 pairs), not non-inferior; permuted twin gap -0.0055; G-2 runs_scored dT +0.0021; runs_allowed dT -0.0321; run_differential dT -0.0144; wins dT -0.0165; guard holds: False. The label stays published fWAR. Owner question EWLE-Q2 was answered (b), the headline eWAR after its own check (task EFV_LABEL_HEADLINE_EWAR_CHECK, row ewar_headline_label), so the core label epoch is closed without a flip and LABEL_EWAR_CORE stays False. No accuracy claim is made for any label."
   },
   {
    "model_id": "ewar_headline_label",

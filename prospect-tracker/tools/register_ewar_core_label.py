@@ -48,8 +48,10 @@ def row(rec: dict) -> dict:
         "notes": (f"Guard read once on 2026-10-22 (task EFV_LABEL_EPOCH_EWAR, owner EW3-17 and EW3-20): "
                   f"G-1 gap {g1['gap']:+.4f} (5th percentile {g1['lower']:+.4f}, n {g1['n_pairs']} pairs), "
                   f"not non-inferior; permuted twin gap {g1['twin']['gap']:+.4f}; G-2 {outs}; "
-                  f"guard holds: {v['guard_holds']}. The label stays published fWAR; the switch waits on "
-                  "owner question EWLE-Q2. No accuracy claim is made for any label."),
+                  f"guard holds: {v['guard_holds']}. The label stays published fWAR. Owner question EWLE-Q2 "
+                  "was answered (b), the headline eWAR after its own check (task EFV_LABEL_HEADLINE_EWAR_CHECK, "
+                  "row ewar_headline_label), so the core label epoch is closed without a flip and "
+                  "LABEL_EWAR_CORE stays False. No accuracy claim is made for any label."),
     }
 
 
