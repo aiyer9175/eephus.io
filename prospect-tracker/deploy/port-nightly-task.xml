@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  eephus.io port (Strategy D): the PC-side nightly as a Windows Task Scheduler task.
+  NOT INSTALLED. Registering it is the owner's act, after the ship config is filled
+  (deploy/port_ship.conf.example) and rsync is on this PC:
+    Register-ScheduledTask -TaskName EephusPortNightly -Xml (Get-Content -Raw deploy\port-nightly-task.xml)
+  It runs deploy\port-nightly.ps1 (pipeline, build_site, test gate, served bundle,
+  ship) daily at 03:10 local time, the box nightly's old slot. StartWhenAvailable
+  runs a night the PC missed (a crash or a shutdown) as soon as it is back;
+  IgnoreNew never doubles a slow run; the 8-hour limit stops a hung run before
+  the next one. Edit the two paths below if the checkout moves.
+-->
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>eephus.io port nightly: run the pipeline, build the served bundle, verify it and ship it to the box over the restricted SSH user (prospect-tracker\deploy\port-nightly.ps1).</Description>
+    <URI>\EephusPortNightly</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2026-10-23T03:10:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT8H</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\Users\noah\baseball-projects\BaseballR\prospect-tracker\deploy\port-nightly.ps1"</Arguments>
+      <WorkingDirectory>C:\Users\noah\baseball-projects\BaseballR\prospect-tracker</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

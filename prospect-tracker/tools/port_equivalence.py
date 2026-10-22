@@ -30,6 +30,29 @@ Three commands:
         Positive control: perturbs one numeric leaf of a copy of FILE in its
         last serialized place and asserts `diff` reports exactly that leaf.
 
+    python tools/port_equivalence.py compare-http --bundle BUNDLE_DIR
+            --origin https://eephus.io [--pace 0.5] [--only data/] [--every N]
+            [--explained explained.tsv] [--out report.json]
+    python tools/port_equivalence.py compare-http --ref ref.json --origin URL
+        The HTTP fetch mode: reads every file of the frozen snapshot from the
+        PUBLISHED webroot (browser UA through curl, one request at a time,
+        --pace seconds apart) and names each difference. With --bundle (a
+        served bundle from tools/port_bundle.py --served-bundle) the reference
+        is the bundle's MANIFEST.tsv and its site/ bytes, so a DIFFERENT JSON
+        file lists its differing leaves and any other file its first differing
+        line. With --ref (a snapshot) payloads take the category ladder above
+        and pages compare by sha256_lf. Extra categories over HTTP:
+          CDN_INJECTED an HTML page equal once the scripts Cloudflare adds
+                      (/cdn-cgi/ beacons and challenge or email helpers) are
+                      removed
+          EXPLAINED   differs, and --explained names the difference (a TSV of
+                      glob<TAB>reason lines: the headshot proxy, the forums
+                      layer); the reason is printed with the file
+          BLOCKED     Cloudflare answered with a challenge, not the origin;
+                      rerun from a browser session or with a skip rule
+          MISSING     any status but 200 (the status is recorded)
+        Exit 1 on any DIFFERENT, MISSING or BLOCKED file.
+
 The published set is computed the way deploy/nightly-build.sh's rsync computes
 it: data/*.json and data/*.js at depth one minus deploy/data_exclude.txt, plus
 the per-player directories in PER_PLAYER_DIRS (pinned to the script's include
@@ -42,6 +65,7 @@ import argparse
 import copy
 import hashlib
 import json
+import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -120,10 +144,13 @@ def _load(raw: bytes):
 
 
 def fingerprint(path: Path) -> dict:
-    raw = path.read_bytes()
+    return fingerprint_bytes(path.read_bytes(), path.suffix)
+
+
+def fingerprint_bytes(raw: bytes, suffix: str) -> dict:
     rec = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
            "sha256_lf": hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()}
-    if path.suffix == ".json":
+    if suffix == ".json":
         try:
             obj = _load(raw)
         except ValueError:
@@ -245,6 +272,132 @@ def selftest(path: Path) -> dict:
             "ok": len(found) == 1 and found[0][0] == leaf}
 
 
+# --------------------------------------------------------------------------- #
+# HTTP fetch mode: the published webroot against the frozen snapshot
+# --------------------------------------------------------------------------- #
+_SCRIPT_BLOCK = re.compile(rb"<script\b[^>]*>.*?</script>[ \t]*\r?\n?", re.S | re.I)
+_CDN_MARKS = (b"/cdn-cgi/", b"cloudflareinsights", b"data-cf-beacon")
+BAD_HTTP = ("DIFFERENT", "MISSING", "BLOCKED")
+
+
+def strip_cdn(raw: bytes) -> bytes:
+    """Drop the script blocks Cloudflare injects into an HTML response."""
+    return _SCRIPT_BLOCK.sub(
+        lambda m: b"" if any(k in m.group(0) for k in _CDN_MARKS) else m.group(0), raw)
+
+
+def _lf(raw: bytes) -> bytes:
+    return raw.replace(b"\r\n", b"\n")
+
+
+def _first_line_diff(a: bytes, b: bytes) -> dict:
+    la, lb = _lf(a).split(b"\n"), _lf(b).split(b"\n")
+    for i, (x, y) in enumerate(zip(la, lb)):
+        if x != y:
+            return {"line": i + 1, "ref": x[:200].decode("utf-8", "replace"),
+                    "live": y[:200].decode("utf-8", "replace")}
+    return {"line": min(len(la), len(lb)) + 1, "ref_lines": len(la), "live_lines": len(lb)}
+
+
+def read_bundle_manifest(bundle: Path) -> list[str]:
+    """Webroot-relative paths of a served bundle's MANIFEST.tsv."""
+    with open(bundle / "MANIFEST.tsv", encoding="utf-8") as f:
+        next(f)
+        return [line.split("\t", 1)[0] for line in f if line.strip()]
+
+
+def read_explained(path: Path | None) -> list[tuple[str, str]]:
+    if path is None:
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip() and not line.lstrip().startswith("#") and "\t" in line:
+            pat, reason = line.split("\t", 1)
+            rows.append((pat.strip(), reason.strip()))
+    return rows
+
+
+def _categorize_bytes(rel: str, ref_raw: bytes, live: bytes) -> tuple[str, object]:
+    if ref_raw == live:
+        return "IDENTICAL", None
+    if _lf(ref_raw) == _lf(live):
+        return "LINE_ENDINGS", None
+    suffix = Path(rel).suffix
+    if suffix in (".html", ".htm") and _lf(strip_cdn(ref_raw)) == _lf(strip_cdn(live)):
+        return "CDN_INJECTED", None
+    if suffix == ".json":
+        cat = categorize(fingerprint_bytes(ref_raw, suffix), fingerprint_bytes(live, suffix))
+        if cat != "DIFFERENT":
+            return cat, None
+        try:
+            leaves = leaf_diff(_load(ref_raw), _load(live), cap=20)
+        except ValueError:
+            return "DIFFERENT", {"parse_error": True}
+        return "DIFFERENT", [{"leaf": p, "ref": str(x), "live": str(y)} for p, x, y in leaves]
+    return "DIFFERENT", _first_line_diff(ref_raw, live)
+
+
+def compare_http(origin: str, *, bundle: Path | None = None, ref_doc: dict | None = None,
+                 fetch_raw=None, pace: float = 0.5, only: tuple[str, ...] = (),
+                 every: int = 1, explained: list[tuple[str, str]] = (),
+                 pacer=None) -> dict:
+    """Fetch every snapshot file from the origin and sort it into a category."""
+    import fnmatch
+    sys.path.insert(0, str(ROOT / "tools"))
+    import port_live_check as plc
+    fetch_raw = fetch_raw or plc.curl_fetch_raw
+    pacer = pacer or plc.Pacer(pace)
+    origin = origin.rstrip("/")
+    if bundle is not None:
+        rels = read_bundle_manifest(bundle)
+        reference = {"bundle": str(bundle)}
+        info = bundle / "BUNDLE.json"
+        if info.is_file():
+            reference["bundle_id"] = json.loads(info.read_text(encoding="utf-8")).get("bundle_id")
+    elif ref_doc is not None:
+        rels = sorted(set(ref_doc.get("payloads", {})) | set(ref_doc.get("pages", {})))
+        reference = {"ref_root": ref_doc.get("root")}
+    else:
+        raise ValueError("compare_http needs a bundle or a snapshot")
+    if only:
+        rels = [r for r in rels if r.startswith(only)]
+    rels = rels[::max(1, int(every))]
+    files: dict[str, list[str]] = {}
+    details: dict[str, object] = {}
+    codes: dict[str, object] = {}
+    reasons: dict[str, str] = {}
+    for rel in rels:
+        pacer.wait()
+        code, body, headers = fetch_raw(f"{origin}/{rel}")
+        if plc.is_challenge(code, headers, body):
+            cat, det = "BLOCKED", None
+            codes[rel] = code
+        elif code != 200 or body is None:
+            cat, det = "MISSING", None
+            codes[rel] = code
+        elif bundle is not None:
+            cat, det = _categorize_bytes(rel, (bundle / "site" / rel).read_bytes(), body)
+        elif rel in ref_doc.get("payloads", {}):
+            cat = categorize(ref_doc["payloads"][rel], fingerprint_bytes(body, Path(rel).suffix))
+            det = None
+        else:
+            same = hashlib.sha256(_lf(body)).hexdigest() == ref_doc["pages"][rel].get("sha256_lf")
+            cat = "IDENTICAL" if same else "DIFFERENT"
+            det = None if same else "a snapshot keeps no page bytes: rerun with --bundle"
+        if cat == "DIFFERENT":
+            hit = next((reason for pat, reason in explained if fnmatch.fnmatch(rel, pat)), None)
+            if hit is not None:
+                cat = "EXPLAINED"
+                reasons[rel] = hit
+        files.setdefault(cat, []).append(rel)
+        if det is not None:
+            details[rel] = det
+    return {"origin": origin, "reference": reference, "checked": len(rels),
+            "counts": {k: len(v) for k, v in sorted(files.items())}, "files": files,
+            "details": details, "codes": codes, "explained": reasons,
+            "ok": not any(k in files for k in BAD_HTTP)}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -260,7 +413,41 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("target_file", type=Path)
     t = sub.add_parser("selftest")
     t.add_argument("file", type=Path)
+    h = sub.add_parser("compare-http")
+    src = h.add_mutually_exclusive_group(required=True)
+    src.add_argument("--bundle", type=Path, help="a served bundle directory")
+    src.add_argument("--ref", type=Path, help="a snapshot written by `snapshot`")
+    h.add_argument("--origin", default="https://eephus.io")
+    h.add_argument("--pace", type=float, default=0.5, metavar="SECONDS",
+                   help="seconds between two requests (one at a time)")
+    h.add_argument("--only", action="append", default=[], metavar="PREFIX",
+                   help="only paths starting with PREFIX (repeatable)")
+    h.add_argument("--every", type=int, default=1, metavar="N",
+                   help="every Nth path of the sorted list (a fixed sample)")
+    h.add_argument("--explained", type=Path, help="TSV of glob<TAB>reason lines")
+    h.add_argument("--out", type=Path, help="write the full report here")
     a = ap.parse_args(argv)
+    if a.cmd == "compare-http":
+        res = compare_http(
+            a.origin, bundle=a.bundle.resolve() if a.bundle else None,
+            ref_doc=json.loads(a.ref.read_text(encoding="utf-8")) if a.ref else None,
+            pace=a.pace, only=tuple(a.only), every=a.every,
+            explained=read_explained(a.explained))
+        if a.out:
+            a.out.write_text(json.dumps(res, indent=1, default=str), encoding="utf-8")
+        print(json.dumps({"origin": res["origin"], "reference": res["reference"],
+                          "checked": res["checked"], "counts": res["counts"],
+                          "ok": res["ok"]}, indent=1))
+        shown = 0
+        for cat in ("DIFFERENT", "MISSING", "BLOCKED", "EXPLAINED"):
+            for rel in res["files"].get(cat, []):
+                if shown >= 200:
+                    break
+                note = res["explained"].get(rel) or res["codes"].get(rel) or ""
+                det = res["details"].get(rel)
+                print(cat, rel, note, json.dumps(det, default=str)[:400] if det else "")
+                shown += 1
+        return 0 if res["ok"] else 1
     if a.cmd == "snapshot":
         snap = snapshot(a.root.resolve())
         a.out.write_text(json.dumps(snap, indent=0, sort_keys=True), encoding="utf-8")

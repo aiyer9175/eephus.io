@@ -1,0 +1,25 @@
+# eephus.io port: the ship config TEMPLATE (docs/port/PORT_BUNDLE.md).
+#
+# Copy this file OUTSIDE every git checkout, to %USERPROFILE%\.eephus\port_ship.conf
+# (or point EEPHUS_PORT_SHIP_CONF at it), and fill the three required values.
+# tools/port_ship.py refuses a config that sits inside a git work tree, so the
+# filled copy can never be committed. Values in <angle brackets> count as unfilled.
+#
+# The host must be an address that does not go through Cloudflare (Cloudflare
+# Free proxies no SSH): the box's own address from an ADMIN_SSH_CIDR network,
+# or its WireGuard or Tailscale address.
+
+EEPHUS_SHIP_HOST=<box address>
+EEPHUS_SHIP_USER=<restricted ssh user>
+EEPHUS_SHIP_KEY=<path to that user's private key>
+
+# Optional (defaults shown).
+EEPHUS_SHIP_PORT=22
+EEPHUS_SHIP_REMOTE_DIR=/opt/eephus/artifacts/incoming
+# The PC has no rsync by default: cwRsync, MSYS2 (pacman -S rsync) or "wsl rsync".
+EEPHUS_SHIP_RSYNC=rsync
+EEPHUS_SHIP_SSH=ssh
+# native | cygdrive | msys | wsl: how that rsync spells C:\path (cwRsync: cygdrive).
+EEPHUS_SHIP_PATH_STYLE=native
+EEPHUS_SHIP_KNOWN_HOSTS=
+EEPHUS_SHIP_BWLIMIT=

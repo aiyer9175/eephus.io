@@ -36,15 +36,50 @@ Usage::
 
 Read-only toward the module tree: it reads ``prospects.db`` through SQLite's
 VACUUM INTO and reads ``.cache/`` and ``data/``; it writes only under ``--out``.
+
+THE SERVED BUNDLE (port Strategy D, docs/port/PORT_BUNDLE.md). The second job of
+this tool: freeze what the site serves, so the box only publishes it::
+
+    python tools/port_bundle.py --plan-served                 # counts only
+    python tools/port_bundle.py --served-bundle OUT_ROOT [--no-strip] [--keep 2]
+    python tools/port_bundle.py --verify-served OUT_ROOT/<bundle-id>
+
+``--served-bundle`` writes ``OUT_ROOT/<bundle-id>/``::
+
+    site/                 the webroot image: every page and asset directory of
+                          deploy/publish_paths.txt and every payload the
+                          nightly rsync ships (data/*.json and data/*.js at
+                          depth one minus deploy/data_exclude.txt, plus the
+                          per-player directories), the set computed by
+                          port_equivalence.page_files and payload_files, with
+                          the nightly's two publish-time comment strips applied
+                          (--no-strip ships the sources), plus
+                          site/data/bundle_info.json (bundle id, built_at)
+    MANIFEST.tsv          relpath (under site/), bytes, sha256 for every file
+    SHA256SUMS            the same sums in ``sha256sum -c`` form, so the box
+                          verifies with coreutils and no Python
+    BUNDLE.json           bundle id, git sha, counts, bytes, the withheld names,
+                          the strip outcome per file, the MANIFEST.tsv sha256
+    READY                 written last: "<bundle-id><TAB><MANIFEST.tsv sha256>"
+
+The bundle id is ``<UTC build time YYYYMMDDTHHMMSSZ>-<12 hex of the content
+sha256>``, so ids sort by build time and two builds of the same bytes share a
+content suffix. The box's receive step may add exactly one file the manifest
+does not list, site/data/bundle_receipt.json (received_at), which the
+36-hour heartbeat reads (tools/port_live_check.py --heartbeat). The publisher's
+own heartbeat, data/build_info.json, never travels in a bundle.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as _dt
 import hashlib
 import json
 import os
+import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -295,6 +330,211 @@ def verify(manifest: Path, root: Path) -> dict:
             "ok": not missing and not mismatched}
 
 
+# --------------------------------------------------------------------------- #
+# The served bundle (port Strategy D)
+# --------------------------------------------------------------------------- #
+BUNDLE_ID_RE = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{12}$")
+BUNDLE_INFO = "data/bundle_info.json"      # written into every served bundle
+RECEIPT = "data/bundle_receipt.json"       # the one file the receiver may add
+# The publisher's own heartbeat: written on the box at publish time, never shipped.
+PUBLISHER_FILES: frozenset[str] = frozenset({"data/build_info.json"})
+
+
+def _withheld_names(root: Path) -> list[str]:
+    path = root / "deploy" / "data_exclude.txt"
+    if not path.is_file():
+        return []
+    return [x.strip() for x in path.read_text(encoding="utf-8").splitlines()
+            if x.strip() and not x.strip().startswith("#")]
+
+
+def served_files(root: Path) -> list[str]:
+    """Webroot-relative paths the nightly rsync would publish from this tree.
+
+    The set is port_equivalence's (imported, never transcribed), so the bundle,
+    the Gate C snapshot and deploy/nightly-build.sh's include lines agree."""
+    import port_equivalence as pe
+    rels = set(pe.page_files(root)) | set(pe.payload_files(root))
+    return sorted(r for r in rels
+                  if r not in PUBLISHER_FILES and r not in (RECEIPT, BUNDLE_INFO))
+
+
+def plan_served(root: Path) -> dict:
+    rels = served_files(root)
+    by_top: dict[str, list[int]] = {}
+    for r in rels:
+        parts = r.split("/")
+        top = parts[0] if parts[0] != "data" else (
+            "data/" + parts[1] if len(parts) > 2 else "data (depth one)")
+        n_b = by_top.setdefault(top, [0, 0])
+        n_b[0] += 1
+        n_b[1] += (root / r).stat().st_size
+    return {"files": len(rels), "bytes": sum(v[1] for v in by_top.values()),
+            "by_top": {k: {"files": v[0], "bytes": v[1]} for k, v in sorted(by_top.items())}}
+
+
+def apply_strips(site: Path) -> dict[str, str]:
+    """The nightly's publish-time comment strips, on the bundle's copies, fail-open."""
+    import strip_asset_comments as sac
+    import strip_prospx_comments as spc
+    out: dict[str, str] = {}
+    page = site / "prospx" / "index.html"
+    if page.is_file():
+        try:
+            with contextlib.redirect_stdout(sys.stderr):
+                rc = spc.main([str(page), "--in-place"])
+            out["prospx/index.html"] = "stripped" if rc == 0 else f"kept: exit {rc}"
+        except Exception as exc:  # fail-open, as deploy/nightly-build.sh is
+            out["prospx/index.html"] = f"kept: {exc!r}"
+    try:
+        for row in sac.run(site):
+            out[row["file"]] = row["status"]
+    except Exception as exc:
+        out["assets"] = f"kept: {exc!r}"
+    return out
+
+
+def _git(root: Path, *args: str) -> str:
+    r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def build_served(root: Path, out_root: Path, strip: bool = True,
+                 now: _dt.datetime | None = None, strips=apply_strips) -> dict:
+    """Freeze the served set into OUT_ROOT/<bundle-id>/ and return BUNDLE.json."""
+    now = (now or _dt.datetime.now(_dt.timezone.utc)).astimezone(_dt.timezone.utc)
+    out_root.mkdir(parents=True, exist_ok=True)
+    stage = out_root / f".building-{os.getpid()}"
+    if stage.exists():
+        shutil.rmtree(stage)
+    site = stage / "site"
+    rels = served_files(root)
+    for rel in rels:
+        dst = site / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(root / rel, dst)
+    strip_rows = strips(site) if strip else {}
+    rows = [(rel, (site / rel).stat().st_size, _sha256(site / rel)) for rel in rels]
+    content = hashlib.sha256("".join(f"{r}\t{b}\t{s}\n" for r, b, s in rows)
+                             .encode("utf-8")).hexdigest()
+    bundle_id = f"{now.strftime('%Y%m%dT%H%M%SZ')}-{content[:12]}"
+    git_sha = _git(root, "rev-parse", "HEAD")
+    built_at = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    total = sum(b for _, b, _ in rows)
+    (site / BUNDLE_INFO).parent.mkdir(parents=True, exist_ok=True)
+    (site / BUNDLE_INFO).write_text(json.dumps({
+        "bundle_id": bundle_id, "built_at": built_at, "git_sha": git_sha,
+        "content_sha256": content, "files": len(rows), "bytes": total,
+    }, indent=1) + "\n", encoding="utf-8", newline="\n")
+    rows.append((BUNDLE_INFO, (site / BUNDLE_INFO).stat().st_size, _sha256(site / BUNDLE_INFO)))
+    rows.sort()
+    with open(stage / "MANIFEST.tsv", "w", encoding="utf-8", newline="\n") as man:
+        man.write("relpath\tbytes\tsha256\n")
+        man.writelines(f"{r}\t{b}\t{s}\n" for r, b, s in rows)
+    with open(stage / "SHA256SUMS", "w", encoding="utf-8", newline="\n") as sums:
+        sums.writelines(f"{s}  site/{r}\n" for r, _, s in rows)
+    manifest_sha = _sha256(stage / "MANIFEST.tsv")
+    by_top: dict[str, int] = {}
+    for r, _, _ in rows:
+        top = r.split("/")[0] if not r.startswith("data/") or r.count("/") == 1 \
+            else "data/" + r.split("/")[1]
+        by_top[top] = by_top.get(top, 0) + 1
+    info = {
+        "bundle_id": bundle_id, "built_at": built_at, "git_sha": git_sha,
+        "git_dirty": bool(_git(root, "status", "--porcelain", "-uno")),
+        "source_root": str(root), "content_sha256": content,
+        "manifest_sha256": manifest_sha, "files": len(rows),
+        "bytes": sum(b for _, b, _ in rows), "files_by_top": dict(sorted(by_top.items())),
+        "strip": strip, "strips": strip_rows,
+        "withheld": _withheld_names(root),
+        "left_out": sorted(PUBLISHER_FILES), "receipt": RECEIPT,
+    }
+    (stage / "BUNDLE.json").write_text(json.dumps(info, indent=1) + "\n",
+                                       encoding="utf-8", newline="\n")
+    (stage / "READY").write_text(f"{bundle_id}\t{manifest_sha}\n",
+                                 encoding="utf-8", newline="\n")
+    final = out_root / bundle_id
+    if final.exists():
+        shutil.rmtree(final)
+    os.replace(stage, final)
+    info["path"] = str(final)
+    return info
+
+
+def verify_served(bundle: Path) -> dict:
+    """Every manifest row present with its bytes and sha256, nothing extra but
+    the receipt, no withheld name, and READY, BUNDLE.json and the manifest agree."""
+    site = bundle / "site"
+    res: dict = {"bundle": str(bundle), "checked": 0}
+    problems: list[str] = []
+    info_p, ready_p, man_p = bundle / "BUNDLE.json", bundle / "READY", bundle / "MANIFEST.tsv"
+    for p in (info_p, ready_p, man_p):
+        if not p.is_file():
+            problems.append(f"{p.name} is missing")
+    if problems:
+        res.update(ok=False, problems=problems)
+        return res
+    info = json.loads(info_p.read_text(encoding="utf-8"))
+    res["bundle_id"] = bundle_id = info.get("bundle_id")
+    manifest_sha = _sha256(man_p)
+    ready = ready_p.read_text(encoding="utf-8").strip().split("\t")
+    if ready != [bundle_id, manifest_sha]:
+        problems.append("READY does not name this bundle id and manifest sha256")
+    if info.get("manifest_sha256") != manifest_sha:
+        problems.append("BUNDLE.json manifest_sha256 differs from MANIFEST.tsv")
+    if not BUNDLE_ID_RE.match(str(bundle_id)):
+        problems.append(f"bundle id {bundle_id!r} is not <YYYYMMDDTHHMMSSZ>-<12 hex>")
+    if BUNDLE_ID_RE.match(bundle.name) and bundle.name != bundle_id:
+        problems.append(f"directory {bundle.name} holds bundle {bundle_id}")
+    missing: list[str] = []
+    mismatched: list[str] = []
+    listed: set[str] = set()
+    with open(man_p, encoding="utf-8") as f:
+        next(f)
+        for line in f:
+            rel, size, digest = line.rstrip("\n").split("\t")
+            listed.add(rel)
+            p = site / rel
+            if not p.is_file():
+                missing.append(rel)
+            elif p.stat().st_size != int(size) or _sha256(p) != digest:
+                mismatched.append(rel)
+    res["checked"] = len(listed)
+    present = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()} \
+        if site.is_dir() else set()
+    extra = sorted(present - listed - {RECEIPT})
+    withheld = sorted(f"data/{n}" for n in info.get("withheld", [])
+                      if f"data/{n}" in present)
+    left_out = sorted(r for r in info.get("left_out", []) if r in present)
+    try:
+        bi = json.loads((site / BUNDLE_INFO).read_text(encoding="utf-8"))
+        if bi.get("bundle_id") != bundle_id:
+            problems.append("site/data/bundle_info.json names another bundle")
+    except (OSError, ValueError):
+        problems.append("site/data/bundle_info.json is missing or unreadable")
+    res.update(missing=len(missing), mismatched=len(mismatched), extra=len(extra),
+               withheld_present=withheld, left_out_present=left_out,
+               missing_sample=missing[:20], mismatched_sample=mismatched[:20],
+               extra_sample=extra[:20], problems=problems)
+    res["ok"] = not (missing or mismatched or extra or withheld or left_out or problems)
+    return res
+
+
+def prune_served(out_root: Path, keep: int, protect: str | None = None) -> list[str]:
+    """Delete all but the newest `keep` bundles (and stale staging dirs)."""
+    if keep <= 0 or not out_root.is_dir():
+        return []
+    ids = sorted(p.name for p in out_root.iterdir()
+                 if p.is_dir() and BUNDLE_ID_RE.match(p.name))
+    doomed = [i for i in ids[:-keep] if i != protect]
+    doomed += [p.name for p in out_root.iterdir()
+               if p.is_dir() and p.name.startswith(".building-")
+               and p.name != f".building-{os.getpid()}"]
+    for name in doomed:
+        shutil.rmtree(out_root / name, ignore_errors=True)
+    return doomed
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--root", type=Path, default=ROOT,
@@ -304,6 +544,16 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--out", type=Path, help="bundle directory to write")
     g.add_argument("--verify", type=Path, metavar="MANIFEST",
                    help="check every manifest row against --root")
+    g.add_argument("--plan-served", action="store_true",
+                   help="count the served bundle's files, write nothing")
+    g.add_argument("--served-bundle", type=Path, metavar="OUT_ROOT",
+                   help="write the served bundle to OUT_ROOT/<bundle-id>/")
+    g.add_argument("--verify-served", type=Path, metavar="BUNDLE_DIR",
+                   help="verify a served bundle against its own manifest")
+    ap.add_argument("--no-strip", action="store_true",
+                    help="served bundle: ship the sources, skip the comment strips")
+    ap.add_argument("--keep", type=int, default=2,
+                    help="served bundle: bundles to keep under OUT_ROOT (0 keeps all)")
     ap.add_argument("--served-data", action="store_true",
                     help="also carry the other gitignored data/ artifacts")
     ap.add_argument("--no-db", action="store_true", help="skip the database seed")
@@ -311,6 +561,22 @@ def main(argv: list[str] | None = None) -> int:
                     help="leave a further top-level .cache directory behind (repeatable)")
     a = ap.parse_args(argv)
     root = a.root.resolve()
+    if a.plan_served:
+        print(json.dumps(plan_served(root), indent=1))
+        return 0
+    if a.served_bundle:
+        out_root = a.served_bundle.resolve()
+        info = build_served(root, out_root, strip=not a.no_strip)
+        res = verify_served(Path(info["path"]))
+        info["verify"] = {k: res[k] for k in ("checked", "ok", "problems")}
+        info["pruned"] = prune_served(out_root, a.keep, protect=info["bundle_id"]) \
+            if res["ok"] else []
+        print(json.dumps({k: v for k, v in info.items() if k != "strips"}, indent=1))
+        return 0 if res["ok"] else 1
+    if a.verify_served:
+        res = verify_served(a.verify_served.resolve())
+        print(json.dumps(res, indent=1))
+        return 0 if res["ok"] else 1
     if a.plan:
         print(json.dumps(plan(root, tuple(a.exclude_dir)), indent=1))
         return 0
