@@ -146,3 +146,21 @@ Reported beside, deciding nothing:
 - MLB 2026 split-half (option-value costs): batters 182 players, rho 0.0195 (lo95 -0.1013), Spearman-Brown 0.0382; catchers 91 players, rho -0.0676 (lo95 -0.2537), Spearman-Brown -0.1450.
 
 What part 6 licenses: no persistence or skill sentence for either role. The board says that season-to-season persistence was not distinguishable from chance on AAA 2022 to 2026. Nothing enters eWAR; the owner question (EABS-Q1, EABS-Q2) carries these numbers.
+
+### 9.2 2026-10-21: the owner's answer to EABS-Q1, the part enters eWAR by override (dated amendment)
+
+- **Owner answer, verbatim** (2026-10-15, `DECISIONS_FOR_OWNER.md` EW3-32): "Into eWAR, do not
+  disclose, this is the first year of ABS so it's impossible to tell, we have enough to put it in."
+- **What it overrides.** The ewar-map plan's T4 pass rule admits the eWAR part only after a stability
+  read clears its MDE95; part 9.1 read NULL for both roles (batters rho 0.0300, lo95 -0.0757;
+  catchers rho 0.1215, lo95 -0.0027, Holm p 0.107). The owner admitted part 7's reattribution part into
+  eWAR v3 anyway, from 2026, in both eWAR and eWAR realized. This entry records the override and the
+  NULL read it overrides; nothing in parts 1 to 9.1 changes.
+- **Where the part is defined and built.** `docs/ebr-2026-09-30/EBR_GATE.md` 11.10.2 (candidate part 8),
+  built by task EWAR_V3_ASSEMBLE (`tools/build_ewar_v3.py`). It reads this document's frame, values and
+  option costs through `eabs_export.frame`, unchanged.
+- **Copy.** Per the owner, the site carries no stability caveat and no "validated" claim for eABS or for
+  the part: it describes plainly what each measures. The board's derived persistence line (part 6) is
+  no longer printed; the `stability` block stays in the payload as the record.
+- **Registry.** The `eabs` row stays provisional (`measurement_only`), never validated; its notes name
+  this override and the NULL read.

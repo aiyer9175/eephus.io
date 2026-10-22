@@ -2180,6 +2180,168 @@ hitter i, season s (2016 on):
 - Committed alone with its pin test, docs only, before the skill look (part 12.2 is empty at this
   commit). No served number moves.
 
+### 11.10 2026-10-21: the assembled series, eWAR realized, the ABS part by owner override, the runs-per-win conversion and the display flip (clause (i), owner decisions EBR-Q5, EW3-19, EW3-20, EW3-24 and EW3-32)
+
+- **Owner answers, as recorded** (`DECISIONS_FOR_OWNER.md`): EBR-Q5 (2026-10-01, verbatim) "Use the
+  latest/best version of eWAR for all eWAR displays"; EW3-19 (2026-10-15) "eWAR v3 naming = plain
+  "eWAR", shown INSTEAD of v2 on player pages too" (recorded for the name by 11.8); EW3-20 (2026-10-15)
+  "TWO NUMBERS. Headline eWAR = predictive, talent-true (parts admitted only by the forward skill
+  look) [...]; 'eWAR realized' = actual runs in the same frame for Awards, HoF, recaps"; EW3-24
+  (2026-10-15) runs per win fitted from team outcomes, "adopted in eWAR only if its leave-one-season-out
+  wins MAE beats the closed form (lo95 > 0)"; EW3-32 (2026-10-15, verbatim) "Into eWAR, do not
+  disclose, this is the first year of ABS so it's impossible to tell, we have enough to put it in",
+  recorded with the stability check of `docs/eabs-2026-10-15/EABS_GATE.md` part 9.1 read NULL for
+  both roles. Part 1 gains these rows, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-32 | Whether the ABS reattribution part enters eWAR v3 | yes, from 2026, in both eWAR and eWAR realized, by owner override of the stability rule of the ewar-map plan's T4 (its read was NULL for batters and catchers); no stability caveat and no validated claim in site copy (11.10.2) | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-32); recorded by queue task EWAR_V3_ASSEMBLE |
+| EW3-20 (display) | Which of the two numbers shows where | the headline eWAR on every display door, player pages included; eWAR realized beside it on player pages and in the Awards module (11.10.3, 11.10.5) | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-20); recorded by queue task EWAR_V3_ASSEMBLE |
+| EW3-24 | The runs-per-win conversion of eWAR v3 | the form `docs/ewar/RPW_GATE.md` admits, else the incumbent `league_constants.league_totals(s)["rpw"]` (11.10.4) | answered 2026-10-15 (`DECISIONS_FOR_OWNER.md`, EW3-24); recorded by queue task EWAR_V3_ASSEMBLE |
+| EBR-Q5 (served) | When eWAR v3 replaces eWAR v2 on the display doors | at task EWAR_V3_ASSEMBLE's flip, behind `war_source.EWAR_V3_LIVE`, after the looks of parts 12.1 to 12.3 (11.10.5) | answered 2026-10-01 (`DECISIONS_FOR_OWNER.md`, EBR-Q5); the "not before 2026-11-18" date it carried is waived by owner decision EW3-5 |
+
+- **What this amendment departs from, disclosed.** Part 9.1 keeps eWAR v2 the displayed WAR and names
+  no display door's provider among the files a task of this plan may write; parts 0, 9.1, 9.2 and 9.7
+  make eWAR v3 display only, a column beside eWAR v2; part 9.7 admits a part only through a look. This
+  amendment, by the owner decisions above, makes eWAR v3 the displayed WAR on the display doors
+  (11.10.5), adds the companion series eWAR realized (11.10.3), and carries one part no look admitted:
+  the ABS reattribution part, candidate part 8, by owner override (11.10.2). It is recorded as an owner
+  override of those sentences for these items alone. It lands after the looks: nothing they read
+  changes, parts 12.1 to 12.3 stand as written, and no look's frame, statistic, threshold, margin,
+  guard, twin, date or claim moves. Unchanged: `war_source.DEFAULT_PROVIDER` (fWAR, the training
+  label), `data/ewar.json`, `ewar.py`, `tools/build_ewar.py` and the provider `ewar_v2` (still servable,
+  now a reference column), every fitted consumer (part 9.1's never-read list holds for training labels,
+  drivers and fitted inputs; a label switch is the label epoch's own registration, owner decisions
+  EW3-17 and EW3-20), and `war_source` refusing `ewar_v3` on the `arb_spine` door.
+
+#### 11.10.1 What eWAR v3 carries after the looks
+
+- Parts 12.1 and 12.2 admitted no candidate part (1 to 6, PE-P, PE-H) and part 12.3 changes no
+  admission, so every look-decided component of eWAR v3 is FanGraphs' own, from the frozen fWAR
+  vintage, marked `fg`.
+- The headline eWAR (EW3-20) = fWAR plus the ABS part (11.10.2) from 2026. Every player-season with no
+  ABS term equals fWAR exactly.
+- Because one part is carried, part 9.7's label "eWAR v3 (equals FanGraphs WAR: no part admitted)" does
+  not apply; the displayed name is plain "eWAR" (11.8), and the artifact's meta names the one part
+  carried, how it entered (owner override, not a look) and the seasons it covers.
+
+#### 11.10.2 Candidate part 8, the ABS reattribution part (owner override EW3-32)
+
+The design of `docs/eabs-2026-10-15/EABS_GATE.md` part 7, priced on the eABS frame of that document's
+parts 1 and 2 (the zone challenges of the MLB regular season after its part 1 exclusions; v_k the
+value of challenge k if overturned, c_k the option cost of a failed one from its part 2.3, o_k 1 when
+overturned), with each term re-centred so the part sums to zero per season and side:
+
+```
+season s (2026 on); rows: the hitting-group and pitching-group rows of the frozen vintage for s
+hitter i:
+  m_i     = sum of v_k over fielding-side challenges k with o_k = 1 made by i as catcher
+  E_i     = i's innings at C (data/fielding_innings.json)
+  M_i     = m_i - E_i * (sum_j m_j) / (sum_j E_j)          the move, against an average catcher per inning
+  f_i     = - sum of c_k over challenges k with o_k = 0 made by i (as batter or as catcher)
+  F_i     = f_i - PA_i * (sum_j f_j) / (sum_j PA_j)         every hitting-group row, MLB-wide per PA
+  g_abs,i = M_i + F_i                                       runs
+pitcher j:
+  q_j     = - sum of v_k over fielding-side challenges k with o_k = 1 on j's pitches made by a catcher
+  Q_j     = q_j - IP_j * (sum_l q_l) / (sum_l IP_l)         every pitching-group row, per IP
+  p_j     = - sum of c_k over challenges k with o_k = 0 made by j
+  P_j     = p_j - IP_j * (sum_l p_l) / (sum_l IP_l)
+  h_abs,j = Q_j + P_j                                       runs
+eWAR_v3_i  = fWAR_i + g_abs,i / RPW_s;   eWAR_v3_j = fWAR_j + h_abs,j / RPW_s     (both series, 11.10.3)
+```
+
+- **The move is measured against an average catcher, as fWAR's framing is.** EABS_GATE.md part 7 names
+  the replica's framing convention (`fwar_frame.framing_charge_per9`): FanGraphs' framing runs are
+  measured against an average catcher and charged back to the pitchers they were earned for, so
+  their league total sits near zero and the hitter and pitcher shares of the frame do not move. A gross
+  move (every overturned run from pitchers to catchers) would shift several hundred runs a season from
+  the pitching side to the hitting side and break part 9.7's league totals (570 hitters and 430
+  pitchers per 2,430 games). So the move is centred among catchers per inning at C and the charge among
+  pitchers per IP. The option cost of a failed challenge is charged to the challenger and credited back
+  across his side, per PA or per IP, as part 7 says.
+- **What is not added.** A batter's own overturned challenge is already in his batting runs (the ball
+  or the extra pitch happened), so his term is his failure cost only, re-centred. A pitcher's own
+  overturned challenge would credit and charge the same player, so it moves nothing. A challenge with
+  no named challenger moves nothing.
+- **Rows.** A challenger or a charged pitcher with no row on his side of the vintage carries no term:
+  his raw term is dropped before the re-centring and counted as a coverage gap, so each re-centred
+  term sums to zero exactly. A catcher with m_i above 0 and no innings at C stops the build.
+- **Identities, tested at every build:** sum_i M_i, sum_i F_i, sum_j Q_j and sum_j P_j are each 0 per
+  season within 1e-9 runs, so each side's league total equals fWAR's; the raw move totals equal the
+  eABS frame's (sum m over catchers equals the frame's catcher-won runs; sum q over pitchers equals
+  minus the same total, less coverage gaps); every term is 0 before 2026.
+- **Seasons.** 2026 only: ABS challenges began in MLB in 2026. A later season enters when its eABS frame
+  exists, on its own season's tables.
+- **Limits, disclosed here and not on the site.** The stability check read NULL for both roles
+  (EABS_GATE.md part 9.1); the option cost is fitted and applied on the same season; FanGraphs'
+  framing for 2026 may already credit part of an overturned call to the catcher, an overlap not
+  measured.
+- **Copy (owner EW3-32).** No stability caveat and no "validated" claim: the site describes plainly what
+  the part measures (the runs a catcher's challenges won against an average catcher's, charged to the
+  pitchers they were won for, and the cost of failed challenges). Its card label is "eABS (ABS
+  challenges)". Part 8's may-not list stands, and no sentence calls eABS a skill.
+- **Registry.** The `eabs` row's notes record this override and the NULL read; its verdict stays
+  provisional, never validated.
+
+#### 11.10.3 eWAR realized (EW3-20, 11.2.8 and 11.3.3)
+
+```
+hitter i:   eWAR realized_i = fWAR_i + g_abs,i / RPW_s
+pitcher j:  eWAR realized_j = fWAR_j + Delta_r,j + h_abs,j / RPW_s      Delta_r: R2 of 11.3.3, 2016 on
+```
+
+- Delta_r is read from the swar preview build the looks read (or rebuilt by `tools/build_swar.py` on the
+  same vintage), per pitcher-season 2016 to the last vintage season; before 2016 and on a nopp row
+  realized pitching equals fWAR's, marked `fg`. Realized batting is fWAR's batting (actual events);
+  eBR, the ladder and the fielding arms are not admitted (11.10.1), so realized carries FanGraphs' own
+  components there too.
+- Accounting checks only (11.2.8): Delta_r sums to 0 per season over pitchers within 1e-9 wins; the
+  ABS terms as in 11.10.2; each side's league total equals fWAR's. No forward target, no look.
+
+#### 11.10.4 Runs per win (EW3-24, `docs/ewar/RPW_GATE.md` part 12.1)
+
+- RPW_GATE.md records candidate (c) PRIMARY PASS, GUARD PENDING and gives this task the team guard of
+  11.2.4 "once". The guard's series is eWAR v3 with the candidate's RPW in place of the incumbent's,
+  on predictor seasons 2021 to 2024. eWAR v3 carries no departure in those seasons (the ABS part
+  begins in 2026), so the candidate's series equals the frame's series on every row by construction,
+  and the guard is computed as that identity: the build checks that the two roster sums agree on every
+  club-season and records the result in RPW_GATE.md part 12; no WAR sum is related to a club outcome
+  for it. A guard that reads the two series as the same row for row is NON-INFERIOR under 11.2.4's
+  rule, and the record says it measured no departure.
+- When the guard reads NON-INFERIOR, RPW_s is the candidate's (c) value for every season
+  (`data/rpw_fit.json` `verdict.rpw_by_season`); otherwise the incumbent stands. It converts the ABS
+  part's runs (11.10.2); Delta_r is already in wins from the replica's own chain and is not
+  re-converted.
+
+#### 11.10.5 The display flip
+
+- `war_source.EWAR_V3_LIVE` (default off until the flip commit) routes `war_source.DISPLAY_PROVIDER` to
+  `ewar_v3`; every display door that named `ewar_v2` reads `DISPLAY_PROVIDER` instead (the MLB Stats
+  boards through `bullpen_export.served_war_basis`, the player pages, the Earned board, the PAL history,
+  the trade lookup, the identity helpers, the FA Archive frames, the timeseries `career_war` block and
+  the overseas signings). F-DEF's input file reads only Baseball-Reference's decomposition columns and
+  stays on `ewar_v2` by name.
+- **Player pages:** the season lines show eWAR (the headline), eWAR realized, and then eWAR v2,
+  FanGraphs WAR and bWAR as reference columns. **Awards:** the selection reads the displayed series
+  under the module's own freeze rules, and eWAR realized prints beside each candidate's score. The
+  reference columns never sort, sum, band or rank anything.
+- **Labels:** plain "eWAR" and "eWAR realized"; "eWAR v2" names the reference; the provider and file ids
+  stay `ewar_v3`. The copy that described eWAR v2's construction (the Baseball-Reference frame with
+  pitching re-priced on FIP) follows the served provider, so it describes FanGraphs' published WAR
+  with the ABS part on the eWAR doors.
+- **Rows that follow the displayed board stamp.** Readers that take their WAR from a displayed board's
+  own provider stamp (the Franchise Team eWAR leaf and F-SCORE's roster leg read the Earned board's
+  team totals, plan X14) follow it to `ewar_v3` on their next run; this is a departure from part 9.1's
+  never-read list for those two readers, disclosed here and put to the owner in the task report.
+- The 3-year WAR-rate columns refuse a mixed basis (`bullpen_export.join_war_rate_3yr`), so the flip
+  reruns `tools/war_rate_plus_lab.py` on the served basis.
+- Registry rows `ewar_v3` and `ewar_v3_realized` (provisional, `measurement_only`: neither series claims
+  accuracy) and the `swar_*` rows of part 12.2 land in the flip commit with the glossary entries and
+  `data/swar_eval.json`, the filtered copy of the tracked record 11.2.4 allows.
+
+- Committed alone, docs only, before any number of the assembled series exists. No served number moves
+  at this commit.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
