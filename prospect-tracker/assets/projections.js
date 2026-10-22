@@ -1081,7 +1081,7 @@
         ? `<div class="fa-sub pd-runs-line">Projected ${d.season} runs, ${outlookFrame}: ${runCols.map(c => `${c[1]} ${runTxt(c[0], r.runs[c[0]])}`).join(" &middot; ")}</div>` : "";
       const frHref = franchiseHref(r.team);
       return `<tr class="proj-detail proj-drill" data-export-skip data-drill-for="${esc(r.team)}"><td colspan="${ncols}"><div class="proj-drill-inner">
-        <div class="pd-head"><strong>${esc(r.team)} ${d.season} roster, player by player</strong>${frHref ? ` &middot; <a href="${esc(frHref)}">franchise page</a>` : ""}</div>
+        <div class="pd-head"><strong>${esc(r.team)} ${d.season} <span data-gl="team_drilldown">roster, player by player</span></strong>${frHref ? ` &middot; <a href="${esc(frHref)}">franchise page</a>` : ""}</div>
         <div class="fa-sub">WAR is the served projection; Comp WAR and the runs are the component lines (${esc(d.frame || "FanGraphs frame")}), and the gap line is the difference. Bat, BsR, Fld and Pos are runs above average; Pitching is FIP WAR in runs above replacement.${hasPt ? "" : " PA and IP are not projected: the playing-time heads have not passed their gate."}</div>
         ${runs}
         <table class="detail-table proj-drill-table"><thead><tr><th scope="col">Player</th>${hasPt ? `<th scope="col">PA / IP</th>` : ""}<th scope="col" class="pd-run">Bat</th><th scope="col" class="pd-run">BsR</th><th scope="col" class="pd-run">Fld</th><th scope="col" class="pd-run">Pos</th><th scope="col" class="pd-run" title="FIP-based WAR in runs (FIP WAR x runs per win)">Pitching</th><th scope="col">Comp WAR</th><th scope="col">WAR</th><th scope="col">Gap</th></tr></thead>

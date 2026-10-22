@@ -409,8 +409,15 @@ def test_the_frozen_constants_have_the_registered_form():
 # TM_7_TEAM_DISPLAY_DARK: the T3 columns and the T7 drill-down, dark
 # --------------------------------------------------------------------------- #
 
-def test_the_display_flags_default_false():
-    assert pe.TEAM_DRILLDOWN_LIVE is False and pe.TEAM_RUNS_LIVE is False
+def test_the_display_flags_after_the_team_flips():
+    """TM_8_TEAM_FLIPS commit 1: the drill-down serves (class 2, descriptive,
+    no gate); the T3 runs stay off because the 2026 look recorded TM-C RS FAIL
+    and gate section 3.3 serves RS, RA, run differential and Pythag wins
+    together only if both sides pass."""
+    assert pe.TEAM_DRILLDOWN_LIVE is True and pe.TEAM_RUNS_LIVE is False
+    doc = json.loads((ROOT / "data" / "team_outlook_eval.json").read_text(encoding="utf-8"))
+    v = doc["team_projection_gate"]["gate_2026"]["tm_c"]["verdict"]
+    assert not (v["rs"] == "PASS" and v["ra"] == "PASS"), "both sides pass: TEAM_RUNS_LIVE becomes eligible"
     assert pe.TEAM_DISPLAY_PREVIEW_PATH != ROOT / "data" / "team_outlook_display.json"
 
 
@@ -473,7 +480,9 @@ def test_the_drilldown_reconciles_to_roster_war_on_every_club(quiet_outlook):
     assert drill[sorted(TP.ORG_NICKNAMES)[5]]["foot"]["nProspects"] == 0
 
 
-def test_with_the_flags_off_no_row_moves_and_the_preview_carries_both_blocks(quiet_outlook):
+def test_with_the_flags_off_no_row_moves_and_the_preview_carries_both_blocks(quiet_outlook, monkeypatch):
+    monkeypatch.setattr(pe, "TEAM_RUNS_LIVE", False)
+    monkeypatch.setattr(pe, "TEAM_DRILLDOWN_LIVE", False)
     vets, prospects, rows, blocks, _p0 = _drill_fixture()
     drill = pe._team_drilldown(rows, vets, prospects, blocks=blocks, rpw=10.0)
     runs = {"clubs": {r["team"]: {"rs": 700.0, "ra": 690.0, "runDiff": 10.0, "pythW": 82.0,
@@ -489,6 +498,24 @@ def test_with_the_flags_off_no_row_moves_and_the_preview_carries_both_blocks(qui
     assert prev["runs_keys"] == ["ra", "pf"]
     for r in prev["team_outlook"]:
         assert set(r["runs"]) == {"ra", "pf"} and r["drill"]["players"]
+
+
+def test_the_served_team_outlook_carries_the_drilldown_and_no_runs():
+    """TM_8_TEAM_FLIPS commit 1, read from the served artifact: every club row
+    carries the drill block (the 2027 frame, FanGraphs frame) footed to Roster
+    WAR within the registered 0.06, and no row carries a runs block."""
+    p = ROOT / "data" / "mlb_projections.json"
+    if not p.exists():
+        pytest.skip("data/mlb_projections.json is gitignored and absent here")
+    rows = json.loads(p.read_text(encoding="utf-8"))["team_outlook"]
+    assert len(rows) == 30
+    for r in rows:
+        d = r["drill"]
+        assert d["season"] == FIRST and d["frame"] == pe.COMPONENTS_FRAME
+        f = d["foot"]
+        assert f["rosterWar"] == r["war"] and abs(f["residual"]) <= 0.06, (r["team"], f)
+        assert f["nPlayers"] == len(d["players"]) > 0
+        assert "runs" not in r, r["team"]
 
 
 def test_with_the_flags_on_the_rows_carry_only_the_passing_sides(quiet_outlook, monkeypatch):

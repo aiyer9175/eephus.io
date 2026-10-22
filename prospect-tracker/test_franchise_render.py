@@ -1144,9 +1144,14 @@ def test_the_outlook_links_the_team_outlook_breakdown_only_when_the_payload_name
     franchise_export names the link (the projection rows carry the drill-down
     under TEAM_DRILLDOWN_LIVE). Absent, the section is unchanged."""
     d = _served()
-    lad = next(c for c in d["clubs"] if c["code"] == "LAD")
-    assert "team_drilldown" not in lad["links"], "the drill-down link serves before its flag"
-    html, _ = _render("club", team="LAD", payload=d)
+    # TM_8_TEAM_FLIPS commit 1: TEAM_DRILLDOWN_LIVE is True, so every served
+    # club names the link; a payload without it leaves the section unchanged.
+    for c in d["clubs"]:
+        assert c["links"].get("team_drilldown") == f"/projections/#view=teams&club={c['code']}", c["code"]
+    d0 = json.loads(json.dumps(d))
+    lad0 = next(c for c in d0["clubs"] if c["code"] == "LAD")
+    del lad0["links"]["team_drilldown"]
+    html, _ = _render("club", team="LAD", payload=d0)
     sec = html.split('data-frsec="outlook"')[1].split("</section>")[0]
     assert "Club breakdown" not in sec and "club=LAD" not in html
     d2 = json.loads(json.dumps(d))

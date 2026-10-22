@@ -246,10 +246,14 @@ TEAM_RUNS_LIVE = False           # T3: RS, RA, run differential and Pythag wins 
 #: T7 (TM_7_TEAM_DISPLAY_DARK; owner answer TM-Q4 (a)): the per-club drill-down
 #: (each club's players with the component runs, served WAR and the gap line,
 #: footed by the reconciliation to Roster WAR) as `team_outlook[].drill`. Class
-#: 2, descriptive, no gate. False: the rows Team Outlook would carry (drill-down
-#: and the T3 runs that passed TM-C, per side) go to TEAM_DISPLAY_PREVIEW_PATH
-#: only, and no served file moves.
-TEAM_DRILLDOWN_LIVE = False
+#: 2, descriptive, no gate. FLIPPED True by TM_8_TEAM_FLIPS (2026-10-21): the
+#: drill-down is served on every Team Outlook row. TEAM_RUNS_LIVE stays False:
+#: the 2026 GATE look recorded TM-C RS FAIL, RA PASS, and docs/
+#: TEAM_PROJECTIONS_GATE.md section 3.3 serves RS, RA, run differential and
+#: Pythag wins together, so the flag is not eligible (the look's own record).
+#: While either flag is False the rows Team Outlook would carry in full go to
+#: TEAM_DISPLAY_PREVIEW_PATH only.
+TEAM_DRILLDOWN_LIVE = True
 TEAM_DISPLAY_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "team_projection" / "preview"
                              / "team_outlook_display.json")
 #: The playing-time ledger the candidates read, filled by _veteran_rows and
