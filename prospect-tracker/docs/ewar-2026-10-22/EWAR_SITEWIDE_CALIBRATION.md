@@ -208,4 +208,48 @@ do-not-reopen list forbids here. Their copy keeps saying "fWAR basis", which is 
 
 ## 9. Results
 
-(empty at registration)
+### 9.1 2026-10-22: the checks of 3.3 and 4.4, run once (build a908f44c, both flags off)
+
+**WAG (part 3.3): PASS.** Two timeseries exports from the same inputs rebuild_only loads, each in
+its own process, storage.WAG_EWAR_HEADLINE off then on, compared player by player:
+
+- 2,768 debuted players, 2,434 with a WAG block. C-1 held (no WAG moved for a player whose row
+  carries no 2026 headline departure); C-2 held on every moved row (observed leg moved by the sum
+  of the row's departures within 0.01 wins); C-3 held (debuted value, surplus, trade value and
+  posterior identical for every player).
+- Reported: 967 of 2,434 WAG rows move; the largest move in regressed_wag is 0.076 (Edgar Quero,
+  -0.324 to -0.248); 7 boom/bust labels change (samuel_basallo, carlos_narvaez, endy_rodriguez,
+  jake_irvin, ivan_herrera, yennier_cano, shane_baz).
+- The farm grade follows the WAG it rolls up (talent translation, boom and bust rates, MLB
+  production): all 30 org summaries move in some leaf; farm_rank swaps BAL (1 to 2) and LAD
+  (2 to 1); the overall letter moves BAL A+ to A and LAD A to A+; farm_score moves on 4 clubs by at
+  most 0.2 (BAL 112.8 to 112.6).
+
+**Awards (part 4.4): PASS.** D-1 held (realized league totals reconcile with the artifact on every
+season and side, largest gap 0.0); D-2 held (every pool equals the selection rule's); D-3 held
+(k_bat 0.000525 wins^2 per PA from 8,592 player-seasons, k_pit 0.003787 wins^2 per IP from 8,221);
+D-4 held (no closed season file and not the 2026 frozen record changed; the export with the flag
+on succeeded, awards.json 133,665 to 186,454 bytes, under its 400,000 line).
+
+- k by exposure tercile, descriptive: bat 0.000210 (1 to 40 PA), 0.000445 (40 to 285), 0.000555
+  (285 to 753); pit 0.003329 (0.3 to 18.3 IP), 0.003640 (18.3 to 59.7), 0.003868 (59.7 to 232.7).
+  The per-exposure line is not flat for hitters at low playing time. Most ballot rows sit in the
+  top tercile (the floors are 252 PA or 81 IP for MVP, 100 PA or 30 IP for Rookie, 41 IP for Cy
+  Young), where the tercile's k reads about 6 percent (bat) and 2 percent (pit) above the pooled k,
+  so the served band is slightly narrow there.
+- 36 ballots (MVP, Cy Young, Rookie, two leagues, 2021 to 2026): 4 read clear, 32 too close to call.
+- Disclosure: while the result was written up, one tally of the writers' standing across the 30
+  closed-season ballots was printed to the session's console, which 4.3 says is not computed. It is
+  not recorded here, in the report or in any artifact, and nothing reads it.
+
+### 9.2 2026-10-22: amendments made at the build, recorded here (above is not edited)
+
+- 3.2: the block carries `war_basis` only while the flag is on, so a flag-off export is
+  byte-identical to the export before this task (part 7 step 2); off reads the stored row.
+- 4.4: with the flag off nothing is built or written, not even in `data/awards_eval.json`; the
+  check builds the read in memory (part 7 step 2's "no served file moves" binds before 4.4's
+  sentence). On, `data/awards_eval.json` carries the band under `realized_read_band`.
+- 4.4 and 6: the payload key is `realized_read`, not `deserved`, and the page says "The rule on
+  eWAR realized", "too close to call" and "within the band": the Awards module's copy rules ban
+  the verdict words, keys included (`awards_core.VERDICT_WORDS`, `test_awards_copy.py`). Owner
+  question SWC-Q3 records the choice. The registry row is `awards_realized_read`.
