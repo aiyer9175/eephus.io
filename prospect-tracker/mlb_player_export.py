@@ -88,6 +88,12 @@ CACHE_DIR = ROOT / ".cache" / "savant_mlb"
 COMPONENTS_PATH = DATA_DIR / "mlb_proj_components.json"
 #: {card key: component block} of the last build_payload, for _export_shards.
 _SHARD_COMP: dict[str, dict] = {}
+#: {card key: {"careerHist", "careerPitHist", "ewarParts": {"hit", "pit"}}}: the eWAR history
+#: (docs/ewar/EWAR_HISTORY_GATE.md part 5) of the last build_payload, for the
+#: card's SHARD only. The whole-set payload's `career` keeps CAREER_FROM, because
+#: Python readers sum it (overseas career WAR, the Trade Machine's appearance
+#: proxy, the deal order) and the history is a display addition, not their input.
+_SHARD_HIST: dict[str, dict] = {}
 
 
 def _component_rows(proj: dict) -> dict | None:
@@ -103,6 +109,10 @@ def _component_rows(proj: dict) -> dict | None:
     return doc.get("rows") or {}
 
 CAREER_FROM = 2014
+#: The card's season lines reach back to eWAR's first season (2000, the frozen fWAR
+#: vintage's; ewar_history.FIRST_SEASON) in the per-card shard, as `careerHist`.
+#: Seasons before 2014 are read from the season-line cache only (milb_history).
+HISTORY_FROM = 2000
 LB = {
     "statcast": ("https://baseballsavant.mlb.com/leaderboard/statcast"
                  "?type={side}&year={year}&csv=true&min=25"),
@@ -249,11 +259,13 @@ def _career_rows(mlbam: int, is_pitcher: bool,
                  war_by: dict[int, dict[int, dict[str, float]]],
                  war_bwar_by: dict[int, dict[int, dict[str, float]]] | None = None,
                  war_fwar_by: dict[int, dict[int, dict[str, float]]] | None = None,
-                 war_ref_by: dict[str, dict] | None = None
+                 war_ref_by: dict[str, dict] | None = None,
+                 seasons: range | None = None
                  ) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
     out = []
-    for season in range(CAREER_FROM, date.today().year + 1):
+    for season in (seasons if seasons is not None
+                   else range(CAREER_FROM, date.today().year + 1)):
         rows = [r for r in (mh.player_index(season, group).get(mlbam) or [])
                 if r.get("level") == "MLB"]
         if not rows:
@@ -395,7 +407,41 @@ def _war_ref_maps() -> dict[str, dict]:
             out[key] = war_source.side_war_by_season(**kw)
         except war_source.DataUnavailable as e:
             log.warning("mlb player detail: no %s column (%s)", key, e)
+    # eWAR v2 exists only inside its own artifact's window (2011 on): before it the
+    # provider serves bWAR, which is never printed under the eWAR v2 label
+    # (docs/ewar/EWAR_HISTORY_GATE.md part 5).
+    lo = _ewar_v2_first_season()
+    if lo is not None and out["ewar2"]:
+        out["ewar2"] = {mid: {y: c for y, c in by.items() if int(y) >= lo}
+                        for mid, by in out["ewar2"].items()}
     return out
+
+
+def _ewar_v2_first_season() -> int | None:
+    """The first season of eWAR v2's own artifact (data/ewar.json), or None."""
+    try:
+        import ewar
+        return int((ewar.load().get("seasons") or [None])[0])
+    except Exception:   # noqa: BLE001 - no window known, nothing filtered
+        return None
+
+
+def _ewar_parts(seasons: set[int], side: str) -> list[str]:
+    """The season-group sentences naming the parts a card's seasons lack against
+    the newest season, oldest first, neighbouring groups joined
+    (ewar_history.merged_shorts): on the hitting lines eWAR's own parts (every
+    one a hitting-side part), on the pitching lines eWAR realized's. [] when the
+    displayed WAR is not eWAR or no season lacks a part."""
+    import war_source
+    if war_source.DISPLAY_PROVIDER != "ewar_v3" or not seasons:
+        return []
+    try:
+        import ewar_history
+        groups = ewar_history.season_groups()
+    except Exception as e:   # noqa: BLE001 - a stamp is context, not the card
+        log.warning("mlb player detail: no eWAR season stamps (%s)", e)
+        return []
+    return ewar_history.merged_shorts(groups, seasons, "headline" if side == "hit" else "realized")
 
 
 def _fwar_reference_map() -> dict[int, dict[int, dict[str, float]]]:
@@ -933,6 +979,7 @@ def build_payload() -> dict:
     frame = {"first_season": proj.get("first_season"), "horizon": proj.get("horizon")}
     comp_rows = _component_rows(proj)
     _SHARD_COMP.clear()
+    _SHARD_HIST.clear()
     fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
     members = {m["key"]: m for m in fa.get("members") or []}
     swing = {}
@@ -1096,6 +1143,16 @@ def build_payload() -> dict:
         p["career"] =_career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by,
                                    war_fwar_by, war_ref_by)
         n_car += 1 if p["career"] else 0
+        # eWAR history (shard only, _SHARD_HIST): the season lines before
+        # CAREER_FROM, and the stamps of every season the card shows.
+        hist: dict = {}
+        if war_source.DISPLAY_PROVIDER == "ewar_v3":
+            span = range(HISTORY_FROM, CAREER_FROM)
+            hist["careerHist"] = _career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by,
+                                              war_fwar_by, war_ref_by, seasons=span)
+            if p.get("twoWay"):
+                hist["careerPitHist"] = _career_rows(int(mlbam), True, war_by, war_bwar_by,
+                                                     war_fwar_by, war_ref_by, seasons=span)
         sc = _statcast_block(int(mlbam), p["isPit"], year)
         if sc:
             p["sc"] = sc
@@ -1106,6 +1163,25 @@ def build_payload() -> dict:
         if p.get("twoWay"):
             p["careerPit"] = _career_rows(int(mlbam), True, war_by, war_bwar_by,
                                           war_fwar_by, war_ref_by)
+        if war_source.DISPLAY_PROVIDER == "ewar_v3":
+            # The hitting lines are `career` (careerHist) unless the card is a
+            # pitcher's; the pitching lines are careerPit on a two-way card.
+            lines = {"hit": [] if p["isPit"] else ["career", "careerHist"],
+                     "pit": (["careerPit", "careerPitHist"] if p.get("twoWay")
+                             else ["career", "careerHist"] if p["isPit"] else [])}
+            parts = {}
+            for side, keys in lines.items():
+                shown = {int(r["y"]) for k in keys
+                         for r in ((p.get(k) or []) + (hist.get(k) or []))
+                         if r.get("war") is not None}
+                found = _ewar_parts(shown, side)
+                if found:
+                    parts[side] = found
+            hist = {k: v for k, v in hist.items() if v}
+            if parts:
+                hist["ewarParts"] = parts
+            if hist:
+                _SHARD_HIST[key] = hist
             scp = _statcast_block(int(mlbam), True, year)
             if scp:
                 p["scPit"] = scp
@@ -1362,7 +1438,8 @@ def _shard_dir() -> Path:
     return DATA_DIR / SHARD_DIRNAME
 
 
-def _export_shards(payload: dict, comp: dict | None = None) -> int:
+def _export_shards(payload: dict, comp: dict | None = None,
+                   hist: dict | None = None) -> int:
     """data/mlb_player_detail/<key>.json: one card per player, carrying the
     payload's generated_at, first_season and horizon beside it. Shards of
     players no longer in the payload are removed, so the directory is always
@@ -1378,6 +1455,8 @@ def _export_shards(payload: dict, comp: dict | None = None) -> int:
         names.add(name)
         if comp and comp.get(key) is not None:
             p = {**p, "proj": {**(p.get("proj") or {}), "comp": comp[key]}}
+        if hist and hist.get(key):
+            p = {**p, **hist[key]}
         (out_dir / name).write_text(
             json.dumps({**head, "key": key, "player": p}, separators=(",", ":")),
             encoding="utf-8")
@@ -1391,7 +1470,7 @@ def export() -> int:
     payload = build_payload()
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
-    n_shards = _export_shards(payload, _SHARD_COMP)
+    n_shards = _export_shards(payload, _SHARD_COMP, _SHARD_HIST)
     log.info("mlb player detail: %d per-player shards under data/%s/", n_shards, SHARD_DIRNAME)
     _export_links(payload)
     _export_position_games()

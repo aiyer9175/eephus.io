@@ -108,7 +108,7 @@
    "rule": "every fielder with window innings; a fielder under 400 innings is published as provisional, with his innings on the row",
    "since": "2026-10-01"
   },
-  "generated_at": "2026-10-21",
+  "generated_at": "2026-10-22",
   "season": 2026,
   "window": [
    2024,
@@ -116,7 +116,7 @@
    2026
   ],
   "window_key": "l3",
-  "panel_built_at": "2026-10-21",
+  "panel_built_at": "2026-10-22",
   "n_in_artifact": 889,
   "pool": {
    "n": 889,
@@ -125,7 +125,7 @@
   },
   "uncoloured": true,
   "gate_record": "dem_plus_multiyear_eval.json",
-  "note": "3-year DEM+ is the Last 3 window's index read from mlbstats_window_l3.json (built 2026-10-21), the same value the Last 3 view prints. The percentile is inside the window's pool; no value ruler is carried onto it. Fielders the window does not publish have no value. The window publishes every fielder with window innings; a fielder under 400 innings is published as provisional, with his innings on the row."
+  "note": "3-year DEM+ is the Last 3 window's index read from mlbstats_window_l3.json (built 2026-10-22), the same value the Last 3 view prints. The percentile is inside the window's pool; no value ruler is carried onto it. Fielders the window does not publish have no value. The window publishes every fielder with window innings; a fielder under 400 innings is published as provisional, with his innings on the row."
  },
  "team_rollup_framing": {
   "included": true,
