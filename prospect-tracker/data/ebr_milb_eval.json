@@ -1,0 +1,1266 @@
+{
+ "bounds": {
+  "display_pa": 150,
+  "league_gidp_rel_diff_max": 0.005,
+  "league_sb_cs_rel_diff_max": 0.001,
+  "min_unit_games": 100,
+  "pa_coverage_min": 0.99,
+  "player_gidp_exact_share_min": 0.97,
+  "player_sb_cs_exact_share_min": 0.99
+ },
+ "continuity": {
+  "aaa|aa": {
+   "mean_rate_higher": 2.016,
+   "mean_rate_lower": 0.852,
+   "n": 49,
+   "r": 0.3456
+  },
+  "aa|high_a": {
+   "mean_rate_higher": -1.96,
+   "mean_rate_lower": 1.222,
+   "n": 69,
+   "r": 0.2593
+  },
+  "aa|single_a": {
+   "mean_rate_higher": -3.706,
+   "mean_rate_lower": -1.828,
+   "n": 2,
+   "r": null
+  },
+  "all_pairs": {
+   "mean_rate_higher": -0.645,
+   "mean_rate_lower": 1.297,
+   "n": 177,
+   "r": 0.1474
+  },
+  "high_a|single_a": {
+   "mean_rate_higher": -0.66,
+   "mean_rate_lower": 0.66,
+   "n": 42,
+   "r": 0.1429
+  },
+  "single_a|rookie": {
+   "mean_rate_higher": -2.845,
+   "mean_rate_lower": 5.299,
+   "n": 15,
+   "r": -0.2432
+  }
+ },
+ "descriptive": true,
+ "dirt_advances_league": {
+  "aaa|2026": {
+   "advances": 3210,
+   "runs": 636.9
+  },
+  "aa|2026": {
+   "advances": 3883,
+   "runs": 816.691
+  },
+  "high_a|2026": {
+   "advances": 4538,
+   "runs": 943.028
+  },
+  "rookie|2023": {
+   "advances": 11705,
+   "runs": 2475.252
+  },
+  "rookie|2024": {
+   "advances": 11809,
+   "runs": 2491.501
+  },
+  "rookie|2025": {
+   "advances": 11455,
+   "runs": 2381.754
+  },
+  "rookie|2026": {
+   "advances": 12299,
+   "runs": 2651.083
+  },
+  "single_a|2023": {
+   "advances": 5863,
+   "runs": 1223.443
+  },
+  "single_a|2024": {
+   "advances": 5785,
+   "runs": 1218.137
+  },
+  "single_a|2025": {
+   "advances": 5545,
+   "runs": 1194.332
+  },
+  "single_a|2026": {
+   "advances": 5627,
+   "runs": 1230.214
+  }
+ },
+ "gate": "docs/ebr-2026-09-30/EBR_GATE.md",
+ "generated_at": "2026-10-20T00:41:06+00:00",
+ "identity": {
+  "aaa|2026": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": true,
+    "gidp_rel_diff": 0.002723,
+    "official": {
+     "cs": 1343,
+     "gidp": 2938,
+     "pa": 171799,
+     "sb": 5091
+    },
+    "pass": true,
+    "record": {
+     "cs": 1343,
+     "gidp": 2930,
+     "pa": 171799,
+     "sb": 5091
+    },
+    "sb_rel_diff": 0.0
+   },
+   "I2": {
+    "exact": true,
+    "gidp_exact_share": 0.9848,
+    "pa_exact_share": 0.9813,
+    "pass": true,
+    "players_gidp": 658,
+    "players_pa": 909,
+    "players_sb_cs": 665,
+    "sb_cs_exact_share": 1.0,
+    "sb_cs_mismatch": 0
+   },
+   "I3": {
+    "official_pa": 171799,
+    "pa_coverage": 1.0,
+    "pass": true,
+    "record_pa": 171799
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": -0.0,
+     "sb": -0.0,
+     "xb_adv": -0.0,
+     "xb_oob": 0.0
+    }
+   },
+   "I5": {
+    "K": 1342.7,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "3244d832b3e1f01e180e190fefcc6fe843b5f18e0c39a15537ed8669f856533b"
+   },
+   "I6": {
+    "max_abs_ebr": 14.38,
+    "pass": true,
+    "rows": 911,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 72154,
+    "pass": true,
+    "priced_share": 0.999931,
+    "priced_xb": 72149,
+    "share_priced_from_cell_n50": {
+     "A": 0.7235,
+     "B": 0.9048,
+     "G": 0.8806,
+     "H": 0.7376
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 1,
+   "refetched_games": 11
+  },
+  "aa|2026": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.001618,
+    "official": {
+     "cs": 1575,
+     "gidp": 2472,
+     "pa": 156270,
+     "sb": 6136
+    },
+    "pass": true,
+    "record": {
+     "cs": 1575,
+     "gidp": 2468,
+     "pa": 156270,
+     "sb": 6134
+    },
+    "sb_rel_diff": 0.000326
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9935,
+    "pa_exact_share": 0.9902,
+    "pass": true,
+    "players_gidp": 616,
+    "players_pa": 820,
+    "players_sb_cs": 669,
+    "sb_cs_exact_share": 0.997,
+    "sb_cs_mismatch": 2
+   },
+   "I3": {
+    "official_pa": 156270,
+    "pa_coverage": 1.0,
+    "pass": true,
+    "record_pa": 156270
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": 0.0,
+     "sb": -0.0,
+     "xb_adv": 0.0,
+     "xb_oob": 0.0
+    }
+   },
+   "I5": {
+    "K": 1342.7,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "0150d0c6157576e21c9ab56bfdb88c1bcfd8926914f18da5162aed4b2bbb3ddd"
+   },
+   "I6": {
+    "max_abs_ebr": 13.04,
+    "pass": true,
+    "rows": 820,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 61638,
+    "pass": true,
+    "priced_share": 0.99987,
+    "priced_xb": 61630,
+    "share_priced_from_cell_n50": {
+     "A": 0.6834,
+     "B": 0.8836,
+     "G": 0.8809,
+     "H": 0.6749
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 1,
+   "refetched_games": 12
+  },
+  "high_a|2026": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.001764,
+    "official": {
+     "cs": 1683,
+     "gidp": 2268,
+     "pa": 151429,
+     "sb": 6249
+    },
+    "pass": true,
+    "record": {
+     "cs": 1683,
+     "gidp": 2264,
+     "pa": 151430,
+     "sb": 6248
+    },
+    "sb_rel_diff": 0.00016
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9902,
+    "pa_exact_share": 0.9892,
+    "pass": true,
+    "players_gidp": 613,
+    "players_pa": 830,
+    "players_sb_cs": 665,
+    "sb_cs_exact_share": 0.9985,
+    "sb_cs_mismatch": 1
+   },
+   "I3": {
+    "official_pa": 151429,
+    "pa_coverage": 1.000007,
+    "pass": true,
+    "record_pa": 151430
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": -0.0,
+     "pk": 0.0,
+     "sb": -0.0,
+     "xb_adv": -0.0,
+     "xb_oob": 0.0
+    }
+   },
+   "I5": {
+    "K": 1342.7,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "6ae90267131e9fd852f52e6b62532c5db0e840d6e6e8536efc10495313dd22b3"
+   },
+   "I6": {
+    "max_abs_ebr": 11.433,
+    "pass": true,
+    "rows": 830,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 60540,
+    "pass": true,
+    "priced_share": 0.999901,
+    "priced_xb": 60534,
+    "share_priced_from_cell_n50": {
+     "A": 0.7007,
+     "B": 0.8805,
+     "G": 0.8637,
+     "H": 0.6946
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 2,
+   "refetched_games": 16
+  },
+  "rookie|2023": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.000841,
+    "official": {
+     "cs": 2500,
+     "gidp": 2379,
+     "pa": 164288,
+     "sb": 7035
+    },
+    "pass": true,
+    "record": {
+     "cs": 2500,
+     "gidp": 2377,
+     "pa": 164294,
+     "sb": 7034
+    },
+    "sb_rel_diff": 0.000142
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9982,
+    "pa_exact_share": 0.9883,
+    "pass": true,
+    "players_gidp": 1101,
+    "players_pa": 1884,
+    "players_sb_cs": 1442,
+    "sb_cs_exact_share": 0.9979,
+    "sb_cs_mismatch": 3
+   },
+   "I3": {
+    "official_pa": 164288,
+    "pa_coverage": 1.000037,
+    "pass": true,
+    "record_pa": 164294
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": -0.0,
+     "sb": 0.0,
+     "xb_adv": 0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 2609.0,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "e52e664cc2cd9641eee6dd6b0f84f24061d018af8e4c404fabbed87d48a679f5"
+   },
+   "I6": {
+    "max_abs_ebr": 9.306,
+    "pass": true,
+    "rows": 1886,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 70506,
+    "pass": true,
+    "priced_share": 0.999858,
+    "priced_xb": 70496,
+    "share_priced_from_cell_n50": {
+     "A": 0.8085,
+     "B": 0.9189,
+     "G": 0.8839,
+     "H": 0.7838
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 2,
+   "refetched_games": 1344
+  },
+  "rookie|2024": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": true,
+    "gidp_rel_diff": 0.002236,
+    "official": {
+     "cs": 2639,
+     "gidp": 2236,
+     "pa": 163571,
+     "sb": 8282
+    },
+    "pass": true,
+    "record": {
+     "cs": 2639,
+     "gidp": 2231,
+     "pa": 163573,
+     "sb": 8282
+    },
+    "sb_rel_diff": 0.0
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.995,
+    "pa_exact_share": 0.9898,
+    "pass": true,
+    "players_gidp": 996,
+    "players_pa": 1571,
+    "players_sb_cs": 1270,
+    "sb_cs_exact_share": 0.9984,
+    "sb_cs_mismatch": 2
+   },
+   "I3": {
+    "official_pa": 163571,
+    "pa_coverage": 1.000012,
+    "pass": true,
+    "record_pa": 163573
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": 0.0,
+     "sb": 0.0,
+     "xb_adv": -0.0,
+     "xb_oob": 0.0
+    }
+   },
+   "I5": {
+    "K": 2609.0,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "0195f53f3b1321f52cfdadcbc56532c4e71026bdf3e570c0a694f6738f681bd1"
+   },
+   "I6": {
+    "max_abs_ebr": 11.449,
+    "pass": true,
+    "rows": 1571,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 69359,
+    "pass": true,
+    "priced_share": 0.999769,
+    "priced_xb": 69343,
+    "share_priced_from_cell_n50": {
+     "A": 0.8057,
+     "B": 0.9018,
+     "G": 0.8863,
+     "H": 0.7404
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 2,
+   "refetched_games": 1394
+  },
+  "rookie|2025": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.002035,
+    "official": {
+     "cs": 2737,
+     "gidp": 2457,
+     "pa": 167442,
+     "sb": 8497
+    },
+    "pass": true,
+    "record": {
+     "cs": 2737,
+     "gidp": 2452,
+     "pa": 167445,
+     "sb": 8498
+    },
+    "sb_rel_diff": 0.000118
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9952,
+    "pa_exact_share": 0.9877,
+    "pass": true,
+    "players_gidp": 1052,
+    "players_pa": 1547,
+    "players_sb_cs": 1274,
+    "sb_cs_exact_share": 0.9992,
+    "sb_cs_mismatch": 1
+   },
+   "I3": {
+    "official_pa": 167442,
+    "pa_coverage": 1.000018,
+    "pass": true,
+    "record_pa": 167445
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": -0.0,
+     "sb": 0.0,
+     "xb_adv": 0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 2609.0,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "fce02d8e3e2fa7152147939af3f12f96150e18b16ef22187d87d253f9ab97e35"
+   },
+   "I6": {
+    "max_abs_ebr": 10.486,
+    "pass": true,
+    "rows": 1548,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 72217,
+    "pass": true,
+    "priced_share": 0.999903,
+    "priced_xb": 72210,
+    "share_priced_from_cell_n50": {
+     "A": 0.8025,
+     "B": 0.905,
+     "G": 0.8888,
+     "H": 0.7479
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 0,
+   "refetched_games": 1436
+  },
+  "rookie|2026": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.0,
+    "official": {
+     "cs": 2717,
+     "gidp": 2203,
+     "pa": 163736,
+     "sb": 9622
+    },
+    "pass": true,
+    "record": {
+     "cs": 2717,
+     "gidp": 2203,
+     "pa": 163737,
+     "sb": 9620
+    },
+    "sb_rel_diff": 0.000208
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 1.0,
+    "pa_exact_share": 0.9854,
+    "pass": true,
+    "players_gidp": 985,
+    "players_pa": 1574,
+    "players_sb_cs": 1279,
+    "sb_cs_exact_share": 0.9984,
+    "sb_cs_mismatch": 2
+   },
+   "I3": {
+    "official_pa": 163736,
+    "pa_coverage": 1.000006,
+    "pass": true,
+    "record_pa": 163737
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": 0.0,
+     "pk": 0.0,
+     "sb": 0.0,
+     "xb_adv": -0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 2609.0,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "60da06c6060031e503de4737642b58e9564cb1fb4d098873e274772e4f245527"
+   },
+   "I6": {
+    "max_abs_ebr": 9.579,
+    "pass": true,
+    "rows": 1575,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 71591,
+    "pass": true,
+    "priced_share": 0.999735,
+    "priced_xb": 71572,
+    "share_priced_from_cell_n50": {
+     "A": 0.8149,
+     "B": 0.8984,
+     "G": 0.8757,
+     "H": 0.7442
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 0,
+   "refetched_games": 326
+  },
+  "single_a|2023": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": false,
+    "gidp_rel_diff": 0.001278,
+    "official": {
+     "cs": 1674,
+     "gidp": 2348,
+     "pa": 148834,
+     "sb": 5589
+    },
+    "pass": true,
+    "record": {
+     "cs": 1674,
+     "gidp": 2345,
+     "pa": 148834,
+     "sb": 5588
+    },
+    "sb_rel_diff": 0.000179
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9953,
+    "pa_exact_share": 0.9779,
+    "pass": true,
+    "players_gidp": 642,
+    "players_pa": 903,
+    "players_sb_cs": 709,
+    "sb_cs_exact_share": 0.9986,
+    "sb_cs_mismatch": 1
+   },
+   "I3": {
+    "official_pa": 148834,
+    "pa_coverage": 1.0,
+    "pass": true,
+    "record_pa": 148834
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": -0.0,
+     "pk": -0.0,
+     "sb": -0.0,
+     "xb_adv": -0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 1929.2,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "222fa7880f8975ed58a70931a9acaf7b518eaf885f87164ea4e6cdf50b003997"
+   },
+   "I6": {
+    "max_abs_ebr": 11.622,
+    "pass": true,
+    "rows": 903,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 61051,
+    "pass": true,
+    "priced_share": 0.999885,
+    "priced_xb": 61044,
+    "share_priced_from_cell_n50": {
+     "A": 0.7031,
+     "B": 0.8679,
+     "G": 0.88,
+     "H": 0.6702
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 2,
+   "refetched_games": 3
+  },
+  "single_a|2024": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": true,
+    "gidp_rel_diff": 0.001839,
+    "official": {
+     "cs": 1586,
+     "gidp": 2175,
+     "pa": 148374,
+     "sb": 5727
+    },
+    "pass": true,
+    "record": {
+     "cs": 1586,
+     "gidp": 2171,
+     "pa": 148375,
+     "sb": 5727
+    },
+    "sb_rel_diff": 0.0
+   },
+   "I2": {
+    "exact": true,
+    "gidp_exact_share": 0.9937,
+    "pa_exact_share": 0.9855,
+    "pass": true,
+    "players_gidp": 631,
+    "players_pa": 898,
+    "players_sb_cs": 718,
+    "sb_cs_exact_share": 1.0,
+    "sb_cs_mismatch": 0
+   },
+   "I3": {
+    "official_pa": 148374,
+    "pa_coverage": 1.000007,
+    "pass": true,
+    "record_pa": 148375
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": -0.0,
+     "pk": 0.0,
+     "sb": -0.0,
+     "xb_adv": -0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 1929.2,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "c4f599eccb63a212e6f1f1d1669761c563b4a87cfc0a4916c9cf80d686329903"
+   },
+   "I6": {
+    "max_abs_ebr": 12.808,
+    "pass": true,
+    "rows": 898,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 60206,
+    "pass": true,
+    "priced_share": 0.999801,
+    "priced_xb": 60194,
+    "share_priced_from_cell_n50": {
+     "A": 0.7025,
+     "B": 0.8758,
+     "G": 0.873,
+     "H": 0.6515
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 1,
+   "refetched_games": 1
+  },
+  "single_a|2025": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": true,
+    "gidp_rel_diff": 0.002291,
+    "official": {
+     "cs": 1894,
+     "gidp": 2182,
+     "pa": 149076,
+     "sb": 6708
+    },
+    "pass": true,
+    "record": {
+     "cs": 1894,
+     "gidp": 2177,
+     "pa": 149078,
+     "sb": 6708
+    },
+    "sb_rel_diff": 0.0
+   },
+   "I2": {
+    "exact": true,
+    "gidp_exact_share": 0.9922,
+    "pa_exact_share": 0.989,
+    "pass": true,
+    "players_gidp": 640,
+    "players_pa": 912,
+    "players_sb_cs": 727,
+    "sb_cs_exact_share": 1.0,
+    "sb_cs_mismatch": 0
+   },
+   "I3": {
+    "official_pa": 149076,
+    "pa_coverage": 1.000013,
+    "pass": true,
+    "record_pa": 149078
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": -0.0,
+     "pk": -0.0,
+     "sb": -0.0,
+     "xb_adv": -0.0,
+     "xb_oob": 0.0
+    }
+   },
+   "I5": {
+    "K": 1929.2,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "533dc366fbb1a1626903ffd53d5582d0af49b6175709e9aaf26cda35ccc85e70"
+   },
+   "I6": {
+    "max_abs_ebr": 11.952,
+    "pass": true,
+    "rows": 912,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 61939,
+    "pass": true,
+    "priced_share": 0.999822,
+    "priced_xb": 61928,
+    "share_priced_from_cell_n50": {
+     "A": 0.7196,
+     "B": 0.8674,
+     "G": 0.8859,
+     "H": 0.6503
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 0,
+   "refetched_games": 0
+  },
+  "single_a|2026": {
+   "I1": {
+    "cs_rel_diff": 0.0,
+    "exact": true,
+    "gidp_rel_diff": 0.001304,
+    "official": {
+     "cs": 2009,
+     "gidp": 2301,
+     "pa": 151705,
+     "sb": 6671
+    },
+    "pass": true,
+    "record": {
+     "cs": 2009,
+     "gidp": 2298,
+     "pa": 151721,
+     "sb": 6671
+    },
+    "sb_rel_diff": 0.0
+   },
+   "I2": {
+    "exact": false,
+    "gidp_exact_share": 0.9897,
+    "pa_exact_share": 0.9752,
+    "pass": true,
+    "players_gidp": 677,
+    "players_pa": 968,
+    "players_sb_cs": 764,
+    "sb_cs_exact_share": 0.9948,
+    "sb_cs_mismatch": 4
+   },
+   "I3": {
+    "official_pa": 151705,
+    "pa_coverage": 1.000105,
+    "pass": true,
+    "record_pa": 151721
+   },
+   "I4": {
+    "pass": true,
+    "sums": {
+     "dp": -0.0,
+     "pk": -0.0,
+     "sb": 0.0,
+     "xb_adv": 0.0,
+     "xb_oob": -0.0
+    }
+   },
+   "I5": {
+    "K": 1929.2,
+    "cells": 24,
+    "monotone": true,
+    "pass": true,
+    "sha256": "f107a4c19c845783459456129cdbbd6a4b08929c10de61bea5c831e061dd0480"
+   },
+   "I6": {
+    "max_abs_ebr": 13.474,
+    "pass": true,
+    "rows": 968,
+    "violations": 0
+   },
+   "I7": {
+    "eligible_xb": 61578,
+    "pass": true,
+    "priced_share": 0.999903,
+    "priced_xb": 61572,
+    "share_priced_from_cell_n50": {
+     "A": 0.6727,
+     "B": 0.8729,
+     "G": 0.8612,
+     "H": 0.6724
+    }
+   },
+   "I9": {
+    "pass": true
+   },
+   "all_pass": true,
+   "normalised_steals": 1,
+   "refetched_games": 15
+  }
+ },
+ "model": "ebr_milb_eval",
+ "note": "Same-season, same-unit descriptives only. Level-relative: a runner is compared with the average runner of his own level in his own season. Never summarised, validated or stratified by consensus-FV cell; never an eFV input.",
+ "reliability_split_half": {
+  "aaa|2026": {
+   "n": 465,
+   "r": 0.2843,
+   "spearman_brown": 0.4427
+  },
+  "aa|2026": {
+   "n": 426,
+   "r": 0.2925,
+   "spearman_brown": 0.4526
+  },
+  "high_a|2026": {
+   "n": 413,
+   "r": 0.2348,
+   "spearman_brown": 0.3804
+  },
+  "rookie|2023": {
+   "n": 395,
+   "r": 0.2263,
+   "spearman_brown": 0.369
+  },
+  "rookie|2024": {
+   "n": 451,
+   "r": 0.104,
+   "spearman_brown": 0.1884
+  },
+  "rookie|2025": {
+   "n": 474,
+   "r": 0.0737,
+   "spearman_brown": 0.1373
+  },
+  "rookie|2026": {
+   "n": 479,
+   "r": 0.1144,
+   "spearman_brown": 0.2053
+  },
+  "single_a|2023": {
+   "n": 395,
+   "r": 0.189,
+   "spearman_brown": 0.3179
+  },
+  "single_a|2024": {
+   "n": 389,
+   "r": 0.3303,
+   "spearman_brown": 0.4966
+  },
+  "single_a|2025": {
+   "n": 386,
+   "r": 0.2887,
+   "spearman_brown": 0.448
+  },
+  "single_a|2026": {
+   "n": 392,
+   "r": 0.2332,
+   "spearman_brown": 0.3783
+  }
+ },
+ "schema": 1,
+ "units": {
+  "aaa|2026": {
+   "K": 1342.7,
+   "complete": false,
+   "fit_set_plays": 164817,
+   "games": 2223,
+   "k_source": "all_milb",
+   "lambda": 0.937126,
+   "level": "aaa",
+   "pa": 171799,
+   "players": 911,
+   "players_150": 465,
+   "pool_kind": "season_all",
+   "pool_units": [
+    "aa|2026",
+    "aaa|2026",
+    "high_a|2026",
+    "rookie|2026",
+    "single_a|2026"
+   ],
+   "re24_sha256": "3244d832b3e1f01e180e190fefcc6fe843b5f18e0c39a15537ed8669f856533b",
+   "season": 2026
+  },
+  "aa|2026": {
+   "K": 1342.7,
+   "complete": false,
+   "fit_set_plays": 150318,
+   "games": 2048,
+   "k_source": "all_milb",
+   "lambda": 0.930061,
+   "level": "aa",
+   "pa": 156270,
+   "players": 820,
+   "players_150": 426,
+   "pool_kind": "season_all",
+   "pool_units": [
+    "aa|2026",
+    "aaa|2026",
+    "high_a|2026",
+    "rookie|2026",
+    "single_a|2026"
+   ],
+   "re24_sha256": "0150d0c6157576e21c9ab56bfdb88c1bcfd8926914f18da5162aed4b2bbb3ddd",
+   "season": 2026
+  },
+  "high_a|2026": {
+   "K": 1342.7,
+   "complete": false,
+   "fit_set_plays": 145402,
+   "games": 1952,
+   "k_source": "all_milb",
+   "lambda": 0.963948,
+   "level": "high_a",
+   "pa": 151430,
+   "players": 830,
+   "players_150": 413,
+   "pool_kind": "season_all",
+   "pool_units": [
+    "aa|2026",
+    "aaa|2026",
+    "high_a|2026",
+    "rookie|2026",
+    "single_a|2026"
+   ],
+   "re24_sha256": "6ae90267131e9fd852f52e6b62532c5db0e840d6e6e8536efc10495313dd22b3",
+   "season": 2026
+  },
+  "rookie|2023": {
+   "K": 2609.0,
+   "complete": true,
+   "fit_set_plays": 158212,
+   "games": 2210,
+   "k_source": "level",
+   "lambda": 0.980357,
+   "level": "rookie",
+   "pa": 164294,
+   "players": 1886,
+   "players_150": 395,
+   "pool_kind": "level",
+   "pool_units": [
+    "rookie|2023",
+    "rookie|2024",
+    "rookie|2025",
+    "rookie|2026"
+   ],
+   "re24_sha256": "e52e664cc2cd9641eee6dd6b0f84f24061d018af8e4c404fabbed87d48a679f5",
+   "season": 2023
+  },
+  "rookie|2024": {
+   "K": 2609.0,
+   "complete": true,
+   "fit_set_plays": 156847,
+   "games": 2268,
+   "k_source": "level",
+   "lambda": 0.951135,
+   "level": "rookie",
+   "pa": 163573,
+   "players": 1571,
+   "players_150": 451,
+   "pool_kind": "level",
+   "pool_units": [
+    "rookie|2023",
+    "rookie|2024",
+    "rookie|2025",
+    "rookie|2026"
+   ],
+   "re24_sha256": "0195f53f3b1321f52cfdadcbc56532c4e71026bdf3e570c0a694f6738f681bd1",
+   "season": 2024
+  },
+  "rookie|2025": {
+   "K": 2609.0,
+   "complete": true,
+   "fit_set_plays": 160773,
+   "games": 2314,
+   "k_source": "level",
+   "lambda": 0.959829,
+   "level": "rookie",
+   "pa": 167445,
+   "players": 1548,
+   "players_150": 474,
+   "pool_kind": "level",
+   "pool_units": [
+    "rookie|2023",
+    "rookie|2024",
+    "rookie|2025",
+    "rookie|2026"
+   ],
+   "re24_sha256": "fce02d8e3e2fa7152147939af3f12f96150e18b16ef22187d87d253f9ab97e35",
+   "season": 2025
+  },
+  "rookie|2026": {
+   "K": 2609.0,
+   "complete": false,
+   "fit_set_plays": 157431,
+   "games": 2267,
+   "k_source": "level",
+   "lambda": 1.105712,
+   "level": "rookie",
+   "pa": 163737,
+   "players": 1575,
+   "players_150": 479,
+   "pool_kind": "level",
+   "pool_units": [
+    "rookie|2023",
+    "rookie|2024",
+    "rookie|2025",
+    "rookie|2026"
+   ],
+   "re24_sha256": "60da06c6060031e503de4737642b58e9564cb1fb4d098873e274772e4f245527",
+   "season": 2026
+  },
+  "single_a|2023": {
+   "K": 1929.2,
+   "complete": true,
+   "fit_set_plays": 143134,
+   "games": 1952,
+   "k_source": "level",
+   "lambda": 1.000215,
+   "level": "single_a",
+   "pa": 148834,
+   "players": 903,
+   "players_150": 395,
+   "pool_kind": "level",
+   "pool_units": [
+    "single_a|2023",
+    "single_a|2024",
+    "single_a|2025",
+    "single_a|2026"
+   ],
+   "re24_sha256": "222fa7880f8975ed58a70931a9acaf7b518eaf885f87164ea4e6cdf50b003997",
+   "season": 2023
+  },
+  "single_a|2024": {
+   "K": 1929.2,
+   "complete": true,
+   "fit_set_plays": 142040,
+   "games": 1945,
+   "k_source": "level",
+   "lambda": 0.950053,
+   "level": "single_a",
+   "pa": 148375,
+   "players": 898,
+   "players_150": 389,
+   "pool_kind": "level",
+   "pool_units": [
+    "single_a|2023",
+    "single_a|2024",
+    "single_a|2025",
+    "single_a|2026"
+   ],
+   "re24_sha256": "c4f599eccb63a212e6f1f1d1669761c563b4a87cfc0a4916c9cf80d686329903",
+   "season": 2024
+  },
+  "single_a|2025": {
+   "K": 1929.2,
+   "complete": true,
+   "fit_set_plays": 143269,
+   "games": 1948,
+   "k_source": "level",
+   "lambda": 0.961609,
+   "level": "single_a",
+   "pa": 149078,
+   "players": 912,
+   "players_150": 386,
+   "pool_kind": "level",
+   "pool_units": [
+    "single_a|2023",
+    "single_a|2024",
+    "single_a|2025",
+    "single_a|2026"
+   ],
+   "re24_sha256": "533dc366fbb1a1626903ffd53d5582d0af49b6175709e9aaf26cda35ccc85e70",
+   "season": 2025
+  },
+  "single_a|2026": {
+   "K": 1929.2,
+   "complete": false,
+   "fit_set_plays": 146512,
+   "games": 1955,
+   "k_source": "level",
+   "lambda": 1.084684,
+   "level": "single_a",
+   "pa": 151721,
+   "players": 968,
+   "players_150": 392,
+   "pool_kind": "level",
+   "pool_units": [
+    "single_a|2023",
+    "single_a|2024",
+    "single_a|2025",
+    "single_a|2026"
+   ],
+   "re24_sha256": "f107a4c19c845783459456129cdbbd6a4b08929c10de61bea5c831e061dd0480",
+   "season": 2026
+  }
+ },
+ "version": "ebr_milb_v1"
+}

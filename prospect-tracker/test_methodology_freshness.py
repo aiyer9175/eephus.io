@@ -946,6 +946,7 @@ MODEL_GLOSSARY = {
     "pbp_runner_moves": "internal",
     "ebr": ["ebr", "ebr_sb", "ebr_xb", "ebr_dp"],
     "team_ebr": ["team_ebr"],
+    "ebr_milb": ["ebr_milb"],
     "bem_plus": "internal",
     # xfv_driver_auc_leg is the AUC half of the driver gate. It is a FLOOR
     # derivation and a veto, not a feature: it shipped nothing and, on the record,

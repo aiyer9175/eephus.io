@@ -34486,6 +34486,75 @@ function milbFieldingCard(p) {
       ${rows}
     </div>`;
 }
+// ===== MiLB level-relative eBR (EBR_Q6B_MILB_CARDS, owner answer EBR-Q6 (b)) =====
+// Runs above an average runner at the same level in the same season, from the
+// minor-league play-by-play: steals and pickoffs, extra bases taken and outs on the
+// bases, double plays. One row per level and season at 150 or more plate
+// appearances, labelled level-relative: a level's runs are not comparable with
+// another level's or with the majors'. Descriptive context beside the card, by
+// position players only. NEVER part of any grade, rank, sort or projection, and
+// never summarised by grade. MILB_EBR_CARD_ON mirrors ebr_milb.MILB_EBR_LIVE (a test
+// pins the two); with it false the card fetches nothing and prints nothing.
+// #milbebr=1 (or ?milbebr=1) previews it, latched at boot like #etools.
+const MILB_EBR_CARD_ON = true;
+const _MILB_EBR_UI = (() => {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("milbebr");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("milbebr");
+  if (q != null) return q !== "0";
+  return MILB_EBR_CARD_ON;
+})();
+let _MEBR = null, _MEBR_LOADING = false;
+function ensureMilbEbr() {
+  if (!_MILB_EBR_UI || _MEBR !== null || _MEBR_LOADING) return;
+  _MEBR_LOADING = true;
+  fetch("/data/ebr_milb.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _MEBR = (j && j.by_mlbam) ? j : { by_mlbam: {} };
+      scheduleRender();
+    })
+    .catch(() => { _MEBR = { by_mlbam: {} }; });
+}
+function milbEbrCard(p) {
+  if (!_MILB_EBR_UI || !p) return "";
+  const pos = String(p.position || "").toUpperCase();
+  const isPit = !!(p.statline && p.statline.is_pitcher)
+             || ((p.sabermetrics || {}).is_pitcher === true)
+             || /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos);
+  if (isPit) return "";                // position players only
+  ensureMilbEbr();                     // lazy-load on the first hitter card
+  if (!_MEBR) return "";
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  const rows = mid ? (_MEBR.by_mlbam[String(mid)] || []) : [];
+  if (!rows.length) return "";
+  const fmt = v => (v > 0 ? "+" : "") + Number(v).toFixed(1);
+  const lv = _MEBR.levels || {};
+  const body = rows.map(r => {
+    const [level, season, pa, sbR, xbR, dpR, ebrR, per600, dirtN, dirtR] = r;
+    const label = `${lv[level] || level} ${season}`;
+    const cls = ebrR > 0 ? "is-pos" : (ebrR < 0 ? "is-neg" : "is-neutral");
+    const rel = ((_MEBR.units || {})[`${level}|${season}`] || {}).split_half;
+    const tip = `${label}: ${fmt(ebrR)} baserunning runs over ${pa} plate appearances (${fmt(per600)} per 600), `
+      + `against an average runner at ${lv[level] || level} in ${season}. Steals and pickoffs ${fmt(sbR)}, `
+      + `extra bases and outs on the bases ${fmt(xbR)}, double plays ${fmt(dpR)}. Level-relative: not `
+      + `comparable with another level or with the majors. Advances on wild pitches and passed balls `
+      + `(${dirtN}, ${fmt(dirtR)} runs) are counted beside it and are not in the number.`
+      + (rel != null ? ` One season is a noisy reading: split-half reliability at ${lv[level] || level} ${season} is ${Number(rel).toFixed(2)}.` : "");
+    return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;">
+        <span class="rps-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${escapeHtml(fmt(ebrR))}</span>
+        <span style="font-size:11px;color:var(--text-secondary);">${pa} PA · ${escapeHtml(fmt(per600))} per 600 · steals ${escapeHtml(fmt(sbR))} · extra bases ${escapeHtml(fmt(xbR))} · double plays ${escapeHtml(fmt(dpR))}</span>
+      </div>`;
+  }).join("");
+  const head = `${_MEBR.what || ""} ${_MEBR.claim || ""}`.trim();
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="${escapeHtml(head)}">Baserunning, level-relative</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">runs vs an average runner at the level</div>
+      </div>
+      ${body}
+    </div>`;
+}
 // ===== eTools: the shown grade for each tool (ETOOLS_SITEWIDE_FLIP) =====
 // Owner decision EW3-27 (2026-10-15): "eTools should be our shown version of each
 // tool across the site." An eTool is the consensus tool grade moved by the
@@ -53753,6 +53822,7 @@ function renderPlayerDetail(key) {
   const archetypeHtml = "";
   const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
   const milbFieldingHtml = (typeof milbFieldingCard === "function") ? milbFieldingCard(p) : "";  // MiLB fielding runs (MILB_FIELDING_RUNS gate, descriptive)
+  const milbEbrHtml = (typeof milbEbrCard === "function") ? milbEbrCard(p) : "";  // MiLB level-relative eBR (display only, dark behind MILB_EBR_CARD_ON)
   // H1 - the Overview was FIFTEEN stacked sections with no navigation: a reader
   // who wanted the FV chart or the notes box had to drag past everything above it,
   // and on a phone that is several screens. NOTHING is removed. The same blocks,
@@ -53769,7 +53839,7 @@ function renderPlayerDetail(key) {
     { id: "efv",       label: "eFV",        html: efvCardHtml },
     { id: "signals",   label: "Signals",    html: [efvProxyHtml, palFitHtml, aaaStatcastHtml,
                                                    alevelSignalHtml, apPaceHtml, archetypeHtml,
-                                                   defHomeHtml, milbFieldingHtml].filter(Boolean).join("") },
+                                                   defHomeHtml, milbFieldingHtml, milbEbrHtml].filter(Boolean).join("") },
     { id: "valuation", label: "Valuation",  html: valuationHtml },
     { id: "fvchart",   label: "FV history", html: chartSection },
     { id: "news",      label: "News",       html: _ovNews },

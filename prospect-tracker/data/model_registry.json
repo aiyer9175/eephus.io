@@ -6833,6 +6833,19 @@
    "verdict": "provisional",
    "provisional_kind": "measured_not_adopted",
    "notes": "Read once in the outcome look (EBR_LOOK, docs/ebr-2026-09-30/EBR_GATE.md part 12.1). Outcome look 2026-10-19 (owner-waived early read, EW3-5): Leg E RESOLVED_LOSS (twin RESOLVED_LOSS) against FanGraphs' BsR and E-DP RESOLVED_LOSS (twin RESOLVED_LOSS) against Baseball-Reference's double-play runs; guards pass; no part flagged NOISE; BEM+ FAIL, not served; neither outcome part enters eWAR v3. Dispositions in data/ebr_eval.json; the persistence numbers stay in docs/ebr-2026-09-30/EBR_GATE.md part 12.1. Measured, not adopted: no claim of skill or of a forward guide is made for it. Never a WAR input, never an eFV feature, never read by betting or projections (EBR-Q3 (a))."
+  },
+  {
+   "model_id": "ebr_milb",
+   "summary": "Descriptive: runs above an average runner at the same level and season on the minor-league bases, from play-by-play; official steal counts match within 0.033 percent. Measurement only.",
+   "surface": "PROSPX prospect pages, the Baserunning, level-relative block in Signals (one row per level and season at 150 or more plate appearances, position players), from data/ebr_milb.json",
+   "predicts": "nothing forward; DESCRIPTIVE runs above an average runner at the same level in the same season from the minor-league per-runner play-by-play: SB runs + XB runs + DP runs",
+   "champion": "ebr_milb_v1 (docs/ebr-2026-09-30/EBR_MILB.md): eBR's five parts with s = (level, season): RE24 per level-season shrunk toward the level's pooled table or the season's all-MiLB table, K by the method of moments clipped to [500, 5000], outcome backoff level-season to level to all MiLB, every part centred to zero per level-season; advances on balls in the dirt reported as W and never in the number",
+   "baseline": "n/a, descriptive; the official StatsAPI minor-league season hitting lines (SB, CS and GIDP, fetched once per level-season) which the record is scored against and never seeded from",
+   "metric": "descriptive: league SB and CS within 0.1 percent of the official lines and exact for 99 percent of players with any, GIDP within 0.5 percent and exact for 97 percent (I1, I2), record complete (I3), zero league sums (I4), monotone RE24 (I5), row identity (I6), coverage (I7), determinism (I8), isolation (I9); split-half reliability and cross-level continuity reported",
+   "eval_artifact": "data/ebr_milb_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Built dark by EBR_Q6B_MILB_CARDS and served in one flip commit (owner answer EBR-Q6 (b), 2026-10-01: show it on prospect cards, per level and season at 150 or more plate appearances, display only). 11 level-seasons, 4665 player-seasons at 150 or more plate appearances, every level-season passing I1 to I9 (yes). The minor-league bounds are looser than MLB's exact match because a few official steals are scorer decisions the feed's runner entries do not carry; league SB and CS are exact in 5 of 11 level-seasons. Reliability is low at Rookie and moderate elsewhere (split-half 0.32 to 0.50 above Rookie). Never an eFV input (no efv_ module reads it; a driver test would be a separate registration under docs/efv-v2/DRIVER_SYSTEM_V2.md, not before EFV_V2_GATE.md is final), never a reserved eFV frame, never summarised, validated or stratified by consensus-FV cell (docs/PROSPECT_ANCHOR_GATE.md). Level-relative: not comparable across levels or with MLB's eBR in runs."
   }
  ],
  "problems": []

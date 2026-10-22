@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**391 models.** Verdicts: validated: 55, provisional: 193, unvalidated: 51, deprecated: 92.
+**392 models.** Verdicts: validated: 55, provisional: 194, unvalidated: 51, deprecated: 92.
 
 ## Instrument boundary
 
@@ -410,6 +410,7 @@ can be measured.
 | `ebr` | Descriptive: runs above average on the bases from MLB's play-by-play on per-season RE24, SB plus XB plus DP runs, each zero-sum across the league. Measurement only. | /mlbstats/ Baserunning tab (eBR, SB runs, XB runs, DP run... | nothing forward; DESCRIPTIVE runs above average on the bases from MLB's per-runner play-by-play on per-season RE24: SB runs + X... | ebr_v1 (docs/ebr-2026-09-30/EBR_GATE.md part 2): per-season RE24 shrunk towar... | n/a, descriptive; same-season agreement with FanGraphs BsR (via MLB's feed),... | descriptive: official-count reproduction (I1, I2), zero league sums (I4), mon... | **provisional** | `data/ebr_eval.json` | - | - |
 | `team_ebr` | Descriptive: the sum of a club's runners' eBR, club today on the tab and earned basis in the payload, where it sums to zero across the league. Provisional, measurement only. | /mlbstats/ Baserunning tab, Team Baserunning sub-tab (Tea... | nothing forward; DESCRIPTIVE sum of a club's runners' eBR on two club bases (roster today shown, earned in the payload) | the sum of the season values of the club's runners (bullpen_export.TEAM_BASIS... | n/a, descriptive; realized runs, not a rank of how a club chose to run (the /... | descriptive: the earned basis sums to zero across the league every season (th... | **provisional** | `data/ebr_eval.json` | - | - |
 | `bem_plus` | Measured on its registered gate (EBR_GATE.md 5.8) and not adopted: a PASS clause failed, so BEM+ is not served and the board stays descriptive. | not served (the column is wired and withheld) | baserunning-rate skill: a sample-shrunk rate of the site's eBR per chance, 100 + 10z over runners with 100+ starts on base | bem_plus per EBR_GATE.md 5.8 and baserunning.md 2.6: per-part rates shrunk to... | sprint speed, stolen bases, starts on base (playing time) and the raw unshrun... | forward Spearman Y to Y+1 eBR rate per 100 starts on base, predictor seasons... | **provisional** | `data/ebr_eval.json` | - | - |
+| `ebr_milb` | Descriptive: runs above an average runner at the same level and season on the minor-league bases, from play-by-play; official steal counts match within 0.033 percent. Measurement only. | PROSPX prospect pages, the Baserunning, level-relative bl... | nothing forward; DESCRIPTIVE runs above an average runner at the same level in the same season from the minor-league per-runner... | ebr_milb_v1 (docs/ebr-2026-09-30/EBR_MILB.md): eBR's five parts with s = (lev... | n/a, descriptive; the official StatsAPI minor-league season hitting lines (SB... | descriptive: league SB and CS within 0.1 percent of the official lines and ex... | **provisional** | `data/ebr_milb_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

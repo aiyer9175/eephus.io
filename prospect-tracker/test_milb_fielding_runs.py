@@ -242,7 +242,7 @@ def test_prospx_card_reads_the_sidecar_and_sits_in_signals():
     src = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     assert "function milbFieldingCard(p)" in src
     assert 'fetch("/data/milb_fielding_runs.json"' in src
-    assert "defHomeHtml, milbFieldingHtml].filter(Boolean)" in src
+    assert "defHomeHtml, milbFieldingHtml" in src and "].filter(Boolean)" in src
     blk = src[src.index("function milbFieldingCard(p)"):src.index("// ===== eTools: the shown grade")]
     assert "\u2014" not in blk and "\u2013" not in blk
 

@@ -137,7 +137,11 @@ def test_only_the_builder_and_the_look_import_the_core():
     # tools/build_pitch_ledger.py reuses ebr.base_code and ebr.fit_mask for the pitch
     # ledger's walk and its telescope check (docs/ewar/PITCH_LEDGER_GATE.md parts 2 and
     # 7), a same-season measurement on the same terms.
-    assert users == ["tools/build_count_value.py", "tools/build_ebr.py", "tools/build_pitch_ledger.py",
+    # ebr_milb.py and tools/build_ebr_milb.py carry the same definition to the minor
+    # leagues' runner record with s = (level, season) (task EBR_Q6B_MILB_CARDS, owner
+    # answer EBR-Q6 (b)): display only, isolated by test_ebr_milb.py's own pins.
+    assert users == ["ebr_milb.py", "tools/build_count_value.py", "tools/build_ebr.py",
+                     "tools/build_ebr_milb.py", "tools/build_pitch_ledger.py",
                      "tools/ebr_gate.py", "tools/pitch_basis_build.py"]
 
 
