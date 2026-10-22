@@ -343,4 +343,31 @@ rerun and an OWNER_QUESTION.md.
 
 ## 15. Results
 
-Not read.
+Read 2026-10-22: steps 1 to 3 by `--read`, steps 4 and 5 once by
+`--resume-holdout` (section 14). Artifact `data/xm_eval.json`; plain-language
+write-up `docs/xm/RESULTS.md`.
+
+* Planted recovery: P1 censoring passed (Tobit RMSE 0.053 against least
+  squares 0.059, 0.6 percent censored). P2a: incumbent 1.128 and hurdle 1.098
+  times the oracle MAE, pass; GBM 1.179, FAIL against the 1.15 bar, so (c) is
+  VOID. P2b permuted null: all three pass.
+* Development 2018-2024 (n 893 MLB deals), log-total MAE: incumbent 0.742,
+  hurdle 0.768, GBM 0.734 (VOID, not eligible), NULL 1 1.015, constant 1.141.
+  Band methods: in-sample for (a) and (b); conformal for (c) (in-sample
+  coverage 0.515). SELECTED: (a) the incumbent; no challenger is read.
+* Holdout 2025 and 2026 (n 306 MLB deals, 260 players), read once:
+  incumbent 0.736, NULL 1 0.899, constant 1.163. Incumbent against NULL 1:
+  +0.163, one-sided 95 percent lower bound +0.092. P10-P90 coverage 0.853;
+  years exact 0.765.
+* VERDICT: INCUMBENT. Registry row `xm`: `provisional`,
+  `provisional_kind` `inherits_parent_gate`. The site may use only the
+  section 9 INCUMBENT words.
+* MLB Trade Rumors, sticker basis: development 309 paired rows, MLBTR 0.453
+  against the incumbent 0.832; holdout 92 paired rows, MLBTR 0.452 against
+  0.712, MLBTR better with the lower bound of its improvement above 0. No
+  claim against MLBTR is made.
+* Counterfactual (2027 winter, descriptive): share outside the training
+  support, prospects 0.614, pre-arbitration 0.060, arbitration 0.003.
+  Extension anchor: median bought-FA AAV over xM$ AAV 1.034 (n 101, 95
+  percent interval 0.813 to 1.352), inconclusive. Posting anchor: NOT
+  MEASURABLE (48 rows, median AAV $3.112M).

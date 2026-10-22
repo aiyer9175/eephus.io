@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**401 models.** Verdicts: validated: 55, provisional: 203, unvalidated: 51, deprecated: 92.
+**402 models.** Verdicts: validated: 55, provisional: 204, unvalidated: 51, deprecated: 92.
 
 ## Instrument boundary
 
@@ -420,6 +420,7 @@ can be measured.
 | `bem_plus` | Measured on its registered gate (EBR_GATE.md 5.8) and not adopted: a PASS clause failed, so BEM+ is not served and the board stays descriptive. | not served (the column is wired and withheld) | baserunning-rate skill: a sample-shrunk rate of the site's eBR per chance, 100 + 10z over runners with 100+ starts on base | bem_plus per EBR_GATE.md 5.8 and baserunning.md 2.6: per-part rates shrunk to... | sprint speed, stolen bases, starts on base (playing time) and the raw unshrun... | forward Spearman Y to Y+1 eBR rate per 100 starts on base, predictor seasons... | **provisional** | `data/ebr_eval.json` | - | - |
 | `ebr_milb` | Descriptive: runs above an average runner at the same level and season on the minor-league bases, from play-by-play; official steal counts match within 0.033 percent. Measurement only. | PROSPX prospect pages, the Baserunning, level-relative bl... | nothing forward; DESCRIPTIVE runs above an average runner at the same level in the same season from the minor-league per-runner... | ebr_milb_v1 (docs/ebr-2026-09-30/EBR_MILB.md): eBR's five parts with s = (lev... | n/a, descriptive; the official StatsAPI minor-league season hitting lines (SB... | descriptive: league SB and CS within 0.1 percent of the official lines and ex... | **provisional** | `data/ebr_milb_eval.json` | - | - |
 | `league_trends` | Descriptive: lists changes in a player's own mechanics that clear a placebo-calibrated bar against his earlier games, with the false entries expected a day printed. Measurement only. | /mlbstats/ Trends tab (section=trends): Players, Teams an... | nothing forward. DESCRIPTIVE: lists a change in a player's own measured trait when a recent window differs from his earlier gam... | league_trends_v1 (LEAGUE_TRENDS_PLAN.md; trend_detect.py, tools/league_trends... | descriptive: a placebo of the same player's games shuffled in time, as of eac... | descriptive: placebo false trends per day (per-test tail times tests) and the... | **provisional** | `data/league_trends_eval.json` | - | - |
+| `xm` | Provisional: the /fa/ market model, generalized to every player, beat a WAR-times-price rule on the held-out 2025 and 2026 winters (log-total MAE 0.736 against 0.899); MLB Trade Rumors beat it. | none served yet: xM$ and Fair $ are exported dark (data/x... | the free-agent market price this winter: years, the deferral-adjusted NPV total guarantee and AAV with a P10-P90 band, for sign... | a_incumbent: fa_market.MarketModel (fa_mkt_v2, NPV basis) refit per fold, sel... | NULL 1: platform WAR x the one-step $/WAR index, years from the training medi... | log-total MAE on the NPV guarantee, paired against each comparator with a pla... | **provisional** | `data/xm_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

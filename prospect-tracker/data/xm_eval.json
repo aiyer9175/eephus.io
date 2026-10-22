@@ -1,0 +1,1985 @@
+{
+ "model_id": "xm",
+ "model_version": "xm_v1",
+ "generated_at": "2026-10-22",
+ "what": "xM$ (Expected Market $): the registered read of docs/xm/XM_GATE.md. Candidates (a) incumbent fa_market.MarketModel, (b) hurdle, (c) monotone GBM; NULL 1 platform WAR x one-step $/WAR index; MLB Trade Rumors retro predictions; planted recovery; holdout read once.",
+ "gate": {
+  "doc": "docs/xm/XM_GATE.md",
+  "registered_commit": "70864a33",
+  "doc_sha256": "0b041be0fa29fa447fb9efb163b46eb8c90e873bed6dd387d227cf5767d935e4"
+ },
+ "seed": 20261019,
+ "frames": {
+  "warmup_through": 2017,
+  "development": [
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "holdout": [
+   2025,
+   2026
+  ]
+ },
+ "code_head": "70864a33",
+ "inputs": {
+  "mlb_rows": 1528,
+  "floor_rows": 102,
+  "mlb_rows_by_winter": {
+   "2015": 96,
+   "2016": 132,
+   "2017": 101,
+   "2018": 96,
+   "2019": 106,
+   "2020": 125,
+   "2021": 147,
+   "2022": 144,
+   "2023": 139,
+   "2024": 136,
+   "2025": 161,
+   "2026": 145
+  },
+  "floor_rows_by_winter": {
+   "2015": 31,
+   "2016": 23,
+   "2017": 1,
+   "2018": 4,
+   "2019": 3,
+   "2020": 1,
+   "2021": 1,
+   "2023": 2,
+   "2024": 10,
+   "2025": 15,
+   "2026": 11
+  },
+  "floor_skipped": {
+   "no_mlbam": 30,
+   "no_history": 13,
+   "no_path": 0
+  },
+  "posting_set_rows": 48,
+  "mlb_deals_no_mlbam": 38,
+  "il_table_seasons": [
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "il_prior_season_covered_winters": [
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "demand_by_winter": {
+   "2015": 23,
+   "2016": 24,
+   "2017": 21,
+   "2018": 19,
+   "2019": 23,
+   "2020": 22,
+   "2021": 23,
+   "2022": 28,
+   "2023": 22,
+   "2024": 17,
+   "2025": 17,
+   "2026": 18,
+   "2027": 17
+  },
+  "league_min_by_winter": {
+   "2015": 507500.0,
+   "2016": 507500.0,
+   "2017": 535000.0,
+   "2018": 545000.0,
+   "2019": 555000.0,
+   "2020": 563000.0,
+   "2021": 571000.0,
+   "2022": 700000.0,
+   "2023": 720000.0,
+   "2024": 740000.0,
+   "2025": 760000.0,
+   "2026": 780000.0,
+   "2027": 780000.0
+  },
+  "mlbtr_rows_with_price": 523,
+  "flat_dpw_usd": 16856777.0,
+  "discount_rate": 0.07
+ },
+ "order": [
+  "inputs",
+  "planted",
+  "development",
+  "holdout",
+  "counterfactual"
+ ],
+ "planted": {
+  "P1_censoring": {
+   "rows": 1298,
+   "censored_share": 0.0061633281972265025,
+   "sigma_true": 0.45,
+   "sigma_fit": 0.44560461416085645,
+   "rmse_tobit": 0.05283683556648536,
+   "rmse_ols_uncensored": 0.058637552888695675,
+   "pass": true
+  },
+  "P2a_signal": {
+   "simulated_floor_share": 0.007704160246533128,
+   "a_incumbent": {
+    "n": 908,
+    "log_total_mae": 0.6491957980192312,
+    "oracle_mae": 0.5757090345286862,
+    "ratio": 1.1276456666182184,
+    "pass": true
+   },
+   "b_hurdle": {
+    "n": 908,
+    "log_total_mae": 0.6319358368989868,
+    "oracle_mae": 0.5757090345286862,
+    "ratio": 1.0976653118121233,
+    "pass": true
+   },
+   "c_gbm": {
+    "n": 908,
+    "log_total_mae": 0.6785022878154241,
+    "oracle_mae": 0.5757090345286862,
+    "ratio": 1.1785507037785006,
+    "pass": false
+   }
+  },
+  "P2b_null": {
+   "a_incumbent": {
+    "vs_const": {
+     "n": 893,
+     "clusters": 569,
+     "delta": -0.004074305079058371,
+     "lo95_one_sided": -0.021307967070482287,
+     "ci95": [
+      -0.024735133004610735,
+      0.015416380717246648
+     ],
+     "B": 4000,
+     "seed": 20261019
+    },
+    "pass": true
+   },
+   "b_hurdle": {
+    "vs_const": {
+     "n": 893,
+     "clusters": 569,
+     "delta": -0.11717936994945477,
+     "lo95_one_sided": -0.15426520775055916,
+     "ci95": [
+      -0.160951955966227,
+      -0.07025206224353993
+     ],
+     "B": 4000,
+     "seed": 20261019
+    },
+    "pass": true
+   },
+   "c_gbm": {
+    "vs_const": {
+     "n": 893,
+     "clusters": 569,
+     "delta": -0.13250536670979196,
+     "lo95_one_sided": -0.1732282837571577,
+     "ci95": [
+      -0.18150960478215167,
+      -0.08267404615122849
+     ],
+     "B": 4000,
+     "seed": 20261019
+    },
+    "pass": true
+   }
+  },
+  "void_candidates": [
+   "c_gbm"
+  ]
+ },
+ "development": {
+  "band_method": {
+   "a_incumbent": "in_sample",
+   "b_hurdle": "in_sample",
+   "c_gbm": "conformal",
+   "null1": "in_sample",
+   "const": "in_sample"
+  },
+  "metrics": {
+   "a_incumbent": {
+    "n": 893,
+    "log_total_mae": 0.7420433173933323,
+    "pinball_p10": 0.15695736833256618,
+    "pinball_p50": 0.37102165869666615,
+    "pinball_p90": 0.16795194775121994,
+    "crps_proxy": 0.2319769915934841,
+    "coverage_p10_p90": 0.8185890257558791,
+    "years_exact": 0.6741321388577828,
+    "years_within_one": 0.9137737961926092,
+    "log_aav_mae": 0.588082733454682,
+    "guarantee_mae_mm": 10.151245334826429,
+    "mega_n": 35,
+    "mega_guarantee_mae_mm": 92.46744368571431,
+    "per_winter": {
+     "2018": {
+      "n": 96,
+      "log_total_mae": 0.7643926557392952,
+      "pinball_p10": 0.17848958992434646,
+      "pinball_p50": 0.3821963278696476,
+      "pinball_p90": 0.18638024978165735,
+      "crps_proxy": 0.24902205585855047,
+      "coverage_p10_p90": 0.7916666666666666,
+      "years_exact": 0.5520833333333334,
+      "years_within_one": 0.9270833333333334
+     },
+     "2019": {
+      "n": 106,
+      "log_total_mae": 0.780828684810316,
+      "pinball_p10": 0.1838111337720886,
+      "pinball_p50": 0.390414342405158,
+      "pinball_p90": 0.18044765617110847,
+      "crps_proxy": 0.251557710782785,
+      "coverage_p10_p90": 0.8113207547169812,
+      "years_exact": 0.6037735849056604,
+      "years_within_one": 0.9150943396226415
+     },
+     "2020": {
+      "n": 125,
+      "log_total_mae": 0.6255351795147107,
+      "pinball_p10": 0.13342012405955192,
+      "pinball_p50": 0.31276758975735536,
+      "pinball_p90": 0.1584456423792626,
+      "crps_proxy": 0.20154445206538996,
+      "coverage_p10_p90": 0.872,
+      "years_exact": 0.704,
+      "years_within_one": 0.944
+     },
+     "2021": {
+      "n": 147,
+      "log_total_mae": 0.7328766805080573,
+      "pinball_p10": 0.143283444940899,
+      "pinball_p50": 0.36643834025402866,
+      "pinball_p90": 0.16295321215932426,
+      "crps_proxy": 0.22422499911808397,
+      "coverage_p10_p90": 0.8163265306122449,
+      "years_exact": 0.7482993197278912,
+      "years_within_one": 0.9387755102040817
+     },
+     "2022": {
+      "n": 144,
+      "log_total_mae": 0.6882521662271692,
+      "pinball_p10": 0.15589685810463788,
+      "pinball_p50": 0.3441260831135846,
+      "pinball_p90": 0.14321556933769436,
+      "crps_proxy": 0.2144128368519723,
+      "coverage_p10_p90": 0.8541666666666666,
+      "years_exact": 0.6805555555555556,
+      "years_within_one": 0.8541666666666666
+     },
+     "2023": {
+      "n": 139,
+      "log_total_mae": 0.7556056254206317,
+      "pinball_p10": 0.16241379908516565,
+      "pinball_p50": 0.37780281271031585,
+      "pinball_p90": 0.17027352952486507,
+      "crps_proxy": 0.23683004710678218,
+      "coverage_p10_p90": 0.8057553956834532,
+      "years_exact": 0.6187050359712231,
+      "years_within_one": 0.8920863309352518
+     },
+     "2024": {
+      "n": 136,
+      "log_total_mae": 0.8561241437292393,
+      "pinball_p10": 0.1527875114319187,
+      "pinball_p50": 0.42806207186461964,
+      "pinball_p90": 0.18316355687683894,
+      "crps_proxy": 0.2546710467244591,
+      "coverage_p10_p90": 0.7720588235294118,
+      "years_exact": 0.7573529411764706,
+      "years_within_one": 0.9338235294117647
+     }
+    }
+   },
+   "b_hurdle": {
+    "n": 893,
+    "log_total_mae": 0.767893553046287,
+    "pinball_p10": 0.1642810783182636,
+    "pinball_p50": 0.3839467765231435,
+    "pinball_p90": 0.17388329852743403,
+    "crps_proxy": 0.24070371778961372,
+    "coverage_p10_p90": 0.7581187010078387,
+    "years_exact": 0.6931690929451287,
+    "years_within_one": 0.9227323628219485,
+    "log_aav_mae": 0.6123962315556485,
+    "guarantee_mae_mm": 11.243253263493736,
+    "mega_n": 35,
+    "mega_guarantee_mae_mm": 92.50768278392489,
+    "per_winter": {
+     "2018": {
+      "n": 96,
+      "log_total_mae": 0.7242461235864784,
+      "pinball_p10": 0.1893221040986591,
+      "pinball_p50": 0.3621230617932392,
+      "pinball_p90": 0.17494045826775886,
+      "crps_proxy": 0.2421285413865524,
+      "coverage_p10_p90": 0.6875,
+      "years_exact": 0.59375,
+      "years_within_one": 0.9375
+     },
+     "2019": {
+      "n": 106,
+      "log_total_mae": 0.7347949150961924,
+      "pinball_p10": 0.20144899128938146,
+      "pinball_p50": 0.3673974575480962,
+      "pinball_p90": 0.17269030087801193,
+      "crps_proxy": 0.24717891657182986,
+      "coverage_p10_p90": 0.7547169811320755,
+      "years_exact": 0.6886792452830188,
+      "years_within_one": 0.9150943396226415
+     },
+     "2020": {
+      "n": 125,
+      "log_total_mae": 0.638636973695526,
+      "pinball_p10": 0.13663575114864207,
+      "pinball_p50": 0.319318486847763,
+      "pinball_p90": 0.1659624480526198,
+      "crps_proxy": 0.20730556201634162,
+      "coverage_p10_p90": 0.792,
+      "years_exact": 0.712,
+      "years_within_one": 0.928
+     },
+     "2021": {
+      "n": 147,
+      "log_total_mae": 0.7757408174798253,
+      "pinball_p10": 0.14474101045793325,
+      "pinball_p50": 0.38787040873991263,
+      "pinball_p90": 0.16555292233296906,
+      "crps_proxy": 0.23272144717693832,
+      "coverage_p10_p90": 0.7891156462585034,
+      "years_exact": 0.7687074829931972,
+      "years_within_one": 0.9387755102040817
+     },
+     "2022": {
+      "n": 144,
+      "log_total_mae": 0.8365972306211398,
+      "pinball_p10": 0.15497455753039707,
+      "pinball_p50": 0.4182986153105699,
+      "pinball_p90": 0.1766449181500375,
+      "crps_proxy": 0.24997269699700148,
+      "coverage_p10_p90": 0.7777777777777778,
+      "years_exact": 0.7222222222222222,
+      "years_within_one": 0.8958333333333334
+     },
+     "2023": {
+      "n": 139,
+      "log_total_mae": 0.8518520503589306,
+      "pinball_p10": 0.1619855848156462,
+      "pinball_p50": 0.4259260251794653,
+      "pinball_p90": 0.19327325399396839,
+      "crps_proxy": 0.26039495466302665,
+      "coverage_p10_p90": 0.7266187050359713,
+      "years_exact": 0.6402877697841727,
+      "years_within_one": 0.8992805755395683
+     },
+     "2024": {
+      "n": 136,
+      "log_total_mae": 0.7762654111398926,
+      "pinball_p10": 0.17636586664275924,
+      "pinball_p50": 0.3881327055699463,
+      "pinball_p90": 0.16760951169068777,
+      "crps_proxy": 0.24403602796779778,
+      "coverage_p10_p90": 0.7573529411764706,
+      "years_exact": 0.6911764705882353,
+      "years_within_one": 0.9485294117647058
+     }
+    },
+    "p_mlb_brier": 0.0566292641629857,
+    "p_mlb_rows": 914,
+    "p_mlb_floor_rows": 21
+   },
+   "c_gbm": {
+    "n": 893,
+    "log_total_mae": 0.73415744203241,
+    "pinball_p10": 0.16987046462595362,
+    "pinball_p50": 0.367078721016205,
+    "pinball_p90": 0.1663319870803103,
+    "crps_proxy": 0.2344270575741563,
+    "coverage_p10_p90": 0.7816349384098544,
+    "years_exact": 0.6674132138857782,
+    "years_within_one": 0.921612541993281,
+    "log_aav_mae": 0.5652234280189837,
+    "guarantee_mae_mm": 9.638984590104256,
+    "mega_n": 35,
+    "mega_guarantee_mae_mm": 80.87816217522449,
+    "per_winter": {
+     "2018": {
+      "n": 96,
+      "log_total_mae": 0.7002256982776752,
+      "pinball_p10": 0.1774830372918631,
+      "pinball_p50": 0.3501128491388376,
+      "pinball_p90": 0.1428738408713451,
+      "crps_proxy": 0.22348990910068195,
+      "coverage_p10_p90": 0.71875,
+      "years_exact": 0.59375,
+      "years_within_one": 0.9479166666666666
+     },
+     "2019": {
+      "n": 106,
+      "log_total_mae": 0.7785840005520518,
+      "pinball_p10": 0.18404439539247958,
+      "pinball_p50": 0.3892920002760259,
+      "pinball_p90": 0.1693116318999561,
+      "crps_proxy": 0.24754934252282051,
+      "coverage_p10_p90": 0.7169811320754716,
+      "years_exact": 0.5849056603773585,
+      "years_within_one": 0.9150943396226415
+     },
+     "2020": {
+      "n": 125,
+      "log_total_mae": 0.679956863436578,
+      "pinball_p10": 0.14680288302915903,
+      "pinball_p50": 0.339978431718289,
+      "pinball_p90": 0.16614498752402732,
+      "crps_proxy": 0.21764210075715845,
+      "coverage_p10_p90": 0.84,
+      "years_exact": 0.712,
+      "years_within_one": 0.92
+     },
+     "2021": {
+      "n": 147,
+      "log_total_mae": 0.7579926643697623,
+      "pinball_p10": 0.16273304153788484,
+      "pinball_p50": 0.37899633218488116,
+      "pinball_p90": 0.1804004616162443,
+      "crps_proxy": 0.24070994511300342,
+      "coverage_p10_p90": 0.7687074829931972,
+      "years_exact": 0.7619047619047619,
+      "years_within_one": 0.9319727891156463
+     },
+     "2022": {
+      "n": 144,
+      "log_total_mae": 0.6983490782483385,
+      "pinball_p10": 0.1760685071099895,
+      "pinball_p50": 0.34917453912416924,
+      "pinball_p90": 0.16088009844354303,
+      "crps_proxy": 0.22870771489256725,
+      "coverage_p10_p90": 0.8333333333333334,
+      "years_exact": 0.6597222222222222,
+      "years_within_one": 0.8819444444444444
+     },
+     "2023": {
+      "n": 139,
+      "log_total_mae": 0.7671398790143693,
+      "pinball_p10": 0.16988002591279552,
+      "pinball_p50": 0.38356993950718465,
+      "pinball_p90": 0.16920768455509247,
+      "crps_proxy": 0.24088588332502422,
+      "coverage_p10_p90": 0.762589928057554,
+      "years_exact": 0.6115107913669064,
+      "years_within_one": 0.9064748201438849
+     },
+     "2024": {
+      "n": 136,
+      "log_total_mae": 0.7517410632285473,
+      "pinball_p10": 0.17579368609502843,
+      "pinball_p50": 0.37587053161427364,
+      "pinball_p90": 0.168367273018774,
+      "crps_proxy": 0.2400104969093587,
+      "coverage_p10_p90": 0.8014705882352942,
+      "years_exact": 0.7058823529411765,
+      "years_within_one": 0.9558823529411765
+     }
+    }
+   },
+   "null1": {
+    "n": 893,
+    "log_total_mae": 1.0145013462851054,
+    "pinball_p10": 0.22033771695507617,
+    "pinball_p50": 0.5072506731425527,
+    "pinball_p90": 0.23456486915829267,
+    "crps_proxy": 0.32071775308530714,
+    "coverage_p10_p90": 0.7883538633818589,
+    "years_exact": 0.6696528555431132,
+    "years_within_one": 0.8756998880179171,
+    "log_aav_mae": 1.0352939083137538,
+    "guarantee_mae_mm": 12.610658834373854,
+    "mega_n": 35,
+    "mega_guarantee_mae_mm": 120.1645107789267,
+    "per_winter": {
+     "2018": {
+      "n": 96,
+      "log_total_mae": 0.9105390787725911,
+      "pinball_p10": 0.17922521506687009,
+      "pinball_p50": 0.45526953938629555,
+      "pinball_p90": 0.22599869037255518,
+      "crps_proxy": 0.28683114827524026,
+      "coverage_p10_p90": 0.84375,
+      "years_exact": 0.5208333333333334,
+      "years_within_one": 0.8541666666666666
+     },
+     "2019": {
+      "n": 106,
+      "log_total_mae": 1.0394292138583445,
+      "pinball_p10": 0.2011659174758059,
+      "pinball_p50": 0.5197146069291723,
+      "pinball_p90": 0.23230507711554169,
+      "crps_proxy": 0.3177285338401733,
+      "coverage_p10_p90": 0.7735849056603774,
+      "years_exact": 0.5566037735849056,
+      "years_within_one": 0.9150943396226415
+     },
+     "2020": {
+      "n": 125,
+      "log_total_mae": 1.0627856995801752,
+      "pinball_p10": 0.21775278626001857,
+      "pinball_p50": 0.5313928497900876,
+      "pinball_p90": 0.23426988509163538,
+      "crps_proxy": 0.3278051737139138,
+      "coverage_p10_p90": 0.76,
+      "years_exact": 0.728,
+      "years_within_one": 0.888
+     },
+     "2021": {
+      "n": 147,
+      "log_total_mae": 0.9854073948166425,
+      "pinball_p10": 0.23253512742720903,
+      "pinball_p50": 0.49270369740832126,
+      "pinball_p90": 0.2065399970016242,
+      "crps_proxy": 0.31059294061238485,
+      "coverage_p10_p90": 0.7891156462585034,
+      "years_exact": 0.7755102040816326,
+      "years_within_one": 0.9251700680272109
+     },
+     "2022": {
+      "n": 144,
+      "log_total_mae": 1.110751058845537,
+      "pinball_p10": 0.24653059355932833,
+      "pinball_p50": 0.5553755294227685,
+      "pinball_p90": 0.26287961532072796,
+      "crps_proxy": 0.3549285794342749,
+      "coverage_p10_p90": 0.7430555555555556,
+      "years_exact": 0.6736111111111112,
+      "years_within_one": 0.8263888888888888
+     },
+     "2023": {
+      "n": 139,
+      "log_total_mae": 0.9823130964942461,
+      "pinball_p10": 0.22289632791486552,
+      "pinball_p50": 0.49115654824712307,
+      "pinball_p90": 0.22878406558500144,
+      "crps_proxy": 0.31427898058233,
+      "coverage_p10_p90": 0.8273381294964028,
+      "years_exact": 0.6187050359712231,
+      "years_within_one": 0.8345323741007195
+     },
+     "2024": {
+      "n": 136,
+      "log_total_mae": 0.9865123649222063,
+      "pinball_p10": 0.22314423731629746,
+      "pinball_p50": 0.49325618246110314,
+      "pinball_p90": 0.24886360875109872,
+      "crps_proxy": 0.32175467617616643,
+      "coverage_p10_p90": 0.7941176470588235,
+      "years_exact": 0.7426470588235294,
+      "years_within_one": 0.8897058823529411
+     }
+    }
+   },
+   "const": {
+    "n": 893,
+    "log_total_mae": 1.1407609803390593,
+    "pinball_p10": 0.21069338301709176,
+    "pinball_p50": 0.5703804901695296,
+    "pinball_p90": 0.26894769940762453,
+    "crps_proxy": 0.35000719086474863,
+    "coverage_p10_p90": 0.8051511758118701,
+    "years_exact": 0.6864501679731243,
+    "years_within_one": 0.8723404255319149,
+    "log_aav_mae": 0.8568928308539795,
+    "guarantee_mae_mm": 15.118711758852644,
+    "mega_n": 35,
+    "mega_guarantee_mae_mm": 176.8375442494734,
+    "per_winter": {
+     "2018": {
+      "n": 96,
+      "log_total_mae": 1.1615127070594033,
+      "pinball_p10": 0.24041762448667633,
+      "pinball_p50": 0.5807563535297017,
+      "pinball_p90": 0.2407989462363922,
+      "crps_proxy": 0.3539909747509234,
+      "coverage_p10_p90": 0.7916666666666666,
+      "years_exact": 0.5208333333333334,
+      "years_within_one": 0.8541666666666666
+     },
+     "2019": {
+      "n": 106,
+      "log_total_mae": 1.1267960023937864,
+      "pinball_p10": 0.20007046866346898,
+      "pinball_p50": 0.5633980011968932,
+      "pinball_p90": 0.25978382177626214,
+      "crps_proxy": 0.3410840972122081,
+      "coverage_p10_p90": 0.8207547169811321,
+      "years_exact": 0.6981132075471698,
+      "years_within_one": 0.8867924528301887
+     },
+     "2020": {
+      "n": 125,
+      "log_total_mae": 1.0182366519550397,
+      "pinball_p10": 0.18498325018917738,
+      "pinball_p50": 0.5091183259775198,
+      "pinball_p90": 0.27370022124460536,
+      "crps_proxy": 0.3226005991371009,
+      "coverage_p10_p90": 0.864,
+      "years_exact": 0.728,
+      "years_within_one": 0.888
+     },
+     "2021": {
+      "n": 147,
+      "log_total_mae": 1.0448188353251253,
+      "pinball_p10": 0.1866823280094588,
+      "pinball_p50": 0.5224094176625627,
+      "pinball_p90": 0.27160450046349194,
+      "crps_proxy": 0.32689874871183777,
+      "coverage_p10_p90": 0.8299319727891157,
+      "years_exact": 0.7755102040816326,
+      "years_within_one": 0.9251700680272109
+     },
+     "2022": {
+      "n": 144,
+      "log_total_mae": 1.2090200501263995,
+      "pinball_p10": 0.2142675323267785,
+      "pinball_p50": 0.6045100250631997,
+      "pinball_p90": 0.28345133868413963,
+      "crps_proxy": 0.36740963202470595,
+      "coverage_p10_p90": 0.7916666666666666,
+      "years_exact": 0.6736111111111112,
+      "years_within_one": 0.8263888888888888
+     },
+     "2023": {
+      "n": 139,
+      "log_total_mae": 1.258706177695526,
+      "pinball_p10": 0.23368973562795192,
+      "pinball_p50": 0.629353088847763,
+      "pinball_p90": 0.28874702857266615,
+      "crps_proxy": 0.38392995101612704,
+      "coverage_p10_p90": 0.762589928057554,
+      "years_exact": 0.6187050359712231,
+      "years_within_one": 0.8345323741007195
+     },
+     "2024": {
+      "n": 136,
+      "log_total_mae": 1.1604923757814907,
+      "pinball_p10": 0.22028693387378867,
+      "pinball_p50": 0.5802461878907453,
+      "pinball_p90": 0.25312715189857027,
+      "crps_proxy": 0.35122009122103476,
+      "coverage_p10_p90": 0.7794117647058824,
+      "years_exact": 0.7426470588235294,
+      "years_within_one": 0.8897058823529411
+     }
+    }
+   },
+   "c_gbm__in_sample_band": {
+    "coverage_p10_p90": 0.5151175811870101,
+    "pinball_p10": 0.2022381859768571,
+    "pinball_p90": 0.20057354453885337,
+    "crps_proxy": 0.2566301505106385
+   }
+  },
+  "paired": {
+   "a_incumbent_vs_null1": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.27245802889177306,
+    "lo95_one_sided": 0.2268294943356243,
+    "ci95": [
+     0.21818298517064086,
+     0.32831175896015885
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "a_incumbent_vs_const": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.39871766294572697,
+    "lo95_one_sided": 0.3515983954784077,
+    "ci95": [
+     0.3432036032829642,
+     0.4580977473139583
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "b_hurdle_vs_null1": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.24660779323881832,
+    "lo95_one_sided": 0.20030404143863653,
+    "ci95": [
+     0.19138392050633185,
+     0.30634526585427835
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "b_hurdle_vs_a_incumbent": {
+    "n": 893,
+    "clusters": 569,
+    "delta": -0.025850235652954745,
+    "lo95_one_sided": -0.05298190206250595,
+    "ci95": [
+     -0.05788899180678692,
+     0.005638705392483459
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "b_hurdle_vs_const": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.3728674272927722,
+    "lo95_one_sided": 0.3205598690531816,
+    "ci95": [
+     0.30972665130785004,
+     0.43875696777295625
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "c_gbm_vs_null1": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.2803439042526954,
+    "lo95_one_sided": 0.24021147390752132,
+    "ci95": [
+     0.23316628932507802,
+     0.33026730271579613
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "c_gbm_vs_a_incumbent": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.007885875360922334,
+    "lo95_one_sided": -0.017823262830627944,
+    "ci95": [
+     -0.02302284122929431,
+     0.03745178742655688
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "c_gbm_vs_const": {
+    "n": 893,
+    "clusters": 569,
+    "delta": 0.4066035383066493,
+    "lo95_one_sided": 0.3536687064807363,
+    "ci95": [
+     0.3433602709016606,
+     0.4735329610207014
+    ],
+    "B": 4000,
+    "seed": 20261019
+   }
+  },
+  "selection": {
+   "rule": "lowest pooled development log-total MAE",
+   "eligible": [
+    "a_incumbent",
+    "b_hurdle"
+   ],
+   "selected": "a_incumbent",
+   "challenger": null
+  }
+ },
+ "industry_mlbtr": {
+  "development": {
+   "model": "a_incumbent",
+   "paired_rows": 309,
+   "model_log_total_mae": 0.8319403090843864,
+   "mlbtr_log_total_mae": 0.45298939063363797,
+   "model_years_exact": 0.3883495145631068,
+   "mlbtr_years_exact": 0.5436893203883495
+  },
+  "holdout": {
+   "model": "a_incumbent",
+   "paired_rows": 92,
+   "model_log_total_mae": 0.7116484663711924,
+   "mlbtr_log_total_mae": 0.45244944848738355,
+   "model_years_exact": 0.391304347826087,
+   "mlbtr_years_exact": 0.4782608695652174,
+   "model_vs_mlbtr": {
+    "n": 92,
+    "clusters": 84,
+    "delta": -0.25919901788380884,
+    "lo95_one_sided": -0.35246284007681966,
+    "ci95": [
+     -0.3698980371073761,
+     -0.14128187498122263
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "claim": "MLBTR beats model"
+  }
+ },
+ "resumed": {
+  "on": "2026-10-22",
+  "code_head": "baa0bbf4",
+  "gate_doc_sha256_at_resume": "51feb6fc5bbbe069e7e1cced405c72107e17b3592a5c134929b588bcdae69ab8",
+  "why": "the first read died (exit 139, no Python traceback) after the development block was written and before any holdout metric was written; owner answer XM1-Q1",
+  "crash_fix": "steps 4-5 run in a fresh process; the bootstrap weight matrix is built by one bincount instead of an np.add.at fancy-index accumulation (exactly equal counts); faulthandler on"
+ },
+ "holdout": {
+  "read_once": true,
+  "scored": [
+   "a_incumbent",
+   "null1",
+   "const"
+  ],
+  "metrics": {
+   "a_incumbent": {
+    "n": 306,
+    "log_total_mae": 0.7361616942807532,
+    "pinball_p10": 0.1351699510611481,
+    "pinball_p50": 0.3680808471403766,
+    "pinball_p90": 0.1591030899955768,
+    "crps_proxy": 0.22078462939903382,
+    "coverage_p10_p90": 0.8529411764705882,
+    "years_exact": 0.7647058823529411,
+    "years_within_one": 0.934640522875817,
+    "log_aav_mae": 0.6242445798236299,
+    "guarantee_mae_mm": 8.980386614379084,
+    "mega_n": 15,
+    "mega_guarantee_mae_mm": 56.26565579999996,
+    "per_winter": {
+     "2025": {
+      "n": 161,
+      "log_total_mae": 0.7481698746668476,
+      "pinball_p10": 0.14687560202063915,
+      "pinball_p50": 0.3740849373334238,
+      "pinball_p90": 0.15374103695300653,
+      "crps_proxy": 0.22490052543568984,
+      "coverage_p10_p90": 0.8385093167701864,
+      "years_exact": 0.7888198757763976,
+      "years_within_one": 0.9565217391304348
+     },
+     "2026": {
+      "n": 145,
+      "log_total_mae": 0.722828473300331,
+      "pinball_p10": 0.12217264206474768,
+      "pinball_p50": 0.3614142366501655,
+      "pinball_p90": 0.16505681785663753,
+      "crps_proxy": 0.21621456552385024,
+      "coverage_p10_p90": 0.8689655172413793,
+      "years_exact": 0.7379310344827587,
+      "years_within_one": 0.9103448275862069
+     }
+    }
+   },
+   "null1": {
+    "n": 306,
+    "log_total_mae": 0.8994245607162549,
+    "pinball_p10": 0.21001891367079237,
+    "pinball_p50": 0.44971228035812744,
+    "pinball_p90": 0.20826419485086875,
+    "crps_proxy": 0.28933179629326283,
+    "coverage_p10_p90": 0.8464052287581699,
+    "years_exact": 0.7712418300653595,
+    "years_within_one": 0.8856209150326797,
+    "log_aav_mae": 0.9172868962790017,
+    "guarantee_mae_mm": 14.562718720098626,
+    "mega_n": 15,
+    "mega_guarantee_mae_mm": 138.19408440794155,
+    "per_winter": {
+     "2025": {
+      "n": 161,
+      "log_total_mae": 0.911834616833889,
+      "pinball_p10": 0.222157797126819,
+      "pinball_p50": 0.4559173084169445,
+      "pinball_p90": 0.216010861909725,
+      "crps_proxy": 0.2980286558178295,
+      "coverage_p10_p90": 0.8260869565217391,
+      "years_exact": 0.782608695652174,
+      "years_within_one": 0.8819875776397516
+     },
+     "2026": {
+      "n": 145,
+      "log_total_mae": 0.8856451190959856,
+      "pinball_p10": 0.1965405672127214,
+      "pinball_p50": 0.4428225595479928,
+      "pinball_p90": 0.19966272315103525,
+      "crps_proxy": 0.2796752833039165,
+      "coverage_p10_p90": 0.8689655172413793,
+      "years_exact": 0.7586206896551724,
+      "years_within_one": 0.8896551724137931
+     }
+    }
+   },
+   "const": {
+    "n": 306,
+    "log_total_mae": 1.163344320617723,
+    "pinball_p10": 0.2022135503818189,
+    "pinball_p50": 0.5816721603088615,
+    "pinball_p90": 0.2822955953411052,
+    "crps_proxy": 0.35539376867726186,
+    "coverage_p10_p90": 0.8235294117647058,
+    "years_exact": 0.7712418300653595,
+    "years_within_one": 0.8856209150326797,
+    "log_aav_mae": 0.9325786015937506,
+    "guarantee_mae_mm": 18.098191826797386,
+    "mega_n": 15,
+    "mega_guarantee_mae_mm": 199.2998464,
+    "per_winter": {
+     "2025": {
+      "n": 161,
+      "log_total_mae": 1.185476230701228,
+      "pinball_p10": 0.20521850245393258,
+      "pinball_p50": 0.592738115350614,
+      "pinball_p90": 0.27966457309033177,
+      "crps_proxy": 0.35920706363162613,
+      "coverage_p10_p90": 0.8074534161490683,
+      "years_exact": 0.782608695652174,
+      "years_within_one": 0.8819875776397516
+     },
+     "2026": {
+      "n": 145,
+      "log_total_mae": 1.1387702687318997,
+      "pinball_p10": 0.19887701739140304,
+      "pinball_p50": 0.5693851343659498,
+      "pinball_p90": 0.2852169372885158,
+      "crps_proxy": 0.3511596963486229,
+      "coverage_p10_p90": 0.8413793103448276,
+      "years_exact": 0.7586206896551724,
+      "years_within_one": 0.8896551724137931
+     }
+    }
+   }
+  },
+  "paired": {
+   "incumbent_vs_null1": {
+    "n": 306,
+    "clusters": 260,
+    "delta": 0.1632628664355017,
+    "lo95_one_sided": 0.09155291750533583,
+    "ci95": [
+     0.07615402407595238,
+     0.24732413959430039
+    ],
+    "B": 4000,
+    "seed": 20261019
+   },
+   "incumbent_vs_const": {
+    "n": 306,
+    "clusters": 260,
+    "delta": 0.4271826263369698,
+    "lo95_one_sided": 0.33770283850411115,
+    "ci95": [
+     0.3189961857972501,
+     0.5411632393727047
+    ],
+    "B": 4000,
+    "seed": 20261019
+   }
+  },
+  "pass_rule": "challenger replaces the incumbent iff its holdout log-total MAE beats NULL 1 and the incumbent with the one-sided 95 percent lower bound of the paired improvement above 0 (player-clustered, B 4000, seed 20261019)",
+  "verdict": "INCUMBENT",
+  "served_model": "a_incumbent",
+  "registry_verdict": "provisional",
+  "provisional_kind": "inherits_parent_gate"
+ },
+ "counterfactual": {
+  "served_model": "a_incumbent",
+  "winter": 2027,
+  "index_usd": 16776600.612791415,
+  "support_box": {
+   "age": [
+    24.0,
+    44.0
+   ],
+   "war_y1": [
+    0.0,
+    5.92
+   ],
+   "war_tot": [
+    0.0,
+    41.81
+   ]
+  },
+  "class_supply_rows": 232,
+  "populations": {
+   "pre_arb": {
+    "listed": 833,
+    "no_history": 1,
+    "priced": 832,
+    "outside_support": 50,
+    "share_outside_support": 0.06009615384615385,
+    "age_outside": 50,
+    "xm_aav_mm_p10_p50_p90": [
+     2.192,
+     2.949,
+     13.97
+    ],
+    "xm_years_median": 1.0,
+    "fair_usd_mm_p10_p50_p90": [
+     0.609,
+     2.31,
+     58.744
+    ]
+   },
+   "arb": {
+    "listed": 587,
+    "priced": 587,
+    "outside_support": 2,
+    "share_outside_support": 0.0034071550255536627,
+    "age_outside": 1,
+    "xm_aav_mm_p10_p50_p90": [
+     2.486,
+     4.489,
+     26.279
+    ],
+    "xm_years_median": 1.0,
+    "fair_usd_mm_p10_p50_p90": [
+     0.581,
+     5.011,
+     82.802
+    ]
+   },
+   "prospect": {
+    "listed": 4691,
+    "no_age": 20,
+    "priced": 4671,
+    "outside_support": 2866,
+    "share_outside_support": 0.6135731106829373,
+    "age_outside": 2866,
+    "xm_aav_mm_p10_p50_p90": [
+     1.688,
+     1.802,
+     2.101
+    ],
+    "xm_years_median": 1.0,
+    "fair_usd_mm_p10_p50_p90": [
+     0.0,
+     0.0,
+     0.365
+    ]
+   }
+  },
+  "extension_anchor": {
+   "candidates": 102,
+   "no_spotrac_row": 0,
+   "no_bought_fa_season": 1,
+   "no_service_years": 0,
+   "n": 101,
+   "median_ratio": 1.0338524651178183,
+   "ci95": [
+    0.8125374057398577,
+    1.3524162985575123
+   ],
+   "B": 4000,
+   "seed": 20261019,
+   "reading": "inconclusive",
+   "rows": [
+    {
+     "player": "Kyle Tucker",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 57.195,
+     "xm_aav_mm": 20.887,
+     "outside_support": false
+    },
+    {
+     "player": "Juan Soto",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 51.0,
+     "xm_aav_mm": 54.867,
+     "outside_support": false
+    },
+    {
+     "player": "Shohei Ohtani",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 46.081,
+     "xm_aav_mm": 52.303,
+     "outside_support": false
+    },
+    {
+     "player": "Bo Bichette",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 42.0,
+     "xm_aav_mm": 15.047,
+     "outside_support": false
+    },
+    {
+     "player": "Vladimir Guerrero Jr.",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 35.714,
+     "xm_aav_mm": 24.015,
+     "outside_support": false
+    },
+    {
+     "player": "Corbin Burnes",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 32.911,
+     "xm_aav_mm": 4.718,
+     "outside_support": false
+    },
+    {
+     "player": "Corey Seager",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 32.5,
+     "xm_aav_mm": 23.126,
+     "outside_support": false
+    },
+    {
+     "player": "Pete Alonso",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 31.0,
+     "xm_aav_mm": 30.141,
+     "outside_support": false
+    },
+    {
+     "player": "Alex Bregman",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 30.1,
+     "xm_aav_mm": 41.764,
+     "outside_support": false
+    },
+    {
+     "player": "Cody Bellinger",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 29.413,
+     "xm_aav_mm": 26.275,
+     "outside_support": false
+    },
+    {
+     "player": "Rafael Devers",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 29.153,
+     "xm_aav_mm": 25.68,
+     "outside_support": false
+    },
+    {
+     "player": "Max Fried",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 27.25,
+     "xm_aav_mm": 36.798,
+     "outside_support": false
+    },
+    {
+     "player": "Yoshinobu Yamamoto",
+     "phase": "pre_arb",
+     "fa_season": 2031,
+     "bought_fa_aav_mm": 27.083,
+     "xm_aav_mm": 47.924,
+     "outside_support": false
+    },
+    {
+     "player": "Dylan Cease",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 27.024,
+     "xm_aav_mm": 58.297,
+     "outside_support": false
+    },
+    {
+     "player": "Jes\u00fas Luzardo",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 27.0,
+     "xm_aav_mm": 47.761,
+     "outside_support": false
+    },
+    {
+     "player": "Bobby Witt Jr.",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 26.253,
+     "xm_aav_mm": 54.249,
+     "outside_support": false
+    },
+    {
+     "player": "Ranger Suarez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 26.0,
+     "xm_aav_mm": 49.641,
+     "outside_support": false
+    },
+    {
+     "player": "Willy Adames",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 26.0,
+     "xm_aav_mm": 11.546,
+     "outside_support": false
+    },
+    {
+     "player": "Dansby Swanson",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 25.286,
+     "xm_aav_mm": 18.658,
+     "outside_support": false
+    },
+    {
+     "player": "Michael King",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 25.0,
+     "xm_aav_mm": 26.721,
+     "outside_support": false
+    },
+    {
+     "player": "Zach Eflin",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 25.0,
+     "xm_aav_mm": 3.444,
+     "outside_support": false
+    },
+    {
+     "player": "Fernando Tatis Jr.",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 24.286,
+     "xm_aav_mm": 55.136,
+     "outside_support": false
+    },
+    {
+     "player": "Nico Hoerner",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 22.8,
+     "xm_aav_mm": 25.451,
+     "outside_support": false
+    },
+    {
+     "player": "Luis Severino",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 22.333,
+     "xm_aav_mm": 14.044,
+     "outside_support": false
+    },
+    {
+     "player": "Edwin D\u00edaz",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 21.747,
+     "xm_aav_mm": 8.573,
+     "outside_support": false
+    },
+    {
+     "player": "Austin Riley",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 21.2,
+     "xm_aav_mm": 7.931,
+     "outside_support": false
+    },
+    {
+     "player": "Matt Olson",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 21.0,
+     "xm_aav_mm": 33.451,
+     "outside_support": false
+    },
+    {
+     "player": "Jackson Chourio",
+     "phase": "pre_arb",
+     "fa_season": 2031,
+     "bought_fa_aav_mm": 20.083,
+     "xm_aav_mm": 66.91,
+     "outside_support": true
+    },
+    {
+     "player": "Pete Crow-Armstrong",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 19.167,
+     "xm_aav_mm": 61.029,
+     "outside_support": true
+    },
+    {
+     "player": "Yordan Alvarez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 19.167,
+     "xm_aav_mm": 51.412,
+     "outside_support": false
+    },
+    {
+     "player": "Josh Hader",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 19.0,
+     "xm_aav_mm": 12.845,
+     "outside_support": false
+    },
+    {
+     "player": "Kevin McGonigle",
+     "phase": "pre_arb",
+     "fa_season": 2033,
+     "bought_fa_aav_mm": 18.75,
+     "xm_aav_mm": 68.196,
+     "outside_support": true
+    },
+    {
+     "player": "Carlos Correa",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.726,
+     "xm_aav_mm": 9.412,
+     "outside_support": false
+    },
+    {
+     "player": "Jos\u00e9 Berr\u00edos",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.714,
+     "xm_aav_mm": 3.197,
+     "outside_support": false
+    },
+    {
+     "player": "Josh Naylor",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.5,
+     "xm_aav_mm": 10.21,
+     "outside_support": false
+    },
+    {
+     "player": "Pablo L\u00f3pez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.375,
+     "xm_aav_mm": 12.793,
+     "outside_support": false
+    },
+    {
+     "player": "Andr\u00e9s Gim\u00e9nez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.279,
+     "xm_aav_mm": 10.329,
+     "outside_support": false
+    },
+    {
+     "player": "Logan Webb",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 18.0,
+     "xm_aav_mm": 48.759,
+     "outside_support": false
+    },
+    {
+     "player": "Kyle Bradish",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 18.0,
+     "xm_aav_mm": 17.73,
+     "outside_support": false
+    },
+    {
+     "player": "Cal Raleigh",
+     "phase": "arb",
+     "fa_season": 2028,
+     "bought_fa_aav_mm": 17.5,
+     "xm_aav_mm": 31.867,
+     "outside_support": false
+    },
+    {
+     "player": "Julio Rodr\u00edguez",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 17.442,
+     "xm_aav_mm": 47.706,
+     "outside_support": false
+    },
+    {
+     "player": "Tyler O'Neill",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 16.5,
+     "xm_aav_mm": 5.908,
+     "outside_support": false
+    },
+    {
+     "player": "Roman Anthony",
+     "phase": "pre_arb",
+     "fa_season": 2032,
+     "bought_fa_aav_mm": 16.25,
+     "xm_aav_mm": 11.904,
+     "outside_support": true
+    },
+    {
+     "player": "Cristopher S\u00e1nchez",
+     "phase": "arb",
+     "fa_season": 2028,
+     "bought_fa_aav_mm": 16.168,
+     "xm_aav_mm": 43.538,
+     "outside_support": false
+    },
+    {
+     "player": "Tanner Scott",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 16.128,
+     "xm_aav_mm": 12.122,
+     "outside_support": false
+    },
+    {
+     "player": "Anthony Santander",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 15.631,
+     "xm_aav_mm": 3.056,
+     "outside_support": false
+    },
+    {
+     "player": "Konnor Griffin",
+     "phase": "pre_arb",
+     "fa_season": 2033,
+     "bought_fa_aav_mm": 15.556,
+     "xm_aav_mm": 11.247,
+     "outside_support": true
+    },
+    {
+     "player": "Ryan McMahon",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 15.405,
+     "xm_aav_mm": 6.291,
+     "outside_support": false
+    },
+    {
+     "player": "Mitch Keller",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 15.4,
+     "xm_aav_mm": 14.03,
+     "outside_support": false
+    },
+    {
+     "player": "Jackson Merrill",
+     "phase": "pre_arb",
+     "fa_season": 2031,
+     "bought_fa_aav_mm": 15.0,
+     "xm_aav_mm": 66.622,
+     "outside_support": false
+    },
+    {
+     "player": "Chase Burns",
+     "phase": "pre_arb",
+     "fa_season": 2032,
+     "bought_fa_aav_mm": 15.0,
+     "xm_aav_mm": 57.76,
+     "outside_support": false
+    },
+    {
+     "player": "Andrew Benintendi",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 15.0,
+     "xm_aav_mm": 3.046,
+     "outside_support": false
+    },
+    {
+     "player": "Devin Williams",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 15.0,
+     "xm_aav_mm": 12.551,
+     "outside_support": false
+    },
+    {
+     "player": "Ronald Acu\u00f1a Jr.",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 14.75,
+     "xm_aav_mm": 20.786,
+     "outside_support": false
+    },
+    {
+     "player": "JJ Wetherholt",
+     "phase": "pre_arb",
+     "fa_season": 2033,
+     "bought_fa_aav_mm": 14.062,
+     "xm_aav_mm": 73.748,
+     "outside_support": false
+    },
+    {
+     "player": "Ryan Helsley",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 14.0,
+     "xm_aav_mm": 4.584,
+     "outside_support": false
+    },
+    {
+     "player": "Corbin Carroll",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 13.875,
+     "xm_aav_mm": 56.626,
+     "outside_support": false
+    },
+    {
+     "player": "Shane Baz",
+     "phase": "arb",
+     "fa_season": 2028,
+     "bought_fa_aav_mm": 13.6,
+     "xm_aav_mm": 28.95,
+     "outside_support": false
+    },
+    {
+     "player": "Bryan Reynolds",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 13.344,
+     "xm_aav_mm": 11.948,
+     "outside_support": false
+    },
+    {
+     "player": "Tommy Edman",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 13.037,
+     "xm_aav_mm": 6.927,
+     "outside_support": false
+    },
+    {
+     "player": "Cristian Javier",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 12.8,
+     "xm_aav_mm": 8.237,
+     "outside_support": false
+    },
+    {
+     "player": "Dustin May",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 12.5,
+     "xm_aav_mm": 23.621,
+     "outside_support": false
+    },
+    {
+     "player": "Spencer Strider",
+     "phase": "arb",
+     "fa_season": 2028,
+     "bought_fa_aav_mm": 12.5,
+     "xm_aav_mm": 7.513,
+     "outside_support": false
+    },
+    {
+     "player": "Tyler Soderstrom",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 12.286,
+     "xm_aav_mm": 17.286,
+     "outside_support": false
+    },
+    {
+     "player": "Will Smith",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 12.241,
+     "xm_aav_mm": 13.838,
+     "outside_support": false
+    },
+    {
+     "player": "Sean Murphy",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 12.167,
+     "xm_aav_mm": 3.891,
+     "outside_support": false
+    },
+    {
+     "player": "Brent Rooker",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 12.0,
+     "xm_aav_mm": 7.692,
+     "outside_support": false
+    },
+    {
+     "player": "Cade Cavalli",
+     "phase": "pre_arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 11.75,
+     "xm_aav_mm": 44.005,
+     "outside_support": false
+    },
+    {
+     "player": "Alejandro Kirk",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 11.6,
+     "xm_aav_mm": 19.275,
+     "outside_support": false
+    },
+    {
+     "player": "Maikel Garcia",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 11.5,
+     "xm_aav_mm": 14.178,
+     "outside_support": false
+    },
+    {
+     "player": "Jake Cronenworth",
+     "phase": "pre_arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 11.429,
+     "xm_aav_mm": 8.09,
+     "outside_support": false
+    },
+    {
+     "player": "Geraldo Perdomo",
+     "phase": "arb",
+     "fa_season": 2028,
+     "bought_fa_aav_mm": 11.25,
+     "xm_aav_mm": 49.54,
+     "outside_support": false
+    },
+    {
+     "player": "Brad Keller",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 11.0,
+     "xm_aav_mm": 3.972,
+     "outside_support": false
+    },
+    {
+     "player": "Seranthony Dom\u00ednguez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 11.0,
+     "xm_aav_mm": 4.028,
+     "outside_support": false
+    },
+    {
+     "player": "Jacob Wilson",
+     "phase": "pre_arb",
+     "fa_season": 2031,
+     "bought_fa_aav_mm": 10.0,
+     "xm_aav_mm": 11.287,
+     "outside_support": false
+    },
+    {
+     "player": "Cody Ponce",
+     "phase": "pre_arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 10.0,
+     "xm_aav_mm": 8.914,
+     "outside_support": false
+    },
+    {
+     "player": "Reynaldo L\u00f3pez",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 10.0,
+     "xm_aav_mm": 13.648,
+     "outside_support": false
+    },
+    {
+     "player": "Tanner Bibee",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 9.6,
+     "xm_aav_mm": 20.546,
+     "outside_support": false
+    },
+    {
+     "player": "Lawrence Butler",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 9.357,
+     "xm_aav_mm": 8.177,
+     "outside_support": false
+    },
+    {
+     "player": "Brayan Bello",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 9.167,
+     "xm_aav_mm": 5.43,
+     "outside_support": false
+    },
+    {
+     "player": "Ezequiel Tovar",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 9.071,
+     "xm_aav_mm": 6.137,
+     "outside_support": false
+    },
+    {
+     "player": "Michael Harris II",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 9.0,
+     "xm_aav_mm": 30.082,
+     "outside_support": false
+    },
+    {
+     "player": "Michael Soroka",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 9.0,
+     "xm_aav_mm": 28.45,
+     "outside_support": false
+    },
+    {
+     "player": "Brandon Pfaadt",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 9.0,
+     "xm_aav_mm": 25.555,
+     "outside_support": false
+    },
+    {
+     "player": "Ke'Bryan Hayes",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 8.851,
+     "xm_aav_mm": 2.503,
+     "outside_support": false
+    },
+    {
+     "player": "Hunter Greene",
+     "phase": "arb",
+     "fa_season": 2029,
+     "bought_fa_aav_mm": 8.833,
+     "xm_aav_mm": 13.885,
+     "outside_support": false
+    },
+    {
+     "player": "Myles Straw",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 8.5,
+     "xm_aav_mm": 6.285,
+     "outside_support": false
+    },
+    {
+     "player": "Samuel Basallo",
+     "phase": "pre_arb",
+     "fa_season": 2032,
+     "bought_fa_aav_mm": 8.375,
+     "xm_aav_mm": 2.982,
+     "outside_support": true
+    },
+    {
+     "player": "Mickey Moniak",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 8.125,
+     "xm_aav_mm": 4.772,
+     "outside_support": false
+    },
+    {
+     "player": "Hunter Harvey",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 8.0,
+     "xm_aav_mm": 3.391,
+     "outside_support": false
+    },
+    {
+     "player": "Kristian Campbell",
+     "phase": "pre_arb",
+     "fa_season": 2032,
+     "bought_fa_aav_mm": 7.5,
+     "xm_aav_mm": 2.147,
+     "outside_support": false
+    },
+    {
+     "player": "Carson Kelly",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 7.5,
+     "xm_aav_mm": 11.345,
+     "outside_support": false
+    },
+    {
+     "player": "Danny Jansen",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 7.25,
+     "xm_aav_mm": 4.731,
+     "outside_support": false
+    },
+    {
+     "player": "Cedric Mullins",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 7.0,
+     "xm_aav_mm": 8.615,
+     "outside_support": false
+    },
+    {
+     "player": "Willi Castro",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 6.4,
+     "xm_aav_mm": 5.914,
+     "outside_support": false
+    },
+    {
+     "player": "Cooper Pratt",
+     "phase": "pre_arb",
+     "fa_season": 2033,
+     "bought_fa_aav_mm": 6.344,
+     "xm_aav_mm": 10.327,
+     "outside_support": true
+    },
+    {
+     "player": "Ceddanne Rafaela",
+     "phase": "arb",
+     "fa_season": 2030,
+     "bought_fa_aav_mm": 6.25,
+     "xm_aav_mm": 27.102,
+     "outside_support": false
+    },
+    {
+     "player": "Keibert Ruiz",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 6.25,
+     "xm_aav_mm": 6.322,
+     "outside_support": false
+    },
+    {
+     "player": "Anthony Kay",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 6.0,
+     "xm_aav_mm": 11.1,
+     "outside_support": false
+    },
+    {
+     "player": "Luis Torrens",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 5.75,
+     "xm_aav_mm": 7.88,
+     "outside_support": false
+    },
+    {
+     "player": "Jordan Hicks",
+     "phase": "arb",
+     "fa_season": 2027,
+     "bought_fa_aav_mm": 4.0,
+     "xm_aav_mm": 3.869,
+     "outside_support": false
+    }
+   ]
+  },
+  "posting_anchor": {
+   "rows": 48,
+   "with_as_of_path": 0,
+   "status": "NOT MEASURABLE",
+   "why": "no as-of translated MLB WAR path exists in the store for a player with no MLB season in the three before the winter; the overseas translation serves ERA and strikeout factors, not WAR",
+   "median_aav_mm": 3.112,
+   "largest": [
+    {
+     "player": "Yoshinobu Yamamoto",
+     "class_year": 2024,
+     "years": 12,
+     "guarantee_mm": 325.0
+    },
+    {
+     "player": "Jung Hoo Lee",
+     "class_year": 2024,
+     "years": 6,
+     "guarantee_mm": 113.0
+    },
+    {
+     "player": "Masataka Yoshida",
+     "class_year": 2023,
+     "years": 5,
+     "guarantee_mm": 90.0
+    },
+    {
+     "player": "Seiya Suzuki",
+     "class_year": 2022,
+     "years": 5,
+     "guarantee_mm": 85.0
+    },
+    {
+     "player": "Kodai Senga",
+     "class_year": 2023,
+     "years": 5,
+     "guarantee_mm": 75.0
+    },
+    {
+     "player": "Yasmany Tomas",
+     "class_year": 2015,
+     "years": 6,
+     "guarantee_mm": 68.5
+    },
+    {
+     "player": "Kazuma Okamoto",
+     "class_year": 2026,
+     "years": 4,
+     "guarantee_mm": 60.0
+    },
+    {
+     "player": "Tatsuya Imai",
+     "class_year": 2026,
+     "years": 3,
+     "guarantee_mm": 54.0
+    },
+    {
+     "player": "Shota Imanaga",
+     "class_year": 2024,
+     "years": 4,
+     "guarantee_mm": 53.0
+    },
+    {
+     "player": "Yusei Kikuchi",
+     "class_year": 2019,
+     "years": 3,
+     "guarantee_mm": 43.0
+    }
+   ]
+  },
+  "fair_value_note": "fa_market.expected_rational_value_usd on the same (clipped) path at the xM$ point term and the one-step index"
+ }
+}
