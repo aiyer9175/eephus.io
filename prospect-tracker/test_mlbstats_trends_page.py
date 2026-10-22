@@ -469,10 +469,13 @@ def test_retry_asks_for_the_payload_again(payload):
 
 
 # ---------------------------------------------------------------- the shell
-def test_the_shell_is_dark_by_default_and_names_the_tab_when_the_flag_is_on(monkeypatch):
+def test_the_shell_names_the_tab_now_the_flag_is_on_and_is_dark_without_it(monkeypatch):
     import build_site as B
     import league_trends_export as LT
-    assert LT.MLBSTATS_TRENDS_LIVE is False
+    assert LT.MLBSTATS_TRENDS_LIVE is True    # TR_5_FLIP
+    served = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    assert 'data-trends-src="/assets/mlbstats-league-trends.js?v=' in served
+    monkeypatch.setattr(LT, "MLBSTATS_TRENDS_LIVE", False)
     dark = B.build_mlbstats()
     assert "data-trends-src" not in dark and "mlbstats-section-trends" not in dark and 'data-mlbsection="trends"' not in dark
     monkeypatch.setattr(LT, "MLBSTATS_TRENDS_LIVE", True)

@@ -352,6 +352,12 @@
    "text": "rescaled to the sticker total",
    "pinned_by": "test_claims_freshness.py",
    "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "section 5m of docs/diamond-betting.md names season-to-date and club-level forms of starter workload as close variants of a registered betting candidate",
+   "pinned_by": "test_league_trends_export_contract.py",
+   "reason": "League Trends' footnote on the pitches per PA and starter innings per start cards: the citation plan 4.4 (ruling R5) requires, naming the registered section by its path; changed only by the task that changes the claim."
   }
  ]
 }

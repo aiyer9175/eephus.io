@@ -88,7 +88,9 @@ import trend_detect as TD
 import trend_frames as TF
 
 #: The flag. False: the payload goes under .cache/league_trends/preview/ only.
-MLBSTATS_TRENDS_LIVE = False
+#: True since TR_5_FLIP (2026-10-21): data/league_trends.json and the eval
+#: artifact data/league_trends_eval.json are served.
+MLBSTATS_TRENDS_LIVE = True
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"

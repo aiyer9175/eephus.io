@@ -200,6 +200,8 @@ def test_completed_seasons_only_cards_hold_no_live_value(doc):
         assert c["complete"] is True and c["completed_only"] is True
         assert c["season"] < doc["season"] or doc["mode"] == "final" and c["complete"]
         assert "Disqualification paragraph" in c["footnote"] and "section 5m" in c["footnote"]
+        assert ("section 5m of docs/diamond-betting.md names season-to-date and club-level forms "
+                "of starter workload as close variants of a registered betting candidate") in c["footnote"]
         assert "values" not in c and "so far" not in c["sentence"]
     assert "ip_per_gs" not in by, "never ip_per_gs in place of sp_ip_per_gs"
     if "sp_ip_per_gs" in by:
