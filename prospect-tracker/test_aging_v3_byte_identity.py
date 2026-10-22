@@ -247,7 +247,10 @@ def test_prospect_peak_war_golden_and_default_is_v2():
         assert got == vf.prospect_peak_war(fv, p, age, aging="v2", bucket="1B")
 
 
-def test_aging_factor_golden_and_default_is_v2():
+def test_aging_factor_golden_and_default_is_v2(monkeypatch):
+    # the goldens are the v2 tent as built; TRADE_AGING_PREPEAK_FIX
+    # (test_trade_aging_factor.py) owns the pre-peak branch, so pin it off here
+    monkeypatch.setattr(btv, "TRADE_AGING_PREPEAK_FIX", False)
     for a, k, p, pos in ((22.0, 0, False, "SS"), (22.0, 3, False, "SS"), (27.0, 3, False, "C"),
                          (31.0, 4, False, "C"), (25.0, 2, True, "RHP"), (33.0, 5, True, "SP"),
                          (None, 2, False, "OF")):

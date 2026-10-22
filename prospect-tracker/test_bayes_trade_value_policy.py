@@ -732,7 +732,7 @@ def test_low_prior_partial_sample_hitter_gets_surplus_cap() -> None:
     assert out["posterior_surplus_mm"] <= out["prior_surplus_mm"] * 0.75 + 0.05
 
 
-def test_no_power_infielder_partial_sample_suppresses_defensive_floor() -> None:
+def test_no_power_infielder_partial_sample_suppresses_defensive_floor(monkeypatch) -> None:
     player = _base_debuted_player(
         player_key="no_power_backend_inf",
         position="SS",
@@ -768,9 +768,19 @@ def test_no_power_infielder_partial_sample_suppresses_defensive_floor() -> None:
     # WAR, the level it was set at). Prospect surplus now prices at the free-agent winter
     # level, so the price is read back in the unit the line was drawn in. Not widened:
     # measured 43.3 at $17.14M, which is 29.7 at the FanGraphs level.
+    # AG_3_TM_PREPEAK_FIX (owner answer AG-Q5, 2026-10-21): the trade aging factor now
+    # climbs to the peak instead of falling toward it, so this 24.8-year-old shortstop's
+    # control years rise toward age 27 and the price moves 43.0 -> 46.4 (29.95 -> 32.32 at
+    # the FanGraphs level). Re-examined, not widened: the move is the documented aging
+    # repair and not floor drift (the floor is still exactly 0.0 above), so the line is
+    # read back on the aging basis it was drawn on, the pre-repair factor.
     import value_framework as _vf
+    import bayes_trade_value as _btv
     _unit = _vf.dollars_per_war_flat() / 11.74
-    assert out["trade_value_mm"] / _unit < 31.0
+    monkeypatch.setattr(_btv, "TRADE_AGING_PREPEAK_FIX", False)
+    pre_repair = bayesian_trade_value(player)
+    assert pre_repair["defensive_floor_mm"] == 0.0
+    assert pre_repair["trade_value_mm"] / _unit < 31.0
 
 
 def test_stuff_command_post_callup_starter_outranks_no_power_infielder() -> None:

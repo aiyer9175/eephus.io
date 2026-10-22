@@ -1477,6 +1477,18 @@ def _remaining_control_years(player: dict) -> tuple[float, str]:
     return (remaining, source)
 
 
+# TRADE_AGING_PREPEAK_FIX (AG_3_TM_PREPEAK_FIX, plan Part 9 section 9.3, LANE_B
+# 1.6 and 2.7; owner answer AG-Q5 'Fix both now'). Off: the v2 tent below
+# returns min(1.10, 1.0 + 0.025 * (peak - age_at)) before the peak, so a player
+# under his peak reads ABOVE his peak level and falls toward it, against the
+# docstring's 'slight growth before peak'. On: the factor is the ratio of
+# value_framework._aging_multiplier at age_at to the same multiplier at age_now
+# (peak, decline and floor from this module's aging_curve block, catcher values
+# as configured; the climb from value_framework_config.yaml's aging block), so
+# it rises before the peak and falls after.
+TRADE_AGING_PREPEAK_FIX = True
+
+
 def _aging_factor(age_now: float | None, yr_offset: int, is_pitcher: bool,
                   position: str | None = None, aging: str = "v2") -> float:
     """Simple aging curve: slight growth before peak, decline after.
@@ -1517,6 +1529,15 @@ def _aging_factor(age_now: float | None, yr_offset: int, is_pitcher: bool,
         min_mult      = float(aging_cfg.get("min_multiplier",          0.25))
 
     age_at = age_now + yr_offset
+    if TRADE_AGING_PREPEAK_FIX:
+        tent = {
+            "climb_per_year_before_peak":
+                float(vf._config().get("aging", {}).get("climb_per_year_before_peak", 0.04)),
+            "decline_per_year_after_peak": decline_rate,
+            "min_multiplier": min_mult,
+        }
+        base = vf._aging_multiplier(float(age_now), peak, tent)
+        return vf._aging_multiplier(float(age_at), peak, tent) / base
     if age_at <= peak:
         return min(1.10, 1.0 + 0.025 * (peak - age_at))
     return max(min_mult, 1.0 - decline_rate * (age_at - peak))
