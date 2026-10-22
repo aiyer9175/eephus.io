@@ -27,9 +27,11 @@ It pins:
      and the clocks.
   5. Part 9 (the series, the skill parts' formulas and invariants, the skill
      look and its dispositions, admission, assembly) and part 10's seals.
-  6. That NO RESULT is recorded in part 12.3, or above part 12. Parts 12.1
-     and 12.2 hold the outcome look's and the skill look's results (both
-     2026-10-19), pinned by test_ebr_gate_result.py.
+  6. That NO RESULT is recorded above part 12, or in the registration's own
+     closing paragraph and the dated notes after part 12.3. Parts 12.1 and
+     12.2 hold the outcome look's and the skill look's results (both
+     2026-10-19) and part 12.3 the skill holdout's (2026-10-21), pinned by
+     test_ebr_gate_result.py.
 
 It does NOT pin a result. A look's result pin goes in its own file, so that a
 result pin never lives beside a criterion pin.
@@ -840,13 +842,16 @@ def test_no_result_is_recorded_in_part_12():
     # record docs/ebr-2026-09-30/swar_eval.json, by test_ebr_gate_result.py, not here.
     assert body.index("### 12.1 The outcome look (parts 5 and 6)") < body.index(
         "### 12.2 The skill look (parts 9.5 and 9.6)") < body.index("### 12.3 The skill holdout (part 9.5)")
+    # Part 12.3 holds the skill holdout's result (2026-10-21). It is pinned, with the
+    # tracked record's holdout block, by test_ebr_gate_result.py, not here.
     rest = body[body.index("### 12.3 The skill holdout (part 9.5)"):]
-    flat = _flat(rest)
-    assert flat.startswith("### 12.3 The skill holdout (part 9.5) EMPTY. "), flat[:300]
+    assert not _flat(rest).startswith("### 12.3 The skill holdout (part 9.5) EMPTY. ")
+    tail = rest[rest.index("No identity receipt of the final build"):]
+    flat = _flat(tail)
     assert "None may be written anywhere above this line." in flat
     for pattern in RESULT_PATTERNS:
-        m = re.search(pattern, rest, re.I)
-        assert m is None, f"a result is recorded in part 12.3: {m.group(0) if m else ''!r}"
+        m = re.search(pattern, tail, re.I)
+        assert m is None, f"a result is recorded after part 12.3: {m.group(0) if m else ''!r}"
 
 
 # Registered thresholds that take an interval's shape. Each is stripped, after
