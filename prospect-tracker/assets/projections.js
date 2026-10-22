@@ -2613,6 +2613,17 @@
   const REAL_WAR_TIP = "eWAR realized: the same frame as eWAR, with pitchers priced on the runs they allowed, adjusted for park, defense and inherited runners. Shown beside eWAR; it never sorts, sums or ranks.";
   const V2_WAR_TIP = "eWAR v2, the site's earlier WAR: Baseball-Reference's WAR with pitching re-priced on FIP. A reference only.";
   const BREF_WAR_TIP = "Baseball-Reference's WAR (bWAR). A reference only.";
+  // eWAR v3's named parts (owner answer SWAR-Q4; EBR_GATE.md 11.10.2 and
+  // 11.10.3), keyed by the ids the payload's war_parts carries. `label` is
+  // ewar_v3.PART_LABELS verbatim (pinned by test_projections_smoke.py); `head`
+  // is the column heading; `tip` says what the part measures and which series
+  // carries it. No stability caveat and no validated claim (owner EW3-32).
+  const EWAR_PARTS = [
+    { id: "eabs", label: "eABS (ABS challenges)", head: "eABS (ABS challenges)",
+      tip: "The runs a catcher's challenges won against an average catcher's, charged to the pitchers they were won for, and the cost of failed challenges. In eWAR and eWAR realized." },
+    { id: "r2", label: "realized pitching (runs allowed, adjusted for park, defense and inherited runners)", head: "Realized pitching",
+      tip: "The change when pitchers are priced on the runs they allowed, adjusted for park, defense and inherited runners, in place of FanGraphs' FIP-based pitching. In eWAR realized only." },
+  ];
   function warBarsSVG(ss, sides) {
     const use = (ss || []).filter(s => s.a != null || s.b != null);
     if (!use.length) return "";
@@ -3282,7 +3293,32 @@
       ? `<div class="fa-sub mlbp-legend"><span><i class="mlbp-legend-swatch"></i>hitting</span><span><i class="mlbp-legend-swatch mlbp-legend-b"></i>pitching</span></div>` : "";
     const hasRef = ss.some(s => s.refA != null || s.refB != null);
     return section("value-war", "WAR by season", `${term("ewar", "eWAR")}${hasRef ? " · tick = bWAR" : ""}`, chart ? chart + legend : "")
-      + valueRatesBlock(p);
+      + ewarPartsBlock(p) + valueRatesBlock(p);
+  }
+  // eWAR's named parts per season, in wins beyond FanGraphs WAR (the payload's
+  // war_parts). One row per season and side that carries a part; a column only
+  // for a part some row carries. Display only: nothing here sorts or sums.
+  function ewarPartsBlock(p) {
+    const rows = [];
+    const add = (c, side) => (c || []).forEach(r => {
+      if (r && r.war_parts && Object.keys(r.war_parts).length) rows.push({ y: r.y, side, parts: r.war_parts });
+    });
+    add(p.career, p.twoWay ? "hitting" : "");
+    if (p.twoWay) add(p.careerPit, "pitching");
+    if (!rows.length) return "";
+    const cols = EWAR_PARTS.filter(d => rows.some(r => r.parts[d.id] != null));
+    if (!cols.length) return "";
+    rows.sort((a, b) => b.y - a.y || a.side.localeCompare(b.side));
+    const head = `<th>Year</th>` + (p.twoWay ? `<th>Side</th>` : "")
+      + cols.map(d => `<th title="${esc(d.tip)}">${esc(d.head)}</th>`).join("");
+    const body = rows.map(r => `<tr><td>${r.y}</td>` + (p.twoWay ? `<td>${esc(r.side)}</td>` : "")
+      + cols.map(d => `<td>${r.parts[d.id] != null ? signed(r.parts[d.id], 2) : EM_DASH}</td>`).join("") + `</tr>`).join("");
+    const realOnly = cols.some(d => d.id === "r2");
+    const sub = `wins beyond FanGraphs WAR · ${term("ewar", "eWAR")} = FanGraphs WAR`
+      + (cols.some(d => d.id === "eabs") ? " + eABS" : "")
+      + (realOnly ? ` · ${term("ewar_realized", "eWAR realized")} also takes realized pitching` : "");
+    return section("value-ewar-parts", "eWAR parts", sub,
+      `<div class="mlbp-table-wrap"><table class="detail-table" data-ewar-parts><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }
 
   // ---- overview --------------------------------------------------------------

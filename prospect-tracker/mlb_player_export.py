@@ -292,6 +292,15 @@ def _career_rows(mlbam: int, is_pitcher: bool,
             _v = (((_map.get(mlbam) or {}).get(season) or {}).get("pit" if is_pitcher else "bat"))
             if _v is not None:
                 extra[_key] = round(_v, 1)
+        # war_parts: eWAR v3's named parts on this row's side, in wins, so the
+        # card can name each part with its delta (owner answer SWAR-Q4; the
+        # card labels of EBR_GATE.md 11.10.2 and 11.10.3). Absent when no part
+        # departs at 2dp. Display only: never a sort key, sum or model input.
+        _pm = (war_ref_by or {}).get("parts")
+        if war is not None and _pm:
+            _pp = ((_pm.get(mlbam) or {}).get(season) or {}).get("pit" if is_pitcher else "bat")
+            if _pp:
+                extra["war_parts"] = dict(_pp)
         if is_pitcher:
             bf = _f(r.get("bf")) or 0
             so, bb = _f(r.get("so")), _f(r.get("bb"))
@@ -377,7 +386,9 @@ _CAREER_NOTE_V3 = (
     "data/ewar_v3.json); war_real = eWAR realized (the same frame, pitchers on runs allowed adjusted for "
     "park, defense and inherited runners from 2016); war_ewar2 = eWAR v2, a reference; war_fwar = "
     "FanGraphs' published WAR, a reference; war_bwar = Baseball-Reference's WAR where it differs from "
-    "eWAR at 1dp, absent means equal; every reference is display only")
+    "eWAR at 1dp, absent means equal; war_parts = eWAR v3's named parts on the row's side in wins "
+    "(eabs: the ABS challenge part, in eWAR and eWAR realized; r2: realized pitching, in eWAR "
+    "realized only), absent when no part departs at 2dp; every reference is display only")
 
 
 def _war_ref_maps() -> dict[str, dict]:
@@ -386,7 +397,7 @@ def _war_ref_maps() -> dict[str, dict]:
     Both empty while the displayed provider is eWAR v2. A map that cannot serve
     is empty (logged), so it drops its column and never the card."""
     import war_source
-    out: dict[str, dict] = {"real": {}, "ewar2": {}}
+    out: dict[str, dict] = {"real": {}, "ewar2": {}, "parts": {}}
     if war_source.DISPLAY_PROVIDER != "ewar_v3":
         return out
     for key, kw in (("real", {"provider": "ewar_v3", "series": "realized"}),
@@ -395,6 +406,43 @@ def _war_ref_maps() -> dict[str, dict]:
             out[key] = war_source.side_war_by_season(**kw)
         except war_source.DataUnavailable as e:
             log.warning("mlb player detail: no %s column (%s)", key, e)
+    out["parts"] = _war_parts_map()
+    return out
+
+
+def _war_parts_map(payload: dict | None = None) -> dict[int, dict[int, dict[str, dict[str, float]]]]:
+    """{mlbam: {season: {"bat"|"pit": {part id: wins}}}}: eWAR v3's named parts
+    per player-season and side, read from data/ewar_v3.json (`payload` is the
+    test seam). Part ids are ewar_v3.PART_LABELS' keys: "eabs" (the ABS part,
+    parts.abs.<side>.wins, in eWAR and eWAR realized) and "r2" (realized
+    pitching, parts.r2, pitchers, in eWAR realized only). A part that rounds to
+    0.00 wins is left out. Empty (logged) when the artifact cannot serve, so a
+    missing file drops the parts table and never the card."""
+    import ewar_v3
+    if payload is None:
+        if not ewar_v3.available():
+            log.warning("mlb player detail: no eWAR parts (data/ewar_v3.json absent)")
+            return {}
+        try:
+            payload = ewar_v3.load()
+        except (OSError, ValueError) as e:
+            log.warning("mlb player detail: no eWAR parts (%s)", e)
+            return {}
+    out: dict[int, dict[int, dict[str, dict[str, float]]]] = {}
+    for mid_s, seasons in (payload.get("players") or {}).items():
+        for season_s, blk in (seasons or {}).items():
+            parts = (blk or {}).get("parts") or {}
+            cell: dict[str, dict[str, float]] = {}
+            for side, a in ((parts.get("abs") or {}).items()):
+                w = round(float((a or {}).get("wins") or 0.0), 2)
+                if w:
+                    cell.setdefault(side, {})["eabs"] = w
+            if parts.get("r2") is not None:
+                w = round(float(parts["r2"]), 2)
+                if w:
+                    cell.setdefault("pit", {})["r2"] = w
+            if cell:
+                out.setdefault(int(mid_s), {})[int(season_s)] = cell
     return out
 
 
