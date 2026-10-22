@@ -49,4 +49,18 @@ Before arm F is computed the lab prints the gate's `frame:` line and the CH40 an
 
 ## 7. Results
 
-PENDING.
+`python -u tools/eta_fg_alone_score.py --run --cache-dir <scratch>`, run once on 2026-10-22 (19:32:48 to 19:32:58 UTC) after the fixture dry run (`--dry-run`, synthetic rows, nothing read or written); exit code 0, stderr empty. The roster cache was a private copy (1,131 files); the shared `.cache` was not written. Its stdout, verbatim:
+
+    cohort 2024: {"censored_active": 878, "debut_after_cutoff_ignored": 0, "debut_from_statsapi": 6, "debuted": 496, "dropped_debut_before_listing": 0, "excluded_no_bio": 0, "excluded_post_debut": 147, "fg_present": 1183, "level_from_career_stats": 670, "level_from_statsapi": 461, "listed": 1559, "mlbam_unknown": 1, "no_level_age_fallback": 281, "on40": 56, "org_unknown_at_V": 24, "overdue": 137, "washed_out": 21}
+    frame: rows=1395 debuted=502 censored_active=872 fg_debuted_c5_clean=446
+    reproduction vs the 2026-09-30 look: DIFFERS on censored_active, debuted, rows; stored {"B_mae": 0.8094, "CH40_mae": 1.0224, "censored_active": 871, "debuted": 503, "fg_debuted_c5_clean": 446, "rows": 1394}
+    row-matched (n=446): CH40 1.0224 B 0.8094
+    instrument: planted-better dMAE +0.2332 CI95 [+0.1928, +0.2758]; planted-worse dMAE -1.0000 CI95 [-1.0000, -1.0000] -> PASS
+    F (FanGraphs alone) vs B (served blend): n=446 B 0.8094 vs F 0.5897; dMAE +0.2197 CI95 [+0.1480, +0.2848]; within-1y B 0.8408 vs F 0.9193 d +0.0785 CI95 [+0.0493, +0.1099]
+    reported: bias CH40 0.7085 B 0.63 F 0.2354; F vs CH40 dMAE +0.4327 CI95 [+0.3363, +0.5336]; F differs from B on 224 rows (191 earlier, 33 later); floor at V moved 0
+    VERDICT: F_BEATS_B (adjudicates nothing served; the blend stays served)
+    wrote fg_blend_gate_fg_alone_2026_10_22 into eta_eval.json
+
+Reproduction (section 5): the 446 scored rows reproduce the look's CH40 MAE 1.0224 and arm B MAE 0.8094 exactly. The whole frame differs by one row outside the scored set (1,395 rows, 502 debuted, 872 censored-active, against the look's 1,394, 503 and 871), after the inputs were rewritten.
+
+**Verdict (section 4): F_BEATS_B.** FanGraphs' year alone reads MAE 0.5897 against the served blend's 0.8094 on identical rows (dMAE +0.2197, CI95 +0.1480 to +0.2848) and within-1y 0.9193 against 0.8408 (+0.0785, CI95 +0.0493 to +0.1099); the instrument check passed. Read with section 6: the frame is debuted rows only, which favours earlier predictions (bias: FanGraphs +0.2354, the blend +0.63, CH40 +0.7085), and the overdue guardrail FanGraphs alone failed on the development vintages (+263) was not computed. Nothing served moved; the blend stays served; the registry row `eta_fg_blend` carries this reading in its notes.

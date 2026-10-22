@@ -45736,5 +45736,171 @@
    "2024-08-01": 33
   },
   "verdict": "REMOVE"
+ },
+ "fg_blend_gate_fg_alone_2026_10_22": {
+  "registration": "docs/eta-2026-09-25/ETA_FG_ALONE_SCORE.md",
+  "run": "2026-10-22",
+  "frame": "list vintage 2024",
+  "outcome_cutoff": "2026-09-27",
+  "seed": 20260928,
+  "B": 2000,
+  "arms": {
+   "F": "max(V, FG(V)), FanGraphs alone",
+   "B": "eta.fg_blend_eta_year arm B, the served blend"
+  },
+  "scored_rows": "debuted rows with a C5-clean FanGraphs year and a CH40 year",
+  "accounting": {
+   "listed": 1559,
+   "excluded_post_debut": 147,
+   "excluded_no_bio": 0,
+   "no_level_age_fallback": 281,
+   "level_from_statsapi": 461,
+   "level_from_career_stats": 670,
+   "debuted": 496,
+   "censored_active": 878,
+   "washed_out": 21,
+   "overdue": 137,
+   "org_unknown_at_V": 24,
+   "mlbam_unknown": 1,
+   "on40": 56,
+   "fg_present": 1183,
+   "debut_from_statsapi": 6,
+   "dropped_debut_before_listing": 0,
+   "debut_after_cutoff_ignored": 0
+  },
+  "n": {
+   "rows": 1395,
+   "debuted": 502,
+   "censored_active": 872,
+   "fg_debuted_c5_clean": 446
+  },
+  "reproduction": {
+   "now": {
+    "rows": 1395,
+    "debuted": 502,
+    "censored_active": 872,
+    "fg_debuted_c5_clean": 446,
+    "CH40_mae": 1.0224,
+    "B_mae": 0.8094
+   },
+   "stored": {
+    "rows": 1394,
+    "debuted": 503,
+    "censored_active": 871,
+    "fg_debuted_c5_clean": 446,
+    "CH40_mae": 1.0224,
+    "B_mae": 0.8094
+   },
+   "identical": false,
+   "differs_on": [
+    "censored_active",
+    "debuted",
+    "rows"
+   ]
+  },
+  "scores": {
+   "CH40": {
+    "n": 446,
+    "mae": 1.0224,
+    "within_1y": 0.7377,
+    "bias": 0.7085
+   },
+   "B": {
+    "n": 446,
+    "mae": 0.8094,
+    "within_1y": 0.8408,
+    "bias": 0.63
+   },
+   "F": {
+    "n": 446,
+    "mae": 0.5897,
+    "within_1y": 0.9193,
+    "bias": 0.2354
+   }
+  },
+  "boot_F_vs_B": {
+   "n": 446,
+   "players": 446,
+   "dMAE": 0.2197,
+   "MDE95": 0.067,
+   "ci_dMAE": [
+    0.148,
+    0.2848
+   ],
+   "p_dMAE": 0.0005,
+   "dW1": 0.0785,
+   "ci_dW1": [
+    0.0493,
+    0.1099
+   ]
+  },
+  "boot_F_vs_CH40": {
+   "n": 446,
+   "players": 446,
+   "dMAE": 0.4327,
+   "MDE95": 0.0964,
+   "ci_dMAE": [
+    0.3363,
+    0.5336
+   ],
+   "p_dMAE": 0.0005,
+   "dW1": 0.1816,
+   "ci_dW1": [
+    0.1413,
+    0.2287
+   ]
+  },
+  "instrument": {
+   "planted_better": {
+    "n": 446,
+    "players": 446,
+    "dMAE": 0.2332,
+    "MDE95": 0.041,
+    "ci_dMAE": [
+     0.1928,
+     0.2758
+    ],
+    "p_dMAE": 0.0005,
+    "dW1": 0.1435,
+    "ci_dW1": [
+     0.1121,
+     0.1772
+    ]
+   },
+   "planted_worse": {
+    "n": 446,
+    "players": 446,
+    "dMAE": -1.0,
+    "MDE95": 0.0,
+    "ci_dMAE": [
+     -1.0,
+     -1.0
+    ],
+    "p_dMAE": 0.0005,
+    "dW1": -0.4686,
+    "ci_dW1": [
+     -0.5157,
+     -0.4215
+    ]
+   },
+   "verdict": "PASS"
+  },
+  "moved_vs_B": {
+   "rows": 224,
+   "earlier": 191,
+   "later": 33
+  },
+  "floor_at_V": 0,
+  "verdict": "F_BEATS_B",
+  "verbatim": [
+   "cohort 2024: {\"censored_active\": 878, \"debut_after_cutoff_ignored\": 0, \"debut_from_statsapi\": 6, \"debuted\": 496, \"dropped_debut_before_listing\": 0, \"excluded_no_bio\": 0, \"excluded_post_debut\": 147, \"fg_present\": 1183, \"level_from_career_stats\": 670, \"level_from_statsapi\": 461, \"listed\": 1559, \"mlbam_unknown\": 1, \"no_level_age_fallback\": 281, \"on40\": 56, \"org_unknown_at_V\": 24, \"overdue\": 137, \"washed_out\": 21}",
+   "frame: rows=1395 debuted=502 censored_active=872 fg_debuted_c5_clean=446",
+   "reproduction vs the 2026-09-30 look: DIFFERS on censored_active, debuted, rows; stored {\"B_mae\": 0.8094, \"CH40_mae\": 1.0224, \"censored_active\": 871, \"debuted\": 503, \"fg_debuted_c5_clean\": 446, \"rows\": 1394}",
+   "row-matched (n=446): CH40 1.0224 B 0.8094",
+   "instrument: planted-better dMAE +0.2332 CI95 [+0.1928, +0.2758]; planted-worse dMAE -1.0000 CI95 [-1.0000, -1.0000] -> PASS",
+   "F (FanGraphs alone) vs B (served blend): n=446 B 0.8094 vs F 0.5897; dMAE +0.2197 CI95 [+0.1480, +0.2848]; within-1y B 0.8408 vs F 0.9193 d +0.0785 CI95 [+0.0493, +0.1099]",
+   "reported: bias CH40 0.7085 B 0.63 F 0.2354; F vs CH40 dMAE +0.4327 CI95 [+0.3363, +0.5336]; F differs from B on 224 rows (191 earlier, 33 later); floor at V moved 0",
+   "VERDICT: F_BEATS_B (adjudicates nothing served; the blend stays served)"
+  ]
  }
 }
