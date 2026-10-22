@@ -669,8 +669,10 @@
       var stops = (T && T.PCT_STOPS) || [];
       for (var i = 0; i < 7; i++) {
         var x0 = Math.round(i * W / 7), x1 = Math.round((i + 1) * W / 7), t = stops[i] ? stops[i][1] : "avg";
-        s += '<rect class="aw-seg" data-tier="' + t + '" x="' + x0 + '" y="Y" width="' + (x1 - x0) +
-          '" height="4" style="fill:' + ((T && stops[i]) ? T.pctColor(stops[i][0]) : "var(--vt-avg)") + '"/>';
+        // the ruler's colour when the tiers module is loaded; its avg fill class otherwise
+        s += '<rect class="aw-seg' + ((T && stops[i]) ? '' : ' aw-f-avg') + '" data-tier="' + t + '" x="' + x0 +
+          '" y="Y" width="' + (x1 - x0) + '" height="4"' +
+          ((T && stops[i]) ? ' style="fill:' + T.pctColor(stops[i][0]) + '"' : '') + '/>';
       }
     }
     var marks = [];

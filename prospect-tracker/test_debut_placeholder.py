@@ -156,7 +156,11 @@ def test_no_matrix_row_reads_a_placeholder_day(side):
             assert m and m["status"] == "redated"
             assert r["cutoff"] == m["debut_date"] and r["debut_date_redated_from"] == m["placeholder_date"]
         if m and m["status"] == "redated":
-            assert r["cutoff"] != m["placeholder_date"] or m["debut_date"] == m["placeholder_date"]
+            # the real day, whether the map re-dated the row or the source already
+            # carried it (the debut ledger has carried the real day since the MLB
+            # events flip, so the map has no row left to move; PORT_RED_TESTS_TRIAGE)
+            assert r["cutoff"] == m["debut_date"], (r["player_key"], r["cutoff"], m)
+            n_redated += 1
         if r["debut_date_is_placeholder"]:
             assert r["cutoff"] <= f"{r['debut_year']}{E.SEASON_START_MMDD}"
-    assert n_redated > 0
+    assert n_redated > 0, "no redated key is in the matrix; the map or the matrix is stale"

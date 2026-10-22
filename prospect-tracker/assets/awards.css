@@ -8,13 +8,8 @@
 .aw-app { --aw-hero-ink: var(--text-on-accent); }
 [data-theme="dark"] .aw-app { --aw-hero-ink: var(--text-primary); }
 .aw-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.aw-f-elite { fill: var(--vt-elite); }
-.aw-f-great { fill: var(--vt-great); }
-.aw-f-good { fill: var(--vt-good); }
-.aw-f-above { fill: var(--vt-above); }
-.aw-f-avg { fill: var(--vt-avg); }
-.aw-f-below { fill: var(--vt-below); }
-.aw-f-poor { fill: var(--vt-poor); }
+/* .aw-f-elite to .aw-f-poor, the ruler fills, live in site.css beside the ruler
+   (only the ruler block names the tier colours) */
 .aw-f-ink { fill: var(--text-primary); }
 .aw-f-down { fill: var(--down); }
 .aw-f-off { fill: var(--border); }

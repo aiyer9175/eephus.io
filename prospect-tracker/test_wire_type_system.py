@@ -178,6 +178,9 @@ def test_history_rows_carry_the_family_and_the_ev_il_pictogram(monkeypatch):
         {mmdd: [(iso, "SFA", "k1", "Boston Red Sox", True), (iso, "SGN", "k1", ""),
                 (iso, "TR", "unknown-key", ""), (iso, "DFA", "unknown-key", "")]},
         {mmdd: [(iso, "k1", "15-Day")]}))
+    # the live MLB ledger (mlb_events.MLB_EVENTS_LIVE) stays out of this fixture
+    import mlb_events as M
+    monkeypatch.setattr(M, "on_this_day", lambda *a, **k: [])
     html = B.build_this_day({"players": [g], "graduates": []})
     types = re.findall(r'class="otd-row"[^>]*data-fam="(\w+)" data-type="(\w+)"', html)
     assert sorted(types) == sorted([("fa", "minor_deal"), ("pro", "intl_sign"), ("trd", "trade"),

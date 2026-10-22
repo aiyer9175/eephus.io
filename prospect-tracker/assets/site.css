@@ -1360,7 +1360,7 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
 .otd-cal { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; vertical-align: -1px; color: var(--band-c, var(--text-primary)); }
 .otd-cal .ico { display: block; }
 .otd-cal-day { font: 400 12px/16px "PixelMplus12", var(--font-retro-mono); letter-spacing: 0; }
-.hist-cal h1 { position: relative; }
+.hist-cal h1 { position: relative; --cal-day: ""; }
 .hist-cal h1 > .ico:first-child { vertical-align: top; margin-top: 2px; }
 .hist-cal h1::before {
   content: var(--cal-day) / ""; position: absolute; left: 8px; top: 12px; width: 16px; height: 14px;
@@ -1443,7 +1443,9 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
    Like every animation on the site it runs under Reduce Motion (owner,
    2026-10-01). */
 /* pixel-wordmark:begin */
-.eephus-wordmark-px { display: inline-block; position: relative; line-height: 0; margin: 0; }
+.eephus-wordmark-px { display: inline-block; position: relative; line-height: 0; margin: 0;
+  /* the per-glyph values the markup sets inline (PB-04); these are the rest defaults */
+  --u: 2px; --nudge: 0px; --i: 0; --step: 0ms; --drop-at: 0ms; --glint-at: 0ms; }
 .eephus-wordmark-px .wm-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wm-px { display: block; overflow: visible; shape-rendering: crispEdges; }
 .wm-px .wm-ink { fill: var(--text-primary); }
@@ -1947,7 +1949,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .px-spark { display: block; max-width: 100%; height: auto; shape-rendering: crispEdges; }
 .px-spark .gl { fill: var(--border); }
 .px-spark.up .ln { fill: var(--accent-green); }
-.px-spark.dn .ln { fill: var(--accent-red); }
+.px-spark.dn .ln { fill: var(--down); }
 /* V1 tied-game line score (PX-14), the ballpark lamp idiom: one lamp row per
    point from 50%, unlit lamps the board. Lit lamps are coloured (owner ask
    2026-10-02): top halves (visitors bat) cyan, bottom halves (home bats) the
@@ -2507,6 +2509,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    .mlbp-cell-val's 700 on source order. Here it keeps the place the rules it
    replaces already held.
    Every cut lives in assets/eephus-tiers.js. Nothing here knows a number. */
+/* the /awards/ SVG fills on the same ruler (awards.js draws its bands with them) */
+.aw-f-elite { fill: var(--vt-elite); } .aw-f-great { fill: var(--vt-great); } .aw-f-good { fill: var(--vt-good); }
+.aw-f-above { fill: var(--vt-above); } .aw-f-avg { fill: var(--vt-avg); } .aw-f-below { fill: var(--vt-below); }
+.aw-f-poor { fill: var(--vt-poor); }
 .vt-elite { color: var(--vt-elite); }
 .vt-great { color: var(--vt-great); }
 .vt-good  { color: var(--vt-good); }
@@ -4458,6 +4464,8 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .mlbp-runbar-fill { position: absolute; top: 0; bottom: 0; color: var(--text-tertiary); background: currentColor; }
 .mlbp-runbar-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
 /* WAR by season (served frame bars, bWAR tick) */
+/* the reference WAR columns beside eWAR (eWAR realized, eWAR v2, FanGraphs, bWAR) */
+.mlbp-realwar, .mlbp-fgwar { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mlbp-warbars { overflow: visible; }
 .mlbp-warbar { fill: var(--accent-cyan); }
 .mlbp-warbar-b { fill: var(--accent-gold); }

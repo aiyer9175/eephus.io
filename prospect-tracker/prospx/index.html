@@ -56,7 +56,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=b6460753">
+  <link rel="stylesheet" href="/assets/site.css?v=52016749">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -1433,11 +1433,11 @@
     .px-lb-switch .px-lb-cnt { text-transform: none; letter-spacing: 0; color: var(--text-secondary); }
     .px-lb-range { margin: 0 0 8px; }
     .px-lb-pool { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px;
-      font-size: 11.5px; color: var(--text-secondary); margin: 2px 0 6px; }
+      font-size: var(--fs-xs); color: var(--text-secondary); margin: 2px 0 6px; }
     .px-lb-dist > summary { cursor: pointer; color: var(--text-tertiary); font-size: 11px; }
     .px-lb-dist[open] { flex-basis: 100%; order: 3; }
     .px-lb-key { margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
-      font-size: 10.5px; color: var(--text-tertiary); }
+      font-size: var(--fs-xs); color: var(--text-tertiary); }
     .px-lb-lamps { display: inline-flex; gap: 2px; }
     .px-lb-lamp { display: inline-block; width: 6px; height: 6px; }
     .px-lb-note { font-size: 11px; color: var(--text-tertiary); margin: -2px 0 6px; }
@@ -1447,7 +1447,7 @@
     #leaderboards-section .px-lb-table { width: auto; }
     #leaderboards-section .px-lb-table th,
     #leaderboards-section .px-lb-table td { line-height: 16px; padding: 6px 10px 5px; }
-    #leaderboards-section .px-lb-table th { cursor: default; vertical-align: bottom; text-transform: none; letter-spacing: .02em; font-size: 10.5px; }
+    #leaderboards-section .px-lb-table th { cursor: default; vertical-align: bottom; text-transform: none; letter-spacing: .02em; font-size: var(--fs-xs); }
     #leaderboards-section .px-lb-table th.g-term { text-decoration: none; }
     #leaderboards-section .px-lb-table .px-lb-left { text-align: left; }
     #leaderboards-section .px-lb-table .px-lb-sort {
@@ -60619,5 +60619,5 @@ window.PROSPX = {
   </nav>
   <span>© 2026 eephus.io</span>
 </footer>
-<script src="/assets/xm-surfaces.js?v=b3c7dd07" defer></script></body>
+<script src="/assets/xm-surfaces.js?v=76da15fe" defer></script></body>
 </html>

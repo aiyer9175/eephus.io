@@ -9794,6 +9794,13 @@ SOURCE_ROWS = [
      "cadence": "Monthly",
      "terms": None, "terms_label": None,
      "use": ("Contracts, payrolls, free-agent classes, and international signing trackers.")},
+    {"name": "Cot's Contracts (Baseball Prospectus)",
+     "url": "https://legacy.baseballprospectus.com/compensation/cots/",
+     "take": "Public contract sheets, one per club: deferral schedules, options and contract history",
+     "cadence": "By hand, cached",
+     "terms": None, "terms_label": None,
+     "use": ("Contract sheets read for deferral schedules, options and contract history: the "
+             "deferral check (data/cots_deferral_check.json) and the Ledger's deferred money.")},
     {"name": "MLB Trade Rumors", "url": "https://www.mlbtraderumors.com/",
      "take": "Arbitration projections and results (comparator)",
      "cadence": "By hand, cached",

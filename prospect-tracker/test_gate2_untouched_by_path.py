@@ -101,7 +101,10 @@ def test_gate2_inputs_are_byte_identical_on_and_off(gate2_inputs, tmp_path):
 # fa_export prices the served Deal+ with; it moves the derived edges, never a
 # Gate 2 table number.
 ALLOWED_READERS = {
-    "_destale_rate(": {"fa_market.py", "fa_export.py", "fa_backtest.py"},
+    # xm_export.py joined at the XM-FLIP (2026-10-22): xM$ prices the FA rows
+    # with the same ex-ante destale rate fa_export uses, a served column, never
+    # a Gate 2 table number.
+    "_destale_rate(": {"fa_market.py", "fa_export.py", "fa_backtest.py", "xm_export.py"},
     "dollars_per_war_inflation": {"backtest.py", "fa_class.py", "fa_export.py", "fa_market.py",
                                   "proj_export.py", "valuation_sets.py", "value_framework.py"},
 }
