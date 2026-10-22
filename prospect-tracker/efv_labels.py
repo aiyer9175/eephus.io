@@ -7,9 +7,11 @@
 
 LABEL ONLY. This module reads outcomes and nothing else: it takes no grade, fits
 nothing, scores nothing and summarises nothing by grade. A caller joins its output to
-efv_vintage_frame rows. The WAR series is war_source.DEFAULT_PROVIDER (published fWAR
-since the 2026-10-03 label epoch; a later label epoch moves it, and these labels move
-with it on the next build).
+efv_vintage_frame rows. The WAR series is war_source.EFV_LABEL_PROVIDER: the site-wide
+label DEFAULT_PROVIDER (published fWAR since the 2026-10-03 label epoch), or, under
+war_source.EFV_LABEL_EWAR_HEADLINE, the frozen headline eWAR label read through
+war_source.efv_label_seasons (docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md part 3). A
+later label move moves these labels on the next build.
 
 For a player first read at list vintage V, with effective debut year dy:
 
@@ -84,15 +86,16 @@ def resolved_through() -> int:
 
 def provider() -> str:
     import war_source
-    return str(war_source.DEFAULT_PROVIDER)
+    return str(war_source.EFV_LABEL_PROVIDER)
 
 
 def war_seasons_table() -> dict[str, dict[int, float]]:
-    """{player_key: {season: WAR}} on war_source.DEFAULT_PROVIDER, as stored."""
+    """{player_key: {season: WAR}} on eFV's label (war_source.EFV_LABEL_PROVIDER): the
+    table as stored, each row read through war_source.efv_label_seasons."""
     import war_source
     out: dict[str, dict[int, float]] = {}
     for pk, agg in war_source.career_war_table(provider=war_source.DEFAULT_PROVIDER).items():
-        seasons = (agg or {}).get("seasons") or {}
+        seasons = war_source.efv_label_seasons(agg)
         try:
             out[pk] = {int(y): float(w) for y, w in seasons.items() if w is not None}
         except (TypeError, ValueError):

@@ -6027,7 +6027,10 @@ def board_basis_fingerprint() -> str:
     # the eWAR artifact's generated_at, so the term is comparable across the flip.
     try:
         import war_source as _ws
-        label = str(getattr(_ws, "DEFAULT_PROVIDER", "unknown"))
+        # eFV's label (war_source.EFV_LABEL_PROVIDER): DEFAULT_PROVIDER unless the headline
+        # eWAR label check's switch is on (EWAR_HEADLINE_LABEL_GATE.md part 3), when the
+        # term reads ewar_headline@<frozen label vintage id>
+        label = str(getattr(_ws, "EFV_LABEL_PROVIDER", getattr(_ws, "DEFAULT_PROVIDER", "unknown")))
         if label == "fwar":
             import fwar_vintage as _fv
             label += f"@{str(_fv.load().get('vintage_id') or 'nobuild')}"
@@ -6036,6 +6039,9 @@ def board_basis_fingerprint() -> str:
             # part 3): the frozen label vintage's id, ewar-core-<fWAR vintage id>-<sha12>
             import ewar_core_label as _ecl
             label += f"@{_ecl.vintage_id() or 'nobuild'}"
+        elif label == "ewar_headline":
+            import ewar_headline_label as _ehl
+            label += f"@{_ehl.vintage_id() or 'nobuild'}"
         elif label != "bwar":
             import ewar as _ew
             _p = _ew.load()

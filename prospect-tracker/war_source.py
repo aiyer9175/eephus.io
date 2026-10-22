@@ -213,6 +213,21 @@ LABEL_EWAR_CORE: bool = False
 
 DEFAULT_PROVIDER: str = "ewar_core" if LABEL_EWAR_CORE else "fwar"
 
+#: The headline eWAR label check's switch (docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md
+#: part 3; owner answer EWLE-Q2), scoped to eFV's label: on, efv_dataset's first-6 label and
+#: efv_labels' frames read each stored fwar career_war row through
+#: ewar_headline_label.label_series (published fWAR plus the eABS part from 2026, frozen in
+#: data/ewar_headline_label.json). DEFAULT_PROVIDER, the career_war table, every other label
+#: reader and every display door are untouched. It flips only after the gate's guard holds
+#: (part 4.4), in a commit that bumps storage.BOARD_RANK_BASIS_EPOCH and restamps
+#: BOARD_BASIS_FINGERPRINT.
+EFV_LABEL_EWAR_HEADLINE: bool = False
+
+#: The WAR series eFV's label is summed from: "ewar_headline" under the switch, else the
+#: site-wide label DEFAULT_PROVIDER. "ewar_headline" is not a provider id in PROVIDERS: no
+#: door serves it; efv_label_seasons() is its one read.
+EFV_LABEL_PROVIDER: str = "ewar_headline" if EFV_LABEL_EWAR_HEADLINE else DEFAULT_PROVIDER
+
 #: eWAR v3 serves as THE displayed WAR, plain "eWAR", on every display door,
 #: player pages included (owner answers EBR-Q5 and EW3-19; EBR_GATE.md 11.10.5),
 #: with eWAR v2, fWAR and bWAR as reference columns. Off: the doors show eWAR v2.
@@ -666,6 +681,20 @@ def row_on_provider(row: dict | None, provider: str = DISPLAY_PROVIDER) -> dict:
         out.pop("seasons_ewar_v2", None)
         out.pop("ewar_coverage", None)
     return out
+
+
+def efv_label_seasons(row: dict | None) -> dict:
+    """The {year: war} series eFV's label sums for one stored career_war row: the row's
+    `seasons` as stored, or, when EFV_LABEL_PROVIDER is "ewar_headline", the row on the
+    frozen headline eWAR label (ewar_headline_label.label_series: an fwar row moves by the
+    label's departures in the seasons the fWAR vintage served; any other row is as stored).
+    Always a new dict; the row is never mutated."""
+    row = row or {}
+    if EFV_LABEL_PROVIDER == "ewar_headline":
+        import ewar_headline_label
+        return ewar_headline_label.label_series(row)
+    seasons = row.get("seasons") or {}
+    return dict(seasons) if isinstance(seasons, dict) else {}
 
 
 def career_war_view(*, provider: str = DISPLAY_PROVIDER,
