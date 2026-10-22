@@ -286,3 +286,18 @@ amendment was written.
 ## 8. Results
 
 (Appended by the reads. Nothing below this line exists at registration.)
+
+### 2026-10-22: the three reads (R_TOOLCHAIN_BAKEOFF)
+
+Each item was read once, after its fixture dry run, in one session, with no rerun, on the lab
+committed at eda93727. The plain-language record is `docs/r/RESULTS.md`.
+
+| item | artifact (sha256) | verdict |
+|---|---|---|
+| (a) aging GAM | `data/_labs/r_bakeoff/aging_gam.json` (a432e04cda4ac2fa) | hitters FAIL (ties the served curve), D -0.0015 (97.5 percent bounds -0.0047 to +0.0014); pitchers FAIL (ties the served curve), D -0.0006 (-0.0036 to +0.0025); planted passed on both sides |
+| (b) xM$ years duration | `data/_labs/r_bakeoff/xm_years_surv.json` (25e8e3a6e6e45d9e) | FAIL (ties the served years stage), D -0.0045 (lower bound -0.0247), n 893; beats both nulls; P1 and P2 passed |
+| (c) eFV crossed random effects | `data/_labs/r_bakeoff/efv_glmm.json` (9d139456ac8ed46d) | FAIL (trails PROSPX consensus), UNRESOLVED (planted check failed): W 0.1372 against consensus 0.2011 and served eFV 0.2041; below every permuted-group run |
+
+No item passed, so no flip question arises and nothing served moves. Disclosed defect, reported
+field only: item (a)'s artifact carries no player-effect SD (`sd_pid` null; the script's
+variance-component read returned nothing); no prediction or statistic used it.
