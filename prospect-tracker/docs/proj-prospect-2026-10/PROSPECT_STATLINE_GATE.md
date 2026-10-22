@@ -550,3 +550,24 @@ The 2020 season (60 games) sits inside the windows of the 2018 to 2020 cohorts a
 2020 and 2021 folds. Any change to this specification after this commit is an amendment in the 5c form
 committed alone before the look; a change after any holdout row has been read voids the look.
 
+## Amendment 2 (2026-10-21): inputs that moved on disk since the freeze (the 5c form), TL_17_STATLINE_LOOK
+
+Item 2 of the list at the top, committed alone before the look. It names what moved on disk
+between the freeze (Amendment 1, commit 1c25c75b, 2026-10-14) and the look, and changes no
+threshold, frame, candidate, seed, statistic or baseline. No holdout row was read to write it:
+the comparisons below are file hashes, code diffs, a record count over the development cohorts
+and an equality test over the label file, and no outcome value was printed.
+
+| input | sha256 at the freeze | sha256 now | what moved |
+|---|---|---|---|
+| `efv_dataset.py` | e9039786454f5b53f6344539c9461c1f196154633b89d07ccb2447fde1fb76d2 | 1eb380dbaa3876087e959cefd3e6f78432d20805ea882b1160ad062dfeaccd99 | c552f61e adds `LEVEL_ANCHOR_CAMEO_MULT` inside `_milb_features`' `LEVEL_BLEND_ANCHOR_MOST_EXPOSED` branch, whose flag is False, so the function returns what it returned at the freeze; 02b38332 edits the module docstring only |
+| `proj_components.py` | 68bdeb8b82d11c54bfc8cc66a2b5e125fe7243698ee74174fcfe16099b0177c3 | bd91c61103e5c1d21ca10eb7e340d29335765a114014d313a44dc699a4b482d9 | c5eca62a adds the keyword `price_gmli` to `pitcher_heads` and `project_components`, default True, the frozen behaviour; `prospect_statline.py` calls `pitcher_heads` without it |
+| `data/fwar_vintage.json` | 7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917 | 5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7 | c7dacaaa adds plate appearances to the hitting rows and bd4eaa2a innings, outs, games and games started to the pitching rows, every published WAR value unchanged; the vintage id moves 2026-10-02-0341299c20ec to 2026-10-02-57bf90f7143e to 2026-10-02-a020cf64844a. `fwar_vintage.season_totals` over the file at 1c25c75b and over the file now are equal on every one of 35,904 (player, season) keys, so the label of 2.3 is the same quantity under the new id |
+| `data/debuts.json` | 83bf4c5f00499a9f23413e41f3497f526ef68d4d33a5229b3e8c21ead6006eec | fec88ea5042ed4474d739518f09dfe3efd40269d5f7d428cf94b8a5250d5807f | the gitignored pipeline output, rewritten by the owner's pipeline on 2026-10-19; the development cohorts 2017 to 2021 still carry 770 records by resolved debut year, as at the read |
+
+Unchanged since the freeze, by sha256: `prospect_statline.py`, `tool_implied.py`, `aging_v3.py`,
+`college_translation.py`, `milb_translation.py`, `efv_proxy.py`, `efv_model.py`, `milb_history.py`,
+`fwar_frame.py`, `prospect_path.py`, `data/league_constants.json`, and every StatsAPI season cache
+and Savant expected-stats file of 2017 to 2023 listed in the development artifact's `inputs_sha256`.
+The look records the sha256 of every input it reads, the 2024 to 2026 season files included, at
+its start and at its end.
