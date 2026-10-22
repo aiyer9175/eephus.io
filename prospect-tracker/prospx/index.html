@@ -4883,7 +4883,7 @@
        right. Used above the farm list, farm-detail tab strip, etc.
        so the site reads as a single sports-section publication. */
     .newsprint-eyebrow {
-      display: flex; align-items: baseline; justify-content: space-between;
+      display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
       padding: 4px 10px 5px;
       margin: 0 0 8px;
       border-top: 1px solid var(--border);
@@ -5721,6 +5721,10 @@
       font-family: var(--font-serif); font-weight: 700;
       font-size: 10px;
     }
+    /* The grade palette is 40% lightness (2.3:1 on the dark card at D-); dark
+       mode lifts the letters to 4.5:1 or better without changing the hue. */
+    [data-theme="dark"] .farm-grade-cell .fg-letter,
+    [data-theme="dark"] .farm-grade-cell .fg-comp-letter { filter: brightness(1.6); }
     /* Compact "Org · pos · age" headline so a wider Org column doesn't
        create dead whitespace when team names are short. */
     .farm-org-cell {
@@ -11142,9 +11146,13 @@ function ensureDebutsFull() {
 // to ensureDebutsFull so nothing regresses. Time Machine and the debuted
 // chart mode keep using the monolith (they need EVERY full row).
 const _debutShardInFlight = {};
+// Keys with no debut row once the lite rows are loaded (a non-graduate or an
+// unknown key): there is no shard to fetch, so the card renders without one.
+const _debutShardAbsent = new Set();
 function _debutRowIsFull(playerKey) {
   if (!DATA) return false;
   if (DATA._debutsFull) return true;
+  if (_debutShardAbsent.has(playerKey)) return true;
   const row = (DATA.debuts || []).find(g => g && g.player_key === playerKey);
   return !!(row && !row._lite);
 }
@@ -11164,6 +11172,11 @@ function ensureDebutFullFor(playerKey) {
     .then(() => {
       // The monolith may have landed while lite was in flight.
       if (_debutRowIsFull(playerKey)) return null;
+      // No debut row for this key (a non-graduate or an unknown key): no shard exists.
+      if ((DATA.debuts || []).length && !DATA.debuts.some(g => g && g.player_key === playerKey)) {
+        _debutShardAbsent.add(playerKey);
+        return null;
+      }
       const { url, opts } =
         _sliceUrl(`${DATA._slices_dir.debuts_full}${encodeURIComponent(playerKey)}.json`);
       return fetch(url, opts);
@@ -23456,7 +23469,7 @@ function renderRecentlyTraded() {
       const mark = _lw
         ? `<span data-fam="${_lw.fam}" style="display:inline-flex;"><span class="wire-ico">${pxIcoHTML(_lw.ico, 12)}</span></span>`
         : "";
-      contextLine = `<span style="display:inline-flex;align-items:center;gap:5px;">`
+      contextLine = `<span style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:0 5px;max-width:100%;">`
         + `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_level || "?")}</span>`
         + `${mark}<span class="visually-hidden">${up ? "promoted to" : "demoted to"}</span>`
         + `<span style="color:var(--text-primary);font-weight:600;">${escapeHtml(acq.to_level || "?")}</span>`
@@ -36072,7 +36085,7 @@ function efvDetailCard(p) {
   // it re-ordered carries the head's note, printed wherever the grade is.
   const _th = _vv.tracking_head;
   const headHTML = (_th && _th.note)
-    ? `<div class="efv-head-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="This grade blends eFV V2 with the tracking-era head at weight ${escapeHtml(String(_th.blend_w))}: pitch and batted-ball tracking from his ${escapeHtml(String(_th.season))} ${escapeHtml(String(_th.level))} season, scored on a short-horizon label (reached MLB within 3 seasons; fWAR per MLB season over those seasons), not the six-season label the rest of eFV is scored on. Shift ${Number(_th.shift_pct) >= 0 ? "+" : ""}${Number(_th.shift_pct).toFixed(1)} percentile points.">${escapeHtml(_th.note)}</div>`
+    ? `<div class="efv-head-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="eFV V2 blended with the tracking head (weight ${escapeHtml(String(_th.blend_w))}, ${escapeHtml(String(_th.season))} ${escapeHtml(String(_th.level))} tracking; label fWAR per MLB season over 3 seasons). Shift ${Number(_th.shift_pct) >= 0 ? "+" : ""}${Number(_th.shift_pct).toFixed(1)} percentile points.">${escapeHtml(_th.note)}</div>`
     : "";
   const placeHTML = (_v2 && _vv.order_rank != null && _vv.consensus_rank != null)
     ? `<div class="efv-place-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="eFV grade = consensus FV at his place in eFV's order among ${_sideWord}. Drivers move him vs the average prospect; others can gain more.">#${Number(_vv.order_rank).toLocaleString()} of ${Number(_vv.group_n || 0).toLocaleString()} ${_sideWord} by eFV · #${Number(_vv.consensus_rank).toLocaleString()} by consensus FV</div>`
@@ -46387,7 +46400,7 @@ function renderFarmSystems() {
     <span class="fc-logo"></span>
     <span class="fc-org">Organization</span>
     <span class="sort-header fc-grade" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition). Click to sort.">Grade</span>
-    <span class="sort-header fc-dvm" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ - wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev.${farmDvmDifficulty() ? " Difficulty-adjusted: each step counts against what prospects with the same origin, starting grade, age and level usually gain." : ""} Acquisitions contribute zero on arrival; debuts don't subtract - pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
+    <span class="sort-header fc-dvm" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+: 100 = league mean, 10 points = 1 SD.${farmDvmDifficulty() ? " Difficulty-adjusted: each step counts against what prospects with the same origin, starting grade, age and level usually gain." : ""} Acquisitions count zero on arrival; debuts do not subtract. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header fc-tool" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header fc-traj" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
     <span class="sort-header fc-top" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
@@ -50864,7 +50877,7 @@ function renderPlayerDetail(key) {
     if (efvDisplaySwaps()) {
       const gb = gradeBlock(pp, { primary: "xfv" });
       if (gb.basis === "efv") {
-        const cons = (!placeholder && fc != null) ? ` · consensus ${fvCeil(fc)}` : "";
+        const cons = (!placeholder && fc != null) ? ` · ${gb.locked ? "latest consensus" : "consensus"} ${fvCeil(fc)}` : "";
         return `${gb.provisional ? "Provisional eFV" : "eFV"} ${gb.efvVal}${cons}`;
       }
       if (placeholder) return "No source grade";
