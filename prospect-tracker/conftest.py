@@ -1098,6 +1098,9 @@ _SIDECAR_WRITE_TARGETS = (
     ("fa_export", "DEST_PREVIEW_PATH",
      ".cache/fa_destination/preview/fa_destinations.json"),
     ("fa_export", "DEST_LIVE_PATH", "data/fa_destinations.json"),
+    # TL_18: proj_export's third output, the served arrival line; the module's
+    # write_served resolves it at call time.
+    ("prospect_statline", "SERVED_PATH", "data/prospect_statline.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

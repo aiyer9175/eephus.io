@@ -1326,6 +1326,45 @@
         read: toolTag,
         note: toolNote,
       },
+      // ---- Prospect arrival line (TL_18), the one look on debut classes 2022 to 2024 -----
+      // Rows are the stats whose L1 verdict in the eval artifact is PASS (the served
+      // ones); the WAR leg prints beside them as the comparison that did not pass.
+      arrival_line: {
+        art: "/data/prospect_statline_eval.json",
+        estimand: "Claim: for hitters who reached the majors, the arrival line misses the rate over his first three MLB seasons by less than the best simple baseline. Checked once on debut classes 2022 to 2024. Accuracy among players who reached the majors, not over all prospects.",
+        baseline: "the best single baseline for the stat, named per row",
+        read: j => {
+          const res = (j && j.results) || {}, l1 = res.l1 || {};
+          const LBL = { k_pct: "K%", bb_pct: "BB%", iso: "ISO", avg: "AVG", babip: "BABIP", woba: "wOBA", xwoba: "xwOBA", hr_bf: "HR per BF" };
+          const BN = { B0: "league-average rookie line", B1: "translated minor league rate", B2: "tool-implied value of his grade", B3: "xwOBA prior" };
+          const rows = [];
+          ["hit", "pit"].forEach(side => {
+            Object.keys(l1[side] || {}).forEach(stat => {
+              const e = l1[side][stat];
+              if (!e || e.verdict !== "PASS" || e.mae_model == null || e.mae_best_baseline == null) return;
+              rows.push({
+                label: (side === "hit" ? "Hitter " : "Pitcher ") + (LBL[stat] || stat) + ", mean miss (n=" + _rn(e.n, 0) + " players)",
+                mv: _rn(e.mae_model, 4), bname: BN[e.best_baseline] || e.best_baseline, bv: _rn(e.mae_best_baseline, 4),
+                band: "gain " + _rns(e.d, 4) + ", one-sided 95% bound " + _rns(e.d_lb95, 4) + ", P10 to P90 held " + _rn(100 * e.coverage_p10_p90, 0) + "%",
+                verdict: _rcptCI(e.d_lb95, e.d_ub95),
+              });
+            });
+          });
+          const l2 = res.l2 || {};
+          if (rows.length && l2.mae_model != null && l2.mae_inc != null) rows.push({
+            label: "First-three-season WAR, mean miss (n=" + _rn(l2.n, 0) + " players; not served)",
+            mv: _rn(l2.mae_model, 2), bname: "the FV-anchored path", bv: _rn(l2.mae_inc, 2),
+            band: "gain " + _rns(l2.d_mae, 2) + ", one-sided 95% bound " + _rns(l2.d_mae_lb95, 2) + "; the WAR cells keep the FV-anchored path",
+          });
+          return rows.length ? rows : null;
+        },
+        note: j => {
+          const l1 = ((j && j.results) || {}).l1 || {};
+          let n = 0;
+          ["hit", "pit"].forEach(side => Object.keys(l1[side] || {}).forEach(s => { if ((l1[side][s] || {}).verdict !== "PASS") n += 1; }));
+          return n ? n + " other rates did not pass and are not shown." : "";
+        },
+      },
     };
     return _RCPT_SPECS;
   }

@@ -206,6 +206,7 @@ MODEL_GLOSSARY = {
     # two terms the tab defines.
     "tool_implied_production": ["tool_implied_production", "tool_above_grade"],
     "tool_source_accuracy": ["tool_above_grade", "tool_implied_production"],
+    "mlb_projections_prospects_statline": ["arrival_line"],
     "consensus_fv": ["consensus_fv", "normalized_source_grade"],
     "draft_consensus_weight": "internal",
     "source_track_record": ["single_source_mark"],

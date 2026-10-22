@@ -753,3 +753,19 @@ OWNER-WAIVED EARLY READ against Part 9.1, recorded in that word: (1) the dev-rea
 2026-10-14 in `docs/PROSPECT_ANCHOR_GATE.md` section 18) and point 3 held (the 2026 season files
 were written after 2026-09-27). The clause "an earlier day voids the look" is set aside by the
 owner's decision and by nothing else; no data the look reads was missing on this day.
+
+## Note 2026-10-21: TL_18 serves the arrival line (Part 12)
+
+TL_18_STATLINE_DISPLAY_FLIP served what Part 12 allows for an L1 PASS, under owner answer TL-Q6 (a)
+(arrival line on both pages), on 2026-10-21 (branch `wt-TL_18_STATLINE_DISPLAY_FLIP`). The stats
+served are the ones whose L1 verdict in `data/prospect_statline_eval.json` is PASS, read from the
+file by `prospect_statline.look_passes`: hitter AVG and hitter xwOBA. Hitter ISO (coverage 0.852,
+over the 0.85 veto), the other hitter rates and every pitcher rate are not served. The file
+`data/prospect_statline.json` is written by `proj_export` behind `SERVE_PROSPECT_STATLINE` (now
+True) from the fit the look scored (debut classes 2016 to 2021, aging v2); `prospect_statline.serve_doc`
+refuses to write it unless that fit reproduces the look's penalty, rows, bands and coefficients for
+each served stat. The WAR cell stays the FV-anchored path (L2: INC retains). No threshold, frame,
+candidate, seed, statistic or baseline above was changed, and nothing in Parts 1 to 13 is edited.
+Part 12 names a 'What his minor league line translates to' row; the translation input exists only
+for K% and BB%, neither of which passed, so no served stat has one and the row is not printed (a
+test fails if a translation stat is ever served without it).

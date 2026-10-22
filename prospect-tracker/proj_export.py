@@ -921,15 +921,17 @@ COMPONENTS_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "proj_components" / "pre
                            / "components.json")
 COMPONENTS_LIVE_PATH = DATA_DIR / "mlb_proj_components.json"
 COMPONENTS_FRAME = "FanGraphs frame"
-# CLASS 2, DARK (TL_11_STATLINE_BUILD_DARK; docs/proj-prospect-2026-10/
-# PROSPECT_STATLINE_GATE.md Part 12). While SERVE_PROSPECT_STATLINE is False
-# nothing here imports prospect_statline and the export is byte-identical to the
-# export without it. True (TL_18's flip, after TL_17's look) writes the arrival
-# line of the served prospects (rates with P10 to P90 bands, conditional on
-# reaching MLB) under .cache/prospect_statline/preview/ only: no served key moves
-# either way, and the prospect WAR cell stays the FV-anchored path. Distinct from
+# CLASS 2 (TL_11_STATLINE_BUILD_DARK built it; TL_18_STATLINE_DISPLAY_FLIP turned it
+# on after TL_17's look; docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md
+# Part 12). While SERVE_PROSPECT_STATLINE is False nothing here imports
+# prospect_statline and the export is byte-identical to the export without it.
+# True writes data/prospect_statline.json: the arrival line (rates with P10 to
+# P90 bands, conditional on reaching MLB) of every live hitter prospect, for the
+# stats whose L1 verdict in data/prospect_statline_eval.json is PASS. It is a
+# separate file: mlb_projections.json is byte-identical either way, and the
+# prospect WAR cell stays the FV-anchored path. Distinct from
 # value_framework.SERVE_PROSPECT_ANCHOR_V2; neither flag reads the other.
-SERVE_PROSPECT_STATLINE = False
+SERVE_PROSPECT_STATLINE = True
 #: {mlbam: component block} of the last _veteran_rows build, and its context
 #: receipt; written by `_write_components` from export().
 _COMPONENT_BLOCKS: dict[int, dict] = {}
@@ -4584,13 +4586,14 @@ def _build_payload_body() -> dict:
     }
 
 
-def _write_prospect_statline(prospects: list[dict]):
-    """The arrival-line preview of the served prospect rows, written by
-    prospect_statline under .cache/prospect_statline/preview/ (gate Part 12);
-    called only when SERVE_PROSPECT_STATLINE is True."""
+def _write_prospect_statline():
+    """The served arrival line, written by prospect_statline to
+    data/prospect_statline.json for every live hitter prospect (gate Part 12);
+    called only when SERVE_PROSPECT_STATLINE is True. The path is the module's
+    SERVED_PATH, which the test harness redirects (conftest) like every second
+    output path."""
     import prospect_statline as PSL
-    keys = [p["key"] for p in prospects if p.get("key")]
-    return PSL.write_preview(keys)
+    return PSL.write_served()
 
 
 def export() -> int:
@@ -4605,13 +4608,13 @@ def export() -> int:
         _write_components(payload.get("vets") or [])
     except Exception:                                          # noqa: BLE001
         log.warning("component lines not written", exc_info=True)
-    # The prospect arrival line (TL_11, dark): only with SERVE_PROSPECT_STATLINE
-    # on, and then only under .cache. Never fails the export.
+    # The prospect arrival line (TL_18): only with SERVE_PROSPECT_STATLINE on, into
+    # its own file. Never fails the export.
     if SERVE_PROSPECT_STATLINE:
         try:
-            _write_prospect_statline(payload.get("prospects") or [])
+            _write_prospect_statline()
         except Exception:                                      # noqa: BLE001
-            log.warning("prospect statline preview not written", exc_info=True)
+            log.warning("prospect statline not written", exc_info=True)
     # THE FUTURES BOARD RIDES THE SAME PAYLOAD, from export() rather than from
     # inside _attach_current_season. The overlay is called directly by tests on
     # two-club synthetic universes, and writing an untracked artifact from there

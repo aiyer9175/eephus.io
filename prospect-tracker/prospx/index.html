@@ -34555,6 +34555,80 @@ function milbEbrCard(p) {
       ${body}
     </div>`;
 }
+// ===== The arrival line (TL_18_STATLINE_DISPLAY_FLIP, owner answer TL-Q6 (a)) =====
+// For a hitter prospect: the rates he is projected to post over his first three MLB
+// seasons IF he reaches the majors, with P10 to P90 bands, for the stats that passed
+// the spent look (the file names them; nothing here lists them), beside what his
+// grade implies for the stat. Conditional on reaching MLB and checked only on
+// players who did, so it is not a chance of reaching the majors. It is a separate
+// card: it never changes his eFV, his projected WAR or any rank, and the WAR cells
+// stay the FV-anchored path. STATLINE_CARD_ON mirrors
+// proj_export.SERVE_PROSPECT_STATLINE (a test pins the two); with it false the card
+// fetches nothing and prints nothing. #arrivalline=0 (or ?arrivalline=0) hides it.
+const STATLINE_CARD_ON = true;
+const _STATLINE_UI = (() => {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("arrivalline");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("arrivalline");
+  if (q != null) return q !== "0";
+  return STATLINE_CARD_ON;
+})();
+let _SL = null, _SL_LOADING = false;
+function ensureStatline() {
+  if (!_STATLINE_UI || _SL !== null || _SL_LOADING) return;
+  _SL_LOADING = true;
+  fetch("/data/prospect_statline.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _SL = (j && j.rows) ? j : { rows: {}, stats: {} };
+      scheduleRender();
+    })
+    .catch(() => { _SL = { rows: {}, stats: {} }; });
+}
+function _slRate(v, d) {
+  return v == null ? "-" : Number(v).toFixed(d || 3).replace(/^0\./, ".");
+}
+function statlineCard(p) {
+  if (!_STATLINE_UI || !p || !p.player_key) return "";
+  ensureStatline();                    // lazy-load on the first card
+  if (!_SL) return "";
+  const r = _SL.rows[p.player_key];
+  const meta = _SL.stats || {};
+  const stats = r ? Object.keys(meta).filter(s => Array.isArray(r[s])) : [];
+  if (!stats.length) return "";
+  const frame = _SL.frame || "FanGraphs frame";
+  const coh = (_SL.source || {}).holdout_cohorts || [];
+  const span = coh.length ? `${coh[0]} to ${coh[coh.length - 1]}` : "";
+  const rows = stats.map(s => {
+    const a = r[s], x = meta[s];
+    const tip = `${x.label} over his first three MLB seasons if he reaches the majors, ${frame}. `
+      + `Checked once on ${x.n} hitters who debuted ${span}: mean miss ${_slRate(x.mae_model, 4)} against `
+      + `${_slRate(x.mae_best_baseline, 4)} for ${x.best_baseline_name}; the P10 to P90 band held `
+      + `${Math.round(100 * x.coverage_p10_p90)} percent of them. Accuracy among players who reached the majors, `
+      + `not over all prospects.`;
+    return `<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-top:6px;" title="${escapeHtml(tip)}">
+        <span style="min-width:46px;font-size:11px;font-weight:700;color:var(--text-secondary);">${escapeHtml(x.label)}</span>
+        <span style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--text-primary);">${escapeHtml(_slRate(a[1]))}</span>
+        <span style="font-size:11px;color:var(--text-secondary);">P10 ${escapeHtml(_slRate(a[0]))} to P90 ${escapeHtml(_slRate(a[2]))}</span>
+      </div>`;
+  }).join("");
+  // The reference row: the tool-implied value of his grade for each shown stat that
+  // has one (the stat's TIP_first), the baseline the line was checked against.
+  const tipStats = stats.filter(s => r.tip && r.tip[s] != null);
+  const implied = tipStats.length
+    ? `<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-top:8px;padding-top:6px;border-top:1px solid var(--border-light);" title="The typical first-three-season rate of MLB players at his consensus tool grade (tool-implied production), read at that grade.">
+        <span style="font-size:11px;font-weight:700;color:var(--text-secondary);">What his grades imply</span>
+        ${tipStats.map(s => `<span style="font-size:12px;color:var(--text-secondary);">${escapeHtml(meta[s].label)} <b style="font-family:var(--font-mono);">${escapeHtml(_slRate(r.tip[s]))}</b></span>`).join("")}
+      </div>` : "";
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${escapeHtml(_SL.heading || "If he reaches the majors, first three seasons")}</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(frame)}</div>
+      </div>
+      ${rows}${implied}
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:7px;">Projected rates over his first three MLB seasons if he reaches the majors, with the P10 to P90 band. Checked only on players who did reach them, so it is not a chance of reaching the majors. It does not change his eFV or his projected WAR. <a href="/glossary/#g=arrival_line" style="color:var(--neon-cyan);">Methodology →</a></div>
+    </div>`;
+}
 // ===== eTools: the shown grade for each tool (ETOOLS_SITEWIDE_FLIP) =====
 // Owner decision EW3-27 (2026-10-15): "eTools should be our shown version of each
 // tool across the site." An eTool is the consensus tool grade moved by the
@@ -53823,6 +53897,7 @@ function renderPlayerDetail(key) {
   const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
   const milbFieldingHtml = (typeof milbFieldingCard === "function") ? milbFieldingCard(p) : "";  // MiLB fielding runs (MILB_FIELDING_RUNS gate, descriptive)
   const milbEbrHtml = (typeof milbEbrCard === "function") ? milbEbrCard(p) : "";  // MiLB level-relative eBR (display only, dark behind MILB_EBR_CARD_ON)
+  const statlineHtml = (typeof statlineCard === "function") ? statlineCard(p) : "";  // Arrival line: first-three-season rates if he reaches the majors (hitters, TL-Q6 (a))
   // H1 - the Overview was FIFTEEN stacked sections with no navigation: a reader
   // who wanted the FV chart or the notes box had to drag past everything above it,
   // and on a phone that is several screens. NOTHING is removed. The same blocks,
@@ -53837,7 +53912,7 @@ function renderPlayerDetail(key) {
   const _ovBlocks = [
     { id: "summary",   label: "Summary",    html: summaryGridHtml },
     { id: "efv",       label: "eFV",        html: efvCardHtml },
-    { id: "signals",   label: "Signals",    html: [efvProxyHtml, palFitHtml, aaaStatcastHtml,
+    { id: "signals",   label: "Signals",    html: [statlineHtml, efvProxyHtml, palFitHtml, aaaStatcastHtml,
                                                    alevelSignalHtml, apPaceHtml, archetypeHtml,
                                                    defHomeHtml, milbFieldingHtml, milbEbrHtml].filter(Boolean).join("") },
     { id: "valuation", label: "Valuation",  html: valuationHtml },
