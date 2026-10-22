@@ -22,8 +22,9 @@ beside it as a sensitivity; it trains nothing and anchors nothing.
     label_series()  one stored career_war row's {year: war} on the label (the switch's
                     read; an fwar row moves, any other row is returned as stored)
 
-The switch (war_source.EFV_LABEL_EWAR_HEADLINE) is scoped to eFV's label: efv_dataset and
-efv_labels read their series through label_series(). Display doors never read this module.
+The switch (war_source.EFV_LABEL_EWAR_HEADLINE) is scoped to eFV's label: efv_dataset reads
+its series through label_series() (gate amendment 9.2; efv_labels' development frames stay on
+published fWAR). Display doors never read this module.
 """
 
 from __future__ import annotations

@@ -8,9 +8,9 @@ EWAR_HEADLINE_LABEL_GATE.md part 3; task EFV_LABEL_HEADLINE_EWAR_CHECK).
 
 Pins: the frozen file reproduces from its inputs; the identities of part 3 (identity 3
 under amendment 9.1); the write-once rule; the label series equals the displayed eWAR v3
-transform of the same fwar row at the freeze; the switch is scoped to eFV's label
-(DEFAULT_PROVIDER and the table untouched) and reads the label through
-war_source.efv_label_seasons; the fingerprint's label term follows the switch.
+transform of the same fwar row at the freeze; the switch is scoped to efv_dataset's label
+(amendment 9.2: DEFAULT_PROVIDER, the table and efv_labels' frames untouched) and reads the
+label through war_source.efv_label_seasons; the fingerprint's label term follows the switch.
 """
 
 from __future__ import annotations
@@ -135,8 +135,9 @@ def test_efv_label_seasons_follows_the_switch(frozen, monkeypatch):
     monkeypatch.setattr(war_source, "EFV_LABEL_PROVIDER", "ewar_headline")
     assert war_source.efv_label_seasons(row) == H.label_series(row)
     assert efv_dataset._label_seasons(row) == (H.label_series(row), 0)
-    assert efv_labels.provider() == "ewar_headline"
     assert efv_dataset._label_provider() == "ewar_headline"
+    # amendment 9.2: the development frames keep published fWAR (registered reads froze it)
+    assert efv_labels.provider() == "fwar"
 
 
 def test_fingerprint_label_term_follows_the_switch(frozen, monkeypatch):

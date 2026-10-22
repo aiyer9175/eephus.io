@@ -214,10 +214,11 @@ LABEL_EWAR_CORE: bool = False
 DEFAULT_PROVIDER: str = "ewar_core" if LABEL_EWAR_CORE else "fwar"
 
 #: The headline eWAR label check's switch (docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md
-#: part 3; owner answer EWLE-Q2), scoped to eFV's label: on, efv_dataset's first-6 label and
-#: efv_labels' frames read each stored fwar career_war row through
-#: ewar_headline_label.label_series (published fWAR plus the eABS part from 2026, frozen in
-#: data/ewar_headline_label.json). DEFAULT_PROVIDER, the career_war table, every other label
+#: part 3 under amendment 9.2; owner answer EWLE-Q2), scoped to eFV's label: on,
+#: efv_dataset's first-6 label (the v1 training target and resolved label) reads each stored
+#: fwar career_war row through ewar_headline_label.label_series (published fWAR plus the eABS
+#: part from 2026, frozen in data/ewar_headline_label.json). DEFAULT_PROVIDER, the career_war
+#: table, efv_labels' development frames (registered reads froze fWAR), every other label
 #: reader and every display door are untouched. It flips only after the gate's guard holds
 #: (part 4.4), in a commit that bumps storage.BOARD_RANK_BASIS_EPOCH and restamps
 #: BOARD_BASIS_FINGERPRINT.
