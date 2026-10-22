@@ -61,6 +61,7 @@ from pathlib import Path
 from typing import Optional
 
 import bullpen_export as be
+import ewar_v3 as _ETC_V3
 import etool_composite as _ETC
 import pal_conversion as pc
 import rem_plus
@@ -138,7 +139,7 @@ _WAR_SERIES = {
     "ewar_merged": "eWAR merged (declared, not servable)",
     "fwar": "fWAR: FanGraphs' published WAR from the frozen vintage, pitchers priced on FIP",
     "ewar_v3": ("eWAR: FanGraphs' published WAR from the frozen vintage plus the site's named "
-                "departures (the ABS challenge part from 2026)"),
+                "departures (the ABS challenge part from 2026" + _ETC_V3.xhem_suffix() + ")"),
 }
 
 #: The provider load_bref_pitcher_war() actually READ in this process. None

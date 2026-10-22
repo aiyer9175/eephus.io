@@ -915,12 +915,19 @@ def _components_block(groups: list) -> dict:
     if not groups:
         return {}
     import ewar_history
-    return {"source": "ewar_history.season_groups (data/ewar_history.json)",
-            "first_season": groups[0]["first"],
-            "why_it_stops": ewar_history.WHY_IT_STOPS,
-            "groups": [{"first": g["first"], "last": g["last"], "text": g["text_headline"],
-                        "missing": [m for m in g["missing"] if m != "r2"],
-                        "short": g["short_headline"]} for g in groups]}
+    out = {"source": "ewar_history.season_groups (data/ewar_history.json)",
+           "first_season": groups[0]["first"],
+           "why_it_stops": ewar_history.WHY_IT_STOPS,
+           "groups": [{"first": g["first"], "last": g["last"], "text": g["text_headline"],
+                       "missing": [m for m in g["missing"] if m != "r2"],
+                       "short": g["short_headline"]} for g in groups]}
+    # The xHEM+ part (EBR_GATE.md 11.11, owner EW3-51): its one sentence, stated once
+    # for a window that reaches a season carrying it; absent while no season does.
+    xs = [g["first"] for g in groups if "xhem" in (g.get("headline") or [])]
+    if xs:
+        import ewar_v3
+        out["xhem"] = {"first_season": min(xs), "copy": ewar_v3.xhem_copy()}
+    return out
 
 
 def build_seasons(war_by: dict, players: list, *, live_season: int,

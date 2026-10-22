@@ -2192,6 +2192,8 @@
       if (g.short) out.short.push(g.short);
     });
     if (c.first_season != null && lo <= c.first_season && c.why_it_stops) out.why = c.why_it_stops;
+    // The xHEM+ part's one sentence (owner EW3-51), once per window that reaches it.
+    if (c.xhem && c.xhem.copy && hi >= c.xhem.first_season) out.text.push(c.xhem.copy);
     return out;
   }
 

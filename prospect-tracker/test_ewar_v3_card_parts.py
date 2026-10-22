@@ -48,7 +48,13 @@ def test_the_parts_map_reads_each_part_by_side():
     assert m[694973][2024] == {"pit": {"r2": -0.31}}
     assert 2025 not in m[694973]          # 0.001 rounds to 0.00: left out
     assert set(m) == {660271, 694973}
-    assert set(ewar_v3.PART_LABELS) == {"eabs", "r2"}
+    assert set(ewar_v3.PART_LABELS) == {"eabs", "r2", "xhem"}
+    # the xHEM+ part (EBR_GATE.md 11.11): hitters, headline only, read when the artifact carries it
+    fx = {"players": {"1": {"2024": {"f": {"bat": 2.0}, "dh": {"bat": 0.123}, "dr": {},
+                                     "dx": {}, "parts": {"xhem": {"runs": 2.4, "wins": 0.123, "arm": "xhem"}}},
+                            "2025": {"f": {"bat": 2.0}, "dh": {"bat": 0.004}, "dr": {},
+                                     "dx": {}, "parts": {"xhem": {"runs": 0.08, "wins": 0.004, "arm": "hem"}}}}}}
+    assert mpe._war_parts_map(fx) == {1: {2024: {"bat": {"xhem": 0.12}}}}
 
 
 def test_an_absent_artifact_drops_the_parts_not_the_card(monkeypatch):

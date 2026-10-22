@@ -18,6 +18,11 @@ admitted, so two departures exist (11.10):
   headline eWAR     fWAR + eabs / RPW_s                       (owner EW3-20: "eWAR")
   eWAR realized     fWAR + eabs / RPW_s + r2 (pitchers)       (owner EW3-20: "eWAR realized")
 
+A third departure, xhem (EBR_GATE.md 11.11, owner decision EW3-51), is built behind
+XHEM_HALF_LIVE: half of candidate part 4's xHEM+ arm on the hitting side of the
+headline series only, 2016 on. A block that carries it also stores `dx`, the headline
+departure without it, which the frozen eFV label reads (departures(exclude=("xhem",))).
+
 Every player-season the artifact does not list carries fWAR unchanged on both
 series; the artifact's meta says so.
 
@@ -57,11 +62,47 @@ TOL = 1e-9
 
 SIDES = ("bat", "pit")
 
-#: Card labels of the parts (11.10.2, 11.10.3).
+#: The xHEM+ part of the headline series (EBR_GATE.md 11.11, owner decision EW3-51):
+#: half of candidate part 4's xHEM+ arm (S1x) on the hitting side, 2016 on, carried
+#: while the registered admission rule was not met, provisional until the 2027 read
+#: (EWAR_XHEM_2027_READ). Off, tools/build_ewar_v3.py writes the artifact it wrote
+#: before 11.11; the orchestrator flips it on the owner's authorization.
+XHEM_HALF_LIVE: bool = False
+#: LAMBDA, fixed in advance by EW3-51 and never tuned (11.11.1).
+XHEM_LAMBDA: float = 0.5
+#: The first season of the part: the S1x source and the swar preview start in 2016.
+XHEM_FIRST_SEASON = 2016
+#: Where the part's census build goes whatever the flag says (11.11.2).
+PREVIEW_XHEM = ROOT / ".cache" / "ewar_v3" / "preview" / "ewar_v3_xhem.json"
+#: The tracked record whose holdout block the site sentence's numbers come from.
+SWAR_EVAL = DATA_DIR / "swar_eval.json"
+
+#: Card labels of the parts (11.10.2, 11.10.3, 11.11.2).
 PART_LABELS = {
     "eabs": "eABS (ABS challenges)",
     "r2": "realized pitching (runs allowed, adjusted for park, defense and inherited runners)",
+    "xhem": "xHEM+ (expected batting, half weight)",
 }
+
+
+def xhem_copy(record: dict | None = None) -> str:
+    """The one site sentence for the xHEM+ part (owner EW3-51 copy), its three
+    numbers read from the holdout block of data/swar_eval.json (the xHEM+ H-rate
+    cell's gap and 95 percent interval, three decimals). Raises when the record
+    lacks the cell, so no page prints a number the record does not hold."""
+    rec = record if record is not None else json.loads(SWAR_EVAL.read_text(encoding="utf-8"))
+    cell = rec["holdout"]["block"]["cells"]["batting"]["xHEM+ H-rate"]
+    return ("Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the "
+            f"same way on 2025-26 ({float(cell['gap']):+.3f}, range {float(cell['lo95']):+.3f} to "
+            f"{float(cell['hi95']):+.3f}). A 2027 read decides whether it stays.")
+
+
+def xhem_suffix(live: bool | None = None) -> str:
+    """What copy that names the headline eWAR's departures appends after "the ABS
+    challenge part from 2026" while the xHEM+ part is on; "" while it is off, so
+    every sentence reads as it did before 11.11."""
+    on = XHEM_HALF_LIVE if live is None else live
+    return f" and, provisionally, half of xHEM+ expected batting from {XHEM_FIRST_SEASON}" if on else ""
 
 
 class EwarV3Refusal(RuntimeError):
@@ -206,21 +247,31 @@ def set_payload(payload: dict | None) -> None:
     _DEP_CACHE.clear()
 
 
-def departures(payload: dict | None = None, series: str = "headline") -> dict:
+def departures(payload: dict | None = None, series: str = "headline",
+               exclude: tuple[str, ...] = ()) -> dict:
     """{(mlbam, season): {"bat": wins, "pit": wins}} for one series
     ('headline' or 'realized'): the departure from published fWAR on each side
-    the artifact lists. A side or a player-season not listed departs by 0."""
+    the artifact lists. A side or a player-season not listed departs by 0.
+    `exclude=("xhem",)` reads the headline without the xHEM+ part (the stored
+    `dx` of a block that carries it; EBR_GATE.md 11.11.3, the eFV label's basis);
+    no other part may be excluded, and eWAR realized never carries it."""
     if series not in ("headline", "realized"):
         raise ValueError(f"unknown eWAR v3 series {series!r}")
+    exclude = tuple(exclude or ())
+    if set(exclude) - {"xhem"}:
+        raise ValueError(f"only the xhem part can be excluded, not {exclude!r}")
     blob = load() if payload is None else payload
-    key = (id(blob), series)
+    key = (id(blob), series, exclude)
     if payload is None and key in _DEP_CACHE:
         return _DEP_CACHE[key]
     fld = "dh" if series == "headline" else "dr"
     out: dict = {}
     for mid_s, seasons in (blob.get("players") or {}).items():
         for season_s, blk in seasons.items():
-            d = blk.get(fld) or {}
+            use = fld
+            if exclude and series == "headline" and "xhem" in (blk.get("parts") or {}):
+                use = "dx"
+            d = blk.get(use) or {}
             cell = {s: float(d[s]) for s in SIDES if d.get(s) is not None}
             if cell:
                 out[(int(mid_s), int(season_s))] = cell

@@ -57,6 +57,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import ewar_v3 as _ewar_v3_mod
+
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 EXCLUDE_LIST = ROOT / "deploy" / "data_exclude.txt"
@@ -393,7 +395,9 @@ ARTIFACTS = (
         "title": "eWAR parts",
         "what": ("Per player-season and side, the parts by which eWAR and eWAR realized depart "
                  "from FanGraphs' published WAR (the ABS challenge part from 2026 in both; "
-                 "realized pitching from 2016 in eWAR realized only), with each season's "
+                 "realized pitching from 2016 in eWAR realized only"
+                 + ("; half of the xHEM+ batting part from 2016 in eWAR only, provisional"
+                    if _ewar_v3_mod.XHEM_HALF_LIVE else "") + "), with each season's "
                  "identity checks and runs per win. A player-season not listed equals "
                  "FanGraphs WAR."),
         "cadence": "on change", "stability": EXPERIMENTAL,

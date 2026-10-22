@@ -2691,6 +2691,11 @@
       tip: "The runs a catcher's challenges won against an average catcher's, charged to the pitchers they were won for, and the cost of failed challenges. In eWAR and eWAR realized." },
     { id: "r2", label: "realized pitching (runs allowed, adjusted for park, defense and inherited runners)", head: "Realized pitching",
       tip: "The change when pitchers are priced on the runs they allowed, adjusted for park, defense and inherited runners, in place of FanGraphs' FIP-based pitching. In eWAR realized only." },
+    // EBR_GATE.md 11.11 (owner EW3-51): present only when the payload carries it. The
+    // tip's last three sentences are the owner's copy, pinned by test_ewar_xhem_half.py
+    // to the numbers of the record (ewar_v3.xhem_copy).
+    { id: "xhem", label: "xHEM+ (expected batting, half weight)", head: "xHEM+ (half weight)",
+      tip: "Half the change when a hitter's batting runs are priced on his Statcast expected wOBA (xwOBA) in place of his actual results; below 200 PA his shrunk event rates (HEM+) stand in. In eWAR only: eWAR realized keeps FanGraphs' batting. Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the same way on 2025-26 (+0.068, range -0.003 to +0.141). A 2027 read decides whether it stays." },
   ];
   function warBarsSVG(ss, sides) {
     const use = (ss || []).filter(s => s.a != null || s.b != null);
@@ -3027,10 +3032,13 @@
     // eWAR v3 (EBR_GATE.md 11.10.5): eWAR realized beside eWAR, then eWAR v2 and
     // bWAR as reference columns; present only when the payload carries them.
     const hasReal = c.some(r => r && r.war_real != null);
+    // With the xHEM+ part on a row, eWAR realized differs from eWAR on the hitting side too.
+    const realTip = REAL_WAR_TIP + (c.some(r => r && r.war_parts && r.war_parts.xhem != null)
+      ? " Hitters keep FanGraphs' batting there, without the xHEM+ part eWAR carries." : "");
     const hasV2 = c.some(r => r && r.war_ewar2 != null);
     const bref = r => (r.war_bwar != null ? r.war_bwar : r.war);
     const warTh = `<th>${term("ewar", "eWAR")}</th>`
-      + (hasReal ? `<th class="mlbp-realwar" title="${esc(REAL_WAR_TIP)}">${term("ewar_realized", "eWAR realized")}</th>` : "")
+      + (hasReal ? `<th class="mlbp-realwar" title="${esc(realTip)}">${term("ewar_realized", "eWAR realized")}</th>` : "")
       + (hasV2 ? `<th class="mlbp-fgwar" title="${esc(V2_WAR_TIP)}">eWAR v2</th>` : "")
       + (hasFg ? `<th class="mlbp-fgwar" title="${esc(FG_WAR_TIP)}">FanGraphs WAR</th>` : "")
       + (hasReal ? `<th class="mlbp-fgwar" title="${esc(BREF_WAR_TIP)}">bWAR</th>` : "");
@@ -3386,9 +3394,12 @@
     const body = rows.map(r => `<tr><td>${r.y}</td>` + (p.twoWay ? `<td>${esc(r.side)}</td>` : "")
       + cols.map(d => `<td>${r.parts[d.id] != null ? signed(r.parts[d.id], 2) : EM_DASH}</td>`).join("") + `</tr>`).join("");
     const realOnly = cols.some(d => d.id === "r2");
+    const hasX = cols.some(d => d.id === "xhem");
     const sub = `wins beyond FanGraphs WAR · ${term("ewar", "eWAR")} = FanGraphs WAR`
       + (cols.some(d => d.id === "eabs") ? " + eABS" : "")
-      + (realOnly ? ` · ${term("ewar_realized", "eWAR realized")} also takes realized pitching` : "");
+      + (hasX ? " + half of xHEM+" : "")
+      + (realOnly ? ` · ${term("ewar_realized", "eWAR realized")} also takes realized pitching` : "")
+      + (hasX ? ` · ${term("ewar_realized", "eWAR realized")} keeps FanGraphs' batting` : "");
     return section("value-ewar-parts", "eWAR parts", sub,
       `<div class="mlbp-table-wrap"><table class="detail-table" data-ewar-parts><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }

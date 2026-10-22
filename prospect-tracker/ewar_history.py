@@ -73,10 +73,11 @@ PARTS = (
     ("league_replacement", "league and replacement terms", "both"),
     ("pitching", "pitching (FanGraphs' FIP-based)", "both"),
     ("eabs", "eABS (ABS challenges)", "both"),
+    ("xhem", "xHEM+ expected batting, half weight (provisional)", "headline"),
     ("r2", "realized pitching (runs allowed)", "realized"),
 )
 CORE_PARTS = ("batting", "wsb", "fielding", "positional", "league_replacement", "pitching")
-NON_CORE = ("bsr_rest", "framing", "eabs", "r2")
+NON_CORE = ("bsr_rest", "framing", "eabs", "xhem", "r2")
 BSR_LABEL_UBR = "UBR and wGDP double plays"
 BSR_LABEL_OTHER = "FanGraphs' other baserunning runs"
 
@@ -160,6 +161,8 @@ def _stamp(vin: dict, v3: dict, s: int) -> dict:
                         - _num(r.get("wGdp"))) <= BSR_EPS for r in hit.values())
     chk = (v3.get("checks") or {}).get(str(s)) or {}
     has_abs = bool(chk.get("abs_receipt"))
+    # EBR_GATE.md 11.11: the xHEM+ part rides the headline series only
+    has_xhem = bool(int((chk.get("xhem_receipt") or {}).get("rows") or 0))
     r2_rows = int(chk.get("r2_rows") or 0)
     headline = list(CORE_PARTS)
     if bsr_rows:
@@ -169,13 +172,16 @@ def _stamp(vin: dict, v3: dict, s: int) -> dict:
     if has_abs:
         headline.append("eabs")
     realized = list(headline) + (["r2"] if r2_rows else [])
+    if has_xhem:
+        headline.append("xhem")
     order = [p for p, _l, _s in PARTS]
     headline.sort(key=order.index)
     realized.sort(key=order.index)
     return {"headline": headline, "realized": realized,
             "bsr_label": (BSR_LABEL_UBR if ubr_exact else BSR_LABEL_OTHER) if bsr_rows else None,
             "measured": {"hit_rows": len(hit), "bsr_rest_rows": bsr_rows, "framing_rows": frm_rows,
-                         "abs_receipt": has_abs, "r2_rows": r2_rows}}
+                         "abs_receipt": has_abs, "r2_rows": r2_rows,
+                         **({"xhem_rows": int(chk["xhem_receipt"]["rows"])} if has_xhem else {})}}
 
 
 def stamps(vintage: dict | None = None, v3: dict | None = None) -> dict[int, dict]:
@@ -226,10 +232,13 @@ def _sentence(first: int, last: int, stp: dict, st: dict[int, dict]) -> dict:
     fld = "fielding and catcher framing" if "framing" in head else "fielding"
     parts = ["batting", bsr, fld, "the positional, league and replacement terms", "pitching"]
     text_h = f"{_span(first, last)}: FanGraphs' " + _join(parts)
-    if "eabs" in head:
-        text_h += ", plus eABS (ABS challenges)"
-    text = text_h + ("; eWAR realized prices pitchers on runs allowed" if "r2" in stp["realized"]
-                     else "; eWAR realized equals eWAR") + "."
+    extras = (["eABS (ABS challenges)"] if "eabs" in head else []) + (
+        ["half of xHEM+ expected batting (provisional)"] if "xhem" in head else [])
+    if extras:
+        text_h += ", plus " + _join(extras)
+    keeps = " and keeps FanGraphs' batting" if "xhem" in head else ""
+    text = text_h + ((f"; eWAR realized prices pitchers on runs allowed{keeps}") if "r2" in stp["realized"]
+                     else (f"; eWAR realized keeps FanGraphs' batting" if keeps else "; eWAR realized equals eWAR")) + "."
     newest = st[max(st)]
     missing, why_h, why_r = [], [], []
     if "bsr_rest" in newest["headline"] and "bsr_rest" not in head:
@@ -240,6 +249,10 @@ def _sentence(first: int, last: int, stp: dict, st: dict[int, dict]) -> dict:
         fr = _first_with(st, "framing", "headline")
         missing.append("framing")
         why_h.append(f"no catcher framing (FanGraphs' WAR carries it from {fr})")
+    if "xhem" in newest["headline"] and "xhem" not in head:
+        xf = _first_with(st, "xhem", "headline")
+        missing.append("xhem")
+        why_h.append(f"batting is FanGraphs' alone (the xHEM+ part starts in {xf})")
     if "r2" in newest["realized"] and "r2" not in stp["realized"]:
         r2 = _first_with(st, "r2")
         missing.append("r2")
@@ -331,7 +344,9 @@ def _recentre(raw: dict[int, float], expo: dict[int, float]) -> dict[int, float]
 def core_full(season: int, vintage: dict | None = None, v3: dict | None = None,
               stamp: dict | None = None) -> dict:
     """{"rpw_fg", "bat": {mlbam: row}, "pit": {mlbam: row}} for one season, each row
-    {"war", "core", "full", "real", "bsr_rest", "framing", "eabs", "r2", "pa"/"ip"}."""
+    {"war", "core", "full", "real", "bsr_rest", "framing", "eabs", "xhem", "r2", "pa"/"ip"}.
+    xhem is the headline-only xHEM+ part (EBR_GATE.md 11.11; hitting side), read from the
+    block's parts; eabs is the rest of the headline departure."""
     vin, pay = _inputs(vintage, v3)
     s = int(season)
     stp = stamp or _stamp(vin, pay, s)
@@ -357,9 +372,11 @@ def core_full(season: int, vintage: dict | None = None, v3: dict | None = None,
         blk = _dep(m)
         dh = _num((blk.get("dh") or {}).get("bat"))
         dr = _num((blk.get("dr") or {}).get("bat"))
+        x = _num(((blk.get("parts") or {}).get("xhem") or {}).get("wins"))
         core = war - (b + fr)
         bat[m] = {"war": war, "core": core, "full": war + dh, "real": war + dr,
-                  "bsr_rest": b, "framing": fr, "eabs": dh, "r2": dr - dh, "pa": pa.get(m, 0.0)}
+                  "bsr_rest": b, "framing": fr, "eabs": dh - x, "xhem": x, "r2": dr - (dh - x),
+                  "pa": pa.get(m, 0.0)}
     for m, r in pit.items():
         if r.get("war") is None:
             continue
@@ -368,7 +385,7 @@ def core_full(season: int, vintage: dict | None = None, v3: dict | None = None,
         dh = _num((blk.get("dh") or {}).get("pit"))
         dr = _num((blk.get("dr") or {}).get("pit"))
         pitd[m] = {"war": war, "core": war, "full": war + dh, "real": war + dr,
-                   "bsr_rest": 0.0, "framing": 0.0, "eabs": dh, "r2": dr - dh,
+                   "bsr_rest": 0.0, "framing": 0.0, "eabs": dh, "xhem": 0.0, "r2": dr - dh,
                    "ip": _num(r.get("outs")) / 3.0}
     return {"rpw_fg": rpw, "bat": bat, "pit": pitd}
 
@@ -381,7 +398,7 @@ def _check_identities(s: int, cf: dict, stp: dict, chk: dict) -> dict:
     worst = {"row_headline": 0.0, "row_realized": 0.0}
     for side in ("bat", "pit"):
         for m, r in cf[side].items():
-            e1 = abs(r["full"] - r["core"] - (r["bsr_rest"] + r["framing"] + r["eabs"]))
+            e1 = abs(r["full"] - r["core"] - (r["bsr_rest"] + r["framing"] + r["eabs"] + r["xhem"]))
             e2 = abs(r["real"] - r["core"] - (r["bsr_rest"] + r["framing"] + r["eabs"] + r["r2"]))
             worst["row_headline"] = max(worst["row_headline"], e1)
             worst["row_realized"] = max(worst["row_realized"], e2)
@@ -398,7 +415,7 @@ def _check_identities(s: int, cf: dict, stp: dict, chk: dict) -> dict:
         c = sum(r["core"] for r in rows)
         f = sum(r["full"] for r in rows)
         z = sum(r["real"] for r in rows)
-        tol_f = TOL_SIDE + STORE_ROUND * sum(1 for r in rows if r["eabs"] != 0.0)
+        tol_f = TOL_SIDE + STORE_ROUND * sum(1 for r in rows if (r["eabs"] + r["xhem"]) != 0.0)
         tol_z = TOL_SIDE + STORE_ROUND * sum(1 for r in rows if (r["eabs"] + r["r2"]) != 0.0)
         if side == "pit":
             tol_z = max(tol_z, r2_bound)
@@ -410,7 +427,7 @@ def _check_identities(s: int, cf: dict, stp: dict, chk: dict) -> dict:
             raise EwarHistoryRefusal(f"{s} {side}: FULL sums {f - w:+.3g} wins off published fWAR")
         if abs(z - w) > tol_z:
             raise EwarHistoryRefusal(f"{s} {side}: FULL realized sums {z - w:+.3g} wins off published fWAR")
-    bare = not any(p in stp["realized"] for p in NON_CORE)
+    bare = not any(p in stp["realized"] or p in stp["headline"] for p in NON_CORE)
     if bare:
         for side in ("bat", "pit"):
             for m, r in cf[side].items():
@@ -453,7 +470,7 @@ def gap_report(s: int, cf: dict, stp: dict) -> dict:
     hit_frame = lambda r: r.get("pa", 0.0) >= MIN_PA    # noqa: E731
     pit_frame = lambda r: r.get("ip", 0.0) >= MIN_IP    # noqa: E731
     out: dict = {"bat": {}, "pit": {}}
-    for p in ("bsr_rest", "framing", "eabs"):
+    for p in ("bsr_rest", "framing", "eabs", "xhem"):
         if p in stp["headline"]:
             out["bat"][p] = _gap(bat, lambda r, p=p: r[p], hit_frame)
     if "eabs" in stp["headline"]:
@@ -481,7 +498,8 @@ def build(vintage: dict | None = None, v3: dict | None = None, log=print) -> dic
         ident = _check_identities(s, cf, st[s], chk)
         per[str(s)] = {"stamp": st[s], "rpw_fg": round(cf["rpw_fg"], 4), "identities": ident,
                        "gap": gap_report(s, cf, st[s])}
-        log(f"  {s}: parts {'+'.join(p for p in st[s]['realized'] if p in NON_CORE) or 'core only'}; "
+        on = set(st[s]["realized"]) | set(st[s]["headline"])
+        log(f"  {s}: parts {'+'.join(p for p, _l, _s in PARTS if p in NON_CORE and p in on) or 'core only'}; "
             f"rpw_fg {cf['rpw_fg']:.4f}; identities hold")
     return {
         "schema": 1,
@@ -495,7 +513,9 @@ def build(vintage: dict | None = None, v3: dict | None = None, log=print) -> dic
         "fwar_vintage_sha256": _sha(fwar_vintage.VINTAGE_PATH),
         "ewar_v3_generated_at": pay.get("generated_at"),
         "ewar_v3_sha256": _sha(ROOT / "data" / "ewar_v3.json"),
-        "parts": [{"id": p, "label": lab, "series": ser, "core": p in CORE_PARTS} for p, lab, ser in PARTS],
+        # the xHEM+ part is listed only when a season carries it (EBR_GATE.md 11.11)
+        "parts": [{"id": p, "label": lab, "series": ser, "core": p in CORE_PARTS} for p, lab, ser in PARTS
+                  if p != "xhem" or any("xhem" in v["headline"] for v in st.values())],
         "groups": groups,
         "constants": {"bsr_eps_runs": BSR_EPS, "framing_eps_runs": FRM_EPS, "tol_row_wins": TOL_ROW,
                       "tol_side_wins": TOL_SIDE, "frame_min_pa": MIN_PA, "frame_min_ip": MIN_IP},
