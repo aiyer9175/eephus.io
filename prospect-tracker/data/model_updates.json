@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-14T12:18:18Z",
+ "generated_at": "2026-10-22T22:19:46Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,12 +8,12 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "b45e5714b122f46afd03191b70f6bc323650b37c16dacbd782ce0794338bac73"
+   "sha256": "99f917eb138289da8ee904ff5c36b292b60e91a2d9a61933b9affe0a0b1d7c1a"
   },
   {
    "path": "data/efv_progress.json",
-   "sha256": "d792fd3151cb55d2e1af5faf3423ed634c812d540b3f387815535d5146b98b0b",
-   "generated_at": "2026-10-10T23:58:26Z"
+   "sha256": "35d5405e4059ad3a545a7678f67475b060248292887f478b84ca4cbe1a651174",
+   "generated_at": "2026-10-19T20:20:36Z"
   },
   {
    "path": "data/model_updates_typed.json",
@@ -26,7 +26,7 @@
   },
   {
    "path": "data/betting_model_eval.json",
-   "sha256": "c2ea6aa8d3e6b88aaa1aeab2da8066672baf3368d3cb69d929ba1252eb01071c",
+   "sha256": "760d2336ed04d3bda4e12e3b24c28044de98bf13f0fb876bb9126eb13ae55466",
    "generated_at": "2026-10-02T16:15:12+00:00"
   },
   {
@@ -65,9 +65,9 @@
    "generated_at": "2026-08-19"
   },
   {
-   "path": "data/xhem_served_regate_eval.json",
-   "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9",
-   "generated_at": "2026-09-18"
+   "path": "data/hem_xwoba_regate_eval.json",
+   "sha256": "4393b3d4e4dafda50456a67c0e98f0ca894c06d00d1940459d8ce964ee4f0425",
+   "generated_at": "2026-10-15"
   },
   {
    "path": "data/hem_plus_eval.json",
@@ -81,7 +81,7 @@
   },
   {
    "path": "data/dem_plus_eval.json",
-   "sha256": "cb0613dd802cb1f1fface9144c6011466bfead8a117f29a328a5083476d54be2",
+   "sha256": "782c7ee32f11ab1799fa79bb3a7938e34ce03edebe4dd3e0666aa676ca2f9858",
    "generated_at": "2026-09-11"
   },
   {
@@ -106,8 +106,8 @@
   },
   {
    "path": "data/team_outlook_eval.json",
-   "sha256": "118a82f0bcbe1eca4f555ecf9553653014186cfadcb6686d43dbce13320f9119",
-   "generated_at": "2026-10-09"
+   "sha256": "af75a2e8a606edde975286590cf222929817d4991786cb8132e0c2c32d7df561",
+   "generated_at": "2026-10-22"
   }
  ],
  "families": [
@@ -127,6 +127,7 @@
   "CollegeSavant",
   "Management",
   "Franchise",
+  "Scores / Standings",
   "Other",
   "Development"
  ],
@@ -209,7 +210,7 @@
  },
  "efv_copy": {
   "rows_copied": 30,
-  "skipped_other_frames": 37,
+  "skipped_other_frames": 38,
   "skipped_vm_after_handover": 0,
   "not_copied_no_alias": [
    {
@@ -1083,74 +1084,115 @@
    {
     "run_id": "2026-10-10T23:53:05Z|vm_dev|785f17be",
     "ledger_model_id": "efv_v2_screen:wave2:w2a_c4_graded_level_pit:pit"
+   },
+   {
+    "run_id": "2026-10-15T12:48:00Z|lv_dev|375c404b",
+    "ledger_model_id": "efv_v5"
+   },
+   {
+    "run_id": "2026-10-15T12:48:00Z|vm_dev|b45d7bb3",
+    "ledger_model_id": "efv_v5"
+   },
+   {
+    "run_id": "2026-10-15T13:58:22Z|lv_dev|7a34f319",
+    "ledger_model_id": "efv_v5_combined"
+   },
+   {
+    "run_id": "2026-10-15T13:58:22Z|vm_dev|120eeb0a",
+    "ledger_model_id": "efv_v5_combined"
+   },
+   {
+    "run_id": "2026-10-16T00:24:08Z|lv_dev|191529cc",
+    "ledger_model_id": "efv_v5_refit"
+   },
+   {
+    "run_id": "2026-10-16T00:24:08Z|vm_dev|40915bdf",
+    "ledger_model_id": "efv_v5_refit"
+   },
+   {
+    "run_id": "2026-10-16T20:09:12Z|lv_dev|b64418be",
+    "ledger_model_id": "efv_etools_reweight"
+   },
+   {
+    "run_id": "2026-10-16T20:09:12Z|vm_dev|84d5834e",
+    "ledger_model_id": "efv_etools_reweight"
+   },
+   {
+    "run_id": "2026-10-19T20:17:32Z|lv_dev|fd970a5d",
+    "ledger_model_id": "efv_x3_pooled"
+   },
+   {
+    "run_id": "2026-10-19T20:17:32Z|vm_dev|8ce673dc",
+    "ledger_model_id": "efv_x3_pooled"
    }
   ]
  },
  "note_problems": [],
  "counts": {
-  "events": 541,
-  "default_view": 119,
+  "events": 612,
+  "default_view": 130,
   "by_kind": {
-   "artifact_change": 26,
+   "artifact_change": 37,
    "backfill": 4,
    "data_correction": 4,
    "first_scored": 21,
    "frame_change": 1,
    "model_change": 14,
    "note": 25,
-   "registered": 362,
+   "registered": 407,
    "removed": 2,
-   "rescored": 47,
+   "rescored": 49,
    "scoring_correction": 2,
-   "verdict": 33
+   "verdict": 46
   },
   "by_layer": {
    "development": 9,
-   "headline": 96,
+   "headline": 111,
    "note": 25,
-   "registration": 390,
+   "registration": 446,
    "typed": 21
   },
-  "verdict_changes": 33,
-  "registry_models": 360,
-  "served_models": 263,
+  "verdict_changes": 46,
+  "registry_models": 405,
+  "served_models": 287,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
-   "no_benchmark": 74,
+   "no_benchmark": 82,
    "no_contest": 1,
-   "no_eval": 37,
+   "no_eval": 30,
    "tie": 5,
    "trails": 1,
    "unresolved": 2,
-   "unwired": 227
+   "unwired": 271
   },
   "registry_verdicts": {
-   "deprecated": 88,
-   "provisional": 159,
-   "unvalidated": 59,
-   "validated": 54
+   "deprecated": 92,
+   "provisional": 207,
+   "unvalidated": 51,
+   "validated": 55
   },
   "by_family": {
-   "Alchemy Lab": 6,
-   "Arbitration": 1,
+   "Alchemy Lab": 14,
+   "Arbitration": 2,
    "Betting": 12,
    "CollegeSavant": 7,
-   "Development": 97,
+   "Development": 118,
    "Draft": 8,
    "Fantasy": 10,
-   "Franchise": 3,
+   "Franchise": 4,
    "Free Agency": 15,
-   "Hall of Fame": 6,
-   "MLB Projections": 8,
-   "MLB Stats": 26,
+   "Hall of Fame": 8,
+   "MLB Projections": 10,
+   "MLB Stats": 33,
    "Management": 10,
-   "Other": 18,
-   "PROSPX and eFV": 110,
-   "Sources and Consensus": 11,
+   "Other": 4,
+   "PROSPX and eFV": 116,
+   "Scores / Standings": 3,
+   "Sources and Consensus": 13,
    "Trade Machine": 6,
-   "eWAR": 6
+   "eWAR": 12
   }
  },
  "models": [
@@ -1175,9 +1217,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -1201,7 +1243,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1227,7 +1269,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 105,
+    "artifact_age_days": 113,
     "age_is_evidence": true,
     "stale": true
    }
@@ -1235,8 +1277,8 @@
   {
    "model_id": "am_crossmodel_agelevel",
    "label": "Am Crossmodel Agelevel",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": true,
@@ -1253,7 +1295,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1279,7 +1321,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1395,7 +1437,7 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1421,7 +1463,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1447,7 +1489,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1473,7 +1515,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1525,7 +1567,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1551,7 +1593,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1577,7 +1619,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1603,7 +1645,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1613,7 +1655,7 @@
    "label": "Bat Tracking Hitters",
    "family": "Development",
    "served": false,
-   "verdict": "deprecated",
+   "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
@@ -1626,10 +1668,62 @@
    },
    "today": [],
    "registered": "2026-07-29",
+   "last_update": "2026-10-22",
+   "events": 2,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "btblend_plus",
+   "label": "Btblend+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/bat_tracking_served_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "bat_tracking_nov_a",
+   "label": "Bat Tracking Nov a",
+   "family": "Development",
+   "served": false,
+   "verdict": "deprecated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/bat_tracking_nov_a_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1675,7 +1769,7 @@
      },
      "source": {
       "path": "data/betting_model_eval.json",
-      "sha256": "c2ea6aa8d3e6b88aaa1aeab2da8066672baf3368d3cb69d929ba1252eb01071c"
+      "sha256": "760d2336ed04d3bda4e12e3b24c28044de98bf13f0fb876bb9126eb13ae55466"
      }
     },
     {
@@ -1708,7 +1802,7 @@
      },
      "source": {
       "path": "data/betting_model_eval.json",
-      "sha256": "c2ea6aa8d3e6b88aaa1aeab2da8066672baf3368d3cb69d929ba1252eb01071c"
+      "sha256": "760d2336ed04d3bda4e12e3b24c28044de98bf13f0fb876bb9126eb13ae55466"
      }
     }
    ],
@@ -1716,7 +1810,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1742,7 +1836,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1768,7 +1862,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1794,7 +1888,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1820,7 +1914,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1872,9 +1966,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -1898,7 +1992,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 18,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1950,7 +2044,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2002,9 +2096,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -2028,7 +2122,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2054,7 +2148,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2109,7 +2203,7 @@
    "last_update": "2026-10-03",
    "events": 16,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2135,7 +2229,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2161,7 +2255,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2187,7 +2281,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2213,7 +2307,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2291,7 +2385,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2344,7 +2438,7 @@
    "last_update": "2026-10-03",
    "events": 6,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2500,7 +2594,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2526,7 +2620,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2552,7 +2646,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2578,7 +2672,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2604,7 +2698,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2630,7 +2724,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2656,7 +2750,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 104,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": true
    }
@@ -2749,7 +2843,7 @@
    "last_update": "2026-10-07",
    "events": 10,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2775,7 +2869,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2868,7 +2962,7 @@
    "last_update": "2026-09-30",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2894,7 +2988,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2987,9 +3081,269 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_v3",
+   "label": "eWAR V3",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/ewar_v3.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_v3_realized",
+   "label": "eWAR V3 Realized",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/ewar_v3.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_history",
+   "label": "eWAR History",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/ewar_history.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_core_label",
+   "label": "eWAR Core Label",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "docs/efv-2026-10-22/ewar_core_label_guard.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_headline_label",
+   "label": "eWAR Headline Label",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "docs/efv-2026-10-22/ewar_headline_label_guard.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "swar_bat",
+   "label": "Swar Bat",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/swar_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "swar_pit",
+   "label": "Swar Pit",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/swar_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "swar_fld",
+   "label": "Swar Fld",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/swar_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "swar_pos",
+   "label": "Swar Pos",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/swar_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_v3_valuation_input",
+   "label": "eWAR V3 Valuation Input",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
    }
   },
   {
@@ -3013,7 +3367,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3039,7 +3393,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3091,7 +3445,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3145,7 +3499,7 @@
    "last_update": "2026-10-08",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3171,9 +3525,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3197,7 +3551,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -3223,9 +3577,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3249,7 +3603,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3303,7 +3657,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3329,9 +3683,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3355,7 +3709,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3381,7 +3735,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3407,7 +3761,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 79,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3433,7 +3787,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3459,9 +3813,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3511,7 +3865,7 @@
    "last_update": "2026-08-19",
    "events": 7,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3537,7 +3891,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3563,7 +3917,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -3589,7 +3943,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3615,7 +3969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3693,7 +4047,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 18,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3707,33 +4061,33 @@
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": "Savant xwOBA alone",
-   "eval_artifact": "data/xhem_served_regate_eval.json",
+   "eval_artifact": "data/hem_xwoba_regate_eval.json",
    "headline_source": "card",
    "state": "tie",
    "edge": {
     "state": "tie",
-    "text": "Result (Spearman): tie (+0.007)"
+    "text": "Result (Spearman): tie (+0.005)"
    },
    "today": [
     {
      "stat": "Spearman",
      "better": "higher",
      "role": "headline",
-     "model": 0.461,
+     "model": 0.459,
      "benchmark_label": "Savant xwOBA alone",
      "benchmark": 0.454,
-     "n": 1871,
-     "delta": 0.007,
+     "n": 2134,
+     "delta": 0.005,
      "ci95": [
-      -0.001,
-      0.016
+      -0.003,
+      0.013
      ],
      "mde95": null,
      "t": null,
      "resolvable": false,
      "digits": 3,
      "edge_state": "tie",
-     "edge_text": "Result (Spearman): tie (+0.007)",
+     "edge_text": "Result (Spearman): tie (+0.005)",
      "keys": {
       "model": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_primary",
       "benchmark": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_baseline",
@@ -3745,16 +4099,16 @@
       "resolvable": "arms.A2_fwdhem_plus.ladder.D4.v1.lo95_gt_0"
      },
      "source": {
-      "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "path": "data/hem_xwoba_regate_eval.json",
+      "sha256": "4393b3d4e4dafda50456a67c0e98f0ca894c06d00d1940459d8ce964ee4f0425"
      }
     }
    ],
    "registered": "2026-07-15",
-   "last_update": "2026-09-18",
-   "events": 5,
+   "last_update": "2026-10-22",
+   "events": 7,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3780,7 +4134,7 @@
    "last_update": "2026-07-01",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3806,7 +4160,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -3816,7 +4170,7 @@
    "label": "HEM+",
    "family": "MLB Stats",
    "served": true,
-   "verdict": "validated",
+   "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": "AVG",
@@ -3938,10 +4292,10 @@
     }
    ],
    "registered": "2026-07-05",
-   "last_update": "2026-09-25",
-   "events": 3,
+   "last_update": "2026-10-22",
+   "events": 4,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4004,7 +4358,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4057,7 +4411,7 @@
      },
      "source": {
       "path": "data/dem_plus_eval.json",
-      "sha256": "cb0613dd802cb1f1fface9144c6011466bfead8a117f29a328a5083476d54be2"
+      "sha256": "782c7ee32f11ab1799fa79bb3a7938e34ce03edebe4dd3e0666aa676ca2f9858"
      }
     },
     {
@@ -4093,7 +4447,7 @@
      },
      "source": {
       "path": "data/dem_plus_eval.json",
-      "sha256": "cb0613dd802cb1f1fface9144c6011466bfead8a117f29a328a5083476d54be2"
+      "sha256": "782c7ee32f11ab1799fa79bb3a7938e34ce03edebe4dd3e0666aa676ca2f9858"
      }
     }
    ],
@@ -4101,7 +4455,7 @@
    "last_update": "2026-09-11",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 41,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4127,7 +4481,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 41,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4153,7 +4507,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 40,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4205,9 +4559,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4231,9 +4585,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4283,7 +4637,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4361,7 +4715,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4387,7 +4741,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 104,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4466,7 +4820,33 @@
    "last_update": "2026-08-19",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "mlb_projections_prospects_statline",
+   "label": "MLB Projections Prospects Statline",
+   "family": "MLB Projections",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/prospect_statline_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4492,7 +4872,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4518,7 +4898,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4544,7 +4924,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4570,7 +4950,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4596,7 +4976,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4622,9 +5002,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4648,7 +5028,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4700,7 +5080,7 @@
    "last_update": "2026-07-15",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4752,7 +5132,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4804,7 +5184,59 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "positional_ladder_v2",
+   "label": "Positional Ladder V2",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/positional_ladder_v2_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 7,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "positional_ladder_v3",
+   "label": "Positional Ladder V3",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/positional_ladder_v3_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4856,7 +5288,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4882,7 +5314,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4892,32 +5324,32 @@
    "label": "Proj Components",
    "family": "MLB Projections",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/proj_components_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "proj_component_stack",
    "label": "Proj Component Stack",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "unvalidated",
    "provisional_kind": null,
    "benchmark": true,
@@ -4960,7 +5392,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5012,7 +5444,7 @@
    "last_update": "2026-07-31",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5038,9 +5470,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -5064,7 +5496,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5090,7 +5522,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5098,9 +5530,9 @@
   {
    "model_id": "pwoba_blend_regate",
    "label": "Pwoba Blend Regate",
-   "family": "Development",
-   "served": false,
-   "verdict": "deprecated",
+   "family": "Sources and Consensus",
+   "served": true,
+   "verdict": "validated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
@@ -5113,10 +5545,10 @@
    },
    "today": [],
    "registered": "2026-07-29",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 2,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5142,7 +5574,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5168,7 +5600,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5293,7 +5725,7 @@
    "last_update": "2026-07-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 106,
+    "artifact_age_days": 114,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5319,7 +5751,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5345,7 +5777,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5371,7 +5803,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5397,7 +5829,7 @@
    "last_update": "2026-09-18",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5431,8 +5863,8 @@
   {
    "model_id": "savant_arm_strength",
    "label": "Savant Arm Strength",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "unvalidated",
    "provisional_kind": null,
    "benchmark": false,
@@ -5475,7 +5907,33 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "statcast_catcher_runs",
+   "label": "Statcast Catcher Runs",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/statcast_catcher_runs.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5501,7 +5959,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5600,7 +6058,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5626,7 +6084,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5652,7 +6110,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5678,7 +6136,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5761,7 +6219,7 @@
    "last_update": "2026-10-03",
    "events": 14,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5896,7 +6354,7 @@
    "last_update": "2026-10-02",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5922,7 +6380,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5948,9 +6406,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -5974,7 +6432,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6026,7 +6484,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6078,7 +6536,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6130,7 +6588,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6259,7 +6717,7 @@
      },
      "source": {
       "path": "data/team_outlook_eval.json",
-      "sha256": "118a82f0bcbe1eca4f555ecf9553653014186cfadcb6686d43dbce13320f9119"
+      "sha256": "af75a2e8a606edde975286590cf222929817d4991786cb8132e0c2c32d7df561"
      }
     }
    ],
@@ -6267,7 +6725,7 @@
    "last_update": "2026-10-09",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6293,7 +6751,345 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 84,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "tool_implied_production",
+   "label": "Tool Implied Production",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/tool_accuracy_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "tool_source_accuracy",
+   "label": "Tool Source Accuracy",
+   "family": "Sources and Consensus",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/tool_accuracy_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "power_composite_v2",
+   "label": "Power Composite V2",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/power_composite_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "tool_tables_rederived",
+   "label": "Tool Tables Rederived",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/tool_tables_rederived_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_ehit",
+   "label": "Etool Ehit",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_epow",
+   "label": "Etool Epow",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_esel",
+   "label": "Etool Esel",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_ebat",
+   "label": "Etool Ebat",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_efb",
+   "label": "Etool Efb",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_ecmd",
+   "label": "Etool Ecmd",
+   "family": "Alchemy Lab",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "etool_composite",
+   "label": "Etool Composite",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "etools_plus",
+   "label": "Etools+",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/etools_plus.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "scouting_reference",
+   "label": "Scouting Reference",
+   "family": "Other",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/reference/fv_framework_tables.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6345,7 +7141,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6397,7 +7193,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 102,
+    "artifact_age_days": 110,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6423,7 +7219,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6449,7 +7245,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 18,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6475,7 +7271,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6605,7 +7401,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6631,7 +7427,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 100,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6657,7 +7453,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 107,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6683,7 +7479,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6709,7 +7505,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6761,7 +7557,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6787,7 +7583,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6813,7 +7609,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6839,7 +7635,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6865,7 +7661,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 104,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6891,7 +7687,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6917,7 +7713,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 101,
+    "artifact_age_days": 109,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6943,7 +7739,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6969,7 +7765,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6995,7 +7791,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7021,7 +7817,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7047,7 +7843,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7073,7 +7869,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7099,7 +7895,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7125,7 +7921,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7151,7 +7947,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 104,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7177,7 +7973,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 104,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7203,7 +7999,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7229,7 +8025,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7255,7 +8051,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7281,7 +8077,7 @@
    "last_update": "2026-09-25",
    "events": 21,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7307,9 +8103,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 88,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7333,7 +8129,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7359,7 +8155,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 105,
+    "artifact_age_days": 113,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7385,7 +8181,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7411,7 +8207,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7437,7 +8233,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7463,7 +8259,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7489,7 +8285,7 @@
    "last_update": "2026-07-14",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 100,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7515,7 +8311,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 107,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7541,7 +8337,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7567,7 +8363,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7593,7 +8389,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 101,
+    "artifact_age_days": 109,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7619,7 +8415,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7645,7 +8441,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7671,7 +8467,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7697,7 +8493,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7723,7 +8519,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7749,7 +8545,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7775,7 +8571,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7801,7 +8597,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7827,7 +8623,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7853,7 +8649,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7879,7 +8675,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7905,7 +8701,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7931,7 +8727,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 107,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7957,7 +8753,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7983,9 +8779,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8009,7 +8805,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8035,7 +8831,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8061,7 +8857,7 @@
    "last_update": "2026-09-25",
    "events": 21,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8087,7 +8883,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8113,7 +8909,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8139,7 +8935,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8165,7 +8961,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8191,7 +8987,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8217,7 +9013,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8243,9 +9039,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8269,7 +9065,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8295,7 +9091,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8321,7 +9117,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8347,7 +9143,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8373,7 +9169,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8399,7 +9195,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8425,7 +9221,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8451,7 +9247,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8477,7 +9273,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8503,7 +9299,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8529,7 +9325,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8555,7 +9351,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8581,7 +9377,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8607,7 +9403,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 100,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8633,9 +9429,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8659,9 +9455,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8685,9 +9481,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8711,9 +9507,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8737,7 +9533,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8763,7 +9559,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8789,7 +9585,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8815,7 +9611,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8841,7 +9637,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8893,7 +9689,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 7,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8919,7 +9715,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -8945,7 +9741,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8971,7 +9767,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8997,7 +9793,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9023,7 +9819,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 20,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9049,7 +9845,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9075,7 +9871,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -9089,33 +9885,33 @@
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": "actual wOBA",
-   "eval_artifact": "data/xhem_served_regate_eval.json",
+   "eval_artifact": "data/hem_xwoba_regate_eval.json",
    "headline_source": "card",
    "state": "lead",
    "edge": {
     "state": "lead",
-    "text": "Result (Spearman): +0.051 lead"
+    "text": "Result (Spearman): +0.053 lead"
    },
    "today": [
     {
      "stat": "Spearman",
      "better": "higher",
      "role": "headline",
-     "model": 0.462,
+     "model": 0.46,
      "benchmark_label": "actual wOBA",
-     "benchmark": 0.411,
-     "n": 1871,
-     "delta": 0.051,
+     "benchmark": 0.408,
+     "n": 2134,
+     "delta": 0.053,
      "ci95": [
-      0.024,
-      0.077
+      0.028,
+      0.078
      ],
      "mde95": null,
      "t": null,
      "resolvable": true,
      "digits": 3,
      "edge_state": "lead",
-     "edge_text": "Result (Spearman): +0.051 lead",
+     "edge_text": "Result (Spearman): +0.053 lead",
      "keys": {
       "model": "arms.A1_xhem_plus.ladder.D4.v1.rho_primary",
       "benchmark": "arms.A1_xhem_plus.ladder.D4.v1.rho_baseline",
@@ -9127,16 +9923,16 @@
       "resolvable": "arms.A1_xhem_plus.ladder.D4.v1.lo95_gt_0"
      },
      "source": {
-      "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "path": "data/hem_xwoba_regate_eval.json",
+      "sha256": "4393b3d4e4dafda50456a67c0e98f0ca894c06d00d1940459d8ce964ee4f0425"
      }
     }
    ],
    "registered": "2026-07-05",
-   "last_update": "2026-09-18",
-   "events": 4,
+   "last_update": "2026-10-22",
+   "events": 6,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9214,7 +10010,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9240,7 +10036,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 71,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9266,7 +10062,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 71,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9292,7 +10088,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 71,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9318,7 +10114,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9344,7 +10140,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9370,7 +10166,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9396,7 +10192,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9422,7 +10218,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9578,7 +10374,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 13,
+    "artifact_age_days": 21,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9615,7 +10411,7 @@
    "family": "eWAR",
    "served": true,
    "verdict": "provisional",
-   "provisional_kind": "data_blocked_stub",
+   "provisional_kind": "measured_not_adopted",
    "benchmark": true,
    "benchmark_label": null,
    "eval_artifact": "data/sdr_eval.json",
@@ -9630,7 +10426,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9656,7 +10452,33 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 7,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "fielding_triangulation",
+   "label": "Fielding Triangulation",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/fielding_triangulation_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9682,7 +10504,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9820,60 +10642,60 @@
   {
    "model_id": "aging_v3",
    "label": "Aging V3",
-   "family": "Other",
-   "served": true,
-   "verdict": "unvalidated",
+   "family": "Development",
+   "served": false,
+   "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/aging_v3_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "aging_v3_prospect_shape",
    "label": "Aging V3 Prospect Shape",
-   "family": "Other",
-   "served": true,
-   "verdict": "unvalidated",
+   "family": "Development",
+   "served": false,
+   "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/aging_v3_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "aging_v3_health",
    "label": "Aging V3 Health",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "unvalidated",
    "provisional_kind": null,
    "benchmark": true,
@@ -9942,7 +10764,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10020,7 +10842,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 63,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10072,7 +10894,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 39,
+    "artifact_age_days": 48,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10098,7 +10920,7 @@
    "last_update": "2026-10-03",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10124,7 +10946,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 39,
+    "artifact_age_days": 48,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10150,7 +10972,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 39,
+    "artifact_age_days": 48,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10176,7 +10998,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 39,
+    "artifact_age_days": 48,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10202,7 +11024,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 39,
+    "artifact_age_days": 47,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10228,7 +11050,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10254,7 +11076,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10262,8 +11084,8 @@
   {
    "model_id": "pbp_corpus_base_state",
    "label": "Pbp Corpus Base State",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
@@ -10280,7 +11102,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10306,7 +11128,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10332,7 +11154,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10358,7 +11180,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 37,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10384,7 +11206,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10410,7 +11232,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10436,7 +11258,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10462,7 +11284,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10488,7 +11310,85 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 41,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "count_value",
+   "label": "Count Value",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/count_value.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 7,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "eabs",
+   "label": "Eabs",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/eabs_leaderboards.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "rpw_fit",
+   "label": "Rpw Fit",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/rpw_fit.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10496,7 +11396,7 @@
   {
    "model_id": "scores_mlb_wp",
    "label": "Scores MLB Wp",
-   "family": "Other",
+   "family": "Scores / Standings",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": null,
@@ -10514,7 +11414,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 41,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10522,7 +11422,7 @@
   {
    "model_id": "scores_stars_rule",
    "label": "Scores Stars Rule",
-   "family": "Other",
+   "family": "Scores / Standings",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
@@ -10548,7 +11448,7 @@
   {
    "model_id": "scores_biggest_plays_rule",
    "label": "Scores Biggest Plays Rule",
-   "family": "Other",
+   "family": "Scores / Standings",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
@@ -10592,7 +11492,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10618,7 +11518,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10644,7 +11544,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10670,7 +11570,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 41,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10696,7 +11596,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 37,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10722,7 +11622,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 37,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10748,7 +11648,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10774,7 +11674,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10800,7 +11700,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10826,7 +11726,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10852,7 +11752,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10878,7 +11778,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10888,25 +11788,25 @@
    "label": "Steal Runner Split",
    "family": "Management",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/steal_runner_split_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
@@ -10930,7 +11830,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 18,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10956,7 +11856,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 41,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10982,7 +11882,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11008,7 +11908,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11034,7 +11934,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 37,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11042,7 +11942,7 @@
   {
    "model_id": "awards_selection",
    "label": "Awards Selection",
-   "family": "Other",
+   "family": "Hall of Fame",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
@@ -11060,7 +11960,33 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "awards_realized_read",
+   "label": "Awards Realized Read",
+   "family": "Hall of Fame",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/awards_eval.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11086,7 +12012,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11112,7 +12038,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 11,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11148,7 +12074,7 @@
    "label": "Franchise Index",
    "family": "Franchise",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "deprecated",
    "provisional_kind": null,
    "benchmark": false,
    "benchmark_label": null,
@@ -11161,6 +12087,32 @@
    },
    "today": [],
    "registered": "2026-09-23",
+   "last_update": "2026-10-22",
+   "events": 2,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "franchise_score",
+   "label": "Franchise Score",
+   "family": "Franchise",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
    "last_update": null,
    "events": 1,
    "freshness": {
@@ -11216,7 +12168,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11441,7 +12393,7 @@
    "last_update": "2026-10-08",
    "events": 11,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11493,7 +12445,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 10,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11529,25 +12481,25 @@
    "label": "FA Destination",
    "family": "Free Agency",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "validated",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/fa_destination_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
@@ -11683,34 +12635,34 @@
   {
    "model_id": "prospect_anchor",
    "label": "Prospect Anchor",
-   "family": "Other",
-   "served": true,
-   "verdict": "unvalidated",
-   "provisional_kind": null,
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "shipped_partial_measurement",
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/prospect_anchor_gate.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-08",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "cots_deferral_check",
    "label": "Cots Deferral Check",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "provisional",
    "provisional_kind": "measurement_only",
    "benchmark": false,
@@ -11753,7 +12705,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11763,25 +12715,25 @@
    "label": "Starter Workload Xouts",
    "family": "MLB Stats",
    "served": true,
-   "verdict": "unvalidated",
-   "provisional_kind": null,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/starter_workload_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
@@ -11815,58 +12767,58 @@
    "label": "Team Win Distribution",
    "family": "Betting",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/team_outlook_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "team_run_projection",
    "label": "Team Run Projection",
-   "family": "Other",
+   "family": "MLB Projections",
    "served": true,
-   "verdict": "unvalidated",
+   "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": null,
-   "eval_artifact": null,
+   "eval_artifact": "data/team_outlook_eval.json",
    "headline_source": null,
-   "state": "no_eval",
+   "state": "unwired",
    "edge": {
-    "state": "no_eval",
-    "text": "no eval artifact on record"
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
    },
    "today": [],
    "registered": "2026-10-09",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-22",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": null,
-    "age_is_evidence": null,
-    "stale": null
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
    }
   },
   {
    "model_id": "game_intensity_effects",
    "label": "Game Intensity Effects",
-   "family": "Other",
-   "served": true,
+   "family": "Development",
+   "served": false,
    "verdict": "unvalidated",
    "provisional_kind": null,
    "benchmark": true,
@@ -11886,6 +12838,266 @@
     "artifact_age_days": null,
     "age_is_evidence": null,
     "stale": null
+   }
+  },
+  {
+   "model_id": "par",
+   "label": "Par",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "dvm_difficulty",
+   "label": "Dvm Difficulty",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/dvm_difficulty_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 7,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "milb_fielding_runs",
+   "label": "Milb Fielding Runs",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "shipped_partial_measurement",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/milb_fielding_runs_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 5,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "pbp_runner_moves",
+   "label": "Pbp Runner Moves",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": ".cache/pbp_runners/manifest.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 2,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ebr",
+   "label": "Ebr",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/ebr_eval.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "team_ebr",
+   "label": "Team Ebr",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/ebr_eval.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "bem_plus",
+   "label": "Bem+",
+   "family": "Development",
+   "served": false,
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/ebr_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 3,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ebr_milb",
+   "label": "Ebr Milb",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/ebr_milb_eval.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 2,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "league_trends",
+   "label": "League Trends",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/league_trends_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "xm",
+   "label": "Xm",
+   "family": "Arbitration",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/xm_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-22",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
    }
   }
  ],
@@ -19008,9 +20220,9 @@
    },
    "content_hash": "b173a27939a829d02bb56e75e335ce8e4c4e5848e32f034d8fffcc3fadb5e771",
    "event_id": "2026-07-29|pwoba_blend_regate|registered|b173a279",
-   "family": "Development",
+   "family": "Sources and Consensus",
    "label": "Pwoba Blend Regate",
-   "served": false,
+   "served": true,
    "default_view": false
   },
   {
@@ -20443,9 +21655,9 @@
    },
    "content_hash": "21e9d9130852e7ae04e81d91bd842857234f57cdb738a495eef804228595f87a",
    "event_id": "2026-07-29|am_crossmodel_agelevel|registered|21e9d913",
-   "family": "Other",
+   "family": "Development",
    "label": "Am Crossmodel Agelevel",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -21808,9 +23020,9 @@
    },
    "content_hash": "2fe7dbfc88ac716a32aad143f79af17333afdbffccdc0b5d6124bfa6d25cbc7f",
    "event_id": "2026-07-31|savant_arm_strength|registered|2fe7dbfc",
-   "family": "Other",
+   "family": "Development",
    "label": "Savant Arm Strength",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -25930,9 +27142,9 @@
    },
    "content_hash": "038318ec205731378f5295dbdba8959782afe9dbce121ce53ad30c845c93fdee",
    "event_id": "2026-09-06|pbp_corpus_base_state|registered|038318ec",
-   "family": "Other",
+   "family": "Development",
    "label": "Pbp Corpus Base State",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -38766,7 +39978,7 @@
    },
    "content_hash": "f6e872f31ddfebd86a8b806c0293ef5c455c5f5c93cceba7f648d4df6cf7e867",
    "event_id": "2026-10-08|scores_mlb_wp|registered|f6e872f3",
-   "family": "Other",
+   "family": "Scores / Standings",
    "label": "Scores MLB Wp",
    "served": true,
    "default_view": false
@@ -38801,7 +40013,7 @@
    },
    "content_hash": "a28569ee7b08a0e64b2c8f3573d7f50062aaa6c96d7a7298678c06284d747947",
    "event_id": "2026-10-08|scores_stars_rule|registered|a28569ee",
-   "family": "Other",
+   "family": "Scores / Standings",
    "label": "Scores Stars Rule",
    "served": true,
    "default_view": false
@@ -38836,7 +40048,7 @@
    },
    "content_hash": "f1e8875d048bc115a80bfa1fbb7b6160d9f3363c2f9cd3e2a9a95e24cc96f734",
    "event_id": "2026-10-08|scores_biggest_plays_rule|registered|f1e8875d",
-   "family": "Other",
+   "family": "Scores / Standings",
    "label": "Scores Biggest Plays Rule",
    "served": true,
    "default_view": false
@@ -39046,9 +40258,9 @@
    },
    "content_hash": "bd518ffe10406a0c3737b1120dfed3e810d495cdf73fae18f0fdbb63bb66547b",
    "event_id": "2026-10-08|prospect_anchor|registered|bd518ffe",
-   "family": "Other",
+   "family": "Development",
    "label": "Prospect Anchor",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -39541,7 +40753,7 @@
     "after": "provisional",
     "before": null
    },
-   "family": "Other",
+   "family": "Hall of Fame",
    "label": "Awards Selection",
    "served": true,
    "default_view": false
@@ -40112,9 +41324,9 @@
    },
    "content_hash": "46e37fd1c48624dd3d68cd63feb1b6c8eba4440215748ec3159e8c2c56394a17",
    "event_id": "2026-10-08|cots_deferral_check|registered|46e37fd1",
-   "family": "Other",
+   "family": "Development",
    "label": "Cots Deferral Check",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -40179,7 +41391,7 @@
    },
    "content_hash": "cd6073da622fca1be4d38131ecc4ad9f2e70072cd99c9c82ef152ccc012f4f1f",
    "event_id": "2026-10-08|awards_selection|removed|cd6073da",
-   "family": "Other",
+   "family": "Hall of Fame",
    "label": "Awards Selection",
    "served": true,
    "default_view": false
@@ -40354,9 +41566,9 @@
    },
    "content_hash": "c7d86033f570f5b053883c6623759692f35d32f00343d67110ebd68968411828",
    "event_id": "2026-10-09|proj_component_stack|registered|c7d86033",
-   "family": "Other",
+   "family": "Development",
    "label": "Proj Component Stack",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -40527,9 +41739,9 @@
    },
    "content_hash": "bed899fce0e107e56d8cff44285b22856d3aed54f8bbcef61abe62e300beb909",
    "event_id": "2026-10-09|aging_v3|registered|bed899fc",
-   "family": "Other",
+   "family": "Development",
    "label": "Aging V3",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -40562,9 +41774,9 @@
    },
    "content_hash": "4ffcae2b5acee0804d8350ca9b0331c81b9d56c37e800764aa0bbebf4e91236f",
    "event_id": "2026-10-09|aging_v3_prospect_shape|registered|4ffcae2b",
-   "family": "Other",
+   "family": "Development",
    "label": "Aging V3 Prospect Shape",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -40597,9 +41809,9 @@
    },
    "content_hash": "b463933eaf9fa0fa2d20f39b84f2476e2a961526d8953544dd8bc9c39310ea67",
    "event_id": "2026-10-09|aging_v3_health|registered|b463933e",
-   "family": "Other",
+   "family": "Development",
    "label": "Aging V3 Health",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -40667,7 +41879,7 @@
    },
    "content_hash": "16bf8c7e8ccfe440080a63c187c1c685f31eaa6cf385e09032ff6b9873235e1f",
    "event_id": "2026-10-09|awards_selection|registered|16bf8c7e",
-   "family": "Other",
+   "family": "Hall of Fame",
    "label": "Awards Selection",
    "served": true,
    "default_view": false
@@ -40772,7 +41984,7 @@
    },
    "content_hash": "70b1a0e600f02bb0a2c95ec1c97a470520082e985ac668035648bbf7a3d6176b",
    "event_id": "2026-10-09|team_run_projection|registered|70b1a0e6",
-   "family": "Other",
+   "family": "MLB Projections",
    "label": "Team Run Projection",
    "served": true,
    "default_view": false
@@ -40903,9 +42115,9 @@
    },
    "content_hash": "810050a63c0f5aeb7e506020806ff33f8c867dd721ce10c6f4c5b7d7974fe28f",
    "event_id": "2026-10-14|game_intensity_effects|registered|810050a6",
-   "family": "Other",
+   "family": "Development",
    "label": "Game Intensity Effects",
-   "served": true,
+   "served": false,
    "default_view": false
   },
   {
@@ -41035,6 +42247,2710 @@
    "label": "eFV v1",
    "served": true,
    "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "bat_tracking_hitters",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict deprecated to provisional",
+   "verdict": {
+    "before": "deprecated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/bat_tracking_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "06e4e43abf84375685185cc2f2b0d87516cabffb43e379d416c5d91c55df1b15",
+   "event_id": "2026-10-22|bat_tracking_hitters|verdict|06e4e43a",
+   "family": "Development",
+   "label": "Bat Tracking Hitters",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "btblend_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/bat_tracking_served_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "aa0b2930a094c52d4310cf655feadd02e6fd79e5faf4888c1aeeb3a0140fb4ef",
+   "event_id": "2026-10-22|btblend_plus|registered|aa0b2930",
+   "family": "MLB Stats",
+   "label": "Btblend+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "bat_tracking_nov_a",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as deprecated",
+   "verdict": {
+    "before": null,
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": "data/bat_tracking_nov_a_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "b1dae37c00d9da31db994df5da556b0aabf87e5011bf9c83707e24cc628246f8",
+   "event_id": "2026-10-22|bat_tracking_nov_a|registered|b1dae37c",
+   "family": "Development",
+   "label": "Bat Tracking Nov a",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_v3",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ewar_v3.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "ed440208994b82c48a2f5d6cab77fdc41a9cb4c3da4731e728ed01f56747a803",
+   "event_id": "2026-10-22|ewar_v3|registered|ed440208",
+   "family": "eWAR",
+   "label": "eWAR V3",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_v3_realized",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ewar_v3.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "44d2a0dc2a9e614850ca494e15bdb3dc2dcfe91ea4ebb620207ec513eefdc85b",
+   "event_id": "2026-10-22|ewar_v3_realized|registered|44d2a0dc",
+   "family": "eWAR",
+   "label": "eWAR V3 Realized",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_history",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ewar_history.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "084c7af6bdada9275de867e06bca92c9cb18ee460c183dc028b5a0873a208985",
+   "event_id": "2026-10-22|ewar_history|registered|084c7af6",
+   "family": "eWAR",
+   "label": "eWAR History",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_core_label",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "docs/efv-2026-10-22/ewar_core_label_guard.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "bf4de8b3e9224bb203b8edc6a8732089c3e7a432f097989f720c21fb89487908",
+   "event_id": "2026-10-22|ewar_core_label|registered|bf4de8b3",
+   "family": "eWAR",
+   "label": "eWAR Core Label",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_headline_label",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "docs/efv-2026-10-22/ewar_headline_label_guard.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "ade929657cc9f6bb72d90f253f7fde6d3fc589bccf95f69322aa533477b30d5a",
+   "event_id": "2026-10-22|ewar_headline_label|registered|ade92965",
+   "family": "eWAR",
+   "label": "eWAR Headline Label",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "swar_bat",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/swar_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "0eb9c89b5a8f18e50b42b0f1158878a5e2d3fa22d707ec64845179e898df16af",
+   "event_id": "2026-10-22|swar_bat|registered|0eb9c89b",
+   "family": "Development",
+   "label": "Swar Bat",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "swar_pit",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/swar_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4c685f5c56b0dd80e00f3c75a61865eaeb0c6d7e3ec503b0faea6691724f5e72",
+   "event_id": "2026-10-22|swar_pit|registered|4c685f5c",
+   "family": "Development",
+   "label": "Swar Pit",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "swar_fld",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/swar_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4419cfbce574de18d5071944a652600502d50561b540933cc9dc40d57e5c27d4",
+   "event_id": "2026-10-22|swar_fld|registered|4419cfbc",
+   "family": "Development",
+   "label": "Swar Fld",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "swar_pos",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/swar_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "569dbb37cfc623ce77c08db56e36354b9c3b33840a95a5ba4a32de4149d1387b",
+   "event_id": "2026-10-22|swar_pos|registered|569dbb37",
+   "family": "Development",
+   "label": "Swar Pos",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ewar_v3_valuation_input",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "ede4c51e5fffb2b2de5f268f68a52bb3091f29605fd0bd7039091194418c9a82",
+   "event_id": "2026-10-22|ewar_v3_valuation_input|registered|ede4c51e",
+   "family": "eWAR",
+   "label": "eWAR V3 Valuation Input",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "fwdhem_plus",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/hem_xwoba_regate_eval.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "Savant xwOBA alone",
+      "model": 0.461,
+      "benchmark": 0.454,
+      "n": 1871,
+      "ci95": [
+       -0.001,
+       0.016
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "artifact": {
+    "before": "data/xhem_served_regate_eval.json",
+    "after": "data/hem_xwoba_regate_eval.json"
+   },
+   "content_hash": "cfe503f238c816974c2e3280da03c50ff838c386286a6560e43e43f0f7de3ee9",
+   "event_id": "2026-10-22|fwdhem_plus|artifact_change|cfe503f2",
+   "family": "MLB Stats",
+   "label": "fwdHEM+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "fwdhem_plus",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "Spearman",
+    "better": "higher",
+    "before": 0.461,
+    "after": 0.459,
+    "improvement": null,
+    "n_before": 1871,
+    "n": 2134,
+    "same_rows": false,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "Savant xwOBA alone",
+    "value": 0.454
+   },
+   "edge": {
+    "state": "tie",
+    "text": "Result (Spearman): tie (+0.005)",
+    "delta": 0.005,
+    "ci95": [
+     -0.003,
+     0.013
+    ],
+    "mde95": null,
+    "t": null,
+    "resolvable": false
+   },
+   "legs": [
+    {
+     "stat": "Spearman",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.459,
+     "benchmark_label": "Savant xwOBA alone",
+     "benchmark": 0.454,
+     "n": 2134,
+     "delta": 0.005,
+     "ci95": [
+      -0.003,
+      0.013
+     ],
+     "mde95": null,
+     "t": null,
+     "resolvable": false,
+     "digits": 3,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman): tie (+0.005)",
+     "keys": {
+      "model": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_primary",
+      "benchmark": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_baseline",
+      "n": "n_forward_pairs.A2",
+      "ci95": [
+       "arms.A2_fwdhem_plus.ladder.D4.v1.gap_ci.lo95",
+       "arms.A2_fwdhem_plus.ladder.D4.v1.gap_ci.hi95"
+      ],
+      "resolvable": "arms.A2_fwdhem_plus.ladder.D4.v1.lo95_gt_0"
+     },
+     "before": 0.461,
+     "n_before": 1871,
+     "same_rows": false,
+     "improvement": null
+    }
+   ],
+   "source": {
+    "path": "data/hem_xwoba_regate_eval.json",
+    "commit": "192028b5",
+    "sha256": "4393b3d4e4dafda50456a67c0e98f0ca894c06d00d1940459d8ce964ee4f0425",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/hem_xwoba_regate_eval.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "Savant xwOBA alone",
+      "model": 0.459,
+      "benchmark": 0.454,
+      "n": 2134,
+      "ci95": [
+       -0.003,
+       0.013
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "6ce46ecd577509088e246248d80b1b132a746dc5b894b4d2c82c0f838dd088b1",
+   "event_id": "2026-10-22|fwdhem_plus|rescored|6ce46ecd",
+   "family": "MLB Stats",
+   "label": "fwdHEM+",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "hem_plus",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict validated to deprecated",
+   "verdict": {
+    "before": "validated",
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": "data/hem_plus_eval.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "AVG",
+      "model": 0.412,
+      "benchmark": 0.235,
+      "n": 3372,
+      "ci95": [
+       0.145,
+       0.209
+      ],
+      "t": null,
+      "mde95": null
+     },
+     {
+      "stat": "Spearman",
+      "benchmark_label": "raw wOBA (the parent its gate names)",
+      "model": 0.412,
+      "benchmark": 0.409,
+      "n": 3372,
+      "ci95": [
+       -0.01,
+       0.017
+      ],
+      "t": null,
+      "mde95": null
+     },
+     {
+      "stat": "Spearman",
+      "benchmark_label": "OPS (the strongest parent in its eval)",
+      "model": 0.412,
+      "benchmark": 0.411,
+      "n": 3372,
+      "ci95": [
+       -0.013,
+       0.016
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "18943981e362ed0ed688acacdd7609a0eb741e26b2be8db0b9ae4c7ec8b1e1c2",
+   "event_id": "2026-10-22|hem_plus|verdict|18943981",
+   "family": "MLB Stats",
+   "label": "HEM+",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "mlb_projections_prospects_statline",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/prospect_statline_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "615ab54e7131ef594a83f90f5e3c3f5d8bdb4e52da416a2910aeff46c93fdd32",
+   "event_id": "2026-10-22|mlb_projections_prospects_statline|registered|615ab54e",
+   "family": "MLB Projections",
+   "label": "MLB Projections Prospects Statline",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "positional_ladder_v2",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/positional_ladder_v2_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "dacc8afb9f4742b091b2d66a7fa7db767df7b406badc6e053e917552c4b95da3",
+   "event_id": "2026-10-22|positional_ladder_v2|registered|dacc8afb",
+   "family": "Alchemy Lab",
+   "label": "Positional Ladder V2",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "positional_ladder_v3",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/positional_ladder_v3_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "ede97e41ca57099bc74bb3a8cdfe0f80a1e0cd04b9e354fafb46d8226e4d05f0",
+   "event_id": "2026-10-22|positional_ladder_v3|registered|ede97e41",
+   "family": "Alchemy Lab",
+   "label": "Positional Ladder V3",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "proj_components",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to provisional",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "60ff6c271ae9c0e790d14e14d275f7ffd1d63c03c73ddf8be9d344a2939241d8",
+   "event_id": "2026-10-22|proj_components|verdict|60ff6c27",
+   "family": "MLB Projections",
+   "label": "Proj Components",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "proj_components",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/proj_components_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/proj_components_eval.json"
+   },
+   "content_hash": "9b32bf292f0c2674e5c3ed18a44cfb7bf922fc9b0048a87ab44606b30073884f",
+   "event_id": "2026-10-22|proj_components|artifact_change|9b32bf29",
+   "family": "MLB Projections",
+   "label": "Proj Components",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "pwoba_blend_regate",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict deprecated to validated",
+   "verdict": {
+    "before": "deprecated",
+    "after": "validated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/pwoba_blend_regate_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "5842850f3975f15d1b356c71cbcb6a3e950a7f334321ac18c15596f131f46eea",
+   "event_id": "2026-10-22|pwoba_blend_regate|verdict|5842850f",
+   "family": "Sources and Consensus",
+   "label": "Pwoba Blend Regate",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "statcast_catcher_runs",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/statcast_catcher_runs.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "d85ab5c4b4c0373f748ed15d29e3f69d21360c3d2eb9ed008e5e04aa83b1d448",
+   "event_id": "2026-10-22|statcast_catcher_runs|registered|d85ab5c4",
+   "family": "MLB Stats",
+   "label": "Statcast Catcher Runs",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "tool_implied_production",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/tool_accuracy_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "647d8888139018b70b80cae1da432dc454f602b71adda6fab27a051b7112ab2f",
+   "event_id": "2026-10-22|tool_implied_production|registered|647d8888",
+   "family": "PROSPX and eFV",
+   "label": "Tool Implied Production",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "tool_source_accuracy",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/tool_accuracy_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "8abbb83ece509eace73dc0e69dc4020d605ea5e40e3bb5b9287160f9ce07115d",
+   "event_id": "2026-10-22|tool_source_accuracy|registered|8abbb83e",
+   "family": "Sources and Consensus",
+   "label": "Tool Source Accuracy",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "power_composite_v2",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/power_composite_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "74d7d42872761e6cdeddbe58d258a1597f9b7eac7b7935cd44ec5f9c420f0b52",
+   "event_id": "2026-10-22|power_composite_v2|registered|74d7d428",
+   "family": "Development",
+   "label": "Power Composite V2",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "tool_tables_rederived",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/tool_tables_rederived_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "7f399830d657fe357cf756f28cf60554d69b0c6f87cfd9e2fc906dd93d51ae7d",
+   "event_id": "2026-10-22|tool_tables_rederived|registered|7f399830",
+   "family": "PROSPX and eFV",
+   "label": "Tool Tables Rederived",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_ehit",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4aa73200f297b3d26cbf1232072540aeb68b27bafe829feb6db6755237bb9f4d",
+   "event_id": "2026-10-22|etool_ehit|registered|4aa73200",
+   "family": "Alchemy Lab",
+   "label": "Etool Ehit",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_epow",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "c7097400e252d74a1c1bf97a4f3237fde6e1f09a0836e2309966be5b34b7a764",
+   "event_id": "2026-10-22|etool_epow|registered|c7097400",
+   "family": "Alchemy Lab",
+   "label": "Etool Epow",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_esel",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "9595e0d3adaf89866848083ba26eaecd27ca0f80daa274a53c68962b6546f803",
+   "event_id": "2026-10-22|etool_esel|registered|9595e0d3",
+   "family": "Alchemy Lab",
+   "label": "Etool Esel",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_ebat",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "78151b9d79797a5e0656634a8cc4fd4076dfa2a4e490e3791cab4946f61b5315",
+   "event_id": "2026-10-22|etool_ebat|registered|78151b9d",
+   "family": "Alchemy Lab",
+   "label": "Etool Ebat",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_efb",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "0da0e5d58f3ac72fc0036ce386415e8cc68cfce3342ff691e6c5bdc8ff838fc4",
+   "event_id": "2026-10-22|etool_efb|registered|0da0e5d5",
+   "family": "Alchemy Lab",
+   "label": "Etool Efb",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_ecmd",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "685aaabc601432516bb8c768bd82f23d602babd77222a5989d8250bf0ec72648",
+   "event_id": "2026-10-22|etool_ecmd|registered|685aaabc",
+   "family": "Alchemy Lab",
+   "label": "Etool Ecmd",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etool_composite",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "99ce473d09e94f91367da28d224e21bedde428e0fdf391b208e02a528f40196a",
+   "event_id": "2026-10-22|etool_composite|registered|99ce473d",
+   "family": "PROSPX and eFV",
+   "label": "Etool Composite",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "etools_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/etools_plus.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "003232a41d5644cb2f65c04ecacecce3d39995f37f4b473364dd88b8fa364ab8",
+   "event_id": "2026-10-22|etools_plus|registered|003232a4",
+   "family": "PROSPX and eFV",
+   "label": "Etools+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "scouting_reference",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/reference/fv_framework_tables.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "001016da568581fd476c99a5abdac8fa7e32e9eea93e05e2ac26f33281fc028b",
+   "event_id": "2026-10-22|scouting_reference|registered|001016da",
+   "family": "Other",
+   "label": "Scouting Reference",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "xhem_plus",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/hem_xwoba_regate_eval.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "actual wOBA",
+      "model": 0.462,
+      "benchmark": 0.411,
+      "n": 1871,
+      "ci95": [
+       0.024,
+       0.077
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "artifact": {
+    "before": "data/xhem_served_regate_eval.json",
+    "after": "data/hem_xwoba_regate_eval.json"
+   },
+   "content_hash": "42165e7674b94d630010224ee4d29d058cdce3b9449ca2099d1f5eadd4f81cd7",
+   "event_id": "2026-10-22|xhem_plus|artifact_change|42165e76",
+   "family": "MLB Stats",
+   "label": "xHEM+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "xhem_plus",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "Spearman",
+    "better": "higher",
+    "before": 0.462,
+    "after": 0.46,
+    "improvement": null,
+    "n_before": 1871,
+    "n": 2134,
+    "same_rows": false,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "actual wOBA",
+    "value": 0.408
+   },
+   "edge": {
+    "state": "lead",
+    "text": "Result (Spearman): +0.053 lead",
+    "delta": 0.053,
+    "ci95": [
+     0.028,
+     0.078
+    ],
+    "mde95": null,
+    "t": null,
+    "resolvable": true
+   },
+   "legs": [
+    {
+     "stat": "Spearman",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.46,
+     "benchmark_label": "actual wOBA",
+     "benchmark": 0.408,
+     "n": 2134,
+     "delta": 0.053,
+     "ci95": [
+      0.028,
+      0.078
+     ],
+     "mde95": null,
+     "t": null,
+     "resolvable": true,
+     "digits": 3,
+     "edge_state": "lead",
+     "edge_text": "Result (Spearman): +0.053 lead",
+     "keys": {
+      "model": "arms.A1_xhem_plus.ladder.D4.v1.rho_primary",
+      "benchmark": "arms.A1_xhem_plus.ladder.D4.v1.rho_baseline",
+      "n": "n_forward_pairs.A1",
+      "ci95": [
+       "arms.A1_xhem_plus.ladder.D4.v1.gap_ci.lo95",
+       "arms.A1_xhem_plus.ladder.D4.v1.gap_ci.hi95"
+      ],
+      "resolvable": "arms.A1_xhem_plus.ladder.D4.v1.lo95_gt_0"
+     },
+     "before": 0.462,
+     "n_before": 1871,
+     "same_rows": false,
+     "improvement": null
+    }
+   ],
+   "source": {
+    "path": "data/hem_xwoba_regate_eval.json",
+    "commit": "192028b5",
+    "sha256": "4393b3d4e4dafda50456a67c0e98f0ca894c06d00d1940459d8ce964ee4f0425",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/hem_xwoba_regate_eval.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "actual wOBA",
+      "model": 0.46,
+      "benchmark": 0.408,
+      "n": 2134,
+      "ci95": [
+       0.028,
+       0.078
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "31457f40227389cba054ca8faf917897894999d8b7ceca9757d992bb1676f81d",
+   "event_id": "2026-10-22|xhem_plus|rescored|31457f40",
+   "family": "MLB Stats",
+   "label": "xHEM+",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "fielding_triangulation",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/fielding_triangulation_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "8e8bf47b26f30c2a98ea627b3f5d3db77d5bb981b2cdb4a5374d4c9b9ffd266b",
+   "event_id": "2026-10-22|fielding_triangulation|registered|8e8bf47b",
+   "family": "Development",
+   "label": "Fielding Triangulation",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "aging_v3",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to deprecated",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "45b3579219081bfe44ec15bf980d7aee9e59bf6ed90aa54fb584ae2426655954",
+   "event_id": "2026-10-22|aging_v3|verdict|45b35792",
+   "family": "Development",
+   "label": "Aging V3",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "aging_v3",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": "data/aging_v3_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/aging_v3_eval.json"
+   },
+   "content_hash": "f57e8d77810064b38ca617f68435092cb1762d4bb9b8604ed6657a1df2b35b96",
+   "event_id": "2026-10-22|aging_v3|artifact_change|f57e8d77",
+   "family": "Development",
+   "label": "Aging V3",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "aging_v3_prospect_shape",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to deprecated",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "45925b627324f4955cf7066cb2807e72dc6ad7a888cf70392bb42e80506d3780",
+   "event_id": "2026-10-22|aging_v3_prospect_shape|verdict|45925b62",
+   "family": "Development",
+   "label": "Aging V3 Prospect Shape",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "aging_v3_prospect_shape",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": "data/aging_v3_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/aging_v3_eval.json"
+   },
+   "content_hash": "7def5c7c5e7e67063d41249f614e73cfdf5c0c73bbe14094c06faa193ba09ab1",
+   "event_id": "2026-10-22|aging_v3_prospect_shape|artifact_change|7def5c7c",
+   "family": "Development",
+   "label": "Aging V3 Prospect Shape",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "count_value",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/count_value.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "771abf4c6f719e873d69b27859e05415650b1e67df7e87ed3d1f36487c2cc501",
+   "event_id": "2026-10-22|count_value|registered|771abf4c",
+   "family": "Development",
+   "label": "Count Value",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "eabs",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/eabs_leaderboards.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4513bcd9a0c954e6a33988bcabcd9523c21ebbbfae2f70a46fc47e3d8e6416d8",
+   "event_id": "2026-10-22|eabs|registered|4513bcd9",
+   "family": "MLB Stats",
+   "label": "Eabs",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "rpw_fit",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/rpw_fit.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "a3c84a1f76f50dcbe9995685cf728ca41b7f6cbe4a8a14e021d550663b7e5d99",
+   "event_id": "2026-10-22|rpw_fit|registered|a3c84a1f",
+   "family": "Development",
+   "label": "Rpw Fit",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "steal_runner_split",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to deprecated",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4ca9f93bd90757c0c6fd3603ca3bf6f397f50514e73795f115990971337e76af",
+   "event_id": "2026-10-22|steal_runner_split|verdict|4ca9f93b",
+   "family": "Management",
+   "label": "Steal Runner Split",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "steal_runner_split",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": "data/steal_runner_split_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/steal_runner_split_eval.json"
+   },
+   "content_hash": "195df738ec9b1d2e707952f5093e5069f6a09302abb7ca87abc49bf382e53382",
+   "event_id": "2026-10-22|steal_runner_split|artifact_change|195df738",
+   "family": "Management",
+   "label": "Steal Runner Split",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "awards_realized_read",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/awards_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "e2a17873c0ab46cf7d0903f4a6fd014526730b348382e916a44814ec60d2d6e6",
+   "event_id": "2026-10-22|awards_realized_read|registered|e2a17873",
+   "family": "Hall of Fame",
+   "label": "Awards Realized Read",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "franchise_index",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to deprecated",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "deprecated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "deprecated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "2739584e26a0d93a536ab4a8df5713e94c77f820e7822d6deb6de9b472cec56c",
+   "event_id": "2026-10-22|franchise_index|verdict|2739584e",
+   "family": "Franchise",
+   "label": "Franchise Index",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "franchise_score",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "5ad0fc07b8637b4ad77312dfaf2256230bfae3542e66a7ba10ff87974c9dc366",
+   "event_id": "2026-10-22|franchise_score|registered|5ad0fc07",
+   "family": "Franchise",
+   "label": "Franchise Score",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "fa_destination",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to validated",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "validated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "a1922d1907f446356f507db60d8cf2741bc0f8c89ed43e4f830d988c7e9ea7a2",
+   "event_id": "2026-10-22|fa_destination|verdict|a1922d19",
+   "family": "Free Agency",
+   "label": "FA Destination",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "fa_destination",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/fa_destination_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/fa_destination_eval.json"
+   },
+   "content_hash": "714891db57408812cb24628754f13451907a1bce72f7e1b55095d78e23bd5930",
+   "event_id": "2026-10-22|fa_destination|artifact_change|714891db",
+   "family": "Free Agency",
+   "label": "FA Destination",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "prospect_anchor",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to provisional",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "369668a17fad1581a0a7ee434826ae6771104b7609ba093031a140ad9bcdcf71",
+   "event_id": "2026-10-22|prospect_anchor|verdict|369668a1",
+   "family": "Development",
+   "label": "Prospect Anchor",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "prospect_anchor",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/prospect_anchor_gate.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/prospect_anchor_gate.json"
+   },
+   "content_hash": "949d2da535f72a66de37e0896f5de0764e132e709472fe38b233598fa54905b0",
+   "event_id": "2026-10-22|prospect_anchor|artifact_change|949d2da5",
+   "family": "Development",
+   "label": "Prospect Anchor",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "starter_workload_xouts",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to provisional",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "2aecd9bd9d60a885c40d1301a340c7c12ea0b044d56ce9a18da3d758a3d4c3b6",
+   "event_id": "2026-10-22|starter_workload_xouts|verdict|2aecd9bd",
+   "family": "MLB Stats",
+   "label": "Starter Workload Xouts",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "starter_workload_xouts",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/starter_workload_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/starter_workload_eval.json"
+   },
+   "content_hash": "5fc0619c184b24edae2f20b03db69eeb271b934052c560af8783cc5df4b6c741",
+   "event_id": "2026-10-22|starter_workload_xouts|artifact_change|5fc0619c",
+   "family": "MLB Stats",
+   "label": "Starter Workload Xouts",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "team_win_distribution",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to provisional",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "f42bd6b921d18a93473d985fde042c5710a3751c4f43600f321decd7e27550f1",
+   "event_id": "2026-10-22|team_win_distribution|verdict|f42bd6b9",
+   "family": "Betting",
+   "label": "Team Win Distribution",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "team_win_distribution",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/team_outlook_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/team_outlook_eval.json"
+   },
+   "content_hash": "c9c3571a25617c8f1e9fdf62d6a15449f61ff45737fa3a9b96dd3ffc1801b604",
+   "event_id": "2026-10-22|team_win_distribution|artifact_change|c9c3571a",
+   "family": "Betting",
+   "label": "Team Win Distribution",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "team_run_projection",
+   "kind": "verdict",
+   "layer": "headline",
+   "change": "verdict unvalidated to provisional",
+   "verdict": {
+    "before": "unvalidated",
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "259fcaedd29818b07bbf22d31b5a6691ff0a5b552a6ac03b80a6d6c10dc10b08",
+   "event_id": "2026-10-22|team_run_projection|verdict|259fcaed",
+   "family": "MLB Projections",
+   "label": "Team Run Projection",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "team_run_projection",
+   "kind": "artifact_change",
+   "layer": "registration",
+   "change": "eval artifact changed",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/team_outlook_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "artifact": {
+    "before": null,
+    "after": "data/team_outlook_eval.json"
+   },
+   "content_hash": "202921b755cf4db960651fb30cb1574138464a4cdb0ac89e29698c05a01ddeec",
+   "event_id": "2026-10-22|team_run_projection|artifact_change|202921b7",
+   "family": "MLB Projections",
+   "label": "Team Run Projection",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "par",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "c35e301c8bdbec0bd8d51027e5eb9b7ede92076cd94b77757d89928dfb0583cc",
+   "event_id": "2026-10-22|par|registered|c35e301c",
+   "family": "MLB Stats",
+   "label": "Par",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "dvm_difficulty",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/dvm_difficulty_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "4467c99350beae0d16bb8d2f14e22c364087e9294c9c667179e45bab88f3e48b",
+   "event_id": "2026-10-22|dvm_difficulty|registered|4467c993",
+   "family": "Development",
+   "label": "Dvm Difficulty",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "milb_fielding_runs",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/milb_fielding_runs_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "65d1b0cd175733c866a08d6cf6a02cc9acd5245483d46bf743c4606ef6e0a663",
+   "event_id": "2026-10-22|milb_fielding_runs|registered|65d1b0cd",
+   "family": "PROSPX and eFV",
+   "label": "Milb Fielding Runs",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "pbp_runner_moves",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": ".cache/pbp_runners/manifest.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "17cd512f3bc83cfbeb570726d86aa9856b2521555ef50b75551e8ebc74fa8714",
+   "event_id": "2026-10-22|pbp_runner_moves|registered|17cd512f",
+   "family": "Development",
+   "label": "Pbp Runner Moves",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ebr",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ebr_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "ad8fe0faf371882739875a03201bd6468e6fd4a4af185d169bafb53f00f92913",
+   "event_id": "2026-10-22|ebr|registered|ad8fe0fa",
+   "family": "MLB Stats",
+   "label": "Ebr",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "team_ebr",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ebr_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "449ba64666bb434c205e4796247f0908e10e38ae2c2b03df40a934bda02d429f",
+   "event_id": "2026-10-22|team_ebr|registered|449ba646",
+   "family": "MLB Stats",
+   "label": "Team Ebr",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "bem_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ebr_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "5dc969524737105511bb12e1aefe42f2d16ab73284d4a273cda3abd8b13bcc24",
+   "event_id": "2026-10-22|bem_plus|registered|5dc96952",
+   "family": "Development",
+   "label": "Bem+",
+   "served": false,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "ebr_milb",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/ebr_milb_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "1e9a900e168b6744eeaa56340152a7167ca87627797da021bb84f08e99280a23",
+   "event_id": "2026-10-22|ebr_milb|registered|1e9a900e",
+   "family": "PROSPX and eFV",
+   "label": "Ebr Milb",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "league_trends",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/league_trends_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "b0bfa443febb5aff773cf387626b9c40aeab6f7cdc04263cf75d16d1e725a026",
+   "event_id": "2026-10-22|league_trends|registered|b0bfa443",
+   "family": "MLB Stats",
+   "label": "League Trends",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-22",
+   "sort_date": "2026-10-22",
+   "model_id": "xm",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "192028b5"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/xm_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "1a3fe882f22f249f1123d5b7c79d8f5d8f73d8f6e1451c13a1f4c329e48e0b4f",
+   "event_id": "2026-10-22|xm|registered|1a3fe882",
+   "family": "Arbitration",
+   "label": "Xm",
+   "served": true,
+   "default_view": false
   }
  ],
  "backfill": {

@@ -71,7 +71,14 @@ PROVISIONAL_KINDS = ("shipped_partial_measurement", "measured_not_adopted",
 # incapable of firing and the freshness map reported "nothing is stale" as a
 # tautology rather than a finding. 90 days is roughly one quarter, which is
 # the cadence at which a live-surface eval genuinely wants re-running.
-STALE_DAYS = 90
+#
+# RAISED 90 -> 120 on 2026-10-22 (PORT_RED_TESTS_TRIAGE). The oldest dated
+# artifact in the tree reached 114 days (rem_plus, a descriptive index with no
+# live gate), so at 90 the bar fired on a healthy tree, which the decision doc
+# forbids (test_stale_threshold_is_reachable: above the oldest, within three
+# times it). 120 is the first round value above it and still one season's
+# cadence; docs/decision-2026-08-07-freshness-bar.md carries the dated note.
+STALE_DAYS = 120
 
 
 def load() -> dict:

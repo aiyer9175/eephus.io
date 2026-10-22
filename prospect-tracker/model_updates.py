@@ -99,12 +99,20 @@ RULE = ("append-only; an event is added when a model's registry state, its card 
 FAMILIES = ("PROSPX and eFV", "Sources and Consensus", "MLB Projections",
             "Free Agency", "Arbitration", "MLB Stats", "Betting", "eWAR",
             "Alchemy Lab", "Draft", "Trade Machine", "Fantasy", "Hall of Fame",
-            "CollegeSavant", "Management", "Franchise", "Other", "Development")
+            "CollegeSavant", "Management", "Franchise", "Scores / Standings", "Other",
+            "Development")
 DEVELOPMENT = "Development"
 #: Rows the glossary files under "Internal / model-dev": tested first, so a
 #: development artifact that mentions a product page stays out of it.
 DEV_MARKERS = ("model-dev", "rendered nowhere", "loss ledger", "not wired", "n/a",
                "internal")
+#: Tested only on a row no route claims (PORT_RED_TESTS_TRIAGE, 2026-10-22): a
+#: surface that says the row serves nothing is a development row, not "Other".
+#: Tested after the routes so a product row that mentions its dark twin stays
+#: with its module.
+UNSERVED_MARKERS = ("none served", "no surface", "not served", "no served page",
+                    "no page reads it", "no page prints it", "nothing served",
+                    "diagnostic only", "in the local cache", "dark twin", "ingest only")
 #: (where to look, needles, family), tested in order on the lowercased text.
 #: "start" is the start of the model_id, "id" anywhere in it, "any" anywhere in
 #: the surface text plus the model_id.
@@ -115,7 +123,8 @@ ROUTES = (
     ("any", ("/betting/", "betting_"), "Betting"),
     ("any", ("/arbitration/", "arb_", "arbitration"), "Arbitration"),
     ("any", ("/pal/", "alchemy lab", "pal_", "_pal"), "Alchemy Lab"),
-    ("any", ("/hof/", "hof_", "hall of fame"), "Hall of Fame"),
+    ("any", ("/hof/", "hof_", "hall of fame", "/awards/", "awards_"), "Hall of Fame"),
+    ("any", ("/scores/", "scores_"), "Scores / Standings"),
     ("any", ("/fantasy/", "fantasy_", "dfs_"), "Fantasy"),
     ("any", ("/trademachine/", "trade machine", "trademachine"), "Trade Machine"),
     ("any", ("collegesavant", "college_"), "CollegeSavant"),
@@ -147,6 +156,8 @@ def family(m: dict) -> str:
             hit = any(n in hay for n in needles)
         if hit:
             return fam
+    if any(k in text for k in UNSERVED_MARKERS):
+        return DEVELOPMENT
     return "Other"
 
 

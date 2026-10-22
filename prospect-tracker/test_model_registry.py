@@ -78,7 +78,12 @@ def _served_eval_artifacts() -> dict:
         if isinstance(obj, dict):
             for k, v in obj.items():
                 if k == "eval_artifact" and isinstance(v, str) and v.strip():
-                    found.setdefault(v.strip(), []).append(name)
+                    # a row once cited two artifacts joined by " + " (the eWAR
+                    # label epoch at d73c9eb7); the Model Updates history keeps
+                    # that state, and each path is checked on its own
+                    for part in v.split(" + "):
+                        if part.strip():
+                            found.setdefault(part.strip(), []).append(name)
                 else:
                     walk(v, name)
         elif isinstance(obj, list):

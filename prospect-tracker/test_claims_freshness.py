@@ -318,17 +318,12 @@ GLOSSARY_CLAIMS = (
      "data/milb_translation.json", ("validation", "hit_bb", "mae"), "rel", 0.15),
     ("milb_translation", "hit_bb r2", r"BB% MAE [^;(]*?r2 ~?(0\.\d+)",
      "data/milb_translation.json", ("validation", "hit_bb", "r2"), "abs", 0.02),
-    # ewar quotes its gate record (eWAR epoch 2026-09-03). The four numbers
-    # are the basis-decision record: the descriptive loss and the persistence
-    # gain must always be printed together, so both sides of each are pinned.
-    ("ewar", "gate 1 team wins r (eWAR)", r"team wins over 300 team-seasons, r (0\.\d+)",
-     "data/ewar_eval.json", ("gate_1_team_wins", "ewar", "r"), "abs", 0.0005),
-    ("ewar", "gate 1 team wins r (bWAR)", r"team-seasons, r 0\.\d+ against bWAR (0\.\d+)",
-     "data/ewar_eval.json", ("gate_1_team_wins", "bwar", "r"), "abs", 0.0005),
-    ("ewar", "gate 2 persistence (eWAR FIP)", r"\(min 50 IP\), (0\.\d+)",
-     "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_ewar_fip"), "abs", 0.0005),
-    ("ewar", "gate 2 persistence (bWAR RA)", r"\(min 50 IP\), 0\.\d+ against (0\.\d+)",
-     "data/ewar_eval.json", ("gate_2_pitcher_persistence", "self_r_bwar_ra"), "abs", 0.0005),
+    # ewar quoted the eWAR v2 gate record (eWAR epoch 2026-09-03: team wins r and
+    # pitcher persistence, both sides pinned) until the eWAR v3 flip (aff642bd,
+    # 2026-10-21) rewrote the entry on the fWAR base; the v3 copy quotes the ABS
+    # part's own counts and no gate figure, so those four rows retired with the
+    # copy (PORT_RED_TESTS_TRIAGE, 2026-10-22). The v2 record stays in
+    # data/ewar_eval.json on the ewar row's ledger.
     # bust_prob names its training size because the provenance IS the claim
     # (design audit F07): the curve is fitted on the Clemens 2025 published
     # percentage tables, not on our resolved cohorts. Integer counts, so the
