@@ -114,10 +114,21 @@ def test_fit_stores_the_995th_percentile_by_side_and_base_role(fits):
             v = [r[key] for r in corpus[side]
                  if r["season"] <= 2014 and (r.get(key) or 0) > 0
                  and fp._pt_cap_base_role(side, r["role"]) == role]
-            assert cap[side][role] == round(float(np.percentile(v, 99.5)), 1)
+            assert cap[side][role] == pytest.approx(float(np.percentile(v, 99.5)), abs=0)
     # profile-extended roles read their base role's cap
     assert fp.pt_cap_value(curves, "pit", "SP|fin") == cap["pit"]["SP"]
     assert fp.pt_cap_value(curves, "hit", "H|pwr") == cap["hit"]["H"]
+
+
+def test_the_cap_agrees_with_the_aging_v3_comparator_cap(fits):
+    """docs/AGING_V3_GATE.md section 4: the comparator's cap is this one."""
+    import aging_v3 as A
+    corpus, curves, _ = fits
+    caps = A._caps(corpus, 2014)
+    for side in ("hit", "pit"):
+        for role, v in curves["meta"]["pt_cap"][side].items():
+            assert v == caps[f"{side}:{role}"]
+        assert set(curves["meta"]["pt_cap"][side]) == {k.split(":")[1] for k in caps if k.startswith(side)}
 
 
 def test_a_capped_call_on_curves_without_the_cap_raises():
@@ -175,7 +186,7 @@ def test_year1_pt_never_above_the_cap(fits):
             assert off["pt_proj"] > cap
             assert on["pt_proj"] <= cap
             if side == "pit":
-                assert on["ip_proj"] <= round(cap / 4.3, 1)
+                assert on["ip_proj"] <= cap / 4.3
 
 
 def test_flag_off_contract_war_path_matches_the_pre_change_goldens(fits):

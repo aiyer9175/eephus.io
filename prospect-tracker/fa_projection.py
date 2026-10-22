@@ -1093,13 +1093,15 @@ def _pt_cap_base_role(side: str, role: str) -> str:
     base = (role or "").split("|")[0]
     if side == "hit":
         return "C" if base == "C" else "H"
-    return "SP" if base == "SP" else "RP"
+    return "RP" if base == "RP" else "SP"
 
 
 def fit_pt_cap(corpus: dict, max_season: int | None) -> dict:
     """{side: {base role: cap}}: the PT_CAP_PCT percentile of single-season
     exposure (PA for hitters, BF for pitchers) over the corpus rows with
-    season <= max_season and exposure > 0. Computed by the fit, never tuned."""
+    season <= max_season and exposure > 0. Computed by the fit, never tuned;
+    the same definition and value as aging_v3._caps (docs/AGING_V3_GATE.md
+    section 4), unrounded."""
     import numpy as np
     out: dict = {"hit": {}, "pit": {}}
     for side, key in (("hit", "pa"), ("pit", "bf")):
@@ -1110,7 +1112,7 @@ def fit_pt_cap(corpus: dict, max_season: int | None) -> dict:
                 continue
             vals[_pt_cap_base_role(side, r.get("role"))].append(float(e))
         for role, v in sorted(vals.items()):
-            out[side][role] = round(float(np.percentile(v, PT_CAP_PCT)), 1)
+            out[side][role] = float(np.percentile(np.array(v), PT_CAP_PCT))
     return out
 
 
@@ -1800,10 +1802,12 @@ def project_player(history: list[dict], side: str, target_season: int,
                 pt += _adj * 4.3
                 out["ip_proj"] = round(max(0.0, ip + _adj), 1)
     if _pt_cap_on(pt_cap):
+        # pt_proj and ip_proj are stored to 0.1, so the year-1 cap is the
+        # fitted cap rounded DOWN to that precision (never above it).
         _cap = pt_cap_value(curves, side, role)
-        pt = min(pt, _cap)
+        pt = min(pt, math.floor(_cap * 10) / 10)
         if side != "hit" and out.get("ip_proj") is not None:
-            out["ip_proj"] = min(out["ip_proj"], round(_cap / 4.3, 1))
+            out["ip_proj"] = min(out["ip_proj"], math.floor(_cap / 4.3 * 10) / 10)
     out["pt_proj"] = max(0.0, round(pt, 1))
     # P-IPAGE (2026-07-24 projections lane): PITCHER PT AGING NEVER REACHED WAR.
     # ip_proj was stamped ABOVE the `pt += curve_delta(...,"pt",age)` line, so the
