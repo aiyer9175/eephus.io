@@ -1,0 +1,411 @@
+{
+ "item": "xm",
+ "dry_run": false,
+ "generated": "2026-10-22T05:12:48Z",
+ "frame": {
+  "class_years_built": [
+   2015,
+   2024
+  ],
+  "winters": [
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "n_enriched": 1222
+ },
+ "planted": {
+  "P1": {
+   "pass": true,
+   "surv_over_oracle": 1.0475,
+   "score": {
+    "n": 893,
+    "n_players": 569,
+    "mae": {
+     "SURV": 0.542,
+     "N_C": 0.72,
+     "ORACLE": 0.5174
+    },
+    "exact": {
+     "SURV": 0.6405,
+     "N_C": 0.645,
+     "ORACLE": 0.654
+    },
+    "log_mae": {
+     "SURV": 0.2521,
+     "N_C": 0.3475,
+     "ORACLE": 0.2444
+    },
+    "D": {
+     "N_C": {
+      "delta": 0.1781,
+      "lb": 0.12792,
+      "ub": 0.22991,
+      "ci95": [
+       0.11831,
+       0.23937
+      ],
+      "sd": 0.03088,
+      "mde": 0.05079,
+      "p_gt_0": 1.0
+     },
+     "ORACLE": {
+      "delta": -0.0246,
+      "lb": -0.04651,
+      "ub": -0.0043,
+      "ci95": [
+       -0.051,
+       -0.00111
+      ],
+      "sd": 0.0129,
+      "mde": 0.02123,
+      "p_gt_0": 0.017
+     }
+    },
+    "by_winter": {
+     "2018": {
+      "n": 96,
+      "SURV": 0.6667,
+      "N_C": 0.8958,
+      "ORACLE": 0.6354
+     },
+     "2019": {
+      "n": 106,
+      "SURV": 0.5943,
+      "N_C": 0.783,
+      "ORACLE": 0.5566
+     },
+     "2020": {
+      "n": 125,
+      "SURV": 0.624,
+      "N_C": 0.776,
+      "ORACLE": 0.608
+     },
+     "2021": {
+      "n": 147,
+      "SURV": 0.3197,
+      "N_C": 0.3401,
+      "ORACLE": 0.3061
+     },
+     "2022": {
+      "n": 144,
+      "SURV": 0.5347,
+      "N_C": 0.8264,
+      "ORACLE": 0.5278
+     },
+     "2023": {
+      "n": 139,
+      "SURV": 0.7482,
+      "N_C": 1.0144,
+      "ORACLE": 0.6619
+     },
+     "2024": {
+      "n": 136,
+      "SURV": 0.375,
+      "N_C": 0.4926,
+      "ORACLE": 0.3897
+     }
+    }
+   },
+   "truth": {
+    "meanlog": -0.26794,
+    "sdlog": 0.6346,
+    "features": [
+     "age",
+     "w1",
+     "w1sq",
+     "age_w1",
+     "is_SP",
+     "is_RP",
+     "is_C",
+     "qo",
+     "prime",
+     "qo_prime_w1"
+    ]
+   },
+   "dists": {
+    "2018": "gengamma",
+    "2019": "gengamma",
+    "2020": "gengamma",
+    "2021": "gengamma",
+    "2022": "gengamma",
+    "2023": "lnorm",
+    "2024": "gengamma"
+   }
+  },
+  "P2": {
+   "pass": true,
+   "score": {
+    "n": 893,
+    "n_players": 569,
+    "mae": {
+     "SURV": 0.6473,
+     "N_C": 0.6349
+    },
+    "exact": {
+     "SURV": 0.6842,
+     "N_C": 0.6865
+    },
+    "log_mae": {
+     "SURV": 0.3144,
+     "N_C": 0.3109
+    },
+    "D": {
+     "N_C": {
+      "delta": -0.0123,
+      "lb": -0.0346,
+      "ub": 0.0,
+      "ci95": [
+       -0.03708,
+       0.0
+      ],
+      "sd": 0.01133,
+      "mde": 0.01863,
+      "p_gt_0": 0.0
+     }
+    },
+    "by_winter": {
+     "2018": {
+      "n": 96,
+      "SURV": 0.75,
+      "N_C": 0.75
+     },
+     "2019": {
+      "n": 106,
+      "SURV": 0.7358,
+      "N_C": 0.6321
+     },
+     "2020": {
+      "n": 125,
+      "SURV": 0.568,
+      "N_C": 0.568
+     },
+     "2021": {
+      "n": 147,
+      "SURV": 0.3673,
+      "N_C": 0.3673
+     },
+     "2022": {
+      "n": 144,
+      "SURV": 0.7708,
+      "N_C": 0.7708
+     },
+     "2023": {
+      "n": 139,
+      "SURV": 0.9065,
+      "N_C": 0.9065
+     },
+     "2024": {
+      "n": 136,
+      "SURV": 0.4853,
+      "N_C": 0.4853
+     }
+    }
+   },
+   "dists": {
+    "2018": "lnorm",
+    "2019": "gengamma",
+    "2020": "gengamma",
+    "2021": "gengamma",
+    "2022": "gengamma",
+    "2023": "gengamma",
+    "2024": "gengamma"
+   }
+  }
+ },
+ "score": {
+  "n": 893,
+  "n_players": 569,
+  "mae": {
+   "SURV": 0.4815,
+   "INC": 0.477,
+   "N_C": 0.6349,
+   "N_K": 0.5174
+  },
+  "exact": {
+   "SURV": 0.6674,
+   "INC": 0.6741,
+   "N_C": 0.6865,
+   "N_K": 0.6573
+  },
+  "log_mae": {
+   "SURV": 0.2331,
+   "INC": 0.2291,
+   "N_C": 0.3109,
+   "N_K": 0.2504
+  },
+  "D": {
+   "INC": {
+    "delta": -0.0045,
+    "lb": -0.02473,
+    "ub": 0.01545,
+    "ci95": [
+     -0.02858,
+     0.01897
+    ],
+    "sd": 0.01219,
+    "mde": 0.02005,
+    "p_gt_0": 0.3445
+   },
+   "N_C": {
+    "delta": 0.1534,
+    "lb": 0.10838,
+    "ub": 0.2018,
+    "ci95": [
+     0.09933,
+     0.21053
+    ],
+    "sd": 0.02841,
+    "mde": 0.04674,
+    "p_gt_0": 1.0
+   },
+   "N_K": {
+    "delta": 0.0358,
+    "lb": 0.00465,
+    "ub": 0.06601,
+    "ci95": [
+     -0.0011,
+     0.07287
+    ],
+    "sd": 0.01863,
+    "mde": 0.03064,
+    "p_gt_0": 0.969
+   }
+  },
+  "by_winter": {
+   "2018": {
+    "n": 96,
+    "SURV": 0.5729,
+    "INC": 0.5521,
+    "N_C": 0.75,
+    "N_K": 0.6146
+   },
+   "2019": {
+    "n": 106,
+    "SURV": 0.6226,
+    "INC": 0.5566,
+    "N_C": 0.6321,
+    "N_K": 0.6132
+   },
+   "2020": {
+    "n": 125,
+    "SURV": 0.376,
+    "INC": 0.392,
+    "N_C": 0.568,
+    "N_K": 0.392
+   },
+   "2021": {
+    "n": 147,
+    "SURV": 0.3537,
+    "INC": 0.3469,
+    "N_C": 0.3673,
+    "N_K": 0.3946
+   },
+   "2022": {
+    "n": 144,
+    "SURV": 0.5486,
+    "INC": 0.5625,
+    "N_C": 0.7708,
+    "N_K": 0.5486
+   },
+   "2023": {
+    "n": 139,
+    "SURV": 0.5755,
+    "INC": 0.5971,
+    "N_C": 0.9065,
+    "N_K": 0.5971
+   },
+   "2024": {
+    "n": 136,
+    "SURV": 0.375,
+    "INC": 0.3676,
+    "N_C": 0.4853,
+    "N_K": 0.5074
+   }
+  }
+ },
+ "verdict": {
+  "verdict": "FAIL (ties the served years stage)",
+  "pass": false,
+  "beats": {
+   "INC": false,
+   "N_C": true,
+   "N_K": true
+  },
+  "planted": true
+ },
+ "folds": {
+  "2018": {
+   "n_train": 329,
+   "n_scored": 96,
+   "n_test": 96,
+   "dropped_constant": [],
+   "dist": "lnorm"
+  },
+  "2019": {
+   "n_train": 425,
+   "n_scored": 106,
+   "n_test": 106,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  },
+  "2020": {
+   "n_train": 531,
+   "n_scored": 125,
+   "n_test": 125,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  },
+  "2021": {
+   "n_train": 656,
+   "n_scored": 147,
+   "n_test": 147,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  },
+  "2022": {
+   "n_train": 803,
+   "n_scored": 144,
+   "n_test": 144,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  },
+  "2023": {
+   "n_train": 947,
+   "n_scored": 139,
+   "n_test": 139,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  },
+  "2024": {
+   "n_train": 1086,
+   "n_scored": 136,
+   "n_test": 136,
+   "dropped_constant": [],
+   "dist": "gengamma"
+  }
+ },
+ "flexsurv": "2.3.2",
+ "registration": "docs/r/R_BAKEOFF.md",
+ "registration_commit": "13cdf34b",
+ "code_commit": "eda93727",
+ "read_done": true,
+ "seconds": 68.3,
+ "r_versions": {
+  "R": "4.6.1",
+  "packages": {
+   "mgcv": "1.9.4",
+   "lme4": "2.0.6",
+   "glmmTMB": "1.1.15.2",
+   "survival": "3.8.6",
+   "flexsurv": "2.3.2",
+   "quantreg": "6.1",
+   "jsonlite": "2.0.0"
+  }
+ },
+ "role": "development (adjudicates nothing served; nothing served moves)"
+}
