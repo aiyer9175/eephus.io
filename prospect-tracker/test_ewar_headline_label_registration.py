@@ -126,3 +126,13 @@ def test_amendment_9_1_identity_3_tolerance():
     assert ("(a) the artifact's own pre-rounding sum `checks[s].sum_departure_wins.dh_<side>` is within "
             "1e-9 wins of zero, and (b) the stored 6-decimal departures sum to zero within the rounding "
             "bound n x 0.5e-6 wins") in text
+
+
+def test_amendment_9_2_switch_scope_is_efv_dataset():
+    text = _flat()
+    assert ("### Amendment 9.2 (2026-10-22, after the guard and before the flip): the switch's scope is "
+            "efv_dataset's label") in text
+    assert "So the switch reads **`efv_dataset` only**" in text
+    assert ("`efv_labels.provider()` and `efv_labels.war_seasons_table` keep reading "
+            "`war_source.DEFAULT_PROVIDER` (published fWAR)") in text
+    assert "The guard, its record and its verdict are untouched. This amendment is committed alone." in text

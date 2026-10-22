@@ -307,3 +307,27 @@ cohort or level.
 
 **Owner question EWHL-Q1 (part 6), the default applied:** (a) the switch is made now, with EWHL-R1 able
 to revert it after 2027.
+
+### Amendment 9.2 (2026-10-22, after the guard and before the flip): the switch's scope is efv_dataset's label
+
+Part 3 put two readers under the switch: the series `efv_dataset` sums for the first-6-season label, and
+the series `efv_labels.war_seasons_table` serves to the development frames. Reading the second reader's
+consumers before the flip found that every registered development read that uses it refuses to run on a
+label provider other than `"fwar"` (the `L.provider() != FROZEN_PROVIDER` or `!= "fwar"` refusals in
+`efv5_combined`, `efv5_group_drivers`, `efv5_pit_sign`, `efv5_refit`, `efv_etools_reweight`,
+`efv_hitter_position_calibration`, `efv_output_map`, `efv_reliever_adj`, `efv_side_role_calibration`,
+`efv_w2_anchor`, `efv_w2_nri`, `efv_w2_pbp_bb`, `efv_w2_report_read`, `efv_x3_pooled` and eleven tools).
+Their registrations froze published fWAR, no served number is fit from those frames at a regeneration
+(their outputs are frozen artifacts), and moving `efv_labels.provider()` would stop every in-flight
+registered eFV read with no served effect.
+
+So the switch reads **`efv_dataset` only**: `efv_dataset._label_seasons` and `efv_dataset._label_provider`
+follow `war_source.EFV_LABEL_PROVIDER`; `efv_labels.provider()` and `efv_labels.war_seasons_table` keep
+reading `war_source.DEFAULT_PROVIDER` (published fWAR) and the table as stored, which is what part 3's
+sentence on registered reads already intended ("its look ran on fWAR, and re-running it on the new label
+is its own registration"). The served consequences are unchanged from part 3: the eFV v1 matrices and
+everything `efv_dataset` feeds (the v1 model, the scored pools, `data/xfv_history.json` through
+`efv_score.score_history`) carry the new label after the integrator's regeneration, and the fingerprint's
+label term names it. A registered read that reads the v1 matrices from disk reads them as built; each
+matrix report names its label (`efv_dataset._label_provider`). The guard, its record and its verdict are
+untouched. This amendment is committed alone.
