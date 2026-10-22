@@ -712,8 +712,10 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
         age_row = next((r for r in hist if r.get("age")), None)
         age = (age_row["age"] + (target - age_row["season"])) if age_row else None
         try:
+            # pt_cap=False: the veteran PT cap (AG_4, owner answer AG-Q5)
+            # moves only the surfaces AG-Q5 named, never this board.
             proj = fp.project_player(hist, "hit", target, curves, league, age,
-                                     in_progress=in_prog)
+                                     in_progress=in_prog, pt_cap=False)
         except Exception:   # noqa: BLE001 - one bad history never drops the board
             continue
         w = (proj or {}).get("woba_proj")

@@ -220,10 +220,11 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
     if champ is None:
         # aging="v2" EXPLICITLY: the heads were trained on v2 champion features
         # (train/serve parity; docs/AGING_V3_GATE.md section 2; AG_16 is the
-        # only door for v3 here).
+        # only door for v3 here). pt_cap=False EXPLICITLY for the same reason:
+        # the heads were trained on the uncapped champion (AG_4).
         champ = fm.contract_war_path(hist, side, base, HORIZONS, age,
-                                     curves, war_map, league, use_ml=False,
-                                     aging="v2")
+                                     curves, war_map, league, pt_cap=False,
+                                     use_ml=False, aging="v2")
     if champ is None or age is None:
         return None
     by_season = {h["season"]: h for h in hist}
@@ -278,7 +279,8 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
               1.0 if prof.endswith("|fin") else 0.0]
     # Marcel-regressed components (the champion's own projection inputs) +
     # league-relative lag-1 raw rates.
-    proj = fp.project_player(hist, side, base, curves, league, int(age))
+    proj = fp.project_player(hist, side, base, curves, league, int(age),
+                             pt_cap=False)
     comps = HIT_COMPS if side == "hit" else PIT_COMPS
     for c in comps:
         m = (proj or {}).get(c)

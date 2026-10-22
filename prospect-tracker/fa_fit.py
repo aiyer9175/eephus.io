@@ -477,8 +477,10 @@ def _contracted_projections(class_year: int) -> dict[str, list[dict]]:
                 continue
             age_prev = next((h.get("age") for h in hist if h.get("age")), None)
             age = (age_prev + (class_year - hist[0]["season"])) if age_prev else None
+            # pt_cap=False: the FA Fit stays on the uncapped engine (PLAN 9.7
+            # R4a, owner answer TM-Q1), whatever projection.pt_cap_enabled says.
             proj = fp.project_player(hist, side, class_year, curves, league, age,
-                                     in_progress=in_prog)
+                                     in_progress=in_prog, pt_cap=False)
             if proj is None:
                 continue
             war = fp.war_from_projection(proj, side, war_map, league, class_year)
