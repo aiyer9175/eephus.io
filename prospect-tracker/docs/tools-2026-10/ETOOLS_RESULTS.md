@@ -382,3 +382,15 @@ tooltip and eTools block name the scouting grade's date ("scouting grade from Au
 follows by its registered pool (every player in `data/etools.json`): 1,116 hitters (was 829); the
 pool's ePOW mean falls from 47.25 to 46.49, so 755 of the 829 existing hitters' eTools+ rise by 1
 or 2. Stale-graded pitchers keep the consensus fastball and command grades.
+
+## MiLB eBR as an eSPD sub-driver (amendment 5, registered 3cc6a8e6, not computable, not spent)
+
+Owner decision EBR-Q6R (2026-10-21, "Test via eSPD"): does level-relative MiLB baserunning
+(steals, caught stealing and pickoffs, advancement on hits and outs, outs on base) sharpen the speed
+grade beyond the current eSPD (stolen bases per PA)? The runner (`etools_spd_ebr.py`) counted first
+and computed no statistic: the MiLB eBR record starts in 2023 (Rookie and Single-A; the upper levels
+in 2026), so in the development frame only board year 2024 has an as-of season, and its 191
+candidate rows carry 3 MLB sprint-speed labels and 17 upper-minors labels (each label needs 100
+players over 3 board years). **NOT COMPUTABLE**; the read is not spent and runs unchanged when the
+record covers 2021 to 2023 at every level. Speed keeps the consensus grade; nothing served moves.
+The dated note is in the amendment's section 9.
