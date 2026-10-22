@@ -11425,7 +11425,7 @@ function fvBadgeTooltip(player) {
   const parts = [];
   // Consensus FV rounds UP (fvCeil), the grade rule. fv_close is already a ceil-snapped
   // integer (consensus.snap_to_grade), so this prints the digit it always printed.
-  const tier = player.fv_close != null ? fvCeil(player.fv_close) : null;
+  const tier = (player.fv_close != null && player.fv_close > 0) ? fvCeil(player.fv_close) : null;
   // v32.1 - Use the RAW fv_close for the surplus / WAR projection
   // (granular interpolation) - only round to `tier` for the display
   // label. A player with FV 47.3 now shows the true projection at
@@ -35505,7 +35505,8 @@ function gradeBlock(p, opts) {
   const efvVal = (x && x.xfv_grade != null) ? efvGradeDisplay(x) : null;
   const latest = (p && p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const consLabel = latest ? latest.consensus_fv_label : null;
-  const consVal = (p && p.fv_close != null) ? fvCeil(p.fv_close) : null;
+  // fv_close 0 is a graduate with no consensus series (no real grade), never an FV 0.
+  const consVal = (p && p.fv_close != null && p.fv_close > 0) ? fvCeil(p.fv_close) : null;
   // EFV_DISPLAY_SWAPS: before the eFV file settles (or after it failed) a row with no inline
   // eFV entry has no grade to print yet; the consensus number is withheld, never shown bare.
   const waiting = efvVal == null && !(p && p._xfv_entry) && efvDisplaySwaps()
@@ -50913,7 +50914,9 @@ function renderPlayerDetail(key) {
                  : "";
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
-  const _fvForEyebrow = p.fv_close;
+  // A graduate with no real grade carries fv_close 0 (no consensus series; Q2 drops a
+  // debuted player's placeholder points), which must read as no consensus, not "0".
+  const _fvForEyebrow = (p.fv_close != null && p.fv_close > 0) ? p.fv_close : null;
   // The eyebrow's grade line. EFV_DISPLAY_SWAPS on: "eFV N · consensus M" (eFV nearest,
   // consensus up); off, the consensus line it always printed.
   const _eyebrowGradeText = (pp, fc, placeholder) => {
@@ -51520,7 +51523,8 @@ function renderPlayerDetail(key) {
   // financial anchor that the rest of the sabermetrics / tools cards
   // contextualize. Hidden for players without an FV grade.
   const surplusValueSection = (() => {
-    const fv = p.fv_close ?? null;
+    // fv_close 0 is a graduate with no consensus series (no real grade), not an FV 0.
+    const fv = (p.fv_close != null && p.fv_close > 0) ? p.fv_close : null;
     if (fv == null && !p.acquisition) return "";
     const _isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
     // v39 - Use the BAKED engine surplus (p.surplus.value_mm) as the single

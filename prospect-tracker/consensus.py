@@ -1318,6 +1318,55 @@ _SOURCE_WEIGHTS = load_source_weights()
 # votes only when no real source published an FV at this point.
 CONSTANT_ANCHOR_SOURCES = frozenset({"performance_ingest", "auto_detect"})
 
+# A DEBUTED player's placeholder points (owner answer Q2, 2026-10-22, 'Exclude
+# for debuted'). The last-resort fold-back above keeps an ungraded prospect on
+# the board, but once a player has debuted the auto-discovery stamp keeps
+# firing on his MLB line, so a point voted ONLY by a constant anchor landed
+# after his real grades and became his latest consensus, his low and one end of
+# his range: Mason Miller read 'Consensus range 35 (Oct 2026)-49' and a latest
+# consensus of 35 against a last real grade of 49. Measured 2026-10-22 on the
+# served debuts: 105 rows end on a '2026_performance' point; 99 of them carry
+# only the constant (13 with real grades, 86 with none), 6 carry a real
+# published grade at that date and are not placeholders. With this on, those
+# points are dropped from a debuted player's series before the candle fields
+# are read, so the latest consensus is his real last grade, and a debuted
+# player with no real grade has no consensus (as 152 debuted rows already do).
+# Prospects keep the fold-back unchanged. Two seams apply it: build_timeseries
+# (status 'debuted' from a snapshot) and storage.export_timeseries_json (a debut
+# first known from the MLB API debut date or an outright, 9 of the 101 served
+# rows), so both read the same rule.
+DROP_DEBUTED_PLACEHOLDER_POINTS = True
+
+
+def _is_placeholder_point(pt) -> bool:
+    """True when the point's vote came only from a constant-anchor source."""
+    srcs = set(getattr(pt, "sources_contributing", None) or ())
+    return bool(srcs) and srcs <= CONSTANT_ANCHOR_SOURCES
+
+
+def strip_placeholder_points(p) -> bool:
+    """Drop one debuted player's constant-anchor-only points and re-read his
+    candle fields from what is left. The caller decides he has debuted.
+    Returns True when his series changed."""
+    if not p.points:
+        return False
+    kept = [pt for pt in p.points if not _is_placeholder_point(pt)]
+    if len(kept) == len(p.points):
+        return False
+    p.points = kept
+    for attr, val in _candle_fields(kept).items():
+        setattr(p, attr, val)
+    return True
+
+
+def drop_debuted_placeholder_points(players) -> int:
+    """Remove constant-anchor-only points from every debuted player's series.
+
+    Returns the number of players whose series changed. Prospects (any status
+    other than 'debuted') are left exactly as they are."""
+    return sum(1 for p in players
+               if getattr(p, "status", None) == "debuted" and strip_placeholder_points(p))
+
 
 def compute_consensus_point(
     day_snaps: list[Snapshot],
@@ -2474,6 +2523,10 @@ def build_timeseries(
     # targeted FV-35 pull (see SINGLE_SOURCE_PRIOR / SINGLE_SOURCE_K).
     # The legacy apply_shrinkage / compute_prior_mean_fv functions stay
     # defined for back-compat callers but are no longer wired in.
+    # Q2: a debuted player's placeholder points leave his series here, after the
+    # duplicate-key merge (which can pool one in) and before the candles read it.
+    if DROP_DEBUTED_PLACEHOLDER_POINTS:
+        drop_debuted_placeholder_points(result)
     for p in result:
         for attr, val in _candle_fields(p.points).items():
             setattr(p, attr, val)
