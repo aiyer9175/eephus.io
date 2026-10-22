@@ -174,3 +174,31 @@ runner; no network request.
 
 (Empty at registration. Results go to this section as a dated note and to
 `docs/tools-2026-10/ETOOLS_RESULTS.md`.)
+
+### 2026-10-21: THE READ, NOT COMPUTABLE (not spent; OWNER-WAIVED EARLY READ, EW3-5)
+
+`python etools_spd_ebr.py --run --amend-sha 3cc6a8e6` (code at 42afeb29) counted section 3.4 and
+3.5 and stopped before any statistic, as section 8 requires: no grade or candidate was paired with
+a label value, and `data/_labs/etools/etools_spd_ebr_reads.json` records `"spent": false`,
+`"statistics_computed": 0` and every input's sha256 (equal at start and end).
+
+The frame is board year 2024 alone: the MiLB eBR record's complete units are Rookie and Single-A
+2023 to 2025, and only 2023 lies inside a development board year's as-of window. 571 speed rows
+(571 players); 191 carry the candidate (487 carry sb_rel).
+
+| label | rows with the candidate and the label (players) | board years with 20 or more | needs | status |
+|---|---|---|---|---|
+| L_MLB, sprint speed (deciding) | 3 (3) | 0 | 100 players, 3 board years | NOT COMPUTABLE |
+| L_UM, SB per PA over the level-season mean (deciding) | 17 (17) | 0 | same | NOT COMPUTABLE |
+| L_BSR, BsR per 600 PA (reported) | 3 (3) | 0 | same | NOT COMPUTABLE |
+
+Censoring: of the 191 candidate rows, 188 have no MLB line by 2024 (censored for L_MLB and L_BSR)
+and 174 carry no upper-minors line of 300 PA in 2024 (censored for L_UM; 2024 is the only label
+season the cap allows for board year 2024). Projected minimum detectable effect (section 4.3, the
+look's eSPD sd scaled by players): 0.194 on L_MLB (3 players) and 0.094 on L_UM (17 players),
+against the look's whole eSPD gain over consensus of +0.007 on L_MLB.
+
+**Verdict: NOT COMPUTABLE.** Speed keeps the consensus grade; nothing served moves. The read stays
+registered and unspent: the same command runs it, unchanged, once the minor-league partition of the
+runner record holds the as-of seasons (2021 and 2022 at every level, and High-A to Triple-A from 2021
+to 2023, for board years 2022 to 2024). That backfill is a separate task and an owner call.
