@@ -111,9 +111,12 @@ def test_owner_question_and_exclusions():
     assert "`docs/PROSPECT_ANCHOR_GATE.md`" in text
 
 
-def test_results_empty_at_registration():
+def test_results_part_is_pinned_by_the_result_test():
+    # part 9 was empty at registration (072861de); its 2026-10-22 entry is pinned by
+    # test_ewar_headline_label_result.py
     text = _flat()
     assert "## 9. Results **EMPTY AT REGISTRATION.**" in text
+    assert "### 2026-10-22: the guard HOLDS, by identity, as part 4.5 stated" in text
 
 
 def test_amendment_9_1_identity_3_tolerance():

@@ -1237,6 +1237,19 @@
    "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_EPOCH_EWAR, owner EW3-17 and EW3-20): G-1 gap -0.0285 (5th percentile -0.0386, n 2416 pairs), not non-inferior; permuted twin gap -0.0055; G-2 runs_scored dT +0.0021; runs_allowed dT -0.0321; run_differential dT -0.0144; wins dT -0.0165; guard holds: False. The label stays published fWAR; the switch waits on owner question EWLE-Q2. No accuracy claim is made for any label."
   },
   {
+   "model_id": "ewar_headline_label",
+   "summary": "Measured, not a prediction: the headline eWAR (published fWAR plus the eABS part from 2026) as eFV's training label, frozen as its own vintage.",
+   "surface": "None served directly: data/ewar_headline_label.json (off the webroot), read by eFV's label through war_source.efv_label_seasons under EFV_LABEL_EWAR_HEADLINE",
+   "predicts": "Nothing: a label definition, checked against next-season published fWAR and club runs and wins",
+   "champion": "ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d (ewar_headline_label.py, tools/build_ewar_headline_label.py) on the frozen fWAR vintage 2026-10-02-a020cf64844a",
+   "baseline": "published fWAR (the label before the switch)",
+   "metric": "Circularity guard (the core label gate's part 4 on this series): G-1 within-season Spearman gap against next-season fWAR, NON-INFERIOR when the 5th percentile is above -0.02; G-2 the eBR gate's team guard 11.2.4 with the label on both sides",
+   "eval_artifact": "docs/efv-2026-10-22/ewar_headline_label_guard.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_HEADLINE_EWAR_CHECK, owner answer EWLE-Q2): G-1 gap +0.0000 (5th percentile +0.0000, n 2416 pairs, 0 departing); permuted twin gap +0.0000; G-2 runs_scored dT +0.0000; runs_allowed dT +0.0000; run_differential dT +0.0000; wins dT +0.0000; guard holds: True, by identity: the label carries no departure before 2026, so the guard cannot see the eABS part (gate part 4.5); its own read EWHL-R1 needs the 2027 season's data. The switch is cleared and not yet flipped (war_source.EFV_LABEL_EWAR_HEADLINE = False). No accuracy claim is made for any label."
+  },
+  {
    "model_id": "swar_bat",
    "summary": "Measured, not adopted: eWAR v3's batting candidate part; the skill look of 2026-10-19 did not admit it.",
    "surface": "None served as a number: data/swar_eval.json (the filtered record) and EBR_GATE.md part 12.2",

@@ -240,3 +240,70 @@ is within 1e-9 wins of zero, and (b) the stored 6-decimal departures sum to zero
 bound n x 0.5e-6 wins, n the season's listed cells on that side (the convention of eWAR v3's own
 `r2_rounding_bound`). Nothing else in parts 0 to 8 changes. This amendment is committed alone, found by
 reading the input's sums before the build, with no label value frozen and no guard statistic computed.
+
+### 2026-10-22: the guard HOLDS, by identity, as part 4.5 stated; the switch is cleared
+
+This entry records the one read of part 4 and the label-only blast radius of part 5. Clause (l)
+binds it: it reports what was measured and draws no conclusion about eFV's accuracy.
+
+**What ran, and on what.** `python -u tools/ewar_headline_label_guard.py --look`, once, at HEAD
+`2f6ce6c6` (2026-10-22 18:47:55 to 18:48:48 UTC), rc 0, after the fixture dry run passed
+(`test_ewar_headline_label_guard.py`: the identity series held with gap 0 and matched the structure;
+planted hitting noise failed G-1; planted pitching noise alone failed G-2). Inputs: the frozen label
+vintage `ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d` (frozen at `2f6ce6c6`, file sha256
+`6b6f2a8f971fb505a033fd819d20bd39f91a4c520262786f2b9b0bd1a09fa9c4`, copied from `data/ewar_v3.json`
+sha256 `40ea0196...`) on the frozen fWAR vintage `2026-10-02-a020cf64844a`; the Baseball-Reference stint
+caches and StatsAPI standings the core guard read. The record is
+`docs/efv-2026-10-22/ewar_headline_label_guard.json` (sha256
+`5292ca859eda5ce69e9f0cef54a3a304ebcf4ed560d15ea38d1a999837bc5aae`, unedited since the look wrote it);
+stdout and stderr were teed to the task's output directory before anything else ran.
+
+**G-1, the player leg: NON-INFERIOR, by identity.** 2,416 hitter pairs (713 players, 12 predictor
+seasons), 0 of them carrying a departure. Pair-weighted within-season Spearman with next-season
+published fWAR: label 0.4788, published fWAR 0.4788. Gap 0, 5th percentile 0, sd 0 (B 2,000, seed
+20261022). The permuted twin reads gap 0 as well, so G-1 cannot separate the label's change from a
+random change of the same size: on these pairs both changes are zero.
+
+**G-2, the club leg (11.2.4 verbatim, the label on both sides): NON-INFERIOR, by identity.** 360
+club-seasons, 0 departing cells. Every outcome reads dT 0 with sd 0 under both bootstraps and no leg is
+underpowered: runs scored r 0.4524, runs allowed 0.5250, run differential 0.7312, wins 0.7146, each
+equal for the label and published fWAR (bWAR beside: 0.4395, 0.4540, 0.6774, 0.6592).
+
+**Part 4.5's structure: as registered** (G-1 gap 0, twin gap 0, no departing pair, every G-2 dT 0). No
+STOP.
+
+**THE GUARD HOLDS (part 4.4). The switch is cleared** and flips in this task's flag commit. What the
+pass establishes, as part 4.5 said before the look: the headline label is published fWAR wherever an
+outside next-season target exists. It says nothing about the eABS part; EWHL-R1 is the first read that
+can, once the 2027 season's data exists.
+
+**Secondary legs (part 4.3; each decides nothing).**
+
+| Leg | n | S label | S fWAR | gap | 5th pct |
+| --- | --- | --- | --- | --- | --- |
+| G-1 on the rate (per 600 PA) | 2,416 | 0.4460 | 0.4460 | 0 | 0 |
+| G-1 at a 200 PA floor | 3,217 | 0.4650 | 0.4650 | 0 | 0 |
+| realized sensitivity, pitchers 50+ IP (Y 2016 to 2018, 2021 to 2024) | 1,536 | 0.3430 | 0.4505 | -0.1075 | -0.1311 |
+| G-1 on pairs with a framing term above 0.05 runs | 254 | 0.4853 | 0.4853 | 0 | 0 |
+
+The realized row is the R2 departure alone in those seasons (eABS starts in 2026), so it reproduces the
+core gate's realized-core pitcher leg exactly (-0.1075, n 1,536): the realized series is a sensitivity
+and trains nothing. Its target is published fWAR, whose pitching is FIP-based; it is reported, not read.
+
+**The label-only blast radius (part 5).** `python tools/ewar_headline_label_blast.py --write`, once,
+record `docs/efv-2026-10-22/ewar_headline_label_blast.json` (sha256
+`cc3ecb51f5e876dfdc9643ee9c2fa0781fa4ac7afaa4cf7c3840b5b83094b99c`), on the stored career_war table
+(2,698 rows: 2,686 fwar, 6 ewar_v2, 6 bbref; the worktree's copy, whose career_war payloads hash equal
+to the main tree's). Under the switch 1,029 rows move, every move in 2026: mean -0.0011 WAR, sd 0.0718,
+largest 0.51; 112 rows move 0.1 WAR or more and 1 row 0.5 or more. No season before 2026 moves.
+
+**Beside part 5 (descriptive, labels only, nothing persisted).** `efv_dataset.build_matrix` was run in
+memory on both sides with the switch off and on, and only the label columns were compared: hitters,
+245 of 2,012 rows move (`target_resolved` mean -0.0048, sd 0.0945, largest 0.51; `target_censored`,
+the censoring-scaled label, mean -0.0124, sd 0.2048, largest 1.53); pitchers, 300 of 2,158 rows
+(`target_resolved` mean +0.0004, sd 0.0586, largest 0.21; `target_censored` mean +0.0011, sd 0.1207,
+largest 0.48). Every other column is identical. No grade or FV value was read, and no row was split by
+cohort or level.
+
+**Owner question EWHL-Q1 (part 6), the default applied:** (a) the switch is made now, with EWHL-R1 able
+to revert it after 2027.

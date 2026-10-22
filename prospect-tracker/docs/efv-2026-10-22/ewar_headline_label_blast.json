@@ -1,0 +1,32 @@
+{
+ "generated_at": "2026-10-22T18:49:11+00:00",
+ "registration": "docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md part 5",
+ "what": "label-only: stored career_war rows re-read on the headline label; no grade, FV or model",
+ "db_sha256": "9c6f6d90bfca1858dc20091fb418212881c9f0c56e2c79145ebf7ec7da2edd0b",
+ "rows": 2698,
+ "rows_by_source": {
+  "bbref": 6,
+  "ewar_v2": 6,
+  "fwar": 2686
+ },
+ "rows_moved": 1029,
+ "seasons_moved": {
+  "2026": {
+   "n": 1029,
+   "mean": -0.0011,
+   "sd": 0.0718,
+   "max_abs": 0.51,
+   "n_abs_ge_0_1": 112,
+   "n_abs_ge_0_5": 1
+  }
+ },
+ "per_player_sum_change": {
+  "n": 1029,
+  "mean": -0.0011,
+  "sd": 0.0718,
+  "max_abs": 0.51,
+  "n_abs_ge_0_1": 112,
+  "n_abs_ge_0_5": 1
+ },
+ "label_vintage_id": "ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d"
+}
