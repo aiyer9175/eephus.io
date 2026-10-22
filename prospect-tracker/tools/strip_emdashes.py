@@ -101,6 +101,7 @@ TARGETS: list[str] = [
     # Scores / Standings (SCORES_5a_LIVE_FLIP, 2026-10-07): the page and the job,
     # whose built text lands in the files the page reads verbatim.
     "scores/index.html",
+    "standings/index.html",
     "scores_core.py",
     "tools/scores_job.py",
     # Awards / HoF (AWARDS_11_FLIP_RENAME, 2026-10-09): the Awards page, the

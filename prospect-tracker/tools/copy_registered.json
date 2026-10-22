@@ -358,6 +358,26 @@
    "text": "section 5m of docs/diamond-betting.md names season-to-date and club-level forms of starter workload as close variants of a registered betting candidate",
    "pinned_by": "test_league_trends_export_contract.py",
    "reason": "League Trends' footnote on the pitches per PA and starter innings per start cards: the citation plan 4.4 (ruling R5) requires, naming the registered section by its path; changed only by the task that changes the claim."
+  },
+  {
+   "class": "CREDIT",
+   "text": "Assisted with development of MLB Stats: clarified the SEM+ calibration sample in sem_plus.py (2026-07-15).",
+   "reason": "Masthead credit line (data/team.json): a contributor's own record of the work, file name included."
+  },
+  {
+   "class": "CREDIT",
+   "text": "Co-created the PROSPX Spotlights section: built its framework on 2026-05-18 (spotlights.py, the hot prospect and rebounder lists), which the owner then carried onto the site's theme.",
+   "reason": "Masthead credit line (data/team.json): a contributor's own record of the work, file name included."
+  },
+  {
+   "class": "CREDIT",
+   "text": "Co-created the Trade Machine: wrote its Bayesian trade value engine (bayes_trade_value.py, 3,777 lines on 2026-06-24)",
+   "reason": "Masthead credit line (data/team.json): a contributor's own record of the work, file name included."
+  },
+  {
+   "class": "FIELD_NAME",
+   "text": "Perfect game in progress",
+   "reason": "Scores game chip: 'perfect game' is the baseball event's name, not an evaluation."
   }
  ]
 }
