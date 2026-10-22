@@ -165,6 +165,20 @@ A dated amendment, committed alone, may only record an owner answer that arrived
 or fix a definition defect an identity exposed, stating the defect and its evidence. The parts, the
 stamp rule, the series and the report never change after the first build.
 
+### 9.1 2026-10-22: a part's term enters x_i only in a season whose stamp carries it (definition defect, identity 3)
+
+- **Defect.** Part 3 writes `x_i = (baseRunning_i - wSb_i) + F_i` in every season, while part 2
+  stamps a part present only above its threshold. FanGraphs' components are published rounded, so
+  F_i carries a rounding residual in every season: in 2000 and 2001, where no row reaches the 0.05
+  run threshold and the stamp carries no framing, the largest abs(F_i) is 0.00027 and 0.00036 runs
+  (read from the vintage before any CORE, FULL or gap number existed). Identity 3 ("CORE equals FULL
+  on every row exactly" in a season with none of the four parts) could then never hold, and CORE
+  would carry rounding noise as if it were a part.
+- **Fix.** `x_i = [baseRunning_i - wSb_i if the season's stamp carries bsr_rest] + [F_i if it carries
+  framing]`; B_i and Fr_i follow (0 in a season without the part). Nothing else changes: the stamp
+  rule, the thresholds, the series, the identities and the report stand as registered.
+- Committed alone with its pin, before any number of the estimand.
+
 ## 10. Results
 
 **EMPTY AT REGISTRATION.**

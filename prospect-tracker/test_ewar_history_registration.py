@@ -90,3 +90,12 @@ def test_served_and_never_served():
 def test_results_empty_at_registration():
     text = _flat()
     assert "## 10. Results" in text
+
+
+def test_amendment_9_1_terms_enter_only_where_the_stamp_carries_them():
+    text = _flat()
+    assert ("### 9.1 2026-10-22: a part's term enters x_i only in a season whose stamp carries it "
+            "(definition defect, identity 3)") in text
+    assert ("`x_i = [baseRunning_i - wSb_i if the season's stamp carries bsr_rest] + [F_i if it carries "
+            "framing]`") in text
+    assert "the largest abs(F_i) is 0.00027 and 0.00036 runs" in text
