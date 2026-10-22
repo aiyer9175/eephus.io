@@ -1,0 +1,305 @@
+{
+ "generated_at": "2026-10-22T04:59:19+00:00",
+ "schema": 1,
+ "lab": "ewar_core_label_guard/1",
+ "registration": "docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md",
+ "label": {
+  "vintage_id": "ewar-core-2026-10-02-a020cf64844a-9f947d8f87ac",
+  "content_sha256": "9f947d8f87acb02a697ecb88528941716073026c6aa1f961ddb252f16a380ad3",
+  "fwar_vintage_id": "2026-10-02-a020cf64844a",
+  "file_sha256": "295fb428fa5e4d90a3af42b7c06b6e0531e008331ea5840ef935779b7350eb57"
+ },
+ "inputs": {
+  "bwar_cache_sha256": {
+   "bat": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+   "pit": "3279bfbdc5bcf0ee5e6f6dd0609f6252366871fa9b257b2fd92ddc984fd93cb6"
+  }
+ },
+ "parameters": {
+  "predictor_seasons": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "min_pa": 300.0,
+  "boot": 2000,
+  "seed": 20261022,
+  "margin": -0.02,
+  "outcomes": [
+   [
+    "runs_scored",
+    "hit"
+   ],
+   [
+    "runs_allowed",
+    "hit"
+   ],
+   [
+    "run_differential",
+    "total"
+   ],
+   [
+    "wins",
+    "total"
+   ]
+  ],
+  "r2_seasons": [
+   2016,
+   2017,
+   2018,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "min_ip": 50.0
+ },
+ "g1": {
+  "s_series": 0.4503532526202412,
+  "s_fwar": 0.4788481286966428,
+  "n_pairs": 2416,
+  "n_seasons": 12,
+  "gap": -0.02849487607640161,
+  "lower": -0.03863665938906855,
+  "upper95": -0.018752129745711776,
+  "sd": 0.005925331162422648,
+  "mde95": 0.009747169762185256,
+  "n_draws": 2000,
+  "non_inferior": false,
+  "twin": {
+   "gap": -0.005480052260334101,
+   "lower": -0.009948695850593828,
+   "upper95": -0.0008927501472692894,
+   "sd": 0.0027436316586783777,
+   "mde95": 0.004513274078525932,
+   "n_draws": 2000,
+   "non_inferior": true
+  },
+  "n_players": 713,
+  "n_pairs_departing": 2416
+ },
+ "g2": {
+  "n_club_seasons": 360,
+  "n_franchises": 30,
+  "outcomes": {
+   "runs_scored": {
+    "side": "hit",
+    "n_club_seasons": 360,
+    "r_frame": 0.4523694524779432,
+    "r_part": 0.45446024801251694,
+    "dT": 0.0020907955345737528,
+    "r_bwar_reference": 0.43945997512545687,
+    "r_part_minus_bwar": 0.015000272887060073,
+    "player": {
+     "n_draws": 2000,
+     "sd": 0.008792753289717617,
+     "half_width95": 0.01766927557619516,
+     "lower": -0.012373283627011726,
+     "non_inferior": true,
+     "underpowered": false
+    },
+    "club": {
+     "n_draws": 2000,
+     "sd": 0.0090245370856117,
+     "half_width95": 0.017602306448590677,
+     "lower": -0.012754567971257492,
+     "non_inferior": true,
+     "underpowered": false
+    },
+    "non_inferior": true
+   },
+   "runs_allowed": {
+    "side": "hit",
+    "n_club_seasons": 360,
+    "r_frame": 0.5249960883687201,
+    "r_part": 0.49290559036594395,
+    "dT": -0.03209049800277619,
+    "r_bwar_reference": 0.45401504867217696,
+    "r_part_minus_bwar": 0.03889054169376699,
+    "player": {
+     "n_draws": 2000,
+     "sd": 0.007820089550953806,
+     "half_width95": 0.015287596966440081,
+     "lower": -0.0449545453140952,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "club": {
+     "n_draws": 2000,
+     "sd": 0.007272641705046421,
+     "half_width95": 0.01394137782587801,
+     "lower": -0.04405399360757756,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "non_inferior": false
+   },
+   "run_differential": {
+    "side": "total",
+    "n_club_seasons": 360,
+    "r_frame": 0.731154994398769,
+    "r_part": 0.7167277073371334,
+    "dT": -0.01442728706163554,
+    "r_bwar_reference": 0.6773922179022089,
+    "r_part_minus_bwar": 0.03933548943492449,
+    "player": {
+     "n_draws": 2000,
+     "sd": 0.005778280624810954,
+     "half_width95": 0.011005716376878721,
+     "lower": -0.02393255868944956,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "club": {
+     "n_draws": 2000,
+     "sd": 0.004003881369695708,
+     "half_width95": 0.007914117302469215,
+     "lower": -0.02101367191478498,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "non_inferior": false
+   },
+   "wins": {
+    "side": "total",
+    "n_club_seasons": 360,
+    "r_frame": 0.7145736403588984,
+    "r_part": 0.6980859191702575,
+    "dT": -0.016487721188640836,
+    "r_bwar_reference": 0.6591756825751579,
+    "r_part_minus_bwar": 0.03891023659509962,
+    "player": {
+     "n_draws": 2000,
+     "sd": 0.005777715293867536,
+     "half_width95": 0.011130368046035094,
+     "lower": -0.02599206284705293,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "club": {
+     "n_draws": 2000,
+     "sd": 0.003942131920127794,
+     "half_width95": 0.007699407916039069,
+     "lower": -0.022972528197251058,
+     "non_inferior": false,
+     "underpowered": false
+    },
+    "non_inferior": false
+   }
+  },
+  "non_inferior": false,
+  "underpowered": false,
+  "seed": 20261024,
+  "boot": 2000,
+  "holds": false
+ },
+ "secondary": {
+  "rate_per_600pa": {
+   "s_series": 0.4104052032085599,
+   "s_fwar": 0.4459784690287027,
+   "n_pairs": 2416,
+   "n_seasons": 12,
+   "gap": -0.03557326582014281,
+   "lower": -0.04814109683912778,
+   "upper95": -0.023079942490248324,
+   "sd": 0.007626154031900189,
+   "mde95": 0.01254502338247581,
+   "n_draws": 2000,
+   "non_inferior": false,
+   "twin": {
+    "gap": -0.004528242450576647,
+    "lower": -0.009895172416479409,
+    "upper95": 0.0008192525186895505,
+    "sd": 0.003294821114277159,
+    "mde95": 0.005419980732985927,
+    "n_draws": 2000,
+    "non_inferior": true
+   },
+   "n_players": 713,
+   "n_pairs_departing": 2416
+  },
+  "floor_200pa": {
+   "s_series": 0.4395372056197576,
+   "s_fwar": 0.4650069130652619,
+   "n_pairs": 3217,
+   "n_seasons": 12,
+   "gap": -0.025469707445504253,
+   "lower": -0.0339841207162706,
+   "upper95": -0.017412296997298467,
+   "sd": 0.00505741538244332,
+   "mde95": 0.008319448304119261,
+   "n_draws": 2000,
+   "non_inferior": false,
+   "twin": {
+    "gap": -0.00665589277744566,
+    "lower": -0.010831240323853197,
+    "upper95": -0.0022046646784563448,
+    "sd": 0.002609726867113172,
+    "mde95": 0.0042930006964011684,
+    "n_draws": 2000,
+    "non_inferior": true
+   },
+   "n_players": 876,
+   "n_pairs_departing": 3217
+  },
+  "realized_core_pitchers": {
+   "s_series": 0.342954681963465,
+   "s_fwar": 0.4504622843032125,
+   "n_pairs": 1536,
+   "n_seasons": 7,
+   "gap": -0.10750760233974749,
+   "lower": -0.13108406063562653,
+   "upper95": -0.08217250638635065,
+   "sd": 0.015154291221119059,
+   "mde95": 0.024928809058740852,
+   "n_draws": 2000,
+   "non_inferior": false,
+   "n_players": 654
+  },
+  "framing_rows": {
+   "s_series": 0.3191962090199737,
+   "s_fwar": 0.4852936550082604,
+   "n_pairs": 254,
+   "n_seasons": 12,
+   "gap": -0.16609744598828668,
+   "lower": -0.2467008503521964,
+   "upper95": -0.07717345458036987,
+   "sd": 0.050773701294090756,
+   "mde95": 0.08352273862877929,
+   "n_draws": 2000,
+   "non_inferior": false,
+   "twin": {
+    "gap": -0.0073635618108067735,
+    "lower": -0.030761273115866877,
+    "upper95": 0.014934148771034108,
+    "sd": 0.013924219664162638,
+    "mde95": 0.02290534134754754,
+    "n_draws": 2000,
+    "non_inferior": false
+   },
+   "n_players": 91,
+   "n_pairs_departing": 254
+  }
+ },
+ "verdict": {
+  "g1_non_inferior": false,
+  "g2_non_inferior": false,
+  "guard_holds": false,
+  "twin_also_non_inferior": true
+ },
+ "run": {
+  "started_at": "2026-10-22T04:58:25+00:00",
+  "finished_at": "2026-10-22T04:59:19+00:00",
+  "git_head": "bcd329c3984c2049d971853cf1977051e0281b56",
+  "command": "python tools/ewar_core_label_guard.py --look"
+ }
+}

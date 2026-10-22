@@ -316,3 +316,87 @@ decision, with the failed guard disclosed in the label's copy.
 No label value, guard statistic, twin, secondary leg, blast-radius number or eFV read on the core
 label has been computed at this commit. The first entry here is dated, names the commit that
 produced it, and states what was met when it ran. Clause (l) binds this part.
+
+### 2026-10-22: the circularity guard does NOT hold; the label stays published fWAR
+
+This entry records the one read of part 4 and the label-only blast radius of part 5. Clause (l)
+binds it: it reports what was measured and draws no conclusion about eFV's accuracy.
+
+**What ran, and on what.** `python -u tools/ewar_core_label_guard.py --look`, once, at HEAD
+`bcd329c3` (2026-10-22 04:58 to 04:59 UTC), rc 0, after the fixture dry run passed
+(`test_ewar_core_label_guard.py`, 7 passed: the identity series held with gap 0 and a planted
+noise series did not hold). Inputs: the frozen label vintage
+`ewar-core-2026-10-02-a020cf64844a-9f947d8f87ac` (frozen at `07c0709c`, file sha256
+`295fb428fa5e4d90a3af42b7c06b6e0531e008331ea5840ef935779b7350eb57`) on the frozen fWAR vintage
+`2026-10-02-a020cf64844a`; the Baseball-Reference stint caches (bat sha256 `e9571c42...`, pit
+`3279bfbd...`); StatsAPI standings of 2012 to 2019 and 2022 to 2025, 30 clubs each. The record is
+`docs/efv-2026-10-22/ewar_core_label_guard.json` (sha256
+`2ed7b427aafe945b646c79e1c9c55ff002573249f8bfc80c9aab6d766d8cb6e6`; as written by the look it was
+`17c54efcaca5c24d9b39bbc497a9b57075b9f716fbb7d5b354e78ea55f1f4750`, and the one change since is a
+top-level `generated_at` equal to its own `run.finished_at`, 2026-10-22T04:59:19+00:00, which the
+registry's freshness test requires; no measured field changed); stdout and stderr were teed to the
+task's output directory before anything else ran.
+
+**G-1, the player leg: not NON-INFERIOR.** 2,416 hitter pairs (713 players, 12 predictor seasons,
+every pair carrying a departure). Pair-weighted within-season Spearman with next-season published
+fWAR: core label 0.4504, published fWAR 0.4788. Gap -0.0285, 5th percentile -0.0386, 95th
+percentile -0.0188, sd 0.0059, MDE95 0.0097 (B 2,000, seed 20261022). The rule needs the 5th
+percentile above -0.02; it is below it, and the whole one-sided interval sits under zero.
+
+**The permuted twin.** The same departures permuted within season read gap -0.0055 (5th
+percentile -0.0099), NON-INFERIOR. So a random change of the same size costs about a fifth of
+what the core's change costs: the parts CORE removes carry next-season signal that a change of
+their size does not. (The look's last log line printed the part 4.1 twin disclosure because the
+twin was NON-INFERIOR; that sentence is written for the case where G-1 itself passes, and it does
+not apply here. The record's fields are as above; the tool's wording is corrected in the commit
+that carries this entry.)
+
+**G-2, the club leg (11.2.4 verbatim): not NON-INFERIOR.** 360 club-seasons, 30 franchises, B
+2,000 each, seed 20261024; no leg underpowered (every half-width at or under 0.02).
+
+| Outcome (Y + 1) | r fWAR | r core | dT | lower, players | lower, franchises | verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| runs scored (hitting sum) | 0.4524 | 0.4545 | +0.0021 | -0.0124 | -0.0128 | NON-INFERIOR |
+| runs allowed (hitting sum, reversed) | 0.5250 | 0.4929 | -0.0321 | -0.0450 | -0.0441 | not |
+| run differential (total) | 0.7312 | 0.7167 | -0.0144 | -0.0239 | -0.0210 | not |
+| wins (total) | 0.7146 | 0.6981 | -0.0165 | -0.0260 | -0.0230 | not |
+
+bWAR's r, reported beside: 0.4395, 0.4540, 0.6774 and 0.6592.
+
+**THE GUARD DOES NOT HOLD (part 4.4).** The flip does not happen: `war_source.LABEL_EWAR_CORE`
+stays False, `DEFAULT_PROVIDER` stays `"fwar"`, no epoch run is armed, and nothing served moves.
+EWLE-Q2 (part 10) goes to the owner with these numbers; no default is taken.
+
+**Secondary legs (part 4.3; each decides nothing).**
+
+| Leg | n | S label | S fWAR | gap | 5th pct |
+| --- | --- | --- | --- | --- | --- |
+| G-1 on the rate (per 600 PA) | 2,416 | 0.4104 | 0.4460 | -0.0356 | -0.0481 |
+| G-1 at a 200 PA floor | 3,217 | 0.4395 | 0.4650 | -0.0255 | -0.0340 |
+| realized-core sensitivity, pitchers 50+ IP (Y 2016 to 2018, 2021 to 2024) | 1,536 | 0.3430 | 0.4505 | -0.1075 | -0.1311 |
+| G-1 on pairs with a framing term above 0.05 runs | 254 | 0.3192 | 0.4853 | -0.1661 | -0.2467 |
+
+The pitcher leg's target is published fWAR, whose pitching is FIP-based, so a runs-allowed
+departure is measured against a FIP-built target there; it is reported, not read.
+
+**The label-only blast radius (part 5).** `python tools/ewar_core_label_blast.py --write`, once,
+record `docs/efv-2026-10-22/ewar_core_label_blast.json` (sha256
+`e3adb3837d5c9c1a48307d1c247d0f7bdc3e5fa4142c8a843f193267976f5686`). Development vintages 2011 to
+2019, labels only.
+
+| Side, label | rows | r with fWAR label | mean change | sd change | move 0.5+ | move 1.0+ | W3 contributor flags changed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| hitters W3 | 3,053 | 0.9895 | -0.030 | 0.321 | 199 | 60 | 56 |
+| hitters L6 | 2,963 | 0.9932 | -0.054 | 0.560 | 391 | 170 | |
+| pitchers W3 | 2,909 | 1.0000 | +0.001 | 0.008 | 0 | 0 | 0 |
+| pitchers L6 | 2,829 | 1.0000 | +0.002 | 0.017 | 1 | 0 | |
+
+The realized-core sensitivity moves pitchers (W3: r 0.9442, sd 0.551, 232 rows move 1 WAR or
+more; L6: r 0.9677, sd 0.903, 454 rows) and leaves hitters as the core label does. Pitchers'
+core values move at all only through their own batting lines, which carry departures before
+2022. The fWAR label's sd is 2.19 (hitters W3) and 4.75 (hitters L6). Movement is not
+accuracy.
+
+**Not run, because the flip did not happen:** the reads of part 6 (R1 to R5), the epoch run of
+part 8 and every consumer move of part 9. The circularity guard is the condition in front of
+them, and part 4.4 stops there.

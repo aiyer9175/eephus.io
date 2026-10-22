@@ -402,9 +402,11 @@ def run(inputs: GuardInputs, boot: int = BOOT, log: Callable = print) -> dict:
         log(f"[secondary] {k}: n {v.get('n_pairs')} gap {v.get('gap')} lower {v.get('lower')}")
     holds = bool(G1["non_inferior"] and G2["holds"])
     twin_also = bool(G1.get("twin", {}).get("non_inferior"))
+    # part 4.1: the disclosure applies only when G-1 itself is NON-INFERIOR (corrected after
+    # the 2026-10-22 look, whose log printed it beside a G-1 that was not; the record is unchanged)
     log(f"[guard] THE GUARD {'HOLDS' if holds else 'DOES NOT HOLD'}"
         + (" (the permuted twin is also NON-INFERIOR: G-1 cannot separate the label's change from a random "
-           "change of the same size)" if twin_also else ""))
+           "change of the same size)" if (twin_also and G1["non_inferior"]) else ""))
     return {
         "schema": 1, "lab": LAB_VERSION, "registration": GATE_DOC,
         "label": meta, "inputs": inputs.input_meta(),
@@ -523,8 +525,10 @@ def main(argv=None) -> int:
     except GuardStop as e:
         print(f"STOP before scoring: {e}")
         return 3
+    finished = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
+    rec = {"generated_at": finished, **rec}
     rec["run"] = {"started_at": started,
-                  "finished_at": _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat(),
+                  "finished_at": finished,
                   "git_head": _git_head(), "command": "python tools/ewar_core_label_guard.py --look"}
     RECORD.parent.mkdir(parents=True, exist_ok=True)
     RECORD.write_text(json.dumps(_jsonable(rec), indent=1, ensure_ascii=True, allow_nan=True) + "\n",

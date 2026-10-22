@@ -130,11 +130,14 @@ def test_owner_questions():
     assert "**EWLE-Q2 (asked only if the guard of part 4 does not hold; blocking, no default).**" in text
 
 
-def test_results_empty_at_registration():
+def test_results_part_points_to_the_result_pin():
+    """Part 11 recorded the guard read on 2026-10-22; its numbers are pinned by
+    test_ewar_core_label_epoch_result.py. Nothing above part 11 may change."""
     text = DOC.read_text(encoding="utf-8")
-    tail = text.split("## 11. Results", 1)[1]
+    head, tail = text.split("## 11. Results", 1)
     assert "**EMPTY AT REGISTRATION.**" in tail
-    assert "### " not in tail, "part 11 records a result: move this assertion to the result pin"
+    assert "### 2026-10-22: the circularity guard does NOT hold" in tail
+    assert (ROOT / "test_ewar_core_label_epoch_result.py").exists()
 
 
 def test_no_dashes():

@@ -1224,6 +1224,19 @@
    "notes": "Built by tools/build_ewar_history.py (task EWAR_BACKGRADE_HISTORY, owner EW3-17) on fWAR vintage 2026-10-02-a020cf64844a and the eWAR artifact built 2026-10-22T02:17:24+00:00; registered in docs/ewar/EWAR_HISTORY_GATE.md (committed alone before any number; amendments 9.1 and 9.2 fix two identity definitions before any gap number). It admits no part and moves no served eWAR number of 2011 to 2026: it adds seasons 2000 to 2010 to the displayed eWAR's history and stamps every season. eWAR starts in 2000, the first season of the frozen FanGraphs WAR copy it is built on; that copy is never refetched, so an earlier season would need a new copy or another frame. Gap per part (descriptive, deciding nothing): catcher framing 2008 to 2026: sd 0.06 to 0.32 wins, Spearman CORE vs FULL 0.960 to 0.996; the rest of baserunning 2002 to 2026: sd 0.06 to 0.17 wins, Spearman CORE vs FULL 0.982 to 0.994; realized pitching 2016 to 2026: sd 0.37 to 0.69 wins, Spearman CORE vs FULL 0.731 to 0.845. CORE is recorded as per-season summaries only and never displayed."
   },
   {
+   "model_id": "ewar_core_label",
+   "summary": "Measured, not a prediction: core eWAR (fWAR less the rest of baserunning and framing), a candidate eFV label whose circularity guard did not hold.",
+   "surface": "None served: data/ewar_core_label.json (off the webroot) and war_source provider ewar_core, behind LABEL_EWAR_CORE = False",
+   "predicts": "Nothing: a label definition, checked against next-season published fWAR and club runs and wins",
+   "champion": "ewar-core-2026-10-02-a020cf64844a-9f947d8f87ac (ewar_core_label.py, tools/build_ewar_core_label.py) on the frozen fWAR vintage 2026-10-02-a020cf64844a",
+   "baseline": "published fWAR (the label in force)",
+   "metric": "Circularity guard (gate part 4): G-1 within-season Spearman gap against next-season fWAR, NON-INFERIOR when the 5th percentile is above -0.02; G-2 the eBR gate's team guard 11.2.4",
+   "eval_artifact": "docs/efv-2026-10-22/ewar_core_label_guard.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Guard read once on 2026-10-22 (task EFV_LABEL_EPOCH_EWAR, owner EW3-17 and EW3-20): G-1 gap -0.0285 (5th percentile -0.0386, n 2416 pairs), not non-inferior; permuted twin gap -0.0055; G-2 runs_scored dT +0.0021; runs_allowed dT -0.0321; run_differential dT -0.0144; wins dT -0.0165; guard holds: False. The label stays published fWAR; the switch waits on owner question EWLE-Q2. No accuracy claim is made for any label."
+  },
+  {
    "model_id": "swar_bat",
    "summary": "Measured, not adopted: eWAR v3's batting candidate part; the skill look of 2026-10-19 did not admit it.",
    "surface": "None served as a number: data/swar_eval.json (the filtered record) and EBR_GATE.md part 12.2",
