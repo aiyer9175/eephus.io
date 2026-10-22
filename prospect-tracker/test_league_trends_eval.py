@@ -297,6 +297,62 @@ def test_measure_and_fit_rerun_is_identical(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
+# the betting records and the rd_band block (plan 4.3; owner TR-5d 2026-10-21)
+# --------------------------------------------------------------------------- #
+_C5A = "#### Closure, recorded 2026-10-02: the pair closes for 2026\n"
+_K5 = "### Result (run 2026-10-14, once): 5k-A14, 5k-A30 and 5k-B FAIL at p = 1\n"
+_D5C = ("### Decisions recorded 2026-10-14: 5d-C at p = 1 without a read, and 5d-A, 5d-B, "
+        "5d-D and 5d-E not read\n\n**5d-A, 5d-B, 5d-D and 5d-E: not read.** These are ...\n")
+
+
+def test_the_5d_c_decision_counts_as_the_5d_record():
+    recs = L.betting_records(_C5A + _K5 + _D5C)
+    assert (recs["5c-A"], recs["5d"], recs["5k"]) == (True, True, True)
+    assert "TR-5d" in recs["5d_note"]
+    # no 5d block at all: no record
+    assert L.betting_records(_C5A + _K5)["5d"] is False
+    assert L.betting_records(_C5A + _K5)["5d_note"] is None
+    # a 5d result block counts too
+    assert L.betting_records(_C5A + _K5 + "### Result (run 2026-10-20, once): 5d-A FAIL\n")["5d"]
+    # the 5c-A and 5k records are still required
+    assert not L.betting_records(_K5 + _D5C)["5c-A"]
+    assert not L.betting_records(_C5A + _D5C)["5k"]
+    note = L.rd_band_note(L.betting_records(_C5A + _D5C))
+    assert note.startswith("null: docs/diamond-betting.md records 5c-A, 5d but not the 5k")
+
+
+def test_rd_band_refresh_writes_that_block_only(tmp_path, monkeypatch):
+    import json
+    src = tmp_path / "eval.json"
+    base = {"generated_at": "2026-10-14T18:34:01Z", "bars": {"rp_velo": 4.5},
+            "families": {"rp_velo": {"x": 1}}, "rd_band": None, "rd_band_note": "null: old",
+            "inputs": {"lab_version": 2, "betting_records": {"5d": False}},
+            "live_check": {"as_of": "2026-09-27"}}
+    src.write_text(json.dumps(base), encoding="utf-8")
+    doc = tmp_path / "betting.md"
+    monkeypatch.setattr(L, "BETTING_DOC", doc)
+    band = {"sigma_m": 4.4, "seasons": [2021, 2022, 2023, 2024, 2025], "n": 10, "club_seasons": 2}
+    monkeypatch.setattr(L, "rd_band_measure", lambda: dict(band))
+    out = tmp_path / "out.json"
+    # the records are there: rd_band measured, the note dropped
+    doc.write_text(_C5A + _K5 + _D5C, encoding="utf-8")
+    assert L.rd_band_refresh(path=src, out=out, log=lambda *a: None) == band
+    new = json.loads(out.read_text(encoding="utf-8"))
+    assert new["rd_band"] == band and "rd_band_note" not in new
+    assert new["inputs"]["betting_records"]["5d"] is True
+    assert new["inputs"]["lab_version"] == 2 and new["inputs"]["rd_band_refreshed_at"]
+    for k in ("generated_at", "bars", "families", "live_check"):
+        assert new[k] == base[k], k
+    assert set(new) == set(base) - {"rd_band_note"}
+    # a record missing: null with the reason, nothing measured
+    doc.write_text(_C5A + _D5C, encoding="utf-8")
+    monkeypatch.setattr(L, "rd_band_measure", lambda: pytest.fail("measured without the records"))
+    assert L.rd_band_refresh(path=src, out=out, log=lambda *a: None) is None
+    new = json.loads(out.read_text(encoding="utf-8"))
+    assert new["rd_band"] is None and "5k" in new["rd_band_note"]
+
+
+# --------------------------------------------------------------------------- #
 # isolation
 # --------------------------------------------------------------------------- #
 def test_the_lab_reads_no_gated_cache_and_names_no_gated_string():

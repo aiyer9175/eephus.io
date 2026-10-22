@@ -191,6 +191,10 @@ TARGETS: list[str] = [
     # eTools+ (ETOOLS_PLUS, 2026-10-19): its tool names and zero-weight reasons land
     # in data/etools_plus.json, which the PROSPX tooltip prints.
     "etools_plus.py",
+    # League Trends (TR_5_FLIP, 2026-10-21): the exporter whose sentences, fold,
+    # notes and card labels land in data/league_trends.json, which the /mlbstats/
+    # Trends tab prints.
+    "league_trends_export.py",
 ]
 
 EM = "—"

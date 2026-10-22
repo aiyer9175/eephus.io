@@ -1,5 +1,5 @@
 {
- "version": "2026-10-15",
+ "version": "2026-10-21",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -12290,6 +12290,223 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "league_trends",
+   "term": "League Trends",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Trends tab",
+    "League Trends tab",
+    "listed changes"
+   ],
+   "priority": 73,
+   "definition": "The Trends tab of MLB Stats. Players lists changes in a player's own measured mechanics over his recent games that clear a calibrated bar against his earlier games this season, with the number expected from game-to-game noise printed beside the list. Teams shows each club's run differential over its last 10 and 30 games with a chance band, and bullpen workload counts. League shows season-over-season cards. Descriptive: what changed, not what comes next.",
+   "methodology": "The families measured are fastball velocity, movement, spin and extension, pitch-family mix, reliever entry Leverage Index, and hitter bat speed, swing length and attack angle. A family is listed only when its bar meets the stated policy on a placebo of the same players' games shuffled in time, as of each date, and the fold names the families on the day's list. Results measures (wOBA, strikeout and walk rates, whiff, chase, exit velocity) did not separate real changes from chance in 2023 to 2025, so a card shows OBP or K-BB% as context only. The Teams chance band is the pooled game-to-game spread of a club's run margin over 2021 to 2025; nothing in Teams flags a club. The rotation, new-pitch and lineup events are rule-based. Whether a listed change lasts is measured apart, by one registered persistence read.",
+   "formula": "",
+   "seeAlso": [
+    "trend_bar",
+    "shrunk_change",
+    "competitive_swing",
+    "gmli"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "trend_bar",
+   "term": "Trend bar",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "League Trends bar",
+    "calibrated bar",
+    "false trends a day"
+   ],
+   "priority": 74,
+   "definition": "The bar a change must clear to be listed on League Trends: the gap between a player's recent window and his earlier games, net of the league-wide change over the same dates, in units of its game-to-game noise. The list prints how many entries noise alone would put there that day.",
+   "methodology": "Per family, the bar is the smallest on a grid from 2.5 to 6.0 that meets four rules, pooled over 2023 to 2025 (2024 and 2025 for swings) against a placebo of the same players' games shuffled in time. The placebo gives 0.05 or fewer false entries a day; 90 percent or more of the flags sit above the placebo; there are 20 or more flags; and every season with 5 or more flags is at least 75 percent real. The live season is a held-out check against a quasi-Poisson 99th percentile; a family above it is left off. Bars change only after a season completes. Expected false entries a day are the published per-test placebo tail times the tests run that day.",
+   "formula": "z = (window mean - earlier mean - league drift) / (sigma x sqrt(1/n_window + 1/n_earlier)); listed when |z / phi| >= bar and the shrunk change clears the family's size floor",
+   "seeAlso": [
+    "league_trends",
+    "shrunk_change"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "shrunk_change",
+   "term": "Shrunk change",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "shrunk toward no change",
+    "shrunk value"
+   ],
+   "priority": 75,
+   "definition": "A listed change pulled toward no change for game-to-game noise. A League Trends card prints it beside the raw change; a large real change is pulled less than a noisy one.",
+   "methodology": "A two-group prior per family: a share pi0 of players with no real change and a normal spread tau for the rest, fitted on completed seasons before the live one. The shrunk change is the posterior mean. For pitch mix the prior is fitted against the placebo's own largest-of-three change; when that fit is not identified, no shrunk value is printed and the card shows the raw shares only.",
+   "formula": "shrunk = (1 - lfdr) x change x tau^2 / (tau^2 + se^2), lfdr the chance the change is noise",
+   "seeAlso": [
+    "trend_bar",
+    "league_trends"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "competitive_swing",
+   "term": "Competitive swing",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "competitive swings",
+    "competitive-swing cut"
+   ],
+   "priority": 76,
+   "definition": "A tracked swing that is not a check swing or a defensive poke, so bat speed and swing shape compare like with like. League Trends counts a swing as competitive at 50 mph or more and at or above the hitter's own 10th percentile of bat speed.",
+   "methodology": "The cut is taken as of each date from the hitter's swings on or before it, once he has 100 swings that season; before that his previous season's cut is used. Bunts are left out. The bat speed, swing length and attack angle families average a game's competitive swings.",
+   "formula": "competitive when bat speed >= max(50 mph, the hitter's 10th percentile of bat speed to date)",
+   "seeAlso": [
+    "bat_speed",
+    "swing_length",
+    "attack_angle"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast bat tracking (Baseball Savant), from 2024 on; read here from Savant's per-swing files."
+  },
+  {
+   "id": "induced_vertical_break",
+   "term": "Induced vertical break",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "induced vertical movement",
+    "vertical break, induced"
+   ],
+   "priority": 77,
+   "definition": "The vertical movement a pitch's spin creates, in inches, with gravity taken out. A fastball with more of it drops less than gravity alone would make it.",
+   "methodology": "Read for every pitch from the MLB Stats API game feed. League Trends measures a pitcher's primary fastball (his most-thrown four-seamer, sinker or cutter in his earlier games) against his own earlier games; the starter and reliever induced-break families were measured and are listed only when their bar meets the policy (the 2026 calibration left both off).",
+   "formula": "",
+   "seeAlso": [
+    "fb_ivb",
+    "horizontal_break",
+    "spin_rate"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast pitch tracking, read here from the MLB Stats API game feed for every pitch."
+  },
+  {
+   "id": "horizontal_break",
+   "term": "Horizontal break",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "HB",
+    "horizontal movement",
+    "arm-side run"
+   ],
+   "priority": 78,
+   "definition": "The sideways movement of a pitch, in inches: how far it moves toward a pitcher's arm side or glove side on its way to the plate.",
+   "methodology": "Read for every pitch from the MLB Stats API game feed. League Trends compares a reliever's primary fastball over his last 6 outings with his earlier outings, so the feed's sign convention cancels and only the size of the change is read.",
+   "formula": "",
+   "seeAlso": [
+    "induced_vertical_break",
+    "spin_rate",
+    "extension"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast pitch tracking, read here from the MLB Stats API game feed for every pitch."
+  },
+  {
+   "id": "bat_speed",
+   "term": "Bat speed",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "bat speed (mph)",
+    "swing speed"
+   ],
+   "priority": 79,
+   "definition": "How fast the sweet spot of the bat is moving at contact or at the point of closest approach, in mph.",
+   "methodology": "League Trends averages a game's competitive swings and compares a hitter's last 30 days with his earlier games this season, net of the league-wide change.",
+   "formula": "",
+   "seeAlso": [
+    "competitive_swing",
+    "swing_length",
+    "attack_angle"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast bat tracking (Baseball Savant), from 2024 on; read here from Savant's per-swing files."
+  },
+  {
+   "id": "swing_length",
+   "term": "Swing length",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "swing length (ft)"
+   ],
+   "priority": 80,
+   "definition": "The total distance the head of the bat travels from the start of the swing to contact or the point of closest approach, in feet.",
+   "methodology": "League Trends averages a game's competitive swings and compares a hitter's last 30 days with his earlier games this season; the swing-length family is listed only when its bar meets the policy (the 2026 held-out check left it off).",
+   "formula": "",
+   "seeAlso": [
+    "competitive_swing",
+    "bat_speed",
+    "attack_angle"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast bat tracking (Baseball Savant), from 2024 on; read here from Savant's per-swing files."
+  },
+  {
+   "id": "attack_angle",
+   "term": "Attack angle",
+   "category": "statcast",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "attack angle (degrees)",
+    "bat path angle"
+   ],
+   "priority": 81,
+   "definition": "The vertical angle of the bat's path at contact or the point of closest approach, in degrees: above zero the bat is moving upward.",
+   "methodology": "League Trends averages a game's competitive swings and compares a hitter's last 30 days with his earlier games this season, net of the league-wide change.",
+   "formula": "",
+   "seeAlso": [
+    "competitive_swing",
+    "bat_speed",
+    "swing_length"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast bat tracking (Baseball Savant), from 2024 on; read here from Savant's per-swing files."
   }
  ]
 }

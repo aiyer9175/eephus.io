@@ -32,7 +32,8 @@ MAX_LAG_DAYS before the boards' last game date, compared by GAME dates, never
 build stamps; the off-season is therefore never stale), a missing eval
 artifact, a bar in code that differs from the artifact, club identity under
 mgmt_teams.MIN_RESOLVED_SHARE (trend_frames refuses), no sidecar table for the
-live season, or a payload over the 60 KB raw budget.
+live season, or a payload over the raw budget (BUDGET_RAW, 100 KB) or the
+gzip budget (BUDGET_GZIP, plan 4.5's 15 KB).
 
 LEAVES OFF, NEVER REFUSES: a family whose monthly live_check failed (the
 eval artifact's live_check block), and the swing families when a needed swing
@@ -71,6 +72,7 @@ Run:
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import math
 import os
@@ -86,7 +88,9 @@ import trend_detect as TD
 import trend_frames as TF
 
 #: The flag. False: the payload goes under .cache/league_trends/preview/ only.
-MLBSTATS_TRENDS_LIVE = False
+#: True since TR_5_FLIP (2026-10-21): data/league_trends.json and the eval
+#: artifact data/league_trends_eval.json are served.
+MLBSTATS_TRENDS_LIVE = True
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -105,8 +109,13 @@ MAX_LAG_DAYS = 2
 SWING_MAX_LAG_DAYS = 7
 #: Sparkline points: the last 20 game values (plan 4.2).
 SPARK_N = 20
-#: Raw payload budget (plan 4.5).
-BUDGET_RAW = 60_000
+#: Payload budgets (plan 4.5). The plan's 60 KB raw figure counted 30 club rows
+#: but never measured them: the first payload with the Teams view, 23 cards and
+#: 30 club rows on 2026-09-27, is 64,344 bytes raw and 10,431 gzipped. The raw
+#: ceiling is 100 KB (room for about 40 in-season cards beside the club rows);
+#: plan 4.5's 15 KB gzip budget, what a reader downloads, binds as written.
+BUDGET_RAW = 100_000
+BUDGET_GZIP = 15_000
 #: Days walked back to find a listed change's first flagged date.
 EPISODE_LOOKBACK_DAYS = 60
 #: The 30-day context window (plan 4.2).
@@ -1079,6 +1088,9 @@ def export(*, write: bool = True, out: Optional[Path] = None, log: Callable = pr
         raw = encode(doc)
         if len(raw) > BUDGET_RAW:
             raise Refused(f"the payload is {len(raw):,} bytes raw, over the {BUDGET_RAW:,} budget")
+        gz = len(gzip.compress(raw, mtime=0))
+        if gz > BUDGET_GZIP:
+            raise Refused(f"the payload is {gz:,} bytes gzipped, over the {BUDGET_GZIP:,} budget")
     except Refused as exc:
         log(f"  league trends: refused ({exc}); keeping the last good file")
         return {"out": str(path), "refused": str(exc), "written": False}

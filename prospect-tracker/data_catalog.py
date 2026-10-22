@@ -558,8 +558,7 @@ ARTIFACTS = (
         "pinned_by": "test_league_trends_export_contract.py",
         "note": ("Descriptive: as_of is the last game date in the frame, and each "
                  "family's expected false entries a day is its published per-test "
-                 "placebo tail times the tests run that day. Absent until the League "
-                 "Trends flip."),
+                 "placebo tail times the tests run that day."),
     },
     {
         "file": "league_trends_eval.json", "group": "mlb",
@@ -570,8 +569,7 @@ ARTIFACTS = (
         "cadence": "monthly", "stability": EXPERIMENTAL,
         "pinned_by": "test_league_trends_export_contract.py",
         "note": ("The bars change only in a reviewed commit after a season completes; "
-                 "the monthly step rewrites the live check alone. Absent until the "
-                 "League Trends flip."),
+                 "the monthly step rewrites the live check alone."),
     },
     {
         "file": "pal.json", "group": "mlb",

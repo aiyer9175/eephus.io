@@ -58,7 +58,10 @@ sweeper (ST) and splitter (FS) shares of typed pitches, as labelled in MLB's
 feed, and stolen-base attempts per club game, (SB + CS) / (2 x games), for 2018,
 2019 and 2021 to 2025, from the pitch sidecar. rd_band (plan 4.3) only when
 docs/diamond-betting.md records the 5c-A look or its closure and the 5d and 5k
-reads or their closures; otherwise null with the reason. pool (plan 3.4): the
+reads or their closures (the dated 5d-C decision counts as the 5d record, the
+owner's answer TR-5d of 2026-10-21); otherwise null with the reason.
+``--rd-band`` refreshes that block alone and copies every other block through.
+pool (plan 3.4): the
 swing source and its receipts per season. prior_season (plan 3.8, lane 2.8):
 prior-season mode at its fixed bar on the Sundays from April 6 to May 18, each
 season against all of the one before it (pitcher families 2023 to 2025, swing
@@ -76,6 +79,8 @@ same trait.
 Run:
     python tools/league_trends_calibrate.py [--refresh] [--jobs 3] [--out PATH]
     python tools/league_trends_calibrate.py --live-check   (monthly: the live_check block only)
+    python tools/league_trends_calibrate.py --rd-band [--src PATH] [--out PATH]
+                                                           (the rd_band block only)
 """
 from __future__ import annotations
 
@@ -758,18 +763,38 @@ def held_out(c: dict, tail: float, phi_d: float, bar: str, R_: int = R) -> dict:
 
 def betting_records(text: str) -> dict:
     """Whether docs/diamond-betting.md records the 5c-A look or its closure,
-    and the 5d and 5k reads or their closures (plan 4.3)."""
+    and the 5d and 5k reads or their closures (plan 4.3). The 5d record is a
+    5d result block or the dated block that decides 5d-C: the owner answered
+    TR-5d on 2026-10-21 ("5d-C counts"), so the 5d-C decision at p = 1 counts
+    as the 5d record for the Teams view while 5d-A, 5d-B, 5d-D and 5d-E stay
+    not read (5d_note says so)."""
     c5a = bool(re.search(r"#### Closure, recorded 2026-10-02: the pair closes for 2026", text)
                or re.search(r"### Result \(run [0-9-]+, once\)[^\n]*xwoba", text, re.I))
     k5 = bool(re.search(r"### Result \(run [0-9-]+, once\): 5k", text))
     d5_head = re.search(r"### Decisions recorded [0-9-]+: 5d-C[^\n]*", text)
     d5_open = bool(re.search(r"\*\*5d-A, 5d-B, 5d-D and 5d-E: not read\.\*\*", text))
-    d5 = bool(re.search(r"### Result \(run [0-9-]+, once\)[^\n]*5d", text)) or (
-        bool(d5_head) and not d5_open)
+    d5 = bool(re.search(r"### Result \(run [0-9-]+, once\)[^\n]*5d", text)) or bool(d5_head)
     return {"5c-A": c5a, "5d": d5, "5k": k5,
-            "5d_note": ("5d-C decided at p = 1 without a read; 5d-A, 5d-B, 5d-D and 5d-E "
-                        "recorded as not read, with no last day and no closure")
+            "5d_note": ("5d-C decided at p = 1 without a read, counted as the 5d record by "
+                        "the owner's answer TR-5d of 2026-10-21; 5d-A, 5d-B, 5d-D and 5d-E "
+                        "recorded as not read")
             if (d5_head and d5_open) else None}
+
+
+def rd_band_note(recs: dict) -> str:
+    """The reason rd_band stays null (plan 4.3)."""
+    have = [k for k in ("5c-A", "5d", "5k") if recs[k]]
+    lack = [k for k in ("5c-A", "5d", "5k") if not recs[k]]
+    return ("null: docs/diamond-betting.md records " + (", ".join(have) or "none of the three")
+            + " but not the " + ", ".join(lack) + " read or closure"
+            + (f" ({recs['5d_note']})" if recs.get("5d_note") and "5d" in lack else "")
+            + "; plan 4.3")
+
+
+def read_betting_records() -> dict:
+    if BETTING_DOC.exists():
+        return betting_records(BETTING_DOC.read_text(encoding="utf-8"))
+    return {"5c-A": False, "5d": False, "5k": False, "5d_note": None}
 
 
 def summarize(per_family: dict, *, live: dict, env: dict, pool: dict, rd_band,
@@ -1089,8 +1114,7 @@ def run(*, refresh: bool = False, jobs: int = 1, out: Optional[Path] = None,
             per_family[k][fld][LIVE_SEASON] = rec[fld][LIVE_SEASON]
     live_counts = {k: v for k, v in live.items() if not k.startswith("_")}
 
-    recs = betting_records(BETTING_DOC.read_text(encoding="utf-8")) if BETTING_DOC.exists() \
-        else {"5c-A": False, "5d": False, "5k": False, "5d_note": None}
+    recs = read_betting_records()
     if recs["5c-A"] and recs["5d"] and recs["5k"]:
         rd = rd_band_measure()
     else:
@@ -1109,13 +1133,7 @@ def run(*, refresh: bool = False, jobs: int = 1, out: Optional[Path] = None,
     art = summarize({k: v for k, v in per_family.items()}, live=dict(live_counts, _as_of=live["_as_of"]),
                     env=league_env(), pool=pool, rd_band=rd, inputs=inputs, prior=prior)
     if rd is None:
-        have = [k for k in ("5c-A", "5d", "5k") if recs[k]]
-        lack = [k for k in ("5c-A", "5d", "5k") if not recs[k]]
-        art["rd_band_note"] = (
-            "null: docs/diamond-betting.md records " + (", ".join(have) or "none of the three")
-            + " but not the " + ", ".join(lack) + " read or closure"
-            + (f" ({recs['5d_note']})" if recs.get("5d_note") and "5d" in lack else "")
-            + "; plan 4.3")
+        art["rd_band_note"] = rd_band_note(recs)
     art["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     path = Path(out or eval_path())
     write_artifact(art, path)
@@ -1143,6 +1161,39 @@ def rd_band_measure(seasons=RD_BAND_SEASONS) -> dict:
         k += rows["club"].nunique()
     return {"sigma_m": _r(np.sqrt(ss / (n - k)), 5), "seasons": list(seasons), "n": n,
             "club_seasons": k}
+
+
+def rd_band_refresh(*, path: Optional[Path] = None, out: Optional[Path] = None,
+                    log: Callable = print) -> Optional[dict]:
+    """The rd_band block alone (plan 4.3). Re-reads the betting records of
+    docs/diamond-betting.md and, when the 5c-A, 5d and 5k records are all
+    there, measures rd_band from the completed seasons' final scores
+    (rd_band_measure); otherwise rd_band stays null with the reason. Writes
+    rd_band, rd_band_note and inputs.betting_records (plus the refresh date in
+    inputs.rd_band_refreshed_at) ONLY: every other block, generated_at
+    included, is copied through unchanged, so no bar, tail, count, shrink fit
+    or live check moves. Returns the new rd_band (None when it stays null)."""
+    src = Path(path or eval_path())
+    art = json.loads(src.read_text(encoding="utf-8")) if src.exists() else None
+    if not art:
+        raise RuntimeError(f"no eval artifact at {src}; run the full lab first")
+    recs = read_betting_records()
+    new = dict(art)
+    new["inputs"] = dict(art.get("inputs") or {}, betting_records=recs,
+                         rd_band_refreshed_at=datetime.now(timezone.utc).strftime(
+                             "%Y-%m-%dT%H:%M:%SZ"))
+    new.pop("rd_band_note", None)
+    if recs["5c-A"] and recs["5d"] and recs["5k"]:
+        rd = rd_band_measure()
+        log(f"  rd_band: sigma_m {rd['sigma_m']} over {rd['seasons']} "
+            f"({rd['n']} club-games, {rd['club_seasons']} club-seasons)")
+    else:
+        rd = None
+        new["rd_band_note"] = rd_band_note(recs)
+        log(f"  rd_band stays null: {new['rd_band_note']}")
+    new["rd_band"] = rd
+    write_artifact(new, Path(out or src))
+    return rd
 
 
 def _load_tables(lab_dir: Path, plan: dict, prefix: str = "") -> dict:
@@ -1243,7 +1294,19 @@ def main(argv=None) -> int:
     ap.add_argument("--lab-dir", type=Path, default=LAB_DIR)
     ap.add_argument("--live-check", action="store_true",
                     help="refresh only the artifact's live_check block (monthly; no bar moves)")
+    ap.add_argument("--rd-band", action="store_true",
+                    help="refresh only the artifact's rd_band block (plan 4.3; no bar moves)")
+    ap.add_argument("--src", type=Path, default=None,
+                    help="with --rd-band: the artifact to read (default: the flag's path)")
     a = ap.parse_args(argv)
+    if a.rd_band:
+        try:
+            rd = rd_band_refresh(path=a.src, out=a.out)
+        except (RuntimeError, OSError, KeyError, ValueError) as e:
+            print(f"refused, nothing written: {e}")
+            return 2
+        print(json.dumps({"rd_band": rd}, indent=1))
+        return 0
     if a.live_check:
         try:
             blk = live_check_refresh(lab_dir=a.lab_dir, out=a.out, refresh=a.refresh)
