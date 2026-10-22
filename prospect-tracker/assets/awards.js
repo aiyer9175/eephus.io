@@ -434,12 +434,31 @@
     var n = ((doc.ballot_rules || main.ballot_rules || {})[A] || {}).n || b.top.length;
     h += '<details class="aw-d" data-d="cmp"' + (twoCol() ? " open" : "") + "><summary>Compare the three</summary>" +
       compare(doc, A, LG, b) + "</details>";
+    h += onRealized(doc, A, LG);
     h += '<details class="aw-d" data-d="race"><summary>The race</summary>' + race(doc, A, LG) + "</details>";
     h += '<details class="aw-d" data-d="ballot"><summary>The rule&#39;s full ballot (' + n + " places)</summary>" +
       fullBallot(b, rule, n) + "</details>";
     return h + "</article>";
   }
 
+  // The rule on eWAR realized (EWAR_SITEWIDE_CALIBRATION.md part 4; owner EW3-20): the
+  // rule's ballot on eWAR realized with each place's band, read from the main payload's
+  // `realized_read` block for any season in the selector. Absent block, absent panel.
+  function onRealized(doc, A, LG) {
+    var D = main.realized_read;
+    var b = D && D.seasons && ((D.seasons[String(doc.season)] || {})[A] || {})[LG];
+    if (!b || !b.top || !b.top.length) return "";
+    var h = '<details class="aw-d" data-d="realized"><summary>The rule on eWAR realized</summary>';
+    h += '<p class="aw-lead">' + esc(b.sentence) + "</p>";
+    h += '<ol class="aw-full">' + b.top.map(function (r) {
+      return '<li value="' + r.rank + '"><span class="aw-fp">' + r.rank + "</span> " + esc(r.name) + ", " +
+        esc(r.club_code) + ", " + esc(fmt(r.score_display, 1)) + " eWAR realized (band " + esc(fmt(r.lo_display, 1)) +
+        " to " + esc(fmt(r.hi_display, 1)) + ")" + (r.rank > 1 && r.within_band ? ", within the band of the first" : "") +
+        "</li>";
+    }).join("") + "</ol>";
+    if (D.band_sentence) h += '<p class="aw-fact">' + esc(D.band_sentence) + "</p>";
+    return h + "</details>";
+  }
   function places(top) {
     var out = [], i = 0;
     while (i < top.length) {

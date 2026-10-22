@@ -21687,10 +21687,9 @@ function _boardAsOf(dateStr) {
     if (!best) continue;
     const cw = p.career_war || {};
     // Hindsight outcomes (only meaningful for since-debuted players). career_war is the
-    // displayed eWAR (source:"ewar_v2") and WAR/yr is its full-season-normalized rate
-    // (gradWarPerYr). WAG is NOT on that series: its observed_war is the label WAR
-    // (career_war_label, fWAR since the 2026-10 epoch), the basis wagWarBasis names
-    // on the card.
+    // displayed eWAR and WAR/yr is its full-season-normalized rate (gradWarPerYr). WAG's
+    // observed_war is on the same headline eWAR since 2026-10-22 (storage.WAG_EWAR_HEADLINE;
+    // the block's war_basis stamp, which wagWarBasis names on the card).
     const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
     const wagObj = (p.debuted_value || {}).wag;
     rows.push({
@@ -23810,11 +23809,13 @@ function wagExposureNote(g) {
   if (w.exposure_load == null) return "";
   return `${Math.round(Number(w.exposure_load)).toLocaleString("en-US")} ${w.exposure_unit || "PA"}`;
 }
-// The WAR series WAG is measured on: its observed leg is the LABEL row
-// (career_war_label), not the eWAR the card shows beside it, so the card names
-// it. Read off the row, so the eWAR label epoch moves this line with the data.
+// The WAR series WAG is measured on: the WAG block's own war_basis stamp when the
+// export carries one (storage.WAG_EWAR_HEADLINE: the headline eWAR), else the LABEL
+// row (career_war_label) its observed leg was summed from. Read off the data, so a
+// basis switch moves this line with it.
 function wagWarBasis(g) {
-  const src = String(((g && g.career_war_label) || {}).source || "");
+  const wb = (((g && g.debuted_value) || {}).wag || {}).war_basis;
+  const src = String(wb || ((g && g.career_war_label) || {}).source || "");
   if (src === "fwar") return "FanGraphs WAR";
   if (src.startsWith("ewar")) return "eWAR";
   if (src === "bbref" || src === "bwar") return "Baseball-Reference WAR";

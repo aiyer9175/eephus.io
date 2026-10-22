@@ -202,6 +202,8 @@ MODEL_GLOSSARY = {
     "prospect_surplus": ["surplus_value"],
     "fv_to_war_anchors": ["fv_to_war_table"],
     "wag": ["wag", "warwag"],
+    # EWAR_SITEWIDE_CALIBRATION part 4: the Awards rules on eWAR realized.
+    "awards_realized_read": ["ewar_realized"],
     # TL_15: the Source Accuracy Tools tab prints look W; both rows are documented by the
     # two terms the tab defines.
     "tool_implied_production": ["tool_implied_production", "tool_above_grade"],
