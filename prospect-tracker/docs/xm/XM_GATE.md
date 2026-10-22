@@ -473,3 +473,41 @@ the flip is an owner question.
 REPORTED, never gated: the league and per-club farm Fair $ totals before and
 after, the prospect Fair $ quantiles, the counts by arrival year, and the
 top ten prospects by Fair $. Never by consensus FV level.
+
+RESULTS (2026-10-22, task XM_2C_PROSPECT_FAIR_ONLY; `xm_export.export()` in
+cache-only mode; before = the served build of 2026-10-22 at the lane's base,
+after = this rule; market $/WAR $16.86M, carry 0.0402, discount 0.07).
+Descriptive, never gated, never by consensus FV level.
+
+* Board prospects (4,671): every one has xM$ withheld and Fair $ only. Fair
+  $ P10 / P25 / median / P75 / P90 / P99 before $0.00M / $0.00M / $0.00M /
+  $0.00M / $0.37M / $5.21M (the section 11 Fair $ at a one-year term on a
+  path that is zero before the ETA), after $0.00M / $0.00M / $5.80M /
+  $21.91M / $43.71M / $112.40M. 1,774 prospects have Fair $ 0 (an eFV
+  six-season WAR of 0). First season of the path: 2027 862, 2028 889, 2029
+  1,036, 2030 924, 2031 193, 2032 302, 2033 359, 2034 105, 2035 1.
+* League farm: 4,647 rows before (off the 40-man), 4,671 after (every board
+  prospect; 24 sit on a 40-man). Farm Fair $ $1,277.95M before, $73,452.52M
+  after. The farm xM$ totals ($10,615.04M AAV and $10,665.90M total before)
+  no longer exist. Every club's farm Fair $ equals the sum of its rows
+  (asserted and tested). Club farm Fair $ after: highest MIL $3,759.21M,
+  lowest SDP $1,534.82M, median $2,386.09M.
+* For scale only: the served eFV surplus of the same 4,671 prospects
+  (`trade_values.json` posterior_surplus_mm, net of the salary they are
+  expected to draw) sums to $16.64B. Fair $ is gross of salary and runs over
+  the whole 15-season path, so it sits above that figure; the same Fair $
+  over only the six seasons from the ETA would be $59.44B.
+* Top 10 prospects by Fair $: Jesus Made (MIL) $329.76M, Franklin Arias
+  (BOS) $270.87M, Leo De Vries (ATH) $250.04M, Eli Willits (WSN) $246.09M,
+  Grady Emerson (TBR) $244.58M, Juneiker Caceres (CLE) $211.50M, Luis Pena
+  (MIL) $206.55M, Vahn Lackey (MIN) $200.29M, Rainiel Rodriguez (STL)
+  $184.56M, Dax Kilby (NYY) $174.85M.
+* Roster block: the 24 prospects on a 40-man move to the farm block, so the
+  league roster rows go from 1,106 to 1,082, the roster xM$ AAV sum from
+  $10,597.70M to $10,529.54M and the roster Fair $ per year from $14,966.15M
+  to $14,924.04M (17 clubs move). Not moved: the 1,332 MLB and free-agent
+  rows (every field equal), the market-rate surplus of all 30 clubs
+  ($17,209.68M xM$ in all) and the support-clip shares of the fa and mlb
+  populations (0 of 196 and 52 of 1,136). The prospect population leaves
+  the support-clip report (2,866 of 4,671 were clipped before), since no
+  prospect is passed to the market model.
