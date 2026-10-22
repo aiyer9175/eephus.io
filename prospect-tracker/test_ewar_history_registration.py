@@ -99,3 +99,11 @@ def test_amendment_9_1_terms_enter_only_where_the_stamp_carries_them():
     assert ("`x_i = [baseRunning_i - wSb_i if the season's stamp carries bsr_rest] + [F_i if it carries "
             "framing]`") in text
     assert "the largest abs(F_i) is 0.00027 and 0.00036 runs" in text
+
+
+def test_amendment_9_2_full_side_sum_within_storage_rounding():
+    text = _flat()
+    assert ("### 9.2 2026-10-22: FULL's side sum is checked within the artifact's storage rounding "
+            "(definition defect, identity 2)") in text
+    assert "within 1e-6 + 5e-7 x (rows of the side the artifact lists with a departure on that series) wins" in text
+    assert "CORE keeps 1e-6." in text

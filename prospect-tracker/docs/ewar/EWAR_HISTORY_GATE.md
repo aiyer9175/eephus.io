@@ -179,6 +179,19 @@ stamp rule, the series and the report never change after the first build.
   rule, the thresholds, the series, the identities and the report stand as registered.
 - Committed alone with its pin, before any number of the estimand.
 
+### 9.2 2026-10-22: FULL's side sum is checked within the artifact's storage rounding (definition defect, identity 2)
+
+- **Defect.** Identity 2 checks the sum of FULL against published fWAR within 1e-6 wins, but
+  `data/ewar_v3.json` stores each departure rounded to 6 decimals (its `write` of `dh` and `dr`), so
+  the stored departures of a side sum to zero only within 5e-7 wins per listed row. The first build
+  refused on exactly that: FULL's 2026 pitching sum sat +8e-6 wins off fWAR, over 868 listed
+  pitching rows (a storage residual, not a part, read before any gap number existed). The artifact's
+  own zero-sum checks run on its unrounded values and pass.
+- **Fix.** FULL and FULL realized are checked per season and side within 1e-6 + 5e-7 x (rows of the
+  side the artifact lists with a departure on that series) wins; FULL realized keeps the R2 rounding
+  bound where that is larger. CORE keeps 1e-6. Identities 1 and 3 and everything else stand.
+- Committed alone with its pin, before any gap number.
+
 ## 10. Results
 
 **EMPTY AT REGISTRATION.**
