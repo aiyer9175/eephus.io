@@ -258,6 +258,11 @@ TEAM_DISPLAY_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "team_projection" / "p
 _PT_LEDGER: dict = {}
 _LEDGER_META: dict = {}
 _TEAM_PREVIEW: dict = {}
+# THE FA FIT FIELD under the veteran PT cap (AG_4, PLAN 9.7 R4a): {mlbam: the
+# UNCAPPED champion mean path, summed and trimmed exactly as warChamp}, filled
+# only while projection.pt_cap_enabled is on, so byYear[].winsFaFit stays the
+# un-budgeted, aging v2, uncapped wins fa_fit._outlook_wins reads.
+_FA_FIT_CHAMP: dict = {}
 
 # Per-600-PA / per-250-BF denominators: the units fa_market._decay_path carries
 # the WAR RATE in. Defined once so the inverse cannot drift from the forward.
@@ -1556,6 +1561,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         _cf = [paths[s].get("war_by_year_champ") or paths[s]["war_by_year"] for s in paths]
         champ_full = [round(sum(float(a[t] or 0.0) for a in _cf), 2)
                       for t in range(min(len(a) for a in _cf))]
+        if fp._pt_cap_on():
+            _FA_FIT_CHAMP[mlbam] = _uncapped_champ(sides, paths, ages, curves,
+                                                   war_map, league, in_prog)
         # The SERVED path at its full length (TAIL_SEAM "chained", owner answer
         # VAL2-Q1): each side's war_by_year, whose seasons past the horizon are
         # fa_market.chain_aging_tail (the champion's aging curve chained from
@@ -2569,8 +2577,30 @@ def _row_sides(m: dict) -> list[str]:
     return ["pit" if str(m.get("pos") or "").strip().upper() in _PIT_POS else "hit"]
 
 
+def _uncapped_champ(sides: dict, paths: dict, ages: dict, curves: dict,
+                    war_map: dict, league: dict, in_prog) -> list[float]:
+    """A veteran's champion mean path with pt_cap=False, summed across sides
+    and trimmed to HORIZON exactly as the row's warChamp is (the FA Fit field
+    of PLAN 9.7 R4a; read only while the PT cap is on)."""
+    arrs = []
+    for s_key in paths:
+        p = fm.contract_war_path(sides[s_key], s_key, FIRST_SEASON, HORIZON,
+                                 ages[s_key], curves, war_map, league,
+                                 in_progress=in_prog, use_ml=False, pt_cap=False)
+        if p is None:
+            return []
+        arrs.append(p.get("war_by_year_champ") or p["war_by_year"])
+    if len(arrs) == 2:
+        arr = [round((arrs[0][t] or 0) + (arrs[1][t] or 0), 2)
+               for t in range(min(HORIZON, len(arrs[0]), len(arrs[1])))]
+    else:
+        arr = arrs[0][:HORIZON]
+    return [round(w, 2) for w in arr]
+
+
 def _depth_pool(corpus: dict, names: dict[int, str],
-                contracts: dict[str, dict], vet_mlbams: set) -> tuple[dict, dict]:
+                contracts: dict[str, dict], vet_mlbams: set,
+                fa_fit_war: dict | None = None) -> tuple[dict, dict]:
     """Per-season WAR for every projectable player the exposure floors exclude
     from the display list - the retro backtest showed the floor-gated
     universe carries only ~560 of the league's ~1000 WAR while the full
@@ -2593,8 +2623,12 @@ def _depth_pool(corpus: dict, names: dict[int, str],
     depth player counts only through his control window
     (_last_controlled_season; depth players are nearly all non-contracted, so
     the age proxy dominates), so the depth pool also cliffs in the out-years.
-    Returns ({org: [war_2027..2031]}, accounting)."""
+    Returns ({org: [war_2027..2031]}, accounting).
+
+    ``fa_fit_war`` (a dict, filled only while the PT cap is on): the same
+    per-club depth WAR on the uncapped champion, the FA Fit field's input."""
     league = corpus["league"]
+    _alt = fa_fit_war is not None and fp._pt_cap_on()
     curves, war_map = fp.fitted_models(corpus, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, fp.season_fraction(league, FIRST_SEASON - 1))
     by_player: dict[str, dict[int, dict[int, dict]]] = {
@@ -2618,6 +2652,7 @@ def _depth_pool(corpus: dict, names: dict[int, str],
             _dp_name_counts[_k] = _dp_name_counts.get(_k, 0) + 1
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
+        champ_alt = [0.0] * HORIZON
         age_any = None
         _dp_sides: list = []
         for side in ("hit", "pit"):
@@ -2640,6 +2675,15 @@ def _depth_pool(corpus: dict, names: dict[int, str],
             for t in range(HORIZON):
                 if t < len(arr):
                     champ[t] += float(arr[t] or 0.0)
+            if _alt:
+                cpa = fm.contract_war_path(hist, side, FIRST_SEASON, HORIZON, age,
+                                           curves, war_map, league,
+                                           in_progress=in_prog, use_ml=False,
+                                           pt_cap=False)
+                arr_a = (cpa.get("war_by_year_champ") or cpa.get("war_by_year") or []) if cpa else []
+                for t in range(HORIZON):
+                    if t < len(arr_a):
+                        champ_alt[t] += float(arr_a[t] or 0.0)
         if not any(champ):
             continue
         n += 1
@@ -2657,6 +2701,11 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         for t in range(HORIZON):
             if FIRST_SEASON + t <= last_ctrl:
                 bucket[t] += champ[t]
+        if _alt and org:
+            alt_b = fa_fit_war.setdefault(org, [0.0] * HORIZON)
+            for t in range(HORIZON):
+                if FIRST_SEASON + t <= last_ctrl:
+                    alt_b[t] += champ_alt[t]
         if org:
             _ledger_depth(mlbam, org, last_ctrl, _dp_sides, curves, league)
     acct = {"n_depth_players": n,
@@ -3010,6 +3059,35 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
 # served key, number or file moves. A flip is its own commit after the gate's
 # look (section 5.1).
 # --------------------------------------------------------------------------
+
+def _stamp_fa_fit_wins(team_outlook: list[dict], vets: list[dict],
+                       prospects: list[dict], depth_fa_fit: dict,
+                       depth_acct: dict) -> None:
+    """PLAN 9.7 R4a fallback (AG_4): while the PT cap is on, byYear[].winsFaFit
+    is the un-budgeted wins of the same pre-free-agency frame on the UNCAPPED
+    champion (veterans from _FA_FIT_CHAMP, depth from the pool's uncapped
+    twin), so the FA Fit's team baseline never moves with the cap. The second
+    roll-up runs with live=False and leaves the T2 preview as the served run
+    wrote it."""
+    import copy
+    alt_vets = [dict(m, warChamp=_FA_FIT_CHAMP.get(m.get("mlbam"), m.get("warChamp")))
+                for m in vets]
+    saved = copy.deepcopy(_TEAM_PREVIEW)
+    try:
+        alt = _team_outlook(alt_vets, prospects,
+                            {k: [round(x, 2) for x in v] for k, v in depth_fa_fit.items()},
+                            depth_acct, _cohort_intercepts(), live=False)
+    finally:
+        _TEAM_PREVIEW.clear()
+        _TEAM_PREVIEW.update(saved)
+    alt_wins = {(t["team"], b["season"]): b["wins"]
+                for t in alt for b in (t.get("byYear") or [])}
+    for t in team_outlook:
+        for b in (t.get("byYear") or []):
+            w = alt_wins.get((t["team"], b["season"]))
+            if w is not None:
+                b["winsFaFit"] = w
+
 
 def _team_params() -> dict | None:
     """The frozen T1/T2 constants (model/team_projection/params.json), or None
@@ -4379,6 +4457,7 @@ def _build_payload_body() -> dict:
     _PT_LEDGER.clear()
     _LEDGER_META.clear()
     _TEAM_PREVIEW.clear()
+    _FA_FIT_CHAMP.clear()
     from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key, _SPOTRAC_TEAM_SLUGS
     slug_to_org = {slug: code for code, slug in _SPOTRAC_TEAM_SLUGS.items()}
     contracts = {}
@@ -4387,10 +4466,14 @@ def _build_payload_body() -> dict:
     dpw = _winter_dpw(FIRST_SEASON)
     vets = _veteran_rows(corpus, names, contracts, dpw)
     prospects = _prospect_rows(dpw)
+    depth_fa_fit: dict = {}
     depth_team_war, depth_acct = _depth_pool(
-        corpus, names, contracts, {m["mlbam"] for m in vets if m.get("mlbam")})
+        corpus, names, contracts, {m["mlbam"] for m in vets if m.get("mlbam")},
+        fa_fit_war=depth_fa_fit)
     team_outlook = _team_outlook(vets, prospects, depth_team_war, depth_acct,
                                  _cohort_intercepts())
+    if fp._pt_cap_on():
+        _stamp_fa_fit_wins(team_outlook, vets, prospects, depth_fa_fit, depth_acct)
     # Current-season (2026) overlay - ADDITIVE, dark-launched. Best-effort: any
     # fetch failure (offline / degraded local build) leaves team_outlook exactly
     # as the 2027-only output and mc_schedule_source None. FIRST_SEASON-1 = 2026.

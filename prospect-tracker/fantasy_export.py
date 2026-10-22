@@ -551,8 +551,10 @@ def build_players(limit: int | None = None, *, today: date | None = None,
             age_row = next((h for h in hist if h.get("age")), None)
             role = hist[0].get("role")
             age = (age_row["age"] + (cur + 1 - age_row["season"])) if age_row else None
+            # pt_cap=False: the veteran PT cap (AG_4, owner answer AG-Q5)
+            # moves only the surfaces AG-Q5 named, never the fantasy board.
             proj = fp.project_player(hist, side, cur + 1, curves, league, age,
-                                     role=role, in_progress=in_prog)
+                                     role=role, in_progress=in_prog, pt_cap=False)
             if not proj:
                 continue
             name = _name(mid)

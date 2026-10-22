@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-15",
+ "generated_at": "2026-10-21",
  "first_season": 2027,
  "league_sum_accounting": {
   "roster_war_sum": 937.8,
@@ -27,14 +27,14 @@
    },
    {
     "season": 2028,
-    "roster_war_sum": 648.3,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 10.23
+    "roster_war_sum": 648.2,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 10.24
    },
    {
     "season": 2029,
     "roster_war_sum": 509.6,
-    "wins_sum": 2429.8,
+    "wins_sum": 2429.7,
     "remainder_recenter_wins_per_team": 15.01
    },
    {
@@ -45,8 +45,8 @@
    },
    {
     "season": 2031,
-    "roster_war_sum": 307.3,
-    "wins_sum": 2429.9,
+    "roster_war_sum": 307.2,
+    "wins_sum": 2430.0,
     "remainder_recenter_wins_per_team": 22.15
    }
   ],
@@ -332,7 +332,7 @@
    2027.94,
    2029.4
   ],
-  "align_median": 0.09,
+  "align_median": 0.11,
   "align_range": [
    -0.59,
    1.17

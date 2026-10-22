@@ -446,7 +446,9 @@ def _stub_pool(monkeypatch, frac, projs=None):
     projs = projs or {(1, "hit"): _HIT_PROJ, (2, "pit"): _SP_PROJ,
                       (3, "pit"): _RP_PROJ}
 
-    def _proj(hist, side, target, curves, lg, age, role=None, in_progress=None):
+    def _proj(hist, side, target, curves, lg, age, role=None, in_progress=None, pt_cap=None):
+        # the fantasy pool stays off the veteran PT cap (AG_4): explicit False
+        assert pt_cap is False
         return dict(projs[(hist[0]["mlbam"], side)], role=role)
     monkeypatch.setattr(fe.fp, "build_corpus", lambda: corpus)
     monkeypatch.setattr(fe.fp, "fitted_models", lambda c, cur: ({}, {}))

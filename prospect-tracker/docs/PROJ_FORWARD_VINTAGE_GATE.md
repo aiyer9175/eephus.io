@@ -195,6 +195,7 @@ entry, an amendment, and each score are recorded here.
 - 2026-10-09: registered. No frozen file, producer or score exists.
 - 2026-10-09: amendment A1 (section 10) registered after the owner's OUTLOOK answer (a): the Team Outlook winter frames are frozen monthly from 2026-11-01 to 2027-03-01 and scored once as a separate arm. Sections 2 to 5 are unchanged. No winter-frame code, frozen file or score exists.
 - 2026-10-09: amendment A2 (section 11) registered for task PJ_10_FORWARD_FREEZE_AMENDMENT: the Opening Day 2027 freeze also carries the component lines of docs/PROJ_COMPONENTS_GATE.md (H8, P3 and the gap line included), W2's paths and the 2027 team frames of docs/TEAM_PROJECTIONS_GATE.md, each hash-pinned in the same commit or recorded absent. Sections 2 to 5 and 10 are unchanged. No element file, element writer or score exists.
+- 2026-10-21: engine change (task AG_4_CHAMPION_PT_CAP, owner answer AG-Q5 'Fix both now'): fa_config.yaml projection.pt_cap_enabled flipped to true, so the veteran champion path clamps projected PA or BF at the fit's 99.5th percentile of one season by side and base role (meta.pt_cap). On the flip build 7 of 1,400 veterans' warChamp moved (seasons 2028 to 2031 only), warY1Champ and the served war and woba moved on none. The Opening Day 2027 freeze, when it runs, freezes this capped engine. No rule, field, comparator, date or verdict word of this gate changes.
 
 ## 10. Amendment A1 (2026-10-09): the Team Outlook winter frames
 

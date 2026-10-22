@@ -295,7 +295,8 @@ MAX_PATH_YEARS = 15
 
 
 def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
-                curves: dict, aging: str = "v2", mlbam=None) -> list[float]:
+                curves: dict, aging: str = "v2", mlbam=None,
+                pt_cap: bool | None = None) -> list[float]:
     """Decay a year-1 WAR along the aging curves: the WAR RATE (per 600 PA /
     250 BF) and playing time each walk their fitted deltas at the advancing
     age. Shared by the central path and the P10/P90 variants so uncertainty
@@ -306,8 +307,12 @@ def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
     the aging_v3 model attached by fitted_models(..., aging="v3"), its bucket
     from the base-season position and, from year 2 on, the archetype of the
     three seasons before the base (the ARM R serve rule); with no arm active
-    the v3 walk reproduces the v2 walk."""
+    the v3 walk reproduces the v2 walk.
+
+    ``pt_cap`` (call-scoped; None reads projection.pt_cap_enabled): when on,
+    the exposure is clamped at the fitted meta["pt_cap"] in every step."""
     per = 600.0 if side == "hit" else 250.0
+    _cap = fp.pt_cap_value(curves, side, role) if fp.resolve_pt_cap(curves, pt_cap) else None
     rate = (war1 / expo * per) if expo > 0 else 0.0
     _v3 = None
     if aging == "v3":
@@ -335,6 +340,8 @@ def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
                 rate += _v3.rate_delta(side, "war_rate", a, bucket=_bucket, archetype=_arch,
                                        role=role)
                 e = _v3.pt_next(side, role, e, a, bucket=_bucket)
+        if _cap is not None:
+            e = min(e, _cap)
         path.append(max(0.0, rate * e / per))
     return path
 
@@ -486,7 +493,8 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       league: dict, in_progress: tuple[int, float] | None = None,
                       use_ml: bool | None = None,
                       ml_models: dict | None = None,
-                      p20: bool = False, aging: str = "v2") -> dict | None:
+                      p20: bool = False, aging: str = "v2",
+                      pt_cap: bool | None = None) -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
@@ -513,9 +521,15 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     ``aging`` ("v2" default) is the call-scoped aging engine selector passed to
     _decay_path; the champion path, its P10/P90 variants and the year-1 PT step
     (through the curves fitted_models(..., aging=) returned) walk the same
-    engine (docs/AGING_V3_GATE.md section 2)."""
+    engine (docs/AGING_V3_GATE.md section 2).
+
+    ``pt_cap`` (call-scoped; None reads projection.pt_cap_enabled) clamps the
+    exposure at the fitted cap in the year-1 PT and every decay step; the ML
+    heads' stack features stay on the uncapped champion (train/serve parity
+    with the shipped bundle)."""
+    _ptc = fp.resolve_pt_cap(curves, pt_cap)
     proj = fp.project_player(hist, side, class_year, curves, league, age,
-                             in_progress=in_progress, p20=p20)
+                             in_progress=in_progress, p20=p20, pt_cap=_ptc)
     if proj is None:
         return None
     war1 = fp.war_from_projection(proj, side, war_map, league, class_year)
@@ -527,7 +541,8 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     decay_role = fp.profile_role(hist, side, role, league)
     a = age or 30
     _mlbam = hist[0].get("mlbam") if hist else None
-    path = _decay_path(war1, expo, side, decay_role, a, curves, aging=aging, mlbam=_mlbam)
+    path = _decay_path(war1, expo, side, decay_role, a, curves, aging=aging, mlbam=_mlbam,
+                       pt_cap=_ptc)
     out = {"war_by_year": [round(w, 2) for w in path],
            # The champion MEAN path, carried alongside the (possibly ML)
            # display path for team roll-up consumers that must sum MEANS, not
@@ -555,9 +570,9 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
         band_src = "bucket"
     if q:
         p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves,
-                          aging=aging, mlbam=_mlbam)
+                          aging=aging, mlbam=_mlbam, pt_cap=_ptc)
         p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves,
-                          aging=aging, mlbam=_mlbam)
+                          aging=aging, mlbam=_mlbam, pt_cap=_ptc)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
         out["band_source"] = band_src
@@ -568,8 +583,13 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     # default = the shipped live bundle. The live bundle must never serve
     # historical winters — it has seen their outcomes.
     models = ml_models if ml_models is not None else proj_ml.load()
+    # The stack features read the UNCAPPED champion: the shipped heads were
+    # trained on it, so a capped call recomputes it with pt_cap=False.
+    champ_feat = out if not _ptc else contract_war_path(
+        hist, side, class_year, years, age, curves, war_map, league,
+        in_progress=in_progress, use_ml=False, p20=p20, aging=aging, pt_cap=False)
     feats = proj_ml.build_features(hist, side, class_year, age, curves,
-                                   war_map, league, champ=out,
+                                   war_map, league, champ=champ_feat,
                                    in_progress=in_progress)
     if models is None or feats is None:
         return out

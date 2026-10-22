@@ -79,6 +79,12 @@ projection:
   playing_time:                       # classic Marcel PT + aging delta
     hit: { w1: 0.5, w2: 0.1, base_pa: 200 }
     pit: { w1: 0.5, w2: 0.1, base_ip_sp: 60, base_ip_rp: 25 }
+  # Veteran PT cap (AG_4_CHAMPION_PT_CAP, owner answer AG-Q5): clamp the
+  # projected exposure at the fit's 99.5th percentile of single-season PA/BF by
+  # side and base role (meta.pt_cap) in the year-1 PT and every decay step.
+  # Call-scoped override: pt_cap= on fitted_models / project_player /
+  # contract_war_path / _decay_path.
+  pt_cap_enabled: true
   min_exposure_pair: { pa: 100, bf: 70 }   # aging-curve season pairs
   survivorship_lambda: 1.0           # correction strength (documented v1)
   age_range: [21, 42]                # curve support; clamped outside

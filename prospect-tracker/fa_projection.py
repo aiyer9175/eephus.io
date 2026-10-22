@@ -623,13 +623,16 @@ def _aging_select(result: tuple[dict, dict], corpus: dict, max_season: int,
 
 def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
                   *, use_def: bool | None = None,
-                  aging: str = "v2") -> tuple[dict, dict]:
+                  aging: str = "v2",
+                  pt_cap: bool | None = None) -> tuple[dict, dict]:
     """(curves, war_map) fitted on seasons <= max_season, disk-cached per
     max_season — Gate 2 and the live market model reuse Gate 1's twelve
     point-in-time fits instead of recomputing them (load-time ask).
 
     ``aging`` selects the aging engine for THIS call only ("v2" default; "v3"
-    attaches the aging_v3 service, see _aging_select); never a module global."""
+    attaches the aging_v3 service, see _aging_select); never a module global.
+    ``pt_cap`` (None reads projection.pt_cap_enabled) only picks the cache
+    file; the cap itself is applied by the callers that walk exposure."""
     # Key on corpus['last'] too (mirrors proj_ml's frame-cache key): a corpus
     # refresh strictly advances 'last' (annual rollover + the in-progress season
     # going partial->full + bWAR revisions), so omitting it served the PREVIOUS
@@ -644,6 +647,11 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
     # suffix, so the two fits coexist on disk.
     _use_def = _def_enabled() if use_def is None else bool(use_def)
     _suffix = "_def" if _use_def else ""
+    # PT CAP: a capped call needs meta["pt_cap"], which a cache written before
+    # the cap existed lacks, so it reads and writes its own file. Off = the
+    # historical filename: no incumbent cache is invalidated or deleted.
+    if _pt_cap_on(pt_cap):
+        _suffix += "_ptcap1"
     # No WAR-provider tag needed here: _corpus_sig digests every row's `war`,
     # so the eWAR epoch (pitcher labels move) re-keys this cache on its own.
     cache = (CACHE_DIR /
@@ -692,6 +700,7 @@ def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
         "method": "delta_pa_weighted+survivorship+regressed_rate_v2",
         "lambda": lam, "max_season": max_season,
         "corpus_seasons": [corpus["first"], corpus["last"]],
+        "pt_cap": fit_pt_cap(corpus, max_season),
     }}
     for side, rows, comps, expo_key, min_expo, role_of in (
         ("hit", corpus["hit"], HIT_COMPONENTS + ("war_rate", "pt"), "pa", min_pa,
@@ -1059,6 +1068,86 @@ def _pit_ip_age_enabled() -> bool:
     if env is not None:
         return env.strip() == "1"
     return PIT_IP_AGE_DEFAULT
+
+
+# ============================================================================
+# PT CAP (task AG_4_CHAMPION_PT_CAP, owner answer AG-Q5): the veteran engine
+# adds the pool-average playing-time delta at every age with no ceiling, so a
+# 22-year-old 650-PA regular walked to 798 PA by 26. When on, exposure is
+# clamped at meta["pt_cap"] (the fit's 99.5th percentile of single-season
+# exposure by side and base role) in the year-1 PT and in every decay step.
+# CALL-SCOPED like use_def: None reads fa_config.yaml projection.pt_cap_enabled,
+# an explicit True/False wins for that call only.
+# ============================================================================
+
+PT_CAP_PCT = 99.5
+
+
+def _pt_cap_on(pt_cap: bool | None = None) -> bool:
+    if pt_cap is not None:
+        return bool(pt_cap)
+    return bool(_pcfg().get("pt_cap_enabled", False))
+
+
+def _pt_cap_base_role(side: str, role: str) -> str:
+    base = (role or "").split("|")[0]
+    if side == "hit":
+        return "C" if base == "C" else "H"
+    return "RP" if base == "RP" else "SP"
+
+
+def fit_pt_cap(corpus: dict, max_season: int | None) -> dict:
+    """{side: {base role: cap}}: the PT_CAP_PCT percentile of single-season
+    exposure (PA for hitters, BF for pitchers) over the corpus rows with
+    season <= max_season and exposure > 0. Computed by the fit, never tuned;
+    the same definition and value as aging_v3._caps (docs/AGING_V3_GATE.md
+    section 4), unrounded."""
+    import numpy as np
+    out: dict = {"hit": {}, "pit": {}}
+    for side, key in (("hit", "pa"), ("pit", "bf")):
+        vals: dict[str, list[float]] = defaultdict(list)
+        for r in corpus.get(side) or []:
+            e = r.get(key) or 0
+            if e <= 0 or (max_season is not None and r["season"] > max_season):
+                continue
+            vals[_pt_cap_base_role(side, r.get("role"))].append(float(e))
+        for role, v in sorted(vals.items()):
+            out[side][role] = float(np.percentile(np.array(v), PT_CAP_PCT))
+    return out
+
+
+def pt_cap_value(curves: dict, side: str, role: str) -> float:
+    """The fitted cap for one side and (possibly profile-extended) role. A
+    curves dict without meta["pt_cap"] (a cache written before the cap
+    existed) raises, so a capped call can never run uncapped by accident."""
+    caps = ((curves or {}).get("meta") or {}).get("pt_cap")
+    if not caps:
+        raise ValueError("pt_cap is on but the curves carry no meta['pt_cap'] "
+                         "(fit them through fitted_models(..., pt_cap=True))")
+    return float(caps[side][_pt_cap_base_role(side, role)])
+
+
+_PT_CAP_WARNED = False
+
+
+def resolve_pt_cap(curves: dict, pt_cap: bool | None = None) -> bool:
+    """Whether THIS call clamps. An explicit value wins (True on curves without
+    meta["pt_cap"] then raises in pt_cap_value). None reads the config; curves
+    that carry no fitted cap (hand-built test curves; every fit through
+    fitted_models stores one) run uncapped, logged once, since there is no cap
+    to clamp at."""
+    global _PT_CAP_WARNED
+    if pt_cap is not None:
+        return bool(pt_cap)
+    if not _pt_cap_on(None):
+        return False
+    if ((curves or {}).get("meta") or {}).get("pt_cap"):
+        return True
+    if not _PT_CAP_WARNED:
+        log.warning("pt_cap_enabled is on but these curves carry no meta['pt_cap']; "
+                    "the call runs uncapped")
+        _PT_CAP_WARNED = True
+    return False
 
 
 # ============================================================================
@@ -1592,7 +1681,8 @@ def project_player(history: list[dict], side: str, target_season: int,
                    curves: dict, league: dict, age: int | None,
                    role: str | None = None,
                    in_progress: tuple[int, float] | None = None,
-                   p20: bool = False) -> dict | None:
+                   p20: bool = False,
+                   pt_cap: bool | None = None) -> dict | None:
     """Project one player's ``target_season`` from up to three prior
     seasons (the rows must be corpus-shaped). Returns the component dict +
     assembled composites (wRC+/FIP) + playing time — WAR attaches later
@@ -1604,7 +1694,11 @@ def project_player(history: list[dict], side: str, target_season: int,
     e1, e2, e3 and the pitcher terms ip1, ip2, ip3, including their use in the
     bounce term) is multiplied by 162/60. Rates, their exposure weights, the
     aging curves, the WAR map and every other season are unchanged. Only the
-    $/WAR path writer's enrichment sets it."""
+    $/WAR path writer's enrichment sets it.
+
+    ``pt_cap`` (call-scoped; None reads projection.pt_cap_enabled): when on,
+    the year-1 exposure is clamped at the fitted meta["pt_cap"] (pitchers'
+    ip_proj at the same cap over 4.3)."""
     cfg = _pcfg()
     weights = _marcel_weights()
     expo_key = "pa" if side == "hit" else "bf"
@@ -1730,6 +1824,13 @@ def project_player(history: list[dict], side: str, target_season: int,
             else:
                 pt += _adj * 4.3
                 out["ip_proj"] = round(max(0.0, ip + _adj), 1)
+    if resolve_pt_cap(curves, pt_cap):
+        # pt_proj and ip_proj are stored to 0.1, so the year-1 cap is the
+        # fitted cap rounded DOWN to that precision (never above it).
+        _cap = pt_cap_value(curves, side, role)
+        pt = min(pt, math.floor(_cap * 10) / 10)
+        if side != "hit" and out.get("ip_proj") is not None:
+            out["ip_proj"] = min(out["ip_proj"], math.floor(_cap / 4.3 * 10) / 10)
     out["pt_proj"] = max(0.0, round(pt, 1))
     # P-IPAGE (2026-07-24 projections lane): PITCHER PT AGING NEVER REACHED WAR.
     # ip_proj was stamped ABOVE the `pt += curve_delta(...,"pt",age)` line, so the
