@@ -74,6 +74,9 @@ def js():
     ctx.eval("function escapeHtml(s) { return String(s); }"
              " function gradeColor(l) { return '#000'; }"
              " function formatMetric(v, t) { return '$' + Number(v).toFixed(2) + 'M'; }")
+    # the composite labels its DvM line through dvmPlayerLabel since the DvM pass
+    ctx.eval(_function_source(_src(), "farmDvmDifficulty"))
+    ctx.eval(_function_source(_src(), "dvmPlayerLabel"))
     ctx.eval(_function_source(_src(), "makeFarmFinancialComposite"))
     return ctx
 
