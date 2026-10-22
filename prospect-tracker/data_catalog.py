@@ -279,6 +279,31 @@ ARTIFACTS = (
         "note": "",
     },
     {
+        "file": "xm_players.json", "group": "mlb",
+        "title": "xM$ and Fair $ by player",
+        "what": ("Every 40-man player and board prospect priced as if a free agent this "
+                 "winter: xM$ years, AAV and NPV guarantee with P10 and P90 from the /fa/ "
+                 "market model, Fair $ at the same term, the counterfactual and "
+                 "support-clip flags, and each player's market-rate surplus over his "
+                 "priced control seasons. Keyed by MLBAM id (40-man) or player key "
+                 "(prospect)."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_xm_export.py",
+        "note": ("Data only: no page shows it yet. Counterfactual rows carry no accuracy "
+                 "claim; a free agent's row copies the /fa/ class board."),
+    },
+    {
+        "file": "xm_clubs.json", "group": "mlb",
+        "title": "xM$ club roll-ups",
+        "what": ("Per club: the 40-man xM$ AAV sum beside Spotrac's payroll figures, the "
+                 "market-rate surplus over control, the farm xM$ totals and each Fair $ "
+                 "counterpart, with the player ids every sum is taken over."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_xm_export.py",
+        "note": ("Data only: no page shows it yet. Every club figure equals the sum of its "
+                 "listed player rows; quantiles are never summed."),
+    },
+    {
         "file": "fa_archive.json", "group": "mlb",
         "title": "Archived winters",
         "what": "Past free-agent winters with the realized-surplus ledger for each signing.",
