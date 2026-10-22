@@ -34496,7 +34496,7 @@ function milbFieldingCard(p) {
 // never summarised by grade. MILB_EBR_CARD_ON mirrors ebr_milb.MILB_EBR_LIVE (a test
 // pins the two); with it false the card fetches nothing and prints nothing.
 // #milbebr=1 (or ?milbebr=1) previews it, latched at boot like #etools.
-const MILB_EBR_CARD_ON = false;
+const MILB_EBR_CARD_ON = true;
 const _MILB_EBR_UI = (() => {
   const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("milbebr");
   if (h != null) return h !== "0";

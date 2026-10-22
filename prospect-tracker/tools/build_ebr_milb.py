@@ -15,9 +15,10 @@ hitting lines once per level-season WITH caughtStealing and groundIntoDoublePlay
   .cache/ebr/milb_preview/ebr_milb_eval.json  identity receipts per level-season,
       split-half reliability and cross-level continuity (aggregates only).
 
-and, only when ebr_milb.MILB_EBR_LIVE is True (or --serve is passed by the flip
-test harness with an explicit out path), data/ebr_milb.json: the PROSPX card
-payload, rows at DISPLAY_PA plate appearances or more, keyed by mlbam.
+and, only when ebr_milb.MILB_EBR_LIVE is True and --serve is passed, two files under
+data/: ebr_milb.json, the PROSPX card payload (rows at DISPLAY_PA plate
+appearances or more from level-seasons that pass every identity gate, keyed by
+mlbam), and ebr_milb_eval.json, the registry row's eval artifact (aggregates only).
 
 Never relates a number to a consensus-FV cell, an eFV, a grade or an outcome.
 
@@ -49,6 +50,7 @@ RECORD = ROOT / ".cache" / "pbp_runners"
 PREVIEW_DIR = ROOT / ".cache" / "ebr" / "milb_preview"
 LINES_DIR = ROOT / ".cache" / "ebr" / "milb_lines"
 SERVED = ROOT / "data" / "ebr_milb.json"
+SERVED_EVAL = ROOT / "data" / "ebr_milb_eval.json"
 REFETCH_DIR = RECORD / "refetch" / "milb"
 LIVE_FEED = "https://statsapi.mlb.com/api/v1.1/game/{pk}/feed/live"
 GAMELOG = "https://statsapi.mlb.com/api/v1/people/{mid}/stats?stats=gameLog&season={season}&sportId={sport}"
@@ -657,8 +659,35 @@ def write_preview(substrate: dict, ev: dict, out_dir: Path = PREVIEW_DIR) -> Non
     _write_json(out_dir / "ebr_milb_eval.json", ev, indent=1)
 
 
-def write_served(substrate: dict, ev: dict, path: Path = SERVED) -> None:
+def served_eval(substrate: dict, ev: dict) -> dict:
+    """The registry row's eval artifact: aggregates only. The identity receipts
+    keep their counts and flags (the lists of re-fetched games become counts), plus
+    each unit's run basis, the split-half reliability, the cross-level continuity and
+    the league W sub-totals. No player id, no grade, no consensus-FV cell."""
+    ident = {}
+    for k, v in ev["identity"].items():
+        blk = {i: v[i] for i in ("I1", "I2", "I3", "I4", "I5", "I6", "I7", "I9", "all_pass")}
+        blk["refetched_games"] = len(v.get("refetched_games") or [])
+        blk["normalised_steals"] = v.get("normalised_steals", 0)
+        ident[k] = blk
+    units = {k: {x: u[x] for x in ("level", "season", "games", "pa", "players", "players_150", "pool_kind",
+                                   "pool_units", "K", "k_source", "lambda", "fit_set_plays", "re24_sha256",
+                                   "complete")}
+             for k, u in substrate["units"].items()}
+    return {"schema": 1, "model": "ebr_milb_eval", "version": M.MILB_VERSION,
+            "generated_at": ev["generated_at"], "gate": GATE_DOC, "descriptive": True,
+            "note": ev["note"],
+            "bounds": {"league_sb_cs_rel_diff_max": LEAGUE_TOL, "player_sb_cs_exact_share_min": PLAYER_SB_CS_SHARE,
+                       "player_gidp_exact_share_min": PLAYER_GIDP_SHARE, "league_gidp_rel_diff_max": GIDP_LEAGUE_TOL,
+                       "pa_coverage_min": MIN_PA_COVERAGE, "display_pa": M.DISPLAY_PA,
+                       "min_unit_games": M.MIN_UNIT_GAMES},
+            "units": units, "identity": ident, "reliability_split_half": ev["reliability_split_half"],
+            "continuity": ev["continuity"], "dirt_advances_league": ev["dirt_advances_league"]}
+
+
+def write_served(substrate: dict, ev: dict, path: Path = SERVED, eval_path: Path = SERVED_EVAL) -> None:
     _write_json(Path(path), served_payload(substrate, ev))
+    _write_json(Path(eval_path), served_eval(substrate, ev), indent=1)
 
 
 def reconcile_all(*, fetch: bool = True, only=None) -> dict:
@@ -695,7 +724,8 @@ def main(argv=None) -> int:
     ap.add_argument("--fill", default=None, metavar="LEVEL|SEASON,...",
                     help="fetch the final games a level-season's record lacks (I3), then exit")
     ap.add_argument("--serve", action="store_true",
-                    help="also write data/ebr_milb.json (refused while MILB_EBR_LIVE is False)")
+                    help="also write data/ebr_milb.json and data/ebr_milb_eval.json (refused while "
+                         "MILB_EBR_LIVE is False)")
     a = ap.parse_args(argv)
     if a.fill:
         data, _ = load_units()
@@ -721,7 +751,7 @@ def main(argv=None) -> int:
             print("MILB_EBR_LIVE is False: data/ebr_milb.json is not written")
         else:
             write_served(sub, ev)
-            print(f"wrote {SERVED}")
+            print(f"wrote {SERVED} and {SERVED_EVAL}")
     print(f"wrote {PREVIEW_DIR} in {ev['build_seconds']} s")
     return 0
 

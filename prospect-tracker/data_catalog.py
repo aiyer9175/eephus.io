@@ -361,6 +361,27 @@ ARTIFACTS = (
         "note": "Carries no correlation against runs or wins.",
     },
     {
+        "file": "ebr_milb.json", "group": "prospects",
+        "title": "Level-relative eBR",
+        "what": ("Per player, one row per minor-league level and season at 150 or more plate "
+                 "appearances: baserunning runs against an average runner at the same level in "
+                 "the same season, split into steals, extra bases and double plays."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ebr_milb.py",
+        "note": ("Level-relative: not comparable across levels or with the majors. Display only; "
+                 "no grade, rank or projection reads it."),
+    },
+    {
+        "file": "ebr_milb_eval.json", "group": "prospects",
+        "title": "Level-relative eBR evaluation",
+        "what": ("Identity receipts against the official minor-league season lines, each "
+                 "level-season's run basis, split-half reliability, cross-level continuity and "
+                 "the wild-pitch and passed-ball sub-totals."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ebr_milb.py",
+        "note": "Aggregates only; carries no outcome, grade or consensus-FV cell.",
+    },
+    {
         "file": "war_leaderboards.json", "group": "mlb",
         "title": "eWAR leaderboard",
         "what": ("Every player with a season eWAR cell, batting and pitching summed "

@@ -346,6 +346,26 @@ def test_the_card_flag_mirrors_the_module_flag_and_fetches_only_when_on():
     assert "isPit" in card, "position players only"
 
 
+def test_write_served_writes_both_files_to_the_redirected_paths(tmp_path):
+    sub, ev = _sub_and_eval()
+    for k, v in ev["identity"].items():
+        v.update({i: {"pass": True} for i in ("I1", "I2", "I3", "I4", "I5", "I6", "I7", "I9")})
+        v["refetched_games"] = [1, 2, 3]
+    sub["units"] = {k: dict(level=k.split("|")[0], season=int(k.split("|")[1]), games=10, pa=100, players=5,
+                            players_150=1, pool_kind="level", pool_units=[k], K=1500.0, k_source="level",
+                            lambda_=1.0, fit_set_plays=9, re24_sha256="x", complete=False, **{"lambda": 1.0})
+                    for k in sub["units"]}
+    for u in sub["units"].values():
+        u.pop("lambda_")
+    ev.update({"generated_at": "t", "note": "n", "reliability_split_half": {}, "continuity": {},
+               "dirt_advances_league": {}})
+    B.write_served(sub, ev, tmp_path / "a.json", tmp_path / "b.json")
+    assert (tmp_path / "a.json").exists() and (tmp_path / "b.json").exists()
+    served = json.loads((tmp_path / "b.json").read_text(encoding="utf-8"))
+    assert served["identity"]["aaa|2026"]["refetched_games"] == 3
+    assert "mlbam" not in json.dumps(served) and "by_mlbam" not in served
+
+
 def test_the_served_files_exist_exactly_when_the_flag_is_on():
     for name in ("ebr_milb.json", "ebr_milb_eval.json"):
         assert (ROOT / "data" / name).exists() is M.MILB_EBR_LIVE, name
@@ -358,3 +378,58 @@ def test_the_card_reads_no_grade_and_sits_in_the_signals_section_only():
     assert not re.search(r"efv|\bfv\b|consensus|rank|sort", card, re.I)
     assert "defHomeHtml, milbFieldingHtml, milbEbrHtml].filter(Boolean)" in html
     assert html.count("milbEbrCard(") == 2        # the definition and the one call
+
+
+# --------------------------------------------------------------------------
+# the served files (after the flip)
+# --------------------------------------------------------------------------
+def _served():
+    return (json.loads((ROOT / "data" / "ebr_milb.json").read_text(encoding="utf-8")),
+            json.loads((ROOT / "data" / "ebr_milb_eval.json").read_text(encoding="utf-8")))
+
+
+def test_every_served_row_is_a_passing_level_season_at_150_pa_or_more():
+    p, ev = _served()
+    assert p["version"] == M.MILB_VERSION and p["display_pa"] == M.DISPLAY_PA
+    assert len(p["by_mlbam"]) > 1000
+    for mid, rows in p["by_mlbam"].items():
+        assert mid.isdigit() and rows == sorted(rows, key=lambda x: (-x[1], M.LEVEL_ORDER.index(x[0])))
+        for level, season, pa, sb, xb, dp, e, per600, dn, dr in rows:
+            assert level in M.LEVEL_ORDER and pa >= M.DISPLAY_PA
+            key = f"{level}|{season}"
+            assert key in p["units"] and ev["identity"][key]["all_pass"] is True
+            assert abs((sb + xb + dp) - e) <= 0.31
+            assert abs(per600 - 600.0 * e / pa) <= 600 * 0.05 / pa + 0.011
+            assert dn >= 0
+
+
+def test_the_served_eval_passes_every_gate_and_keeps_the_stated_bounds():
+    _, ev = _served()
+    assert len(ev["identity"]) == 11 and set(ev["units"]) == set(ev["identity"])
+    b = ev["bounds"]
+    assert b["league_sb_cs_rel_diff_max"] == B.LEAGUE_TOL and b["display_pa"] == 150
+    for key, blk in ev["identity"].items():
+        assert blk["all_pass"] is True, key
+        assert blk["I1"]["sb_rel_diff"] <= B.LEAGUE_TOL and blk["I1"]["cs_rel_diff"] <= B.LEAGUE_TOL
+        assert blk["I2"]["sb_cs_exact_share"] >= B.PLAYER_SB_CS_SHARE
+        assert blk["I3"]["pa_coverage"] >= B.MIN_PA_COVERAGE
+        assert abs(sum(blk["I4"]["sums"].values())) <= 0.05
+    assert "aa|2024" not in ev["units"]
+
+
+def _keys(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield str(k)
+            yield from _keys(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _keys(v)
+
+
+def test_the_served_files_carry_no_grade_fv_or_outcome_key():
+    p, ev = _served()
+    for doc in (p, ev):
+        bad = [k for k in _keys(doc) if not k.isdigit() and re.search(
+            r"(^|_)(fv|efv|grade|rank|war|wins|consensus|runs_scored)($|_)", k)]
+        assert bad == []

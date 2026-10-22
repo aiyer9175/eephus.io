@@ -51,10 +51,11 @@ import ebr
 
 #: The display flag. False: tools/build_ebr_milb.py writes only under
 #: .cache/ebr/milb_preview/ and the PROSPX card (MILB_EBR_CARD_ON in
-#: prospx/index.html, pinned equal to this by a test) fetches nothing. The flip
-#: is ONE commit: this flag, data/ebr_milb.json, the registry row ebr_milb and the
-#: glossary entries together.
-MILB_EBR_LIVE = False
+#: prospx/index.html, pinned equal to this by a test) fetches nothing. The flip is
+#: ONE commit: this flag, the card constant, data/ebr_milb.json and
+#: data/ebr_milb_eval.json, the registry row ebr_milb and the glossary entry
+#: together (done by EBR_Q6B_MILB_CARDS).
+MILB_EBR_LIVE = True
 
 MILB_VERSION = "ebr_milb_v1"
 LEVEL_ORDER = ("aaa", "aa", "high_a", "single_a", "rookie")
