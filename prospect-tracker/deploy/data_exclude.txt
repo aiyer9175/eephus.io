@@ -112,3 +112,6 @@ dvm_difficulty.json
 efv_surrogate_frame_2026.json
 # ETOOLS_DVM: the as-of eTool history, a server input (etool_history.py --build); no page reads it.
 etool_asof.json
+# null_comparator_sweep.json: the null comparator sweep's one run (docs/NULL_COMPARATOR_SWEEP.md,
+# tools/null_comparator_sweep_lab.py), an audit record; no page fetches it.
+null_comparator_sweep.json
