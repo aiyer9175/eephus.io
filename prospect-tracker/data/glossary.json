@@ -12561,6 +12561,32 @@
    ],
    "shelf": "industry",
    "origin": "Industry metric. MLB Statcast bat tracking (Baseball Savant), from 2024 on; read here from Savant's per-swing files."
+  },
+  {
+   "id": "team_drilldown",
+   "term": "Club breakdown",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections Team Outlook, proj_export.py).",
+   "module": [
+    "projections",
+    "franchise"
+   ],
+   "aliases": [
+    "club breakdown",
+    "roster breakdown",
+    "team drill-down",
+    "player by player"
+   ],
+   "priority": 41,
+   "definition": "A club's first projected season roster, player by player, on the Team Outlook view of MLB Projections: each veteran's component runs, component WAR, served WAR and the gap line between them, footed to the club's Roster WAR. It is a breakdown of the number already printed, not a second projection.",
+   "methodology": "The listed players are exactly the veterans and arrived prospects the Team Outlook roll-up counts. The foot adds the served WAR of the listed veterans, the champion mean minus the served head (the roll-up sums the champion mean; quantile points are never summed) and the prospects who arrive in that season at their ETA, and shows what is left against Roster WAR; the leftover is rounding. Bat, BsR, Fld and Pos are runs above average and Pitching is FIP-based WAR in runs, on FanGraphs' WAR frame; a part that reads not projected is left blank and its runs sit in the gap line. PA and IP print only where the playing-time heads have passed their own test. It adds no new projection and carries no accuracy claim, so there is no gate to read.",
+   "seeAlso": [
+    "projected_component_runs",
+    "war_from_components",
+    "projection_gap"
+   ]
   }
  ]
 }

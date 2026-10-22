@@ -550,3 +550,12 @@ Run once on 2026-10-14 at 95102285 (branch wt-TM_4_TEAM_LOOK_2026), `PYTHONHASHS
 **Bans kept (section 7).** No player-level 2026 residual, cohort or MAE (the frame rows carry no actual WAR, asserted by team_frame); no team statistic by consensus-FV cell; both arms aging v2; the labels and run parts are the frozen fWAR vintage (FanGraphs frame); no cohort intercept and no team-level recalibration (the T3 league identity is reported, not corrected); no second look.
 
 The block is `team_projection_gate.gate_2026` in `data/team_outlook_eval.json` (per-club table, both arms' CRPS, the T2 accounting, the bootstraps); the registry rows team_win_distribution and team_run_projection point at it and stay provisional whatever the outcome (section 5.2); team_win_projections carries TM-B's dated note. Elapsed 62.4 s.
+
+
+### 2026-10-21: the team flips (TM_8_TEAM_FLIPS), commit 1 of the flips: TEAM_DRILLDOWN_LIVE True, TEAM_RUNS_LIVE stays False
+
+Written by TM_8_TEAM_FLIPS. No look ran and no verdict is written here; this entry records which flags the 2026-10-14 look makes eligible and what served.
+
+- **TEAM_DRILLDOWN_LIVE set True** (class 2, descriptive, no gate; owner answer TM-Q4 (a)). Every Team Outlook row carries a `drill` block (30 clubs, 1,400 veteran lines, 43 arrived prospects, the foot residual at most 0.05 WAR against Roster WAR) and every Franchise club carries the `team_drilldown` link. Nothing else in `data/mlb_projections.json` moved (0 existing keys moved on 30 rows), and `trade_values.json`, `fa_class.json`, `futures.json` (timestamp only), `fscore.json`, `ledger_board.json`, the 30 ledger club files and the 30 franchise grades are byte-identical in content.
+- **TEAM_RUNS_LIVE stays False.** The look records TM-C RS FAIL and RA PASS, and section 3.3 serves RS, RA, run differential and Pythag wins together only if both sides pass, so the look's own record reads TEAM_RUNS_LIVE not eligible. Runs allowed alone does not print. Owner question recorded in the task report: whether to serve RA alone.
+- **TEAM_TALENT_RANGE_LIVE and TEAM_PT_BUDGET_LIVE stay False.** TM-A FAIL and TM-B FAIL at the look, so neither flag is eligible and the class 3 flips (commits 2 and 3 of the plan) are not made; each keeps the incumbent (section 5.1).
