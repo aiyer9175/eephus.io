@@ -86,7 +86,13 @@ def test_the_receipts_match_the_committed_files():
     # fingerprint names the lineage's head, the vintage on disk.
     lineage = fwar_vintage.war_lineage(fwar_vintage.load())
     assert VINTAGE_ID in lineage
-    assert f"label=fwar@{lineage[0]}" in storage.BOARD_BASIS_FINGERPRINT
+    import war_source
+    if war_source.EFV_LABEL_PROVIDER == "ewar_headline":
+        # eFV's label moved to the headline eWAR (EWAR_HEADLINE_LABEL_GATE.md), whose frozen
+        # vintage is built on the lineage's head and names it
+        assert f"label=ewar_headline@ewar-headline-{lineage[0]}-" in storage.BOARD_BASIS_FINGERPRINT
+    else:
+        assert f"label=fwar@{lineage[0]}" in storage.BOARD_BASIS_FINGERPRINT
     cov = _eval()["clause_c_coverage"]
     for side in ("hit", "pit"):
         for band in cov[side]["by_cohort_band"].values():

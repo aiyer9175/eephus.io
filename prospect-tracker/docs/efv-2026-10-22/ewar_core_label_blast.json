@@ -1,0 +1,111 @@
+{
+ "schema": 1,
+ "registration": "docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md part 5",
+ "label_vintage_id": "ewar-core-2026-10-02-a020cf64844a-9f947d8f87ac",
+ "built_at": "2026-10-22T05:00:09+00:00",
+ "vintages": [
+  2011,
+  2012,
+  2013,
+  2014,
+  2015,
+  2016,
+  2017,
+  2018,
+  2019
+ ],
+ "w_star_dev": 1.19,
+ "field_key": "per side and '<label>:<w3|l6>': rows resolved on both labels, Pearson r with the fWAR label, mean and sd of (label - fWAR label), rows changed by 0.005 or more, rows moving 0.5 and 1.0 WAR or more, the fWAR label's sd, and W3 contributor flags at w* that change; labels only, no grade read",
+ "sides": {
+  "hit": {
+   "frame_rows": 3053,
+   "core:w3": {
+    "n": 3053,
+    "pearson_r": 0.9894978136977238,
+    "mean_change": -0.030131018670160496,
+    "sd_change": 0.32113145093353934,
+    "rows_changed": 1192,
+    "rows_move_0_5": 199,
+    "rows_move_1_0": 60,
+    "label_sd_fwar": 2.187079871464249,
+    "contributor_flags_changed": 56
+   },
+   "core:l6": {
+    "n": 2963,
+    "pearson_r": 0.9932279809518335,
+    "mean_change": -0.054458319271009095,
+    "sd_change": 0.5602664088509218,
+    "rows_changed": 1499,
+    "rows_move_0_5": 391,
+    "rows_move_1_0": 170,
+    "label_sd_fwar": 4.750042455788857
+   },
+   "realized_core:w3": {
+    "n": 3053,
+    "pearson_r": 0.9894497356926287,
+    "mean_change": -0.02968227972486079,
+    "sd_change": 0.3216446879892595,
+    "rows_changed": 1195,
+    "rows_move_0_5": 201,
+    "rows_move_1_0": 60,
+    "label_sd_fwar": 2.187079871464249,
+    "contributor_flags_changed": 56
+   },
+   "realized_core:l6": {
+    "n": 2963,
+    "pearson_r": 0.9932136952815921,
+    "mean_change": -0.054046574417819765,
+    "sd_change": 0.5607344168889927,
+    "rows_changed": 1503,
+    "rows_move_0_5": 396,
+    "rows_move_1_0": 170,
+    "label_sd_fwar": 4.750042455788857
+   }
+  },
+  "pit": {
+   "frame_rows": 2909,
+   "core:w3": {
+    "n": 2909,
+    "pearson_r": 0.9999886921463504,
+    "mean_change": 0.0008628394637332425,
+    "sd_change": 0.007689250811487631,
+    "rows_changed": 189,
+    "rows_move_0_5": 0,
+    "rows_move_1_0": 0,
+    "label_sd_fwar": 1.5589599087722323,
+    "contributor_flags_changed": 0
+   },
+   "core:l6": {
+    "n": 2829,
+    "pearson_r": 0.9999879879448923,
+    "mean_change": 0.002163308589607638,
+    "sd_change": 0.01725874879540479,
+    "rows_changed": 256,
+    "rows_move_0_5": 1,
+    "rows_move_1_0": 0,
+    "label_sd_fwar": 3.434151229201293
+   },
+   "realized_core:w3": {
+    "n": 2909,
+    "pearson_r": 0.9442327648861285,
+    "mean_change": -0.02779305603300103,
+    "sd_change": 0.5512586047573566,
+    "rows_changed": 1020,
+    "rows_move_0_5": 474,
+    "rows_move_1_0": 232,
+    "label_sd_fwar": 1.5589599087722323,
+    "contributor_flags_changed": 106
+   },
+   "realized_core:l6": {
+    "n": 2829,
+    "pearson_r": 0.967666318286098,
+    "mean_change": -0.038282078472958635,
+    "sd_change": 0.902652004012079,
+    "rows_changed": 1378,
+    "rows_move_0_5": 802,
+    "rows_move_1_0": 454,
+    "label_sd_fwar": 3.434151229201293
+   }
+  }
+ }
+}

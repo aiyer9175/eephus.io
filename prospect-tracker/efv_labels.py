@@ -9,7 +9,10 @@ LABEL ONLY. This module reads outcomes and nothing else: it takes no grade, fits
 nothing, scores nothing and summarises nothing by grade. A caller joins its output to
 efv_vintage_frame rows. The WAR series is war_source.DEFAULT_PROVIDER (published fWAR
 since the 2026-10-03 label epoch; a later label epoch moves it, and these labels move
-with it on the next build).
+with it on the next build). The headline eWAR label check's switch
+(war_source.EFV_LABEL_EWAR_HEADLINE) does NOT move these frames: it is scoped to
+efv_dataset's label (docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md amendment 9.2),
+because the registered reads that use them froze published fWAR.
 
 For a player first read at list vintage V, with effective debut year dy:
 

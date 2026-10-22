@@ -5603,7 +5603,16 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-10-15"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-10-22"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-10-22 for the HEADLINE eWAR LABEL CHECK's switch (task EFV_LABEL_HEADLINE_EWAR_CHECK,
+# owner answer EWLE-Q2; docs/efv-2026-10-22/EWAR_HEADLINE_LABEL_GATE.md part 9 and amendment 9.2):
+# war_source.EFV_LABEL_EWAR_HEADLINE on moves eFV's first-6 label (efv_dataset) from published
+# fWAR to the headline eWAR (fWAR plus the eABS part from 2026). Measured on labels alone before
+# the flip: 1,029 of 2,698 career_war rows move, all in 2026 (sd 0.0718 WAR, largest 0.51); in
+# the v1 matrices 245 of 2,012 hitter and 300 of 2,158 pitcher label rows. The v1 model and the
+# scored pools re-label at the next regeneration, so the board may re-rank once for a reason
+# that is not player movement. metric_snapshots held no rank row dated after 2026-10-15 at the
+# bump (main tree, read-only), so no rank history is dropped and no served movement chip changes.
 # Bumped 2026-10-19 for the 2026-10-15 served-model moves (owner EW3-10 eFV v5 COMBINED and
 # EFV-REFIT-1 variant RT, flag 8ae40518): the served= term began hashing the re-fit weights
 # (2bf83f80) and moved efv_v2@bcc9b0dd -> efv_v2@22ec625f, but neither flip restamped the pin
@@ -5763,9 +5772,16 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
-                           "|label=fwar@2026-10-02-a020cf64844a"
+                           "|label=ewar_headline@ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d"
                            "|injsides=pit|served=efv_v2@22ec625f"
                            "|section=label_graded")
+# label fwar@2026-10-02-a020cf64844a -> ewar_headline@ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d
+# on 2026-10-22: the headline eWAR label check's switch (EWAR_HEADLINE_LABEL_GATE.md part 3 under
+# amendment 9.2). The term names eFV's label (war_source.EFV_LABEL_PROVIDER) and the frozen
+# headline label vintage's id, which embeds the fWAR vintage it is built on; DEFAULT_PROVIDER
+# stays fwar. Restamped with the BOARD_RANK_BASIS_EPOCH bump to 2026-10-22. The cost, paid
+# knowingly: data/xfv_history.json carries the old string until score_history restamps it (the
+# integrator's regeneration), so the eFV-delta movement override is withheld until then.
 # label fwar@2026-10-02-57bf90f7143e -> fwar@2026-10-02-a020cf64844a on 2026-10-19: the
 # innings amendment of the frozen vintage (EWAR_P0B_VINTAGE_IP, the EW3-19 precedent "a new
 # vintage id"; FWAR_LABEL_EPOCH_GATE.md part 9, the 2026-10-19 entry). Four columns
@@ -6027,10 +6043,21 @@ def board_basis_fingerprint() -> str:
     # the eWAR artifact's generated_at, so the term is comparable across the flip.
     try:
         import war_source as _ws
-        label = str(getattr(_ws, "DEFAULT_PROVIDER", "unknown"))
+        # eFV's label (war_source.EFV_LABEL_PROVIDER): DEFAULT_PROVIDER unless the headline
+        # eWAR label check's switch is on (EWAR_HEADLINE_LABEL_GATE.md part 3), when the
+        # term reads ewar_headline@<frozen label vintage id>
+        label = str(getattr(_ws, "EFV_LABEL_PROVIDER", getattr(_ws, "DEFAULT_PROVIDER", "unknown")))
         if label == "fwar":
             import fwar_vintage as _fv
             label += f"@{str(_fv.load().get('vintage_id') or 'nobuild')}"
+        elif label == "ewar_core":
+            # the core eWAR label epoch (docs/efv-2026-10-22/EWAR_CORE_LABEL_EPOCH_GATE.md
+            # part 3): the frozen label vintage's id, ewar-core-<fWAR vintage id>-<sha12>
+            import ewar_core_label as _ecl
+            label += f"@{_ecl.vintage_id() or 'nobuild'}"
+        elif label == "ewar_headline":
+            import ewar_headline_label as _ehl
+            label += f"@{_ehl.vintage_id() or 'nobuild'}"
         elif label != "bwar":
             import ewar as _ew
             _p = _ew.load()

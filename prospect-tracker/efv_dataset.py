@@ -1472,6 +1472,10 @@ def _label_seasons(payload: dict) -> tuple[dict, int]:
     it as a dict (an empty dict counts: a row with no seasons is a row with no
     seasons), else `seasons`, and fell_back is 1 for that row."""
     if LABEL_SEASONS_KEY == "seasons":
+        import war_source
+        if war_source.EFV_LABEL_PROVIDER == "ewar_headline":
+            # the headline eWAR label check's switch (EWAR_HEADLINE_LABEL_GATE.md part 3)
+            return war_source.efv_label_seasons(payload), 0
         return (payload.get("seasons") or {}), 0
     alt = payload.get(LABEL_SEASONS_KEY)
     if isinstance(alt, dict):
@@ -2129,7 +2133,7 @@ def _label_provider() -> str:
     epoch moved it to eWAR v2)."""
     try:
         import war_source
-        return str(war_source.DEFAULT_PROVIDER)
+        return str(war_source.EFV_LABEL_PROVIDER)
     except Exception:
         return "provider unavailable"
 

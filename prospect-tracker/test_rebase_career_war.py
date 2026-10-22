@@ -236,4 +236,4 @@ def test_an_incumbent_payload_on_an_fwar_row_refreshes_the_kept_series(db):
 def test_the_old_entry_point_is_untouched():
     src = (HERE / "tools" / "rebase_career_war_to_ewar.py").read_text(encoding="utf-8")
     assert "def main(" in src and "bak-ewar-" in src
-    assert RB.PROVIDERS == ("ewar_v2", "fwar")
+    assert RB.PROVIDERS == ("ewar_v2", "fwar", "ewar_core")
