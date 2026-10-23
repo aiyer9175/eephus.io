@@ -97,3 +97,14 @@ def test_licence_bans_and_owner_question():
     assert "`backtest.run_backtest`" in text
     assert "A second `--read` refuses while the record exists." in text
     assert "it uses eBR's priced events only as the baserunning component's noise proxy" in text
+
+
+def test_amendment_13_1_before_the_read():
+    text = _flat()
+    assert ("### 13.1 2026-10-22: amendment before the read, committed alone (the planted check on the "
+            "registered design failed)") in text
+    assert "the constants k and the multipliers m are both set on the training seasons, FIT and CAL together" in text
+    assert "the split-conformal multiplier is computed and applied in every band" in text
+    assert ("CALIBRATED when in every one of the 24 cells the 5th to 95th percentile interval of TEST "
+            "coverage lies inside [0.70, 0.90] under both bootstraps") in text
+    assert "the planted check is rerun on the amended design as the read's first step" in text

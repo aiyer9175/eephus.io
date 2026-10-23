@@ -287,3 +287,46 @@ exposure bands each: 24 cells.
     and the vintage cover 2000 to 2026. No half, constant, coverage or disagreement was computed.
 
 ## 13. Results
+### 13.1 2026-10-22: amendment before the read, committed alone (the planted check on the registered design failed)
+
+`python tools/ewar_uncertainty_band_lab.py --planted` on the real design (every family's real rows,
+seasons, exposures and clusters; synthetic statistics only, no real half, disagreement or coverage
+computed) read PLANTED FAIL under the registered design: the truth candidate passed in 0 of 20
+replicates (between 4 and 9 of the 24 cells outside [0.75, 0.85] in each), the broken candidate in 0
+of 20. The failing cells were the pitching sampling cells and the high-exposure baserunning and batting
+cells, the ones with the fewest rows: the play corpus gives C2-fip and C2-ra one CAL season (101 to
+277 rows a band) and three TEST seasons (319 to 829 rows a band). Two causes, measured on the same
+planted design before any real statistic:
+
+- the "if off" rule of part 4 leaves a band whose CAL coverage sits inside [0.77, 0.83] by chance at
+  its raw coverage, which for the planted t5 noise is 0.84 on TEST, and the 90 percent interval of a
+  cell of 300 to 800 rows then reaches above 0.85;
+- a multiplier set on one CAL season's 100 to 280 rows carries a coverage error of about 0.03 on its
+  own, so with the TEST interval's half-width (0.02 to 0.04) a cell needs its point within about 0.015
+  of 0.80 to lie inside [0.75, 0.85], and 24 such cells together almost never do.
+
+Variants scored on the same planted design (20 replicates, B 500, seed 20261023; truth passes,
+broken passes): registered, 0 and 0; multiplier always applied, CAL only, [0.75, 0.85], 0 and 0;
+always, FIT and CAL, [0.75, 0.85], 0 and 0; always, FIT and CAL, [0.725, 0.875], 10 and 0; always,
+FIT and CAL, [0.70, 0.90], 19 and 0; always, CAL only, [0.70, 0.90], 10 and 0.
+
+**Amended, binding for the read** (the read has not run; nothing above part 13 is edited):
+
+1. Part 3 and 4: the constants k and the multipliers m are both set on the training seasons, FIT and
+   CAL together; TEST stays held out and is read once. The season split, rows, floors, bands and
+   clusters are unchanged.
+2. Part 4: the split-conformal multiplier is computed and applied in every band (the "if off" window
+   [0.77, 0.83] is dropped). The record keeps each band's raw training coverage, so a band that was
+   off is visible; where the raw band was on target the multiplier is near 1.
+3. Part 6: N0's half-width is the 80th percentile of |D| over the training rows; N1 is unchanged. The
+   broken candidate keeps k from the training rows, multiplied by 0.6, with no multiplier.
+4. Part 7: the equivalence range is [0.70, 0.90]: CALIBRATED when in every one of the 24 cells the
+   5th to 95th percentile interval of TEST coverage lies inside [0.70, 0.90] under both bootstraps.
+   Everything else in part 7 stands, PLANTED PASS included, and the planted check is rerun on the
+   amended design as the read's first step.
+5. Part 10: the claim a flip may make reads "covers ... at a rate between 70 and 90 percent in every
+   playing-time band" in place of "at about its stated 80 percent rate".
+
+Defaults this amendment applies, named for the orchestrator: training seasons FIT and CAL together;
+the multiplier always applied; the equivalence range [0.70, 0.90], the narrowest of the measured
+variants whose planted truth reached 16 of 20.
