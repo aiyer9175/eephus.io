@@ -14005,6 +14005,22 @@ function syncFromURL() {
   _inSyncFromURL = true;
   try { _syncFromURLBody(); } finally { _inSyncFromURL = false; }
 }
+// Which list a detail view belongs to (re-applied from the webmaster's rebuild,
+// eephus/eephus a2e7597c). A detail deep link names the RECORD, not the surface
+// it sits on: #farm-org=BAL set state.view and nothing else, so state.section
+// kept its "active" default, the tab strip lit MiLB Prospects under a farm
+// report, and the report's back link (goHome carries state.section) dropped the
+// reader on the prospect board. The home page's Top Farm Systems rows link this
+// way. Only views with ONE parent list are mapped: college, country and league
+// are reached from several surfaces and keep the section the reader arrived
+// with. player maps to the board it was always on, spelled out so the table
+// reads as the whole answer. An explicit tab still wins.
+const SECTION_FOR_VIEW = {
+  player:          "active",
+  farm:            "farm",
+  draftee:         "draft",
+  overseas_player: "overseas",
+};
 function _syncFromURLBody() {
   const hash = window.location.hash.slice(1);
   // Reset view first so navigating back from a detail page clears state.view.
@@ -14024,6 +14040,7 @@ function _syncFromURLBody() {
                     : p.has("ostab") ? p.get("ostab")
                     : "overview";
   if (p.has("tab"))   state.section     = p.get("tab");
+  else if (state.view && SECTION_FOR_VIEW[state.view.type]) state.section = SECTION_FOR_VIEW[state.view.type];
   // Trade Machine is now its own top-level module - redirect legacy deep links there.
   if (state.section === "tradeboard" || state.section === "trademachine") { window.location.replace("/trademachine/"); return; }
   // Free Agency moved to its own surface - redirect legacy #tab=fa deep links.
