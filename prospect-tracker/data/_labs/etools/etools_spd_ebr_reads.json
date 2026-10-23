@@ -3,10 +3,12 @@
  "tool": "etools_spd_ebr.py",
  "amend_doc": "docs/tools-2026-10/ETOOLS_AMENDMENT_5.md",
  "amend_sha": "3cc6a8e6",
- "head": "42afeb2942778b39f67451cc6ef02d8834ce9a5b",
+ "head": "36d3eff135f11c3592da870fd75fc75fd2db398b",
  "survivorship": "L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to Y + 2 capped at 2024) does not require a debut, but it does require reaching Double-A or Triple-A for 300 PA (150 BF), itself a promotion outcome: among hitter rows with no debut by 2024 only about 37% carry it, and non-debuts who stalled below Double-A are on neither label. L_UM is accuracy AMONG PROMOTED players (amendment 1, A1).",
  "constants": {
   "years": [
+   2022,
+   2023,
    2024
   ],
   "B": 2000,
@@ -32,108 +34,235 @@
   "min_years": 3
  },
  "complete_seasons": [
+  2021,
+  2022,
   2023,
   2024,
   2025
  ],
  "units": {
+  "aa|2021": {
+   "mu": 0.000331,
+   "sd": 0.007089,
+   "nbar": 284.0,
+   "R": 0.2791,
+   "k": 733.556431,
+   "lines": 370
+  },
+  "aa|2022": {
+   "mu": 0.000187,
+   "sd": 0.007422,
+   "nbar": 322.412888,
+   "R": 0.287,
+   "k": 800.976965,
+   "lines": 419
+  },
+  "aa|2023": {
+   "mu": 0.000109,
+   "sd": 0.007895,
+   "nbar": 321.936019,
+   "R": 0.4297,
+   "k": 427.275103,
+   "lines": 422
+  },
+  "aaa|2021": {
+   "mu": 0.000264,
+   "sd": 0.007124,
+   "nbar": 283.932039,
+   "R": 0.4999,
+   "k": 284.045634,
+   "lines": 412
+  },
+  "aaa|2022": {
+   "mu": -5.1e-05,
+   "sd": 0.007366,
+   "nbar": 312.402151,
+   "R": 0.3379,
+   "k": 612.1381,
+   "lines": 465
+  },
+  "aaa|2023": {
+   "mu": 1.2e-05,
+   "sd": 0.007366,
+   "nbar": 325.53617,
+   "R": 0.4621,
+   "k": 378.935092,
+   "lines": 470
+  },
+  "high_a|2021": {
+   "mu": -9.4e-05,
+   "sd": 0.008114,
+   "nbar": 281.530504,
+   "R": 0.2837,
+   "k": 710.822348,
+   "lines": 377
+  },
+  "high_a|2022": {
+   "mu": 4.4e-05,
+   "sd": 0.007475,
+   "nbar": 306.601504,
+   "R": 0.3928,
+   "k": 473.952223,
+   "lines": 399
+  },
+  "high_a|2023": {
+   "mu": 0.000421,
+   "sd": 0.00738,
+   "nbar": 308.45297,
+   "R": 0.2697,
+   "k": 835.236204,
+   "lines": 404
+  },
+  "rookie|2021": {
+   "mu": 0.000536,
+   "sd": 0.011535,
+   "nbar": 180.521595,
+   "R": 0.2615,
+   "k": 509.809551,
+   "lines": 301
+  },
+  "rookie|2022": {
+   "mu": 0.00065,
+   "sd": 0.011475,
+   "nbar": 183.754217,
+   "R": 0.055,
+   "k": 3157.231544,
+   "lines": 415
+  },
   "rookie|2023": {
    "mu": -0.000552,
-   "sd": 0.013146,
+   "sd": 0.013183,
    "nbar": 183.432911,
-   "R": 0.369,
-   "k": 313.67525,
+   "R": 0.3693,
+   "k": 313.271425,
    "lines": 395
   },
   "rookie|2024": {
-   "mu": 0.000685,
-   "sd": 0.012832,
+   "mu": 0.000698,
+   "sd": 0.012883,
    "nbar": 184.195122,
-   "R": 0.1884,
-   "k": 793.485992,
+   "R": 0.1911,
+   "k": 779.672601,
    "lines": 451
   },
   "rookie|2025": {
-   "mu": 0.000538,
-   "sd": 0.012127,
+   "mu": 0.000542,
+   "sd": 0.012178,
    "nbar": 185.223629,
-   "R": 0.1373,
-   "k": 1163.819552,
+   "R": 0.1397,
+   "k": 1140.643434,
    "lines": 474
   },
+  "single_a|2021": {
+   "mu": 0.000317,
+   "sd": 0.008481,
+   "nbar": 281.198324,
+   "R": 0.341,
+   "k": 543.430192,
+   "lines": 358
+  },
+  "single_a|2022": {
+   "mu": 0.000247,
+   "sd": 0.008479,
+   "nbar": 301.874667,
+   "R": 0.4526,
+   "k": 365.10427,
+   "lines": 375
+  },
   "single_a|2023": {
-   "mu": 0.000204,
-   "sd": 0.008757,
+   "mu": 0.000205,
+   "sd": 0.008765,
    "nbar": 294.465823,
-   "R": 0.3179,
-   "k": 631.818615,
+   "R": 0.3188,
+   "k": 629.203634,
    "lines": 395
   },
   "single_a|2024": {
-   "mu": 5.1e-05,
-   "sd": 0.00871,
+   "mu": 4.9e-05,
+   "sd": 0.008681,
    "nbar": 298.969152,
-   "R": 0.4966,
-   "k": 303.06297,
+   "R": 0.4949,
+   "k": 305.130973,
    "lines": 389
   },
   "single_a|2025": {
-   "mu": 0.000272,
-   "sd": 0.009246,
+   "mu": 0.000265,
+   "sd": 0.009195,
    "nbar": 301.012953,
-   "R": 0.448,
-   "k": 370.89096,
+   "R": 0.4445,
+   "k": 376.181542,
    "lines": 386
   }
  },
  "universe": {
-  "identity_no_candidate": 59,
-  "identity_ambiguous": 35,
-  "no_record": 32,
-  "mlb_line_before_board_year": 135,
-  "identity_disagrees_with_record": 8,
-  "rows": 1149
+  "mlb_line_before_board_year": 403,
+  "identity_no_candidate": 160,
+  "no_record": 85,
+  "identity_ambiguous": 95,
+  "identity_disagrees_with_record": 35,
+  "duplicate_player": 2,
+  "rows": 3486
  },
  "coverage": {
-  "candidate": 191,
-  "sb_rel": 487,
-  "mlb": 62,
-  "um": 187,
-  "bsr": 35
+  "candidate": 1276,
+  "sb_rel": 1478,
+  "mlb": 397,
+  "um": 874,
+  "bsr": 268
  },
  "counts": {
-  "frame_rows": 571,
-  "players": 571,
+  "frame_rows": 1716,
+  "players": 1066,
   "by_year": {
+   "2022": {
+    "rows": 579,
+    "candidate": 407,
+    "candidate_debut_by_2024": 193,
+    "candidate_no_mlb_line_by_2024": 214,
+    "candidate_and_mlb": 171,
+    "candidate_and_um": 297,
+    "candidate_and_bsr": 122,
+    "candidate_without_um": 110
+   },
+   "2023": {
+    "rows": 566,
+    "candidate": 425,
+    "candidate_debut_by_2024": 127,
+    "candidate_no_mlb_line_by_2024": 298,
+    "candidate_and_mlb": 117,
+    "candidate_and_um": 250,
+    "candidate_and_bsr": 77,
+    "candidate_without_um": 175
+   },
    "2024": {
     "rows": 571,
-    "candidate": 191,
-    "candidate_debut_by_2024": 3,
-    "candidate_no_mlb_line_by_2024": 188,
-    "candidate_and_mlb": 3,
-    "candidate_and_um": 17,
-    "candidate_and_bsr": 3,
-    "candidate_without_um": 174
+    "candidate": 443,
+    "candidate_debut_by_2024": 74,
+    "candidate_no_mlb_line_by_2024": 369,
+    "candidate_and_mlb": 59,
+    "candidate_and_um": 177,
+    "candidate_and_bsr": 32,
+    "candidate_without_um": 266
    }
   },
   "computability": {
    "mlb": {
-    "rows": 3,
-    "players": 3,
-    "board_years_with_20": 0,
-    "computable": false
+    "rows": 347,
+    "players": 226,
+    "board_years_with_20": 3,
+    "computable": true
    },
    "um": {
-    "rows": 17,
-    "players": 17,
-    "board_years_with_20": 0,
-    "computable": false
+    "rows": 724,
+    "players": 479,
+    "board_years_with_20": 3,
+    "computable": true
    },
    "bsr": {
-    "rows": 3,
-    "players": 3,
-    "board_years_with_20": 0,
-    "computable": false
+    "rows": 231,
+    "players": 158,
+    "board_years_with_20": 3,
+    "computable": true
    }
   }
  },
@@ -151,32 +280,696 @@
    "lb95": 0.0482
   }
  },
- "spent": false,
- "verdict": "NOT COMPUTABLE",
- "why": [
-  "mlb: 3 players, 0 board years of 20 or more rows (needs 100 and 3)",
-  "um: 17 players, 0 board years of 20 or more rows (needs 100 and 3)"
- ],
- "mde_projection": {
-  "mlb": {
-   "mde": 0.1941,
-   "players": 3,
-   "basis": "projection: 2.4865 x look sd 0.00464 x sqrt(849 / 3); the look's sd is eSPD against consensus on the whole speed frame"
+ "spent": true,
+ "spent_at": "2026-10-23T00:32:19Z",
+ "started": "2026-10-23T00:32:15Z",
+ "verdict": "NOT PASS; UNDERPOWERED",
+ "result": {
+  "counts": {
+   "frame_rows": 1716,
+   "players": 1066,
+   "by_year": {
+    "2022": {
+     "rows": 579,
+     "candidate": 407,
+     "candidate_debut_by_2024": 193,
+     "candidate_no_mlb_line_by_2024": 214,
+     "candidate_and_mlb": 171,
+     "candidate_and_um": 297,
+     "candidate_and_bsr": 122,
+     "candidate_without_um": 110
+    },
+    "2023": {
+     "rows": 566,
+     "candidate": 425,
+     "candidate_debut_by_2024": 127,
+     "candidate_no_mlb_line_by_2024": 298,
+     "candidate_and_mlb": 117,
+     "candidate_and_um": 250,
+     "candidate_and_bsr": 77,
+     "candidate_without_um": 175
+    },
+    "2024": {
+     "rows": 571,
+     "candidate": 443,
+     "candidate_debut_by_2024": 74,
+     "candidate_no_mlb_line_by_2024": 369,
+     "candidate_and_mlb": 59,
+     "candidate_and_um": 177,
+     "candidate_and_bsr": 32,
+     "candidate_without_um": 266
+    }
+   },
+   "computability": {
+    "mlb": {
+     "rows": 347,
+     "players": 226,
+     "board_years_with_20": 3,
+     "computable": true
+    },
+    "um": {
+     "rows": 724,
+     "players": 479,
+     "board_years_with_20": 3,
+     "computable": true
+    },
+    "bsr": {
+     "rows": 231,
+     "players": 158,
+     "board_years_with_20": 3,
+     "computable": true
+    }
+   }
   },
-  "um": {
-   "mde": 0.0938,
-   "players": 17,
-   "basis": "projection: 2.4865 x look sd 0.00426 x sqrt(1334 / 17); the look's sd is eSPD against consensus on the whole speed frame"
+  "spearman_sb_rel_ebr_milb": {
+   "rho": 0.3543,
+   "n": 1275
+  },
+  "fold_sigma": {
+   "A1": {
+    "2022": 9.4652,
+    "2023": 8.9653,
+    "2024": 8.5893
+   },
+   "A2": {
+    "2022": 9.4017,
+    "2023": 8.9483,
+    "2024": 8.5861
+   }
+  },
+  "compare": {
+   "mlb": {
+    "A2_vs_A1": {
+     "computable": true,
+     "n": 347,
+     "players": 226,
+     "rho_a": 0.746,
+     "rho_b": 0.7518,
+     "d": -0.0058,
+     "lb95": -0.0133,
+     "ci95": [
+      -0.0149,
+      0.0021
+     ],
+     "sd": 0.00428,
+     "p": 0.913739,
+     "draws": 2000,
+     "mde": 0.0106
+    },
+    "A2_vs_A0": {
+     "computable": true,
+     "n": 347,
+     "players": 226,
+     "rho_a": 0.746,
+     "rho_b": 0.7353,
+     "d": 0.0106,
+     "lb95": -0.0048,
+     "ci95": [
+      -0.0076,
+      0.0282
+     ],
+     "sd": 0.00934,
+     "p": 0.127216,
+     "draws": 2000,
+     "mde": 0.0232
+    },
+    "A1_vs_A0": {
+     "computable": true,
+     "n": 347,
+     "players": 226,
+     "rho_a": 0.7518,
+     "rho_b": 0.7353,
+     "d": 0.0165,
+     "lb95": 0.0019,
+     "ci95": [
+      -0.0013,
+      0.0353
+     ],
+     "sd": 0.00922,
+     "p": 0.036928,
+     "draws": 2000,
+     "mde": 0.0229
+    }
+   },
+   "um": {
+    "A2_vs_A1": {
+     "computable": true,
+     "n": 724,
+     "players": 479,
+     "rho_a": 0.7617,
+     "rho_b": 0.7611,
+     "d": 0.0006,
+     "lb95": -0.003,
+     "ci95": [
+      -0.0039,
+      0.0047
+     ],
+     "sd": 0.00217,
+     "p": 0.390467,
+     "draws": 2000,
+     "mde": 0.0054
+    },
+    "A2_vs_A0": {
+     "computable": true,
+     "n": 724,
+     "players": 479,
+     "rho_a": 0.7617,
+     "rho_b": 0.6986,
+     "d": 0.0631,
+     "lb95": 0.0508,
+     "ci95": [
+      0.0478,
+      0.0783
+     ],
+     "sd": 0.00767,
+     "p": 0.0,
+     "draws": 2000,
+     "mde": 0.0191
+    },
+    "A1_vs_A0": {
+     "computable": true,
+     "n": 724,
+     "players": 479,
+     "rho_a": 0.7611,
+     "rho_b": 0.6986,
+     "d": 0.0625,
+     "lb95": 0.0504,
+     "ci95": [
+      0.0485,
+      0.0777
+     ],
+     "sd": 0.0074,
+     "p": 0.0,
+     "draws": 2000,
+     "mde": 0.0184
+    }
+   },
+   "bsr": {
+    "A2_vs_A1": {
+     "computable": true,
+     "n": 231,
+     "players": 158,
+     "rho_a": 0.691,
+     "rho_b": 0.7019,
+     "d": -0.0109,
+     "lb95": -0.0205,
+     "ci95": [
+      -0.0225,
+      0.0006
+     ],
+     "sd": 0.00592,
+     "p": 0.966975,
+     "draws": 2000,
+     "mde": 0.0147
+    },
+    "A2_vs_A0": {
+     "computable": true,
+     "n": 231,
+     "players": 158,
+     "rho_a": 0.691,
+     "rho_b": 0.7003,
+     "d": -0.0093,
+     "lb95": -0.0357,
+     "ci95": [
+      -0.0408,
+      0.0205
+     ],
+     "sd": 0.01555,
+     "p": 0.725372,
+     "draws": 2000,
+     "mde": 0.0387
+    },
+    "A1_vs_A0": {
+     "computable": true,
+     "n": 231,
+     "players": 158,
+     "rho_a": 0.7019,
+     "rho_b": 0.7003,
+     "d": 0.0016,
+     "lb95": -0.0228,
+     "ci95": [
+      -0.0274,
+      0.0296
+     ],
+     "sd": 0.01457,
+     "p": 0.457181,
+     "draws": 2000,
+     "mde": 0.0362
+    }
+   }
+  },
+  "rule": {
+   "a": false,
+   "b": false,
+   "c": true,
+   "computable": true,
+   "pass": false
+  },
+  "incremental": {
+   "ebr_milb": {
+    "mlb": {
+     "computable": true,
+     "n": 347,
+     "players": 226,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.7353,
+     "rho_candidate_alone": 0.3855,
+     "rho_augmented": 0.7451,
+     "corr_with_consensus": 0.3574,
+     "d": 0.0098,
+     "lb95": -0.0056,
+     "ci95": [
+      -0.0087,
+      0.0276
+     ],
+     "sd": 0.00927,
+     "p": 0.146472,
+     "draws": 2000,
+     "perm_floor95": 0.0027,
+     "perm_draws": 200,
+     "q": 0.146472
+    },
+    "um": {
+     "computable": true,
+     "n": 724,
+     "players": 479,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.6986,
+     "rho_candidate_alone": 0.3192,
+     "rho_augmented": 0.7031,
+     "corr_with_consensus": 0.3286,
+     "d": 0.0045,
+     "lb95": -0.0074,
+     "ci95": [
+      -0.0094,
+      0.0185
+     ],
+     "sd": 0.00706,
+     "p": 0.261053,
+     "draws": 2000,
+     "perm_floor95": 0.001,
+     "perm_draws": 200,
+     "q": 0.261053
+    },
+    "bsr": {
+     "computable": true,
+     "n": 231,
+     "players": 158,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.7003,
+     "rho_candidate_alone": 0.4237,
+     "rho_augmented": 0.7303,
+     "corr_with_consensus": 0.3184,
+     "d": 0.03,
+     "lb95": -0.0009,
+     "ci95": [
+      -0.0075,
+      0.0654
+     ],
+     "sd": 0.01849,
+     "p": 0.052553,
+     "draws": 2000
+    }
+   },
+   "sb_rel": {
+    "mlb": {
+     "computable": true,
+     "n": 380,
+     "players": 236,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.7392,
+     "rho_candidate_alone": 0.6504,
+     "rho_augmented": 0.757,
+     "corr_with_consensus": 0.7212,
+     "d": 0.0178,
+     "lb95": 0.0038,
+     "ci95": [
+      0.0008,
+      0.0362
+     ],
+     "sd": 0.00877,
+     "p": 0.02102,
+     "draws": 2000,
+     "perm_floor95": 0.002,
+     "perm_draws": 200,
+     "q": 0.04204
+    },
+    "um": {
+     "computable": true,
+     "n": 803,
+     "players": 505,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.7015,
+     "rho_candidate_alone": 0.7797,
+     "rho_augmented": 0.8053,
+     "corr_with_consensus": 0.7126,
+     "d": 0.1038,
+     "lb95": 0.0774,
+     "ci95": [
+      0.0724,
+      0.1367
+     ],
+     "sd": 0.01634,
+     "p": 0.0,
+     "draws": 2000,
+     "perm_floor95": 0.0011,
+     "perm_draws": 200,
+     "q": 0.0
+    },
+    "bsr": {
+     "computable": true,
+     "n": 254,
+     "players": 167,
+     "years": [
+      2022,
+      2023,
+      2024
+     ],
+     "rho_consensus": 0.7092,
+     "rho_candidate_alone": 0.5688,
+     "rho_augmented": 0.708,
+     "corr_with_consensus": 0.7155,
+     "d": -0.0012,
+     "lb95": -0.0325,
+     "ci95": [
+      -0.0382,
+      0.0361
+     ],
+     "sd": 0.0187,
+     "p": 0.525853,
+     "draws": 2000
+    }
+   }
+  },
+  "admission_reported": {
+   "admitted": [
+    "sb_rel"
+   ],
+   "qualifying": [
+    {
+     "candidate": "sb_rel",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1038
+    }
+   ]
+  },
+  "zero_comparator": {
+   "max_abs_A2_minus_A1": 0.0,
+   "d_A2_vs_A1": {
+    "mlb": 0.0,
+    "um": 0.0,
+    "bsr": 0.0
+   }
+  },
+  "null_comparator": {
+   "rule": {
+    "a": false,
+    "b": true,
+    "c": true,
+    "computable": true,
+    "pass": false
+   },
+   "compare": {
+    "mlb": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": 0.0027,
+      "lb95": -0.0028,
+      "sd": 0.00352
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": 0.0192,
+      "lb95": 0.0033,
+      "sd": 0.00948
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": 0.0165,
+      "lb95": 0.0019,
+      "sd": 0.00922
+     }
+    },
+    "um": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": -0.0026,
+      "lb95": -0.006,
+      "sd": 0.00212
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": 0.0599,
+      "lb95": 0.0475,
+      "sd": 0.00775
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": 0.0625,
+      "lb95": 0.0504,
+      "sd": 0.0074
+     }
+    },
+    "bsr": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": 0.0035,
+      "lb95": -0.0047,
+      "sd": 0.00532
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": 0.0051,
+      "lb95": -0.0214,
+      "sd": 0.01541
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": 0.0016,
+      "lb95": -0.0228,
+      "sd": 0.01457
+     }
+    }
+   },
+   "incremental": {
+    "mlb": {
+     "computable": true,
+     "d": -0.0029,
+     "lb95": -0.0088
+    },
+    "um": {
+     "computable": true,
+     "d": -0.0022,
+     "lb95": -0.0068
+    }
+   },
+   "void": false
+  },
+  "planted": {
+   "rule": {
+    "a": false,
+    "b": false,
+    "c": true,
+    "computable": true,
+    "pass": false
+   },
+   "compare": {
+    "mlb": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": -0.0026,
+      "lb95": -0.0071,
+      "sd": 0.00267
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": 0.0139,
+      "lb95": -0.0018,
+      "sd": 0.00971
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 347,
+      "players": 226,
+      "d": 0.0165,
+      "lb95": 0.0019,
+      "sd": 0.00922
+     }
+    },
+    "um": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": -0.003,
+      "lb95": -0.0055,
+      "sd": 0.00152
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": 0.0595,
+      "lb95": 0.0474,
+      "sd": 0.00743
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 724,
+      "players": 479,
+      "d": 0.0625,
+      "lb95": 0.0504,
+      "sd": 0.0074
+     }
+    },
+    "bsr": {
+     "A2_vs_A1": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": -0.0029,
+      "lb95": -0.0092,
+      "sd": 0.00387
+     },
+     "A2_vs_A0": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": -0.0013,
+      "lb95": -0.0287,
+      "sd": 0.01614
+     },
+     "A1_vs_A0": {
+      "computable": true,
+      "n": 231,
+      "players": 158,
+      "d": 0.0016,
+      "lb95": -0.0228,
+      "sd": 0.01457
+     }
+    }
+   },
+   "recovered": false
+  },
+  "verdict": "NOT PASS; UNDERPOWERED",
+  "final_fit": {
+   "lines": [
+    [
+     -1.832322,
+     0.040222,
+     true
+    ],
+    [
+     -0.406227,
+     0.008965,
+     true
+    ]
+   ],
+   "c": [
+    5.880496,
+    0.012244
+   ],
+   "sigma": 9.4183,
+   "n_fit": 1270,
+   "tips": {
+    "mlb": {
+     "grade": [
+      30.2931,
+      35.3261,
+      40.331,
+      44.8902,
+      49.8487,
+      54.7,
+      59.5476
+     ],
+     "stat": [
+      26.040476,
+      26.659524,
+      27.178912,
+      27.784906,
+      27.983492,
+      28.254871,
+      28.8
+     ]
+    },
+    "um": {
+     "grade": [
+      20.0,
+      30.1835,
+      35.1339,
+      40.3497,
+      44.9647,
+      50.1925,
+      54.9062,
+      59.565,
+      65.15,
+      69.8182
+     ],
+     "stat": [
+      0.188809,
+      0.235466,
+      0.267423,
+      0.508384,
+      0.652292,
+      0.914063,
+      1.270702,
+      1.586257,
+      2.410939,
+      2.695093
+     ]
+    }
+   }
   }
  },
- "statistics_computed": 0,
- "checked_at": "2026-10-22T02:15:37Z",
  "inputs_sha256_start": {
-  "prospects.db": "9c6f6d90bfca1858dc20091fb418212881c9f0c56e2c79145ebf7ec7da2edd0b",
-  "data/debuts.json": "fec88ea5042ed4474d739518f09dfe3efd40269d5f7d428cf94b8a5250d5807f",
-  "data/inactive.json": "6af77cf24fa60e7a8db881f806f890714e745380dc97a40e62c293be8c0ed73d",
-  ".cache/ebr/milb_preview/ebr_milb.json": "c00642f800e601f7d37e404c733ad2de5246e6bcdd94061424dd357fa80cc310",
-  ".cache/ebr/milb_preview/ebr_milb_eval.json": "a597b0f5875b3e106899ff38a033c553bc5bd680e4647aec9df882c14361b268",
+  "prospects.db": "daa8e15d37f36a1da7c51f009189aa651249b31b7e371d53de8b1dae47371370",
+  "data/debuts.json": "e925538ce4a9e752a22d19b32c6b50f96e7291472008d5c981c0222ea9d9c001",
+  "data/inactive.json": "462f46c0f15a6884282f851f9cc5ee74315c8c73cd751c6e56d9e1cf2aca58c3",
+  ".cache/ebr/milb_preview/ebr_milb.json": "97d22ef8c615d8bb056cabace91f384a02311e141e021dca90b0c54ba84366e5",
+  ".cache/ebr/milb_preview/ebr_milb_eval.json": "5ae52c74d4955ae67c926cb3ad1271d3cba34844da0a004588994df788e67a80",
   "data/fwar_vintage.json": "5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7",
   "data/_labs/etools/etools_eval.json": "0d5950ba373b41811e64db5d7dbd50ce0e98cca3289e446d97f8de71a2fb4225",
   ".cache/savant_sprint/sprint_2015.csv": "529259b0137aed33d32f894fee2614f2035142443e0553a76a566068b8f6067c",
@@ -190,14 +983,14 @@
   ".cache/savant_sprint/sprint_2023.csv": "1d6ce0c818c1ec18e84a83b934e26e229c1001c5f66cca3d69049978df05c265",
   ".cache/savant_sprint/sprint_2024.csv": "270fdc5232eef62f8c74b376d0dfc670c79aa4e69bb0d575debfe220f1865855",
   ".cache/savant_sprint/sprint_2025.csv": "c72bce2fad5c6c708796d4133d2da3b6bb5f010b0635896bcc32cacd28d76f66",
-  ".cache/savant_sprint/sprint_2026.csv": "22af2efe0664b531dcb2322b19bd9f13ffcace4281434b86fea5a2f87a23c150"
+  ".cache/savant_sprint/sprint_2026.csv": "20a65da9f6bad9cda096880131795c506edb6072ce2cd8b3ed21c0726e166b21"
  },
  "inputs_sha256_end": {
-  "prospects.db": "9c6f6d90bfca1858dc20091fb418212881c9f0c56e2c79145ebf7ec7da2edd0b",
-  "data/debuts.json": "fec88ea5042ed4474d739518f09dfe3efd40269d5f7d428cf94b8a5250d5807f",
-  "data/inactive.json": "6af77cf24fa60e7a8db881f806f890714e745380dc97a40e62c293be8c0ed73d",
-  ".cache/ebr/milb_preview/ebr_milb.json": "c00642f800e601f7d37e404c733ad2de5246e6bcdd94061424dd357fa80cc310",
-  ".cache/ebr/milb_preview/ebr_milb_eval.json": "a597b0f5875b3e106899ff38a033c553bc5bd680e4647aec9df882c14361b268",
+  "prospects.db": "daa8e15d37f36a1da7c51f009189aa651249b31b7e371d53de8b1dae47371370",
+  "data/debuts.json": "e925538ce4a9e752a22d19b32c6b50f96e7291472008d5c981c0222ea9d9c001",
+  "data/inactive.json": "462f46c0f15a6884282f851f9cc5ee74315c8c73cd751c6e56d9e1cf2aca58c3",
+  ".cache/ebr/milb_preview/ebr_milb.json": "97d22ef8c615d8bb056cabace91f384a02311e141e021dca90b0c54ba84366e5",
+  ".cache/ebr/milb_preview/ebr_milb_eval.json": "5ae52c74d4955ae67c926cb3ad1271d3cba34844da0a004588994df788e67a80",
   "data/fwar_vintage.json": "5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7",
   "data/_labs/etools/etools_eval.json": "0d5950ba373b41811e64db5d7dbd50ce0e98cca3289e446d97f8de71a2fb4225",
   ".cache/savant_sprint/sprint_2015.csv": "529259b0137aed33d32f894fee2614f2035142443e0553a76a566068b8f6067c",
@@ -211,7 +1004,7 @@
   ".cache/savant_sprint/sprint_2023.csv": "1d6ce0c818c1ec18e84a83b934e26e229c1001c5f66cca3d69049978df05c265",
   ".cache/savant_sprint/sprint_2024.csv": "270fdc5232eef62f8c74b376d0dfc670c79aa4e69bb0d575debfe220f1865855",
   ".cache/savant_sprint/sprint_2025.csv": "c72bce2fad5c6c708796d4133d2da3b6bb5f010b0635896bcc32cacd28d76f66",
-  ".cache/savant_sprint/sprint_2026.csv": "22af2efe0664b531dcb2322b19bd9f13ffcace4281434b86fea5a2f87a23c150"
+  ".cache/savant_sprint/sprint_2026.csv": "20a65da9f6bad9cda096880131795c506edb6072ce2cd8b3ed21c0726e166b21"
  },
- "seconds": 13.0
+ "seconds": 17.4
 }

@@ -202,3 +202,44 @@ against the look's whole eSPD gain over consensus of +0.007 on L_MLB.
 registered and unspent: the same command runs it, unchanged, once the minor-league partition of the
 runner record holds the as-of seasons (2021 and 2022 at every level, and High-A to Triple-A from 2021
 to 2023, for board years 2022 to 2024). That backfill is a separate task and an owner call.
+
+### 2026-10-22: THE READ, NOT PASS; UNDERPOWERED (spent; OWNER-WAIVED EARLY READ, EW3-5)
+
+After the backfill of owner answer ETOOLS-SPD-EBR (2026-10-21; `docs/ebr-2026-09-30/EBR_MILB.md`, dated note
+of 2026-10-22: the record now holds 2021 and 2022 at every level and 2023 at High-A to Triple-A),
+`python etools_spd_ebr.py --run --amend-sha 3cc6a8e6` ran once, unchanged, on 2026-10-22 at 20:32 local
+(2026-10-23 00:32 UTC), as task ETOOLS_SPD_MILB_EBR_BACKFILL. The fixture dry run and the presence counts
+(`--check`) ran first; stdout and stderr were kept. `data/_labs/etools/etools_spd_ebr_reads.json` carries the
+spent marker; every input's sha256 is equal at start and end.
+
+Frame: board years 2022, 2023 and 2024 (complete as-of seasons 2021 to 2023). 1,716 speed rows; 1,275 carry
+both the candidate and sb_rel (Spearman 0.35 between them). Units read: every complete level-season, AA 2021
+included (it is withheld from the cards for a GIDP identity miss, which section 2.1 does not condition on);
+Rookie 2022's reliability is 0.055, above the 0.05 floor.
+
+| label | rows (players) | board years with 20 or more | status |
+|---|---|---|---|
+| L_MLB, sprint speed (deciding) | 347 (226) | 3 | computable |
+| L_UM, SB per PA over the level-season mean (deciding) | 724 (479) | 3 | computable |
+| L_BSR, BsR per 600 PA (reported) | 231 (158) | 3 | computable |
+
+| comparison | L_MLB d (LB, MDE) | L_UM d (LB, MDE) | L_BSR d (LB) |
+|---|---|---|---|
+| A2 vs A1 (the sub-driver over the current eSPD) | -0.0058 (-0.0133, 0.0106) | +0.0006 (-0.0030, 0.0054) | -0.0109 (-0.0205) |
+| A2 vs A0 (rebuilt eSPD over consensus) | +0.0106 (-0.0048, 0.0232) | +0.0631 (+0.0508, 0.0191) | -0.0093 (-0.0357) |
+| A1 vs A0 (current eSPD over consensus, this frame) | +0.0165 (+0.0019, 0.0229) | +0.0625 (+0.0504, 0.0184) | +0.0016 (-0.0228) |
+
+Incremental test of `ebr_milb` over the consensus grade: L_MLB d +0.0098 (LB -0.0056, p 0.146), L_UM +0.0045
+(LB -0.0074, p 0.261), L_BSR +0.0300 (LB -0.0009, p 0.053, reported). Gate 4.4 admission (reported, deciding
+nothing): sb_rel admitted (L_UM, q 0.000), ebr_milb not.
+
+Comparators: zero comparator exact (A2 minus A1 0.0 on every row; d 0.0 on every label). Null comparator
+(permuted within board year): (a) false, (b) true, (c) true, so it does not pass; its incremental LB is
+-0.0088 on L_MLB and -0.0068 on L_UM: **not VOID**. Planted recovery: (a) false (d -0.0026, LB -0.0071),
+(b) false (LB -0.0018), (c) true: **not recovered**.
+
+Rule (section 5): (a) false, (b) false, (c) true. **Verdict: NOT PASS; UNDERPOWERED** (the planted check
+fails, so this is not evidence of no gain). Speed keeps the consensus grade; eSPD is not rebuilt; nothing
+served moves from this read; no flip question. Reported beside it and deciding nothing: on this smaller frame
+the current eSPD (A1) clears consensus on L_MLB (LB +0.0019), which it did not on the look's whole frame
+(+0.007, LB -0.001).
