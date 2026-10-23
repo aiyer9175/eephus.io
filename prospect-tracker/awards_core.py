@@ -479,7 +479,8 @@ def side_totals(league_rows: list[dict]) -> dict:
 
 # --- the four rules ---------------------------------------------------------------
 
-def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None, realized=None) -> dict:
+def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None, realized=None,
+                realized_pm=None) -> dict:
     mlbam = int(r["mlbam"])
     club = (r.get("clubs") or [None])[-1]
     row = {
@@ -498,6 +499,10 @@ def _player_row(rank: int, r: dict, score: float, *, pos=None, flags=None, reali
         # it never ranks, sorts or breaks a tie
         row["realized"] = float(realized)
         row["realized_display"] = score_display(realized)
+        if realized_pm is not None:
+            # the eWAR uncertainty band's 80 percent half-width beside it
+            # (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md); display only
+            row["realized_pm_display"] = score_display(realized_pm)
     return row
 
 
@@ -507,6 +512,17 @@ def _realized(r: dict, sides) -> float | None:
     if not any((s + "_real") in r for s in sides):
         return None
     return sum(float(r.get(s + "_real") or 0.0) for s in sides)
+
+
+def _realized_pm(r: dict, sides, season: int) -> float | None:
+    """The eWAR uncertainty band's half-width on the row's in-league exposure over
+    `sides` for eWAR realized, or None (ewar_band.BAND_LIVE off, no realized column)."""
+    if _realized(r, sides) is None:
+        return None
+    import ewar_band
+    return ewar_band.half_width(season=int(season), mlbam=int(r["mlbam"]), series="realized",
+                                pa=r.get("pa") if "bat" in sides else None,
+                                ip=r.get("ip") if "pit" in sides else None)
 
 
 def _mark_ties(rows: list[dict]) -> None:
@@ -604,7 +620,8 @@ def _war_ballot(award: str, league_rows: list[dict], league: str, season: int, *
         if rookies is not None and rookies[int(r["mlbam"])]["near"]:
             flags.append(ROOKIE_NEAR_TOKEN)
         rows.append(_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), flags=flags,
-                                realized=_realized(r, ("bat", "pit"))))
+                                realized=_realized(r, ("bat", "pit")),
+                                realized_pm=_realized_pm(r, ("bat", "pit"), season)))
     top = _ballot(award, rows, n)
     excluded.sort(key=lambda e: (-(_num(e.get("proxy_days")) or 0.0), e["mlbam"]))
     war_provider = (league_rows[0].get("war_provider") if league_rows else None)
@@ -636,7 +653,8 @@ def cy_young_ballot(league_rows: list[dict], league: str, season: int, *,
     scored = [(float(r.get("pit") or 0.0), r) for r in pool]
     scored.sort(key=lambda t: (-t[0], -(_num(t[1].get("ip")) or 0.0),
                                -_skill(int(t[1]["mlbam"])), int(t[1]["mlbam"])))
-    rows = [_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), realized=_realized(r, ("pit",)))
+    rows = [_player_row(i, r, score, pos=pos.get(int(r["mlbam"])), realized=_realized(r, ("pit",)),
+                        realized_pm=_realized_pm(r, ("pit",), season))
             for i, (score, r) in enumerate(scored, 1)]
     top = _ballot("CY", rows, n)
     war_provider = (league_rows[0].get("war_provider") if league_rows else None)

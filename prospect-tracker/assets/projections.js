@@ -2678,6 +2678,10 @@
   const warFg = s => (((s.a != null && s.fgA == null) || (s.b != null && s.fgB == null)
     || (s.fgA == null && s.fgB == null)) ? null : (s.fgA || 0) + (s.fgB || 0));
   const FG_WAR_TIP = "FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: the site's WAR is eWAR.";
+  // The eWAR uncertainty band (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md): an 80 percent
+  // half-width beside eWAR and eWAR realized, printed only when the payload carries it.
+  const BAND_TIP = "The band: on seasons held out from its constants, the other published WAR (Baseball-Reference) or the other half of the same season, rescaled, landed within this many wins of eWAR 70 to 90 percent of the time in every playing-time band. It is not a range for talent.";
+  const pmWar = v => (v != null ? ` <span class="ewar-pm" title="${esc(BAND_TIP)}">&plusmn;${Number(v).toFixed(1)}</span>` : "");
   const REAL_WAR_TIP = "eWAR realized: the same frame as eWAR, with pitchers priced on the runs they allowed, adjusted for park, defense and inherited runners. Shown beside eWAR; it never sorts, sums or ranks.";
   const V2_WAR_TIP = "eWAR v2, the site's earlier WAR: Baseball-Reference's WAR with pitching re-priced on FIP. A reference only.";
   const BREF_WAR_TIP = "Baseball-Reference's WAR (bWAR). A reference only.";
@@ -3042,8 +3046,8 @@
       + (hasV2 ? `<th class="mlbp-fgwar" title="${esc(V2_WAR_TIP)}">eWAR v2</th>` : "")
       + (hasFg ? `<th class="mlbp-fgwar" title="${esc(FG_WAR_TIP)}">FanGraphs WAR</th>` : "")
       + (hasReal ? `<th class="mlbp-fgwar" title="${esc(BREF_WAR_TIP)}">bWAR</th>` : "");
-    const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`
-      + (hasReal ? `<td class="mlbp-realwar">${r.war_real != null ? fmtWar(r.war_real) : EM_DASH}</td>` : "")
+    const warTd = r => `<td>${r.war != null ? fmtWar(r.war) + pmWar(r.war_pm) : EM_DASH}</td>`
+      + (hasReal ? `<td class="mlbp-realwar">${r.war_real != null ? fmtWar(r.war_real) + pmWar(r.war_real_pm) : EM_DASH}</td>` : "")
       + (hasV2 ? `<td class="mlbp-fgwar">${r.war_ewar2 != null ? fmtWar(r.war_ewar2) : EM_DASH}</td>` : "")
       + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "")
       + (hasReal ? `<td class="mlbp-fgwar">${bref(r) != null ? fmtWar(bref(r)) : EM_DASH}</td>` : "");
