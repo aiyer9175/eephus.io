@@ -1,0 +1,9 @@
+== bin/receive -require-reference -verify-only (positive: the pin's reference)
+ok: 20261023T001053Z-6f82911d5778, 17837 files, 1304296283 bytes verified in 1.935s
+exit 0
+== negative control: an unlisted file planted under site/
+rejected: 1 unlisted (zz_planted.txt)
+exit 1
+== restored
+ok: 20261023T001053Z-6f82911d5778, 17837 files, 1304296283 bytes verified in 1.906s
+exit 0
