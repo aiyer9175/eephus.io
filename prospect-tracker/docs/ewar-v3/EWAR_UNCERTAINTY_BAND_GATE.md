@@ -330,3 +330,113 @@ FIT and CAL, [0.70, 0.90], 19 and 0; always, CAL only, [0.70, 0.90], 10 and 0.
 Defaults this amendment applies, named for the orchestrator: training seasons FIT and CAL together;
 the multiplier always applied; the equivalence range [0.70, 0.90], the narrowest of the measured
 variants whose planted truth reached 16 of 20.
+
+
+### 13.2 2026-10-22: the read, run once (lab at 5878497b; local 2026-10-22 21:03, UTC 2026-10-23 01:03)
+
+`python tools/ewar_uncertainty_band_lab.py --read`, stdout and stderr teed to the task's output
+directory (stderr empty); the record is `data/_labs/ewar_uncertainty_band/record.json`. Inputs by
+sha256: the frozen vintage file `5c3df434...` (vintage id 2026-10-02-a020cf64844a, equal to
+`data/ewar_v3.json`'s), `data/ewar_v3.json` `40ea0196...`, the bWAR copy bat `e9571c42...` and pit
+`3279bfbd...`, the runner record manifest `0d2b06a1...`, the play corpus manifest `6bbcea45...`, the eBR
+pool `f11758e7...`. Every refusal of part 3 held. Rows: C1-bat 16,151, C1-pit 15,857, C2-bat and C2-ebr
+9,033, C2-fip and C2-ra 4,965 player-season-sides. No exception; runtime 83 s.
+
+- **N1's input path.** `data/awards_eval.json` carries no `realized_read_band` in this tree, so the
+  lab computed N1's constants with `awards_core.band_constants` on the same inputs the exporter reads:
+  k_bat 0.000525 and k_pit 0.003787, equal to the served values EWAR_SITEWIDE_CALIBRATION.md 9.1
+  records.
+
+**VERDICT: PASS** (under amendment 13.1). The planted check read PLANTED PASS (truth 19 of 20, broken 0
+of 20, identity check exact); all 24 cells are CALIBRATED inside [0.70, 0.90] under both bootstraps;
+the band is SHARPER THAN THE NULLS on every deciding comparison.
+
+**Disclosed with the verdict: under the registered range [0.75, 0.85], before amendment 13.1, five
+cells would sit outside** (C2-bat PA 300-499 low end 0.747; C2-fip IP 5-19.2 high end 0.852; C2-fip IP
+60-119.2 point 0.871, high end 0.895; C2-fip IP 120+ low end 0.749; C2-ra IP 60-119.2 high end 0.869),
+and the read would be NOT PASS. The amendment was made and committed before any real statistic was
+computed, on the planted check's measured power alone; a reader weighs the PASS with that.
+
+Constants (training seasons) and the split-conformal sd multipliers by exposure band (raw training
+coverage in brackets):
+
+| Term | k | Band 1 | Band 2 | Band 3 | Band 4 |
+|---|---|---|---|---|---|
+| src_bat (wins^2 per PA) | 0.000528 | 0.596 (0.936) | 0.852 (0.859) | 0.952 (0.822) | 0.972 (0.811) |
+| src_pit (wins^2 per IP) | 0.004024 | 0.879 (0.855) | 0.936 (0.833) | 1.053 (0.777) | 1.029 (0.784) |
+| bat (runs^2 per PA) | 0.123787 | 0.952 (0.821) | 1.132 (0.747) | 1.166 (0.729) | 1.189 (0.705) |
+| ebr (runs^2 per PA) | 0.014762 | 0.958 (0.815) | 1.036 (0.788) | 1.057 (0.774) | 1.045 (0.787) |
+| fip (runs^2 per IP) | 0.538254 | 0.955 (0.825) | 0.907 (0.849) | 0.904 (0.861) | 0.832 (0.872) |
+| ra (runs^2 per IP) | 2.084767 | 0.876 (0.846) | 0.746 (0.902) | 0.716 (0.917) | 0.624 (0.971) |
+
+Bands: PA 20-99, 100-299, 300-499, 500+; IP 5-19.2, 20-59.2, 60-119.2, 120+.
+
+TEST coverage of the final band (raw band before multipliers beside it; the interval is the widest of
+the two bootstraps' 5th to 95th percentiles):
+
+| Family | Band | TEST rows | Raw | Final | Interval |
+|---|---|---|---|---|---|
+| C1-bat | PA 20-99 | 1,778 | 0.948 | 0.821 | 0.797 to 0.842 |
+| C1-bat | PA 100-299 | 1,553 | 0.863 | 0.797 | 0.778 to 0.814 |
+| C1-bat | PA 300-499 | 1,108 | 0.835 | 0.821 | 0.801 to 0.841 |
+| C1-bat | PA 500+ | 1,352 | 0.830 | 0.819 | 0.795 to 0.843 |
+| C1-pit | IP 5-19.2 | 1,281 | 0.856 | 0.795 | 0.771 to 0.818 |
+| C1-pit | IP 20-59.2 | 1,997 | 0.808 | 0.778 | 0.761 to 0.794 |
+| C1-pit | IP 60-119.2 | 1,441 | 0.762 | 0.792 | 0.774 to 0.810 |
+| C1-pit | IP 120+ | 1,038 | 0.803 | 0.813 | 0.793 to 0.833 |
+| C2-bat | PA 20-99 | 964 | 0.830 | 0.809 | 0.788 to 0.830 |
+| C2-bat | PA 100-299 | 910 | 0.752 | 0.801 | 0.779 to 0.823 |
+| C2-bat | PA 300-499 | 659 | 0.693 | 0.774 | 0.747 to 0.801 |
+| C2-bat | PA 500+ | 700 | 0.686 | 0.789 | 0.763 to 0.815 |
+| C2-ebr | PA 20-99 | 964 | 0.813 | 0.801 | 0.781 to 0.821 |
+| C2-ebr | PA 100-299 | 910 | 0.773 | 0.785 | 0.762 to 0.806 |
+| C2-ebr | PA 300-499 | 659 | 0.762 | 0.792 | 0.764 to 0.819 |
+| C2-ebr | PA 500+ | 700 | 0.776 | 0.789 | 0.754 to 0.824 |
+| C2-fip | IP 5-19.2 | 482 | 0.842 | 0.822 | 0.790 to 0.852 |
+| C2-fip | IP 20-59.2 | 829 | 0.853 | 0.813 | 0.790 to 0.835 |
+| C2-fip | IP 60-119.2 | 487 | 0.895 | 0.871 | 0.846 to 0.895 |
+| C2-fip | IP 120+ | 319 | 0.853 | 0.790 | 0.749 to 0.830 |
+| C2-ra | IP 5-19.2 | 482 | 0.865 | 0.805 | 0.774 to 0.835 |
+| C2-ra | IP 20-59.2 | 829 | 0.883 | 0.774 | 0.751 to 0.798 |
+| C2-ra | IP 60-119.2 | 487 | 0.953 | 0.842 | 0.814 to 0.869 |
+| C2-ra | IP 120+ | 319 | 0.947 | 0.799 | 0.756 to 0.841 |
+
+Interval score, d = mean IS(null) - mean IS(band), positive favours the band; lo the smaller of the two
+bootstraps' d - 1.645 sd:
+
+| Family | d(N0) | lo | d(N1) | lo |
+|---|---|---|---|---|
+| C1-bat | 0.3082 | 0.2831 | 0.0438 (reported) | 0.0360 |
+| C1-pit | 0.3667 | 0.3345 | 0.0061 (reported) | 0.0008 |
+| C2-bat | 8.9175 | 8.0153 | 57.4566 | 55.3762 |
+| C2-ebr | 2.0839 | 1.8030 | 17.2976 | 16.6012 |
+| C2-fip | 3.4109 | 2.7635 | 39.7101 | 37.9607 |
+| C2-ra | 4.1635 | 3.2684 | 67.6794 | 64.7877 |
+
+(C1 in wins; C2 in runs. N1 has no sampling term, so on C2 it covers almost nothing.)
+
+**Reported, deciding nothing (part 8).**
+
+- Split-half reliability (Spearman-Brown, full season; FIT seasons; PA 300+ or IP 60+): batting runs
+  0.45 to 0.58; eBR 0.55 to 0.60; FIP runs 0.54 to 0.61; runs allowed 0.20 to 0.33.
+- C1 on eWAR realized's pitching side (TEST 2018, 2021, 2024): the band covers bWAR in 0.963, 0.948,
+  0.982 and 0.991 of rows by IP band. Realized pitching and bWAR both price runs allowed, so the method
+  term measured on fWAR's FIP basis is wider than their disagreement: the realized band is
+  conservative on the method side for pitchers.
+- The served band (80 percent half-width, wins, median by the row's main side's exposure band,
+  2000 to 2026): headline PA 20-99 0.432, 100-299 0.816, 300-499 1.246, 500+ 1.565; IP 5-19.2 0.386,
+  20-59.2 0.713, 60-119.2 1.026, 120+ 1.506. Realized: the same for hitters; IP 0.469, 0.816, 1.171,
+  1.662. The sampling term's median share of the variance (headline): hitters 0.86, 0.82, 0.80, 0.79;
+  pitchers 0.61, 0.56, 0.50, 0.48.
+- Registered expectations (part 9): the method term does not dominate at high exposure; the sampling
+  term carries about four fifths of a regular hitter's variance and about half of a starter's, so the
+  first expectation is not met. k_ra exceeds k_fip (2.08 against 0.54 runs^2 per IP), as expected. Part
+  4 acted on C1-bat's lowest band as expected (multiplier 0.596: the per-PA method line is too wide at
+  low playing time); it also narrowed every C2-ra band and widened every C2-bat band above 100 PA (the
+  within-season noise constant, pooled across exposure, is too small for regulars' batting runs and
+  too large for pitchers' runs allowed).
+
+**What this licenses.** PASS: the band is built dark and owner question EWUB-Q1 (part 10) is raised in
+the task report, default (a). The claim a flip may make is amendment 13.1's: the band covers the other
+published WAR and a split-half rescaled season at a rate between 70 and 90 percent in every
+playing-time band, on seasons held out from its constants. Part 10's may-not list stands.
