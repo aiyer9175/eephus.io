@@ -1,0 +1,15 @@
+=== git bundle ===
+The bundle contains these 6 refs:
+03b50135d9156d505228f7f37f24c970fbacb4da refs/heads/port-stage1-pages
+33398bfc046a8b4914a42f7ab6381a5319505cc0 refs/heads/port-stage0-withheld-data
+f277e7cfec2c329463be9ec4449a95e8aebc58d5 refs/heads/port-stage1-publish-contract
+3eac0ba742f9bde48120f06fbca59e2cdcc4347d refs/heads/port-stage1-buildsite-ownership
+5e0bf2422776081020087a498d4144b8f1cdd4ba refs/heads/port-stage1-receive
+935dc8ca04b07d8d16d806cca1612d5b76785767 refs/heads/port-stage1-sidecars
+The bundle requires this ref:
+9e1423ccde2813262fcacd6f07b12fb59c474fe2 
+The bundle uses this hash algorithm: sha1
+../eephus-port-prs.bundle is okay
+-rw-r--r-- 1 noah 197121 3628499 Oct 22 20:47 ../eephus-port-prs.bundle
+=== pack size of the chain (what a push carries) ===
+loose object bytes: 19073
