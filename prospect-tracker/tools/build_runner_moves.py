@@ -92,9 +92,18 @@ mtime prune). ``--milb`` copies their regular-season games into
 ``milb/<level>/<season>/`` in the same layout, with counts and walk receipts
 only: no minor-league value is computed here.
 
+THE MINOR-LEAGUE HISTORY. 2021 and 2022 at every level and 2023 at High-A to
+Triple-A (owner answer ETOOLS-SPD-EBR, 2026-10-21) come from
+``.cache/milb_feeds_hist/feeds`` (tools/fetch_milb_feeds_hist.py, never
+``.cache/game_feeds``). ``--milb-hist`` copies them into the same
+``milb/<level>/<season>/`` layout one unit at a time, and refuses while the
+fetcher's receipts show a unit incomplete (a completed season freezes on its
+first build, so a part-fetched unit must never be built).
+
 Run (outside any pipeline run; the MLB backfill takes several minutes):
     python tools/build_runner_moves.py [--seasons 2018,2019,2021-2026] [--milb]
                                        [--workers 8] [--no-refetch]
+    python tools/build_runner_moves.py --milb-hist [--workers 4]
 """
 from __future__ import annotations
 
@@ -134,6 +143,11 @@ HIST_SEASONS = (2011, 2012, 2013, 2014, 2015, 2016, 2017, 2020)
 #: Seconds between requests of a history season's re-fetch (one a second).
 HIST_FETCH_INTERVAL = 1.0
 MILB_SEASONS = (2023, 2024, 2025, 2026)
+#: The minor-league history seasons (tools/fetch_milb_feeds_hist.HIST_UNITS names the
+#: units: 2021 and 2022 at every level, 2023 at High-A to Triple-A), read from this
+#: directory only.
+MILB_HIST_SEASONS = (2021, 2022, 2023)
+DEFAULT_MILB_HIST = REPO_ROOT / ".cache" / "milb_feeds_hist"
 #: sportId -> partition name of the minor-league copy.
 MILB_LEVELS = {11: "aaa", 12: "aa", 13: "high_a", 14: "single_a", 16: "rookie"}
 #: A completed season freezes on this (month, day) of its own year
@@ -1041,19 +1055,26 @@ def build_season(season: int, *, out_dir: Path = DEFAULT_OUT, source: Path = DEF
 
 def build_milb(*, out_dir: Path = DEFAULT_OUT, feeds: Path = DEFAULT_FEEDS, workers: int = 8,
                today: _dt.date | None = None, man: dict | None = None,
-               seasons=MILB_SEASONS) -> dict:
+               seasons=MILB_SEASONS, units=None, paths=None,
+               skip_key: str = "milb_skipped", source_label: str | None = None) -> dict:
     """The minor-league copy: regular-season games of .cache/game_feeds, counts
     and walk receipts only. Incremental by game_pk; a completed level-season is
-    frozen and never rewritten (its source feeds get pruned)."""
+    frozen and never rewritten (its source feeds get pruned). ``units`` (a set of
+    (level, season)) limits the copy to those units, ``paths`` names the payloads
+    in place of the directory's glob, ``source_label`` is written on each block
+    built (the history directory's name)."""
     import pandas as pd
     out_dir = Path(out_dir)
     own_man = man is None
     man = man if man is not None else load_manifest(out_dir)
     mblk = man.setdefault("milb", {})
-    files = sorted(Path(feeds).glob("*.json")) if Path(feeds).exists() else []
+    if paths is None:
+        files = sorted(Path(feeds).glob("*.json")) if Path(feeds).exists() else []
+        paths = [str(p) for p in files]
+    else:
+        paths = [str(p) for p in paths]
     skips: Counter = Counter()
     by: dict = defaultdict(lambda: {"pa": [], "rn": [], "diag": Counter(), "pks": set()})
-    paths = [str(p) for p in files]
     if workers > 1 and len(paths) > 50:
         with ProcessPoolExecutor(max_workers=workers) as ex:
             res_iter = list(ex.map(_milb_job, paths, chunksize=40))
@@ -1071,6 +1092,9 @@ def build_milb(*, out_dir: Path = DEFAULT_OUT, feeds: Path = DEFAULT_FEEDS, work
             skips["season_out_of_scope"] += 1
             continue
         key = (level, season)
+        if units is not None and key not in units:
+            skips["unit_out_of_scope"] += 1
+            continue
         by[key]["pa"].extend(pa)
         by[key]["rn"].extend(rn)
         by[key]["diag"].update(dg)
@@ -1122,12 +1146,56 @@ def build_milb(*, out_dir: Path = DEFAULT_OUT, feeds: Path = DEFAULT_FEEDS, work
             "pa_sha256": write_table(pa_df, pa_p), "runners_sha256": write_table(rn_df, rn_p),
             "complete": bool(complete), "frozen": bool(complete),
         }
-    man["milb_skipped"] = dict(sorted(skips.items()))
+        if source_label:
+            mblk[name]["source"] = source_label
+    man[skip_key] = dict(sorted(skips.items()))
     if own_man:
         now = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
         man["built_at"] = man["generated_at"] = now
         write_manifest(out_dir, man)
     return mblk
+
+
+class MilbHistIncomplete(RuntimeError):
+    pass
+
+
+def build_milb_hist(*, out_dir: Path = DEFAULT_OUT, hist_dir: Path = DEFAULT_MILB_HIST, workers: int = 4,
+                    today: _dt.date | None = None, units=None) -> dict:
+    """The minor-league history units into milb/<level>/<season>/, one unit at a
+    time (the manifest is written after each), from the fetcher's payloads only.
+    Refuses before writing anything while a unit's schedule is not wholly on disk
+    under ok receipts (or answered 404): its season is complete, so its first
+    build freezes it."""
+    import fetch_milb_feeds_hist as fmh
+    units = list(units or fmh.HIST_UNITS)
+    hist_dir = Path(hist_dir)
+    status = fmh.unit_status(hist_dir, units)
+    bad = {k: v for k, v in status.items() if not v["complete"]}
+    if bad:
+        raise MilbHistIncomplete(f"history units not complete on disk: {bad}")
+    out_dir = Path(out_dir)
+    man = load_manifest(out_dir)
+    feeds = hist_dir / fmh.FEEDS_SUBDIR
+    for u in units:
+        lv, season = u[0], int(u[1])
+        key = f"{lv}|{season}"
+        sched = json.loads((hist_dir / "schedule" / f"{lv}_{season}.json").read_text(encoding="utf-8"))
+        paths = [feeds / f"{int(pk)}.json" for pk, _ in sched if (feeds / f"{int(pk)}.json").exists()]
+        build_milb(out_dir=out_dir, feeds=feeds, workers=workers, today=today, man=man,
+                   seasons=(season,), units={(lv, season)}, paths=paths,
+                   skip_key="milb_hist_skipped", source_label=hist_dir.name)
+        man.setdefault("milb_hist", {})[key] = {
+            "scheduled": status[key]["scheduled"], "payloads": len(paths),
+            "no_play": status[key]["no_play"]}
+        blk = man["milb"].get(key) or {}
+        now = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
+        man["built_at"] = man["generated_at"] = now
+        man["milb_hist_source"] = str(hist_dir)
+        write_manifest(out_dir, man)
+        print(f"  {key}: payloads {len(paths)}  games {blk.get('games')}  "
+              f"pa {(blk.get('counts') or {}).get('pa')}  frozen {blk.get('frozen')}", flush=True)
+    return man
 
 
 def build(seasons=DEFAULT_SEASONS, *, out_dir: Path = DEFAULT_OUT, source: Path = DEFAULT_SOURCE,
@@ -1180,10 +1248,16 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--milb", action="store_true")
     ap.add_argument("--milb-only", action="store_true")
+    ap.add_argument("--milb-hist", action="store_true",
+                    help="copy the minor-league history units (.cache/milb_feeds_hist) and exit")
     ap.add_argument("--no-refetch", action="store_true")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     t0 = time.time()
+    if a.milb_hist:
+        build_milb_hist(workers=a.workers)
+        print(f"done in {time.time() - t0:.1f} s")
+        return 0
     seasons = [] if a.milb_only else _parse_seasons(a.seasons)
     build(seasons, workers=a.workers, milb=(a.milb or a.milb_only),
           allow_refetch=not a.no_refetch)

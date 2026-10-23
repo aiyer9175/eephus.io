@@ -95,8 +95,11 @@ VERSIONED_CACHES: tuple[str, ...] = ("statcast_metrics", "zone_metrics")
 # case: derived from ``win_prob`` and ``game_feeds``, both of which are in
 # SAFE_CACHES, and its minor-league copy is the only one left once feed_cache's
 # monthly prune reaches the 2023 to 2026 feeds (EBR_GATE.md part 2.2).
+# ``milb_feeds_hist`` holds the 2021 to 2023 minor-league game feeds the runner
+# record's history units were copied from (tools/fetch_milb_feeds_hist.py): days of
+# paced network to refetch, the same case as ``win_prob_hist``.
 EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus", "pbp_runners",
-            "win_prob_hist")
+            "win_prob_hist", "milb_feeds_hist")
 
 
 def free_gb(path: Path | None = None) -> float:
