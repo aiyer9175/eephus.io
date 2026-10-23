@@ -286,3 +286,97 @@ yardstick and the recorded baseline cells, not a verdict.
     10.6261 for every season. No club-season sum of any series was computed.
 
 ## 14. Results
+
+### 14.1 2026-10-22: the read, run once (lab at 6c1e6162; local 2026-10-22 20:14, UTC 2026-10-23 00:14)
+
+`python tools/ewar_team_accounting_lab.py --read`, stdout and stderr teed to the task's output
+directory; the record is `data/_labs/ewar_team_accounting/record.json`. Inputs by sha256: the frozen
+vintage `02232201...`, `data/ewar_v3.json` `40ea0196...`, the xHEM+ preview `36ba7b43...`, the bWAR copy
+bat `e9571c42...` and pit `3279bfbd...`. Every refusal of part 3 held: 270 club-seasons, 3,760 players,
+16,976 vintage rows (0 null, 0 unallocated), 18,809 bWAR stint rows, 7,035 R2 departure rows. No
+exception; runtime 21 s.
+
+**VERDICT: NOT PASS.** eWAR realized reads UNRESOLVED against fWAR and UNRESOLVED against bWAR. The
+planted check read PLANTED PASS (truth 20 of 20, fake 0 of 20 at 40 runs; 20 of 20 and 0 of 20 at 60
+runs; identity check all d zero, NOT PASS) and the permutation null was cleared on both deciding
+outcomes, so the design could see a departure of R2's size and the read is not underpowered: eWAR
+realized's team sums are not closer to club wins or run differential than fWAR's or bWAR's.
+
+Points, primary frame (RMSE, Rsq; wins in wins, the rest in runs; each series at its own runs per
+win):
+
+| Series | Wins | Run differential | Runs scored (bat side) | Runs allowed (pit side) |
+|---|---|---|---|---|
+| E, eWAR realized | 5.353, 0.834 | 41.264, 0.903 | 48.279, 0.599 | 41.193, 0.782 |
+| F, fWAR | 5.111, 0.849 | 39.267, 0.912 | 44.591, 0.658 | 51.845, 0.654 |
+| B, bWAR | 4.852, 0.863 | 33.058, 0.938 | 49.690, 0.575 | 57.276, 0.578 |
+| H, headline as served (reported) | 5.111, 0.849 | 39.988, 0.909 | 48.279, 0.599 | 51.004, 0.665 |
+| Hx, headline with xHEM+ (reported) | 5.302, 0.837 | 42.487, 0.897 | 51.887, 0.537 | 51.004, 0.665 |
+| E at fWAR's runs per win (reported) | 5.353, 0.834 | 36.524, 0.924 | 44.591, 0.658 | 40.782, 0.786 |
+
+The fixed published baseline gives the same wins RMSE as the league-reconciled one for every series.
+
+d = RMSE(comparator) - RMSE(E), positive favours eWAR realized; sd per bootstrap (season, club,
+player), B 4,000:
+
+| Comparator, outcome | d | sd season / club / player | lo (worst) | hi (best) |
+|---|---|---|---|---|
+| F, wins (deciding) | -0.243 | 0.234 / 0.312 / 0.339 | -0.801 | 0.315 |
+| F, run differential (deciding) | -1.996 | 1.837 / 3.502 / 4.147 | -8.819 | 4.826 |
+| F, runs scored (reported) | -3.688 | 0.608 / 0.388 / 0.915 | -5.193 | -2.184 |
+| F, runs allowed (reported) | +10.652 | 2.401 / 4.121 / 3.646 | 3.874 | 17.431 |
+| B, wins (deciding) | -0.501 | 0.106 / 0.365 / 0.419 | -1.191 | 0.188 |
+| B, run differential (deciding) | -8.206 | 1.867 / 3.973 / 5.155 | -16.686 | 0.274 |
+| B, runs scored (reported) | +1.411 | 1.818 / 2.839 / 3.216 | -3.879 | 6.701 |
+| B, runs allowed (reported) | +16.083 | 2.357 / 4.386 / 3.665 | 8.869 | 23.297 |
+
+(lo is the smallest d - 1.645 sd over the three bootstraps, hi the largest d + 1.645 sd.) Against bWAR
+the season-clustered interval sits below zero on both deciding outcomes and the club- and
+player-clustered ones reach just above it, so the cell is UNRESOLVED, not LOSS, by part 7's rule.
+
+- **Permutation null:** E's d(F) -0.243 wins against the permutations' 95th percentile -0.620 (mean
+  -0.902), and -1.996 runs against -10.242 (mean -13.020): cleared on both. R2 placed on the pitchers
+  who earned it is far closer to the clubs' records than the same departures placed at random, yet
+  not closer than fWAR without them.
+- **Runs scored:** E's bat side equals fWAR's in this frame; its d against F (-3.688) is the runs-per-
+  win conversion alone (10.6261 against FanGraphs' 9.52 to 10.30): at fWAR's runs per win the cell is
+  exactly 0.
+- **Runs allowed:** E's pit side is closer to the clubs' runs allowed than fWAR's (+10.652) and
+  bWAR's (+16.083) under every bootstrap, as part 9 expected by construction (R2 prices runs allowed).
+  The gain does not carry to the totals (below).
+- **Reported, deciding nothing:** H equals F on wins exactly; its run-differential gap to F (-0.721)
+  is the conversion. Hx reads LOSS against F and against B under part 7's rule (wins d -0.191 and
+  -0.450; run differential -3.220 and -9.429): the xHEM+ part moves batting value away from the runs
+  clubs scored, which is not its claim (it is a predictive part) and changes nothing about EW3-51. E at
+  fWAR's runs per win: run differential d +2.744 against F and -3.466 against B, both UNRESOLVED.
+- **2020 alone** (30 club-seasons, points only): wins RMSE E 2.813, F 3.413, H 3.413, Hx 3.493, B
+  3.625; run differential E 21.099, F 24.423, H 25.109, Hx 28.032, B 31.761.
+
+**Where each source misses (part 8, descriptive).** Pearson r of the club-season residual with each
+factor (run differential residual; wins residual where named):
+
+| Source | park | defense | bullpen Leverage Index | sequencing (wins) | joint Rsq, run differential |
+|---|---|---|---|---|---|
+| E | +0.492 | -0.364 | -0.219 | +0.720 | 0.293 |
+| F | +0.092 | +0.451 | +0.088 | +0.651 | 0.297 |
+| B | -0.148 | +0.339 | +0.122 | +0.727 | 0.137 |
+| Hx | +0.270 | +0.355 | +0.024 | +0.597 | 0.332 |
+
+- Every source's wins misses are mostly sequencing (wins the run totals do not explain; r 0.65 to
+  0.73), which no WAR sum carries.
+- fWAR's and bWAR's run-differential misses sit with defense (r +0.451 and +0.339: clubs with a high
+  defensive efficiency outperform the sum), and almost not with park.
+- eWAR realized's run-differential misses sit with park (r +0.492) and with defense in the opposite
+  direction (r -0.364). Colorado is three of E's ten largest wins misses (2018 +14.3, 2024 +13.4,
+  2023 +12.5, all under-credited). On the sides, E's runs-allowed residual carries less park (r
+  +0.326) than fWAR's (+0.545) and bWAR's (+0.585) while its runs-scored side is fWAR's (+0.715 at
+  the same conversion), so the two sides of eWAR realized are not on the same park footing; the
+  defense sign flip says the pitching side's put-back of fielding runs (Fld + Frm, 11.3.3) and the
+  hitting side's fielding runs do not net out by club. This read measures where the sums part from
+  the records; it does not test R2's park factor or fielding put-back, and it records no defect.
+- Largest wins misses (residual, wins): E 2023 SDP -16.7, 2021 SEA +15.8, 2016 TEX +15.5; F 2021 SEA
+  +17.8, 2016 TEX +17.8, 2016 MIN -14.5; B 2021 SEA +16.4, 2025 CLE +15.9, 2018 BAL -13.8.
+
+**What this licenses.** NOT PASS: nothing is served, no owner question is raised (part 11), and no
+sentence comparing eWAR realized's team accounting with fWAR or bWAR may be written. The recorded
+cells are the baseline EWAR_PITCHING_BLEND reads (part 12).
