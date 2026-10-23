@@ -298,3 +298,89 @@ C     = F + D on the pit side, at FanGraphs' runs per win (league_constants)
     correlation was computed.
 
 ## 14. Results
+
+### 14.1 2026-10-22: the read, run once (lab at d711606d; local 2026-10-22 20:42, UTC 2026-10-23 00:42)
+
+`python -u tools/ewar_pitching_blend_lab.py --read`, stdout and stderr teed to the task's output
+directory; the record is `data/_labs/ewar_pitching_blend/record.json`. Inputs by sha256: the frozen
+vintage `02232201...`, the eWAR v3 preview `fc640b01...`, the Baseball-Reference copy pit `3279bfbd...`,
+`data/ewar_v3.json` `40ea0196...`; the runner record and corpus files per season are in the record.
+Every refusal of part 10 held: zero plays without a pitcher in every season; appearance outs equal to
+the vintage's league outs in every season; runs charged equal to runs scored (21,744, 22,582, 21,630,
+23,467, 22,010, 20,817, 22,432, 21,343, 21,614 for 2016 to 2019 and 2021 to 2025); every fold's role
+moments positive definite. 7,035 pitcher-seasons, all with both sources; 5,761 split rows; 1,307 pairs
+(218, 223, 218, 216, 215, 217 for 2017, 2018, 2021 to 2024). No exception; runtime 82 s.
+
+**VERDICT: UNRESOLVED (the design did not recover a planted blend).** The planted check read PLANTED
+FAIL: the truth world passed test (i) in 14 of 20 replicates (16 needed), the fake world in 0 of 20,
+and the fitted weights sat 0.112 from the oracle's in mean absolute difference (0.10 allowed). The
+identity check held (gap 0 on every replicate). Under part 7 the read cannot ADOPT. The points say the
+same thing on their own: the blend did not beat FanGraphs' FIP-based value, so the read would be NOT
+ADOPT with a passing planted check.
+
+**Test (i), next-season RA9* per inning** (pair-weighted within-season Spearman, B 4,000 per
+bootstrap, seed 20261023):
+
+| Series | rho | 2017 | 2018 | 2021 | 2022 | 2023 | 2024 |
+|---|---|---|---|---|---|---|---|
+| blend (forward weights) | 0.3072 | 0.239 | 0.307 | 0.342 | 0.378 | 0.208 | 0.370 |
+| F9, FanGraphs FIP-based | 0.3119 | 0.236 | 0.307 | 0.344 | 0.378 | 0.214 | 0.390 |
+| B9, Baseball-Reference runs-allowed | 0.1962 | 0.193 | 0.193 | 0.256 | 0.179 | 0.181 | 0.174 |
+| half and half (reported) | 0.2718 | 0.231 | 0.269 | 0.319 | 0.286 | 0.213 | 0.313 |
+| RA9* in Y (reported) | 0.2307 | 0.267 | 0.254 | 0.257 | 0.195 | 0.166 | 0.243 |
+
+| Comparator | Gap | sd player / club | lo (1.645 sd), player / club | p player / club |
+|---|---|---|---|---|
+| F9 (deciding) | -0.0046 | 0.0042 / 0.0044 | -0.0115 / -0.0119 | 0.866 / 0.852 |
+| B9 (deciding) | +0.1111 | 0.0218 / 0.0212 | +0.0753 / +0.0761 | below 0.0001 / below 0.0001 |
+| half and half (reported) | +0.0355 | 0.0129 / 0.0135 | +0.0143 / +0.0133 | 0.0030 / 0.0043 |
+| RA9* in Y (reported) | +0.0766 | 0.0206 / 0.0223 | +0.0426 / +0.0398 | 0.0001 / 0.0003 |
+
+p_i = 0.866: the blend beats Baseball-Reference's value by a wide margin and does not beat FanGraphs'.
+
+**Test (ii), the club runs-allowed accounting** (the team accounting yardstick, B 4,000 per bootstrap,
+seed 20261023): K* is F (runs-allowed RMSE 51.845 against B's 57.276); C's RMSE 51.217, d +0.628 runs;
+sd season 0.388, club 0.747, player 0.872; lo -0.011, -0.601, -0.807, all above -1.0: NON-INFERIOR,
+p_ii = 0.031. Holm over {0.866, 0.031} rejects neither (the smaller p is above 0.025). Reported,
+deciding nothing: C against F on run differential d +1.657 (lo above 0 under all three bootstraps),
+wins +0.033; C against B on runs allowed +6.059, run differential -4.553, wins -0.225. C's departure
+carries 782.451 absolute wins over 7,035 rows, zero per season after the re-pin and 0 unallocated. The
+yardstick's own planted check on C's departure pool recovered it in 2 of 20 replicates (fake 0 of 20).
+
+**The weights (the build's fit, 2016 to 2025; w at each cell's median IP):**
+
+| Role, IP band | Rows (split / season) | w at median IP | sigma2_F | sigma2_B | sigma_FB |
+|---|---|---|---|---|---|
+| SP 0-20 | 128 / 268 | 0.000 at 9.0 | 59.27 | 205.29 | 69.21 |
+| SP 20-40 | 274 / 274 | 1.000 at 29.7 | 49.73 | 145.34 | 57.99 |
+| SP 40-100 | 535 / 535 | 1.000 at 70.0 | 44.05 | 120.12 | 49.35 |
+| SP 100+ | 1,147 / 1,147 | 0.849 at 155.0 | 32.30 | 85.16 | 33.89 |
+| RP 0-20 | 773 / 1,907 | 0.000 at 8.0 | 42.43 | 133.57 | 48.41 |
+| RP 20-40 | 976 / 976 | 1.000 at 29.0 | 39.34 | 112.47 | 43.75 |
+| RP 40-100 | 1,878 / 1,878 | 1.000 at 59.5 | 29.67 | 80.39 | 28.77 |
+| RP 100+ | 50 / 50 | 0.000 at 109.3 | 42.17 | 81.70 | 40.88 |
+
+- Per inning, runs charged carry about 1.9 to 3.5 times FIP's error variance in every cell, and the two
+  errors are strongly correlated (sigma_FB near sigma2_F).
+- Between 20 and 100 IP the runs-allowed source adds no signal FanGraphs lacks: the signal
+  covariances give w = 1 in all four cells. Starters at 100 IP or more take w 0.82 to 0.89 (the folds:
+  0.74 in 2017, 0.91, 0.95, 0.88, 0.88 and 1.00 for 2018 to 2024). That is the only band where the
+  blend differs from F9 on the pairs, and the gap shows it did not help.
+- **A defect of the registered weight, disclosed and not repaired (the read ran once).** The two
+  bands below 20 IP read w = 0 (all runs allowed), the opposite of the expectation of part 9. Their
+  season rows include pitcher-seasons below 10 IP, which enter the signal covariance but not the
+  split rows, and whose per-inning error the model understates (runs cluster within an outing), so
+  part 4 reads their spread as signal (T_BB 169.4 and 51.0 runs squared per 9 squared, against 0.1 to
+  0.3 above 20 IP). RP 100+ (50 rows) reads w = 0 on a near-zero F signal estimate. None of these cells
+  touch test (i)'s pairs except RP 100+; they do carry C's departure on their rows in test (ii).
+- The reported 20 IP floor block read the same 1,307 pairs as test (i) (the lab drew it from pairs
+  already held to 50 IP), so it repeats test (i)'s points and adds nothing; disclosed, not rerun.
+
+**What this licenses.** NOT ADOPT, recorded as UNRESOLVED: nothing is built behind
+`ewar_v3.PITCH_BLEND_LIVE`, nothing is served, no owner question is raised (part 12), and no sentence
+comparing the blend with fWAR or bWAR may be written. eWAR keeps FanGraphs' pitching runs in the
+headline and R2 in eWAR realized. What the read measured, for any later pitching arm: on pitchers with
+50 IP in both seasons FanGraphs' FIP-based value ranks next-season runs allowed better than
+Baseball-Reference's runs-allowed value (rho 0.312 against 0.196) and better than any blend this
+design produced; a measurement-error blend registered after this one needs an error model that holds
+below 20 IP before its weights can be read there.
