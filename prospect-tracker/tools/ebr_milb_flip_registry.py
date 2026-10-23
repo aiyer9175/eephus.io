@@ -37,19 +37,51 @@ def _read_eval(root: Path) -> dict:
     return json.loads((root / "data" / "ebr_milb_eval.json").read_text(encoding="utf-8"))
 
 
+LEVELS = (("aaa", "AAA"), ("aa", "AA"), ("high_a", "High-A"), ("single_a", "Single-A"), ("rookie", "Rookie"))
+
+
+def _seasons_text(seasons) -> str:
+    """2021, 2022, 2023, 2026 -> '2021 to 2023 and 2026'."""
+    runs, cur = [], []
+    for s in sorted(seasons):
+        if cur and s == cur[-1] + 1:
+            cur.append(s)
+        else:
+            if cur:
+                runs.append(cur)
+            cur = [s]
+    if cur:
+        runs.append(cur)
+    parts = [(f"{r[0]} to {r[-1]}" if len(r) > 2 else ", ".join(str(x) for x in r)) for r in runs]
+    return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+
+
+def on_file_text(keys) -> str:
+    """'AAA 2021 to 2023 and 2026; ...' for the served level-seasons."""
+    by: dict = {}
+    for k in keys:
+        lv, s = k.split("|")
+        by.setdefault(lv, []).append(int(s))
+    return "; ".join(f"{lab} {_seasons_text(by[lv])}" for lv, lab in LEVELS if lv in by)
+
+
 def figures(ev: dict) -> dict:
-    rel = {k: v.get("spearman_brown") for k, v in ev["reliability_split_half"].items()}
+    """The printed figures, over the SERVED level-seasons (every identity gate passing);
+    a level-season that misses a gate is withheld from the cards and named."""
+    served = {k for k, v in ev["identity"].items() if v["all_pass"]}
+    rel = {k: v.get("spearman_brown") for k, v in ev["reliability_split_half"].items() if k in served}
     upper = [v for k, v in rel.items() if not k.startswith("rookie") and v is not None]
     rookie = [v for k, v in rel.items() if k.startswith("rookie") and v is not None]
-    ident = ev["identity"]
+    ident = {k: v for k, v in ev["identity"].items() if k in served}
     sb_rel = max(v["I1"]["sb_rel_diff"] for v in ident.values())
     cs_rel = max(v["I1"]["cs_rel_diff"] for v in ident.values())
     share = min(v["I2"]["sb_cs_exact_share"] for v in ident.values())
     gshare = min(v["I2"]["gidp_exact_share"] for v in ident.values())
     exact = sorted(k for k, v in ident.items() if v["I1"]["exact"])
-    units = ev["units"]
+    units = {k: v for k, v in ev["units"].items() if k in served}
     return {
-        "n_units": len(units),
+        "n_units": len(units), "on_file": on_file_text(units),
+        "withheld": sorted(set(ev["identity"]) - served),
         "upper": (min(upper), max(upper)), "rookie": (min(rookie), max(rookie)),
         "sb_rel_pct": round(100 * max(sb_rel, cs_rel), 3), "player_share_pct": round(100 * share, 2),
         "gidp_share_pct": round(100 * gshare, 2), "exact_units": exact,
@@ -57,6 +89,14 @@ def figures(ev: dict) -> dict:
         "players_150": sum(u["players_150"] for u in units.values()),
         "all_pass": all(v["all_pass"] for v in ident.values()),
     }
+
+
+def _withheld_text(f: dict) -> str:
+    if not f["withheld"]:
+        return ""
+    names = ", ".join(k.replace("|", " ") for k in f["withheld"])
+    return (f" Withheld from the cards because it misses an identity gate (reported in the eval artifact): "
+            f"{names}.")
 
 
 def glossary_entry(f: dict) -> dict:
@@ -71,20 +111,20 @@ def glossary_entry(f: dict) -> dict:
                        "out of double plays, counted from minor-league play-by-play. Shown on PROSPX prospect pages "
                        "for each level and season at 150 or more plate appearances. Descriptive: what happened, "
                        "not a forecast, and never part of a grade, rank or projection."),
-        "methodology": ("The same five parts as eBR (steals, pickoffs, advancement and outs on the bases, double "
-                        "plays), priced on a run-expectancy table fitted to that level and season and shrunk toward "
-                        "the level's pooled table (or toward all of the minors that season where a level has one "
-                        "season of play-by-play on file), with every part centred to zero within the level and "
-                        "season. A runner is compared with the average runner of his own league-season, so the "
-                        "minors' rule changes (pickoff limits, bigger bases, the pitch clock) are absorbed, and the "
-                        "number is not comparable across levels or with MLB's eBR in runs. Advances on wild pitches "
-                        "and passed balls are counted beside it and are not in it. Each level-season is checked "
-                        "against the official season lines: league stolen bases and caught stealing within "
+        "methodology": ("The same five parts as eBR: steals, pickoffs, advancement and outs on the bases, double "
+                        "plays. Each is priced on a run-expectancy table fitted to that level and season and shrunk "
+                        "toward the level's pooled table (toward all of the minors that season where a level has one "
+                        "season of play-by-play on file). Every part is centred to zero within the level and season. "
+                        "A runner is compared with the average runner of his own league-season, so the minors' rule "
+                        "changes (pickoff limits, bigger bases, the pitch clock) are absorbed, and the number is not "
+                        "comparable across levels or with MLB's eBR in runs. Advances on wild pitches and passed balls "
+                        "are counted beside it and are not in it. Each level-season is checked against the official "
+                        "season lines: league stolen bases and caught stealing within "
                         f"{f['sb_rel_pct']} percent and exact for {f['player_share_pct']} percent or more of the "
                         "players who have any. One season is a noisy reading: the split-half reliability of runs at "
                         f"150 plate appearances is {f['upper'][0]:.2f} to {f['upper'][1]:.2f} at AAA through "
                         f"Single-A and {f['rookie'][0]:.2f} to {f['rookie'][1]:.2f} at Rookie, and prints in each "
-                        "row's tooltip. On file: Single-A and Rookie 2023 to 2026, AAA, AA and High-A 2026."),
+                        "row's tooltip. On file: " + f["on_file"] + "."),
         "formula": "level-relative eBR = SB runs + XB runs + DP runs, each centred to zero over every runner of the level and season",
         "seeAlso": ["ebr", "ebr_sb", "ebr_xb", "ebr_dp", "milb_fielding_runs"],
         "shelf": "ark", "origin": ORIGIN,
@@ -117,7 +157,8 @@ def registry_row(f: dict) -> dict:
         "notes": ("Built dark by EBR_Q6B_MILB_CARDS and served in one flip commit (owner answer EBR-Q6 (b), "
                   "2026-10-01: show it on prospect cards, per level and season at 150 or more plate appearances, "
                   f"display only). {f['n_units']} level-seasons, {f['players_150']} player-seasons at 150 or more "
-                  f"plate appearances, every level-season passing I1 to I9 ({'yes' if f['all_pass'] else 'NO'}). "
+                  f"plate appearances, every served level-season passing I1 to I9 ({'yes' if f['all_pass'] else 'NO'})."
+                  + _withheld_text(f) + " "
                   "The minor-league bounds are looser than MLB's exact match because a few official steals are "
                   "scorer decisions the feed's runner entries do not carry; league SB and CS are exact in "
                   f"{len(f['exact_units'])} of {f['n_units']} level-seasons. Reliability is low at Rookie and "

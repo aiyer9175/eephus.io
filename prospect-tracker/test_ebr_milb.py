@@ -404,11 +404,21 @@ def test_every_served_row_is_a_passing_level_season_at_150_pa_or_more():
 
 
 def test_the_served_eval_passes_every_gate_and_keeps_the_stated_bounds():
-    _, ev = _served()
-    assert len(ev["identity"]) == 11 and set(ev["units"]) == set(ev["identity"])
+    p, ev = _served()
+    # 11 level-seasons from .cache/game_feeds plus the 13 history units (2021 and 2022 at every
+    # level, 2023 at High-A to Triple-A; owner answer ETOOLS-SPD-EBR, 2026-10-21)
+    assert len(ev["identity"]) == 24 and set(ev["units"]) == set(ev["identity"])
     b = ev["bounds"]
     assert b["league_sb_cs_rel_diff_max"] == B.LEAGUE_TOL and b["display_pa"] == 150
+    # a level-season that misses a gate is reported in the eval and withheld from the cards:
+    # AA 2021 (league GIDP 0.54 percent off the official line, against 0.5)
+    withheld = sorted(k for k, blk in ev["identity"].items() if not blk["all_pass"])
+    assert withheld == ["aa|2021"] and not ev["identity"]["aa|2021"]["I1"]["pass"]
+    assert set(p["units"]) == set(ev["identity"]) - set(withheld)
+    assert not any(r[0] == "aa" and r[1] == 2021 for rows in p["by_mlbam"].values() for r in rows)
     for key, blk in ev["identity"].items():
+        if key in withheld:
+            continue
         assert blk["all_pass"] is True, key
         assert blk["I1"]["sb_rel_diff"] <= B.LEAGUE_TOL and blk["I1"]["cs_rel_diff"] <= B.LEAGUE_TOL
         assert blk["I2"]["sb_cs_exact_share"] >= B.PLAYER_SB_CS_SHARE

@@ -383,7 +383,7 @@ follows by its registered pool (every player in `data/etools.json`): 1,116 hitte
 pool's ePOW mean falls from 47.25 to 46.49, so 755 of the 829 existing hitters' eTools+ rise by 1
 or 2. Stale-graded pitchers keep the consensus fastball and command grades.
 
-## MiLB eBR as an eSPD sub-driver (amendment 5, registered 3cc6a8e6, not computable, not spent)
+## MiLB eBR as an eSPD sub-driver (amendment 5, registered 3cc6a8e6, read once 2026-10-22: NOT PASS; UNDERPOWERED)
 
 Owner decision EBR-Q6R (2026-10-21, "Test via eSPD"): does level-relative MiLB baserunning
 (steals, caught stealing and pickoffs, advancement on hits and outs, outs on base) sharpen the speed
@@ -394,3 +394,11 @@ candidate rows carry 3 MLB sprint-speed labels and 17 upper-minors labels (each 
 players over 3 board years). **NOT COMPUTABLE**; the read is not spent and runs unchanged when the
 record covers 2021 to 2023 at every level. Speed keeps the consensus grade; nothing served moves.
 The dated note is in the amendment's section 9.
+
+**2026-10-22, the read (spent).** After the owner's backfill (ETOOLS-SPD-EBR: 2021 and 2022 at every level,
+2023 at High-A to Triple-A), the same command ran once on board years 2022 to 2024: 347 rows (226 players) on
+MLB sprint speed and 724 (479) on the upper-minors label. Adding MiLB eBR to eSPD: d -0.0058 (LB -0.0133) over
+the current eSPD on sprint speed, +0.0106 (LB -0.0048) over consensus on sprint speed, +0.0631 (LB +0.0508)
+over consensus on the upper-minors label. The null comparator does not pass and the planted signal is not
+recovered, so the verdict is **NOT PASS; UNDERPOWERED**: speed keeps the consensus grade and nothing served
+moves. Details in the amendment's section 9 and `data/_labs/etools/etools_spd_ebr_reads.json`.
