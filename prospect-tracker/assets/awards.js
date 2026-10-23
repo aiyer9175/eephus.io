@@ -523,7 +523,10 @@
       var realV = r.realized_display != null ? r.realized_display : (dr ? dr.realized_now_display : null);
       if (realV != null && A !== "MOY") {
         h += '<span class="aw-drift aw-real" title="' + esc(REAL_TIP) + '">' + (r.realized_display != null ? "" : "Now, ")
-          + "eWAR realized " + esc(fmt(realV, d)) + "</span>";
+          + "eWAR realized " + esc(fmt(realV, d))
+          // the eWAR uncertainty band (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md), only when carried
+          + (r.realized_display != null && r.realized_pm_display != null ? " &plusmn;" + esc(fmt(r.realized_pm_display, d)) : "")
+          + "</span>";
       }
       h += '</div><span class="aw-val" aria-hidden="true"><span class="aw-num ' + ink(v, fam) + '">' + esc(val) +
         '</span> <span class="aw-unit">' + esc(rule.unit) + "</span></span>" + lamps(z, L, g, i, v, fill, zero, width) + "</li>";

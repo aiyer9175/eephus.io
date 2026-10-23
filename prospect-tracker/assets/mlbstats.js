@@ -7332,6 +7332,9 @@
   // claim about the other.
   // ---------------------------------------------------------------------------
   var WAR_URL = "/data/war_leaderboards.json";
+  var EWAR_BAND_TIP = "The band: on seasons held out from its constants, the other published WAR"
+    + " (Baseball-Reference) or the other half of the same season, rescaled, landed within this many wins"
+    + " of eWAR 70 to 90 percent of the time in every playing-time band. It is not a range for talent.";
   var warData = null, warErr = false, warInit = false;
   var warLoading = false;                          // the board payload is in flight
   var warView = "players";                         // players | teams
@@ -7367,7 +7370,12 @@
       title: "Age in the season shown; on a window, in the last season with a line." },
     { key: "war", label: "eWAR", term: "ewar", num: true, ewar: true,
       title: "Batting plus pitching eWAR this season, summed before rounding.",
-      cell: function (r) { return r.war == null ? EM_DASH : "<b>" + f1(r.war) + "</b>"; } },
+      cell: function (r) {
+        if (r.war == null) return EM_DASH;
+        // The eWAR uncertainty band (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md), only when carried.
+        return "<b>" + f1(r.war) + "</b>" + (r.war_pm != null ? ' <span class="ewar-pm" title="' + esc(EWAR_BAND_TIP)
+          + '">&plusmn;' + Number(r.war_pm).toFixed(1) + "</span>" : "");
+      } },
     { key: "war_bat", label: "Bat", fmt: f1, num: true,
       title: "Position-player side: batting, baserunning, fielding, position." },
     { key: "war_pit", label: "Pitch", fmt: f1, num: true, title: "Pitching side." },

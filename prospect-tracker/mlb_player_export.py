@@ -305,6 +305,21 @@ def _career_rows(mlbam: int, is_pitcher: bool,
             _v = (((_map.get(mlbam) or {}).get(season) or {}).get("pit" if is_pitcher else "bat"))
             if _v is not None:
                 extra[_key] = round(_v, 1)
+        # war_pm and war_real_pm: the eWAR uncertainty band's 80 percent half-width
+        # on this row's side (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md), carried
+        # only while ewar_band.BAND_LIVE is on and the displayed eWAR is eWAR v3.
+        # Display only: never a sort key, sum or model input.
+        if war is not None and (war_ref_by or {}).get("real"):
+            import ewar_band
+            _ex = {"ip": r.get("ip")} if is_pitcher else {"pa": r.get("pa")}
+            _h = ewar_band.pm(ewar_band.half_width(season=season, mlbam=mlbam, **_ex))
+            if _h is not None:
+                extra["war_pm"] = _h
+                if "war_real" in extra:
+                    _hr = ewar_band.pm(ewar_band.half_width(season=season, mlbam=mlbam,
+                                                            series="realized", **_ex))
+                    if _hr is not None:
+                        extra["war_real_pm"] = _hr
         # war_parts: eWAR v3's named parts on this row's side, in wins, so the
         # card can name each part with its delta (owner answer SWAR-Q4; the
         # card labels of EBR_GATE.md 11.10.2 and 11.10.3). Absent when no part

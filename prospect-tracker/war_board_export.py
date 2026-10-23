@@ -574,6 +574,16 @@ def build(season: int, *, log=print) -> dict:
             row["war_bat"] = _blank_free(bat)
         if pit is not None:
             row["war_pit"] = _blank_free(pit)
+        # war_pm: the eWAR uncertainty band's 80 percent half-width on the whole
+        # player (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md), carried only while
+        # ewar_band.BAND_LIVE is on and the board shows eWAR. Display only.
+        if _display_is_ewar():
+            import ewar_band
+            _h = ewar_band.pm(ewar_band.half_width(
+                season=int(season), mlbam=int(mid),
+                pa=pa if bat is not None else None, ip=ip if pit is not None else None))
+            if _h is not None:
+                row["war_pm"] = _h
         if pa is not None:
             row["pa"] = int(pa)
         if ip is not None:

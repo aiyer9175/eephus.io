@@ -57,6 +57,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import ewar_band as _ewar_band_mod
 import ewar_v3 as _ewar_v3_mod
 
 ROOT = Path(__file__).resolve().parent
@@ -404,6 +405,20 @@ ARTIFACTS = (
         "pinned_by": "test_ewar_v3.py",
         "note": "Every part sums to zero per season and side; descriptive, no forward claim.",
     },
+    # the eWAR uncertainty band's constants, catalogued only once the band is served
+    # (docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md; owner question EWUB-Q1)
+    *([{
+        "file": "ewar_band.json", "group": "mlb",
+        "title": "eWAR band",
+        "what": ("The constants behind the +/- printed beside eWAR and eWAR realized: per-PA and "
+                 "per-inning noise of batting, baserunning and pitching runs from split season "
+                 "halves, the per-PA and per-inning disagreement of FanGraphs and "
+                 "Baseball-Reference WAR, and a rescaling per playing-time band, with the "
+                 "held-out coverage of each check."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_ewar_band.py",
+        "note": "Same-season spread only; not a range for talent and no forward claim.",
+    }] if _ewar_band_mod.BAND_LIVE else []),
     {
         "file": "swar_eval.json", "group": "mlb",
         "title": "eWAR skill-part evaluation",
