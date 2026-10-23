@@ -1,0 +1,811 @@
+{
+ "admission": {
+  "next": "not admitted: eWAR carries no pitch-economy term (EBR_GATE.md 11.4.5)",
+  "passes": false,
+  "reason": "PE-H rate SMALL WIN (club lo95 +0.0048), PE-H total SMALL WIN, sensitivity not LOSS True, team guard NON-INFERIOR",
+  "served": false
+ },
+ "boot": 4000,
+ "cells": {
+  "PE-H rate": {
+   "b0r": {
+    "gap_over_b0r": 0.009664,
+    "n_pairs": 3488,
+    "rho_b0r": 0.479021,
+    "weight": "none (11.2.1)"
+   },
+   "b1_hi95": 0.00994,
+   "b1_k": 427.0,
+   "b1_lo95": 0.00016,
+   "cell": "PE-H rate",
+   "counts_as": "EQUIVALENT",
+   "disposition": "SMALL WIN",
+   "equivalent_reachable": true,
+   "floors": {
+    "half_width95": 0.003765,
+    "mde95": 0.00319,
+    "n_draws": 4000,
+    "sd": 0.001939
+   },
+   "gap": 0.00884,
+   "gap_b1": 0.00512,
+   "hi90": 0.01199,
+   "hi95": 0.01252,
+   "holm_family": [
+    "PE-H rate",
+    "PE-H total"
+   ],
+   "holm_reject": true,
+   "kind": "rate",
+   "lo90": 0.00559,
+   "lo95": 0.00499,
+   "n_pairs": 3488,
+   "n_pairs_by_system": {
+    "pe_h": 3488
+   },
+   "n_players": 810,
+   "n_rows": 3488,
+   "p_one_sided": 0.00025,
+   "part": "pe_h",
+   "pearson_gap_v2": 0.00771,
+   "per_system": {
+    "pe_h": {
+     "gap": 0.008844,
+     "n_pairs": 3488,
+     "rho_b0": 0.479841,
+     "rho_test": 0.488685
+    }
+   },
+   "rho_b0": 0.47984,
+   "rho_b1": 0.48357,
+   "rho_test": 0.48868,
+   "rho_twin": 0.47857,
+   "series": [
+    "peh"
+   ],
+   "ship_flag_no_weight": null,
+   "systems": [
+    "pe_h"
+   ],
+   "twin_gap": -0.00127,
+   "twin_hi95": 0.00217,
+   "twin_lo95": -0.00501,
+   "v1_gap": 0.00892,
+   "v1_hi95": 0.01245,
+   "v1_lo95": 0.00546,
+   "v1_sign_agrees": true
+  },
+  "PE-H total": {
+   "b0r": {
+    "gap_over_b0r": 0.009603,
+    "n_pairs": 3488,
+    "rho_b0r": 0.484927,
+    "weight": "none (11.2.1)"
+   },
+   "b1_hi95": 0.01507,
+   "b1_k": 427.0,
+   "b1_lo95": 0.00522,
+   "cell": "PE-H total",
+   "counts_as": "EQUIVALENT",
+   "disposition": "SMALL WIN",
+   "equivalent_reachable": true,
+   "floors": {
+    "half_width95": 0.004003,
+    "mde95": 0.003404,
+    "n_draws": 4000,
+    "sd": 0.002069
+   },
+   "gap": 0.00862,
+   "gap_b1": 0.01018,
+   "hi90": 0.01199,
+   "hi95": 0.01262,
+   "holm_family": [
+    "PE-H rate",
+    "PE-H total"
+   ],
+   "holm_reject": true,
+   "kind": "cum",
+   "lo90": 0.00526,
+   "lo95": 0.00461,
+   "n_pairs": 3488,
+   "n_pairs_by_system": {
+    "pe_h": 3488
+   },
+   "n_players": 810,
+   "n_rows": 3488,
+   "p_one_sided": 0.00025,
+   "part": "pe_h",
+   "pearson_gap_v2": 0.00441,
+   "per_system": {
+    "pe_h": {
+     "gap": 0.008622,
+     "n_pairs": 3488,
+     "rho_b0": 0.485907,
+     "rho_test": 0.49453
+    }
+   },
+   "rho_b0": 0.48591,
+   "rho_b1": 0.48435,
+   "rho_test": 0.49453,
+   "rho_twin": 0.48559,
+   "series": [
+    "peh"
+   ],
+   "ship_flag_no_weight": null,
+   "systems": [
+    "pe_h"
+   ],
+   "twin_gap": -0.00032,
+   "twin_hi95": 0.00384,
+   "twin_lo95": -0.00426,
+   "v1_gap": 0.00886,
+   "v1_hi95": 0.01272,
+   "v1_lo95": 0.00518,
+   "v1_sign_agrees": true
+  }
+ },
+ "census": {
+  "franchises": 30,
+  "pairs": 3488,
+  "pairs_by_predictor_season": {
+   "2002": 266,
+   "2003": 273,
+   "2004": 266,
+   "2005": 268,
+   "2006": 268,
+   "2007": 263,
+   "2008": 270,
+   "2009": 269,
+   "2010": 270,
+   "2011": 263,
+   "2012": 265,
+   "2013": 275,
+   "2014": 272
+  },
+  "players": 810
+ },
+ "cited_not_rescored": {
+  "holdout_2026_10_21": {
+   "admitted": false,
+   "frame": "predictor season 2025",
+   "guard": "NON-INFERIOR",
+   "pairs": 263,
+   "rate": "EQUIVALENT, gap +0.00216 (-0.01311 to +0.01624)",
+   "total": "EQUIVALENT, gap -0.00226 (-0.01899 to +0.01375)"
+  },
+  "look_2026_10_19": {
+   "admitted": false,
+   "frame": "predictor seasons 2021 to 2024",
+   "guard": "NON-INFERIOR",
+   "pairs": 1071,
+   "rate": "SMALL WIN, gap +0.01304 (+0.00604 to +0.02029)",
+   "total": "SMALL WIN, gap +0.01341 (+0.00659 to +0.02069)"
+  }
+ },
+ "club_clustered": {
+  "PE-H rate": {
+   "half_width95": 0.003983,
+   "hi95": 0.012744,
+   "lo95": 0.004777,
+   "mde95": 0.003364,
+   "n_franchises": 30,
+   "sd": 0.002045
+  },
+  "PE-H total": {
+   "half_width95": 0.004163,
+   "hi95": 0.01267,
+   "lo95": 0.004344,
+   "mde95": 0.003548,
+   "n_franchises": 30,
+   "sd": 0.002157
+  }
+ },
+ "controls": {
+  "null": {
+   "PE-H rate": {
+    "b1_lo95": -0.00696,
+    "disposition": "EQUIVALENT",
+    "gap": 0.0,
+    "lo95": 0.0,
+    "twin_lo95": 0.0
+   },
+   "PE-H total": {
+    "b1_lo95": -0.00122,
+    "disposition": "EQUIVALENT",
+    "gap": 0.0,
+    "lo95": 0.0,
+    "twin_lo95": 0.0
+   }
+  },
+  "null_passes": true,
+  "planted": {
+   "PE-H rate": {
+    "b1_lo95": 0.24517,
+    "disposition": "WIN (components)",
+    "gap": 0.26663,
+    "lo95": 0.24901,
+    "twin_lo95": -0.05809
+   },
+   "PE-H total": {
+    "b1_lo95": 0.23734,
+    "disposition": "WIN (components)",
+    "gap": 0.25394,
+    "lo95": 0.23574,
+    "twin_lo95": -0.04595
+   }
+  },
+  "planted_passes": true
+ },
+ "finished_at": "2026-10-23T12:07:42+00:00",
+ "floors": {
+  "PE-H rate": {
+   "half_width95": 0.003765,
+   "mde95": 0.00319,
+   "n_draws": 4000,
+   "n_pairs": 3488,
+   "sd": 0.001939
+  },
+  "PE-H total": {
+   "half_width95": 0.004003,
+   "mde95": 0.003404,
+   "n_draws": 4000,
+   "n_pairs": 3488,
+   "sd": 0.002069
+  }
+ },
+ "gate": "docs/ewar-v3/EWAR_PEH_OLD_SEASONS_GATE.md",
+ "input_meta": {
+  "bwar_cache_sha256": {
+   "bat": "e9571c428cb4db444e4b8214bb9adc5834925529e7d10db4271993f79fc3fd55",
+   "pit": "3279bfbdc5bcf0ee5e6f6dd0609f6252366871fa9b257b2fd92ddc984fd93cb6"
+  },
+  "count_value_sha256": "758d99141b5de4b54608afbddc355920c785b281061fda3e175f0db423152f71",
+  "frozen_constants": {
+   "B1_k_peh": 427.0,
+   "B1_k_secondary": 662.0,
+   "DELTA_TTO": 0.01848,
+   "K_CL": 236.41,
+   "K_P": 110.95
+  },
+  "league_constants_sha256": "c83180e6f1477a975dc3fef07631128865a8e2f17b78629948ccf1e592b8a191",
+  "season_tables_sha256": "e3c5b794e53b791681dff8cbbe0c04657d2a8339a7ba0e3219f8987f526337ca",
+  "vintage_id": "2026-10-02-a020cf64844a",
+  "vintage_sha256": "02232201dc3242c605829707389044efc4a34a84f5209dd972dac90a61b31ba0"
+ },
+ "lab": "peh_old_seasons_lab/1",
+ "predictor_seasons": [
+  2002,
+  2003,
+  2004,
+  2005,
+  2006,
+  2007,
+  2008,
+  2009,
+  2010,
+  2011,
+  2012,
+  2013,
+  2014
+ ],
+ "season_receipts": {
+  "2002": {
+   "admitted": true,
+   "game_coverage": 0.999588,
+   "hitters": 1101,
+   "no_pitch": 1,
+   "pa_walked": 186540,
+   "pitch_coverage": 0.999581,
+   "pitchers": 609,
+   "re288_identity_share": 1.0,
+   "rpw": 9.9913,
+   "season": 2002,
+   "split_pitch_share": 1.0,
+   "w": -0.006528,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2003": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1134,
+   "no_pitch": 2,
+   "pa_walked": 187451,
+   "pitch_coverage": 1.0,
+   "pitchers": 612,
+   "re288_identity_share": 1.0,
+   "rpw": 10.1582,
+   "season": 2003,
+   "split_pitch_share": 1.0,
+   "w": -0.006122,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2004": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1136,
+   "no_pitch": 1,
+   "pa_walked": 188540,
+   "pitch_coverage": 1.0,
+   "pitchers": 632,
+   "re288_identity_share": 1.0,
+   "rpw": 10.2723,
+   "season": 2004,
+   "split_pitch_share": 1.0,
+   "w": -0.006563,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2005": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1141,
+   "no_pitch": 2,
+   "pa_walked": 186294,
+   "pitch_coverage": 1.0,
+   "pitchers": 606,
+   "re288_identity_share": 1.0,
+   "rpw": 9.9713,
+   "season": 2005,
+   "split_pitch_share": 1.0,
+   "w": -0.005656,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2006": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1134,
+   "no_pitch": 0,
+   "pa_walked": 188071,
+   "pitch_coverage": 1.0,
+   "pitchers": 635,
+   "re288_identity_share": 1.0,
+   "rpw": 10.3648,
+   "season": 2006,
+   "split_pitch_share": 1.0,
+   "w": -0.006467,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2007": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1173,
+   "no_pitch": 0,
+   "pa_walked": 188623,
+   "pitch_coverage": 1.0,
+   "pitchers": 666,
+   "re288_identity_share": 1.0,
+   "rpw": 10.2503,
+   "season": 2007,
+   "split_pitch_share": 1.0,
+   "w": -0.006941,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2008": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1188,
+   "no_pitch": 0,
+   "pa_walked": 187631,
+   "pitch_coverage": 1.0,
+   "pitchers": 651,
+   "re288_identity_share": 1.0,
+   "rpw": 10.0321,
+   "season": 2008,
+   "split_pitch_share": 1.0,
+   "w": -0.005831,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2009": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1156,
+   "no_pitch": 2,
+   "pa_walked": 187081,
+   "pitch_coverage": 1.0,
+   "pitchers": 664,
+   "re288_identity_share": 1.0,
+   "rpw": 9.9943,
+   "season": 2009,
+   "split_pitch_share": 1.0,
+   "w": -0.005719,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2010": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1157,
+   "no_pitch": 0,
+   "pa_walked": 185553,
+   "pitch_coverage": 1.000001,
+   "pitchers": 635,
+   "re288_identity_share": 1.0,
+   "rpw": 9.6426,
+   "season": 2010,
+   "split_pitch_share": 1.0,
+   "w": -0.005815,
+   "weights_source": "solved from the frozen vintage's woba and wRaa (league_constants.solve_season)",
+   "zero_sum_abs": 0.0
+  },
+  "2011": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1173,
+   "no_pitch": 1,
+   "pa_walked": 185246,
+   "pitch_coverage": 1.0,
+   "pitchers": 662,
+   "re288_identity_share": 1.0,
+   "rpw": 9.4536,
+   "season": 2011,
+   "split_pitch_share": 1.0,
+   "w": -0.006121,
+   "weights_source": "data/league_constants.json",
+   "zero_sum_abs": 0.0
+  },
+  "2012": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1185,
+   "no_pitch": 1,
+   "pa_walked": 184180,
+   "pitch_coverage": 1.0,
+   "pitchers": 662,
+   "re288_identity_share": 1.0,
+   "rpw": 9.5443,
+   "season": 2012,
+   "split_pitch_share": 1.0,
+   "w": -0.007308,
+   "weights_source": "data/league_constants.json",
+   "zero_sum_abs": 0.0
+  },
+  "2013": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1202,
+   "no_pitch": 0,
+   "pa_walked": 184873,
+   "pitch_coverage": 1.0,
+   "pitchers": 679,
+   "re288_identity_share": 1.0,
+   "rpw": 9.264,
+   "season": 2013,
+   "split_pitch_share": 1.0,
+   "w": -0.006805,
+   "weights_source": "data/league_constants.json",
+   "zero_sum_abs": 0.0
+  },
+  "2014": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1212,
+   "no_pitch": 1,
+   "pa_walked": 183930,
+   "pitch_coverage": 1.0,
+   "pitchers": 692,
+   "re288_identity_share": 1.0,
+   "rpw": 9.1167,
+   "season": 2014,
+   "split_pitch_share": 1.0,
+   "w": -0.006465,
+   "weights_source": "data/league_constants.json",
+   "zero_sum_abs": 0.0
+  },
+  "2015": {
+   "admitted": true,
+   "game_coverage": 1.0,
+   "hitters": 1252,
+   "no_pitch": 0,
+   "pa_walked": 183628,
+   "pitch_coverage": 1.0,
+   "pitchers": 735,
+   "re288_identity_share": 1.0,
+   "rpw": 9.4213,
+   "season": 2015,
+   "split_pitch_share": 1.0,
+   "w": -0.006192,
+   "weights_source": "data/league_constants.json",
+   "zero_sum_abs": 0.0
+  }
+ },
+ "seasons": [
+  2002,
+  2003,
+  2004,
+  2005,
+  2006,
+  2007,
+  2008,
+  2009,
+  2010,
+  2011,
+  2012,
+  2013,
+  2014
+ ],
+ "secondary": {
+  "PE-H rate": {
+   "b0r": null,
+   "b1_hi95": 0.00203,
+   "b1_k": 662.0,
+   "b1_lo95": -0.00869,
+   "cell": "PE-H rate",
+   "counts_as": "EQUIVALENT",
+   "disposition": "EQUIVALENT",
+   "equivalent_reachable": true,
+   "floors": {
+    "half_width95": 0.00372,
+    "mde95": 0.003123,
+    "n_draws": 4000,
+    "sd": 0.001899
+   },
+   "gap": 0.00303,
+   "gap_b1": -0.00332,
+   "hi90": 0.00616,
+   "hi95": 0.00673,
+   "holm_family": [
+    "PE-H rate",
+    "PE-H total"
+   ],
+   "holm_reject": false,
+   "kind": "rate",
+   "lo90": -8e-05,
+   "lo95": -0.00071,
+   "n_pairs": 3488,
+   "n_pairs_by_system": {
+    "pe_h": 3488
+   },
+   "n_players": 810,
+   "n_rows": 3488,
+   "p_one_sided": 0.05549,
+   "part": "pe_h",
+   "pearson_gap_v2": 0.00298,
+   "per_system": {
+    "pe_h": {
+     "gap": 0.003034,
+     "n_pairs": 3488,
+     "rho_b0": 0.403019,
+     "rho_test": 0.406053
+    }
+   },
+   "rho_b0": 0.40302,
+   "rho_b1": 0.40938,
+   "rho_test": 0.40605,
+   "rho_twin": 0.4017,
+   "series": [
+    "peh"
+   ],
+   "ship_flag_no_weight": null,
+   "systems": [
+    "pe_h"
+   ],
+   "twin_gap": -0.00132,
+   "twin_hi95": 0.002,
+   "twin_lo95": -0.00485,
+   "v1_gap": 0.00304,
+   "v1_hi95": 0.00648,
+   "v1_lo95": -0.00035,
+   "v1_sign_agrees": true
+  },
+  "PE-H total": {
+   "b0r": null,
+   "b1_hi95": 0.02061,
+   "b1_k": 662.0,
+   "b1_lo95": 0.00092,
+   "cell": "PE-H total",
+   "counts_as": "EQUIVALENT",
+   "disposition": "EQUIVALENT",
+   "equivalent_reachable": true,
+   "floors": {
+    "half_width95": 0.003446,
+    "mde95": 0.002851,
+    "n_draws": 4000,
+    "sd": 0.001733
+   },
+   "gap": 0.00138,
+   "gap_b1": 0.0108,
+   "hi90": 0.00422,
+   "hi95": 0.00478,
+   "holm_family": [
+    "PE-H rate",
+    "PE-H total"
+   ],
+   "holm_reject": false,
+   "kind": "cum",
+   "lo90": -0.00146,
+   "lo95": -0.00212,
+   "n_pairs": 3488,
+   "n_pairs_by_system": {
+    "pe_h": 3488
+   },
+   "n_players": 810,
+   "n_rows": 3488,
+   "p_one_sided": 0.2187,
+   "part": "pe_h",
+   "pearson_gap_v2": 0.00049,
+   "per_system": {
+    "pe_h": {
+     "gap": 0.001381,
+     "n_pairs": 3488,
+     "rho_b0": 0.460139,
+     "rho_test": 0.46152
+    }
+   },
+   "rho_b0": 0.46014,
+   "rho_b1": 0.45072,
+   "rho_test": 0.46152,
+   "rho_twin": 0.45874,
+   "series": [
+    "peh"
+   ],
+   "ship_flag_no_weight": null,
+   "systems": [
+    "pe_h"
+   ],
+   "twin_gap": -0.0014,
+   "twin_hi95": 0.0019,
+   "twin_lo95": -0.00466,
+   "v1_gap": 0.00138,
+   "v1_hi95": 0.00467,
+   "v1_lo95": -0.0017,
+   "v1_sign_agrees": true
+  }
+ },
+ "seed": 20261023,
+ "sensitivity": {
+  "gap": 0.00893,
+  "hi95": 0.01259,
+  "lo95": 0.00508,
+  "loss": false,
+  "n_pairs": 3488
+ },
+ "started_at": "2026-10-23T12:04:59+00:00",
+ "tables_receipt": {
+  "lambda": 1.058307,
+  "lambda_count_value": 1.058307,
+  "max_abs_re24": 0.0,
+  "max_abs_re288": 0.0,
+  "pass": true,
+  "season": 2019
+ },
+ "team_guard": {
+  "club_seasons": 390,
+  "n_club_seasons": 390,
+  "n_franchises": 30,
+  "non_inferior": true,
+  "outcomes": {
+   "run_differential": {
+    "club": {
+     "half_width95": 0.003639,
+     "lower": 0.002382,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.001868,
+     "underpowered": false
+    },
+    "dT": 0.005454,
+    "n_club_seasons": 390,
+    "non_inferior": true,
+    "player": {
+     "half_width95": 0.004098,
+     "lower": 0.002038,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.002077,
+     "underpowered": false
+    },
+    "r_bwar_reference": 0.587862,
+    "r_frame": 0.633978,
+    "r_part": 0.639432,
+    "r_part_minus_bwar": 0.05157,
+    "side": "total"
+   },
+   "runs_scored": {
+    "club": {
+     "half_width95": 0.009674,
+     "lower": -0.002369,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.005067,
+     "underpowered": false
+    },
+    "dT": 0.005967,
+    "n_club_seasons": 390,
+    "non_inferior": true,
+    "player": {
+     "half_width95": 0.005671,
+     "lower": 0.001223,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.002884,
+     "underpowered": false
+    },
+    "r_bwar_reference": 0.371038,
+    "r_frame": 0.352758,
+    "r_part": 0.358725,
+    "r_part_minus_bwar": -0.012314,
+    "side": "hit"
+   },
+   "wins": {
+    "club": {
+     "half_width95": 0.004026,
+     "lower": 0.001789,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.002063,
+     "underpowered": false
+    },
+    "dT": 0.005183,
+    "n_club_seasons": 390,
+    "non_inferior": true,
+    "player": {
+     "half_width95": 0.004022,
+     "lower": 0.001863,
+     "n_draws": 4000,
+     "non_inferior": true,
+     "sd": 0.002018,
+     "underpowered": false
+    },
+    "r_bwar_reference": 0.557906,
+    "r_frame": 0.620902,
+    "r_part": 0.626085,
+    "r_part_minus_bwar": 0.068178,
+    "side": "total"
+   }
+  },
+  "pa_share_on_standings_clubs": 1.0,
+  "underpowered": false
+ },
+ "terms_one_at_a_time": {
+  "peh_cl": {
+   "rate_gap": 0.00925,
+   "total_gap": 0.00902
+  },
+  "peh_p": {
+   "rate_gap": -0.00055,
+   "total_gap": -0.00072
+  }
+ },
+ "void": false,
+ "weights_receipt": {
+  "pass": true,
+  "seasons": {
+   "2011": {
+    "d_lg_woba": 0.0,
+    "d_scale": 0.0,
+    "d_weight_max": 0.0,
+    "pass": true
+   },
+   "2012": {
+    "d_lg_woba": 0.0,
+    "d_scale": 0.0,
+    "d_weight_max": 0.0,
+    "pass": true
+   },
+   "2013": {
+    "d_lg_woba": 0.0,
+    "d_scale": 0.0,
+    "d_weight_max": 0.0,
+    "pass": true
+   },
+   "2014": {
+    "d_lg_woba": 0.0,
+    "d_scale": 0.0,
+    "d_weight_max": 0.0,
+    "pass": true
+   },
+   "2015": {
+    "d_lg_woba": 0.0,
+    "d_scale": 0.0,
+    "d_weight_max": 0.0,
+    "pass": true
+   }
+  }
+ }
+}

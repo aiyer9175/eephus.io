@@ -100,3 +100,21 @@ def test_controls_and_admission():
 def test_no_dashes_in_document():
     raw = DOC.read_text(encoding="utf-8")
     assert "—" not in raw and "–" not in raw
+
+
+def test_result_recorded_once_and_matches_the_record():
+    import json
+    rec_path = ROOT / "docs" / "ewar-v3" / "peh_old_seasons_eval.json"
+    rec = json.loads(rec_path.read_text(encoding="utf-8"))
+    assert rec["void"] is False and rec["boot"] == 4000 and rec["seed"] == 20261023
+    assert rec["controls"]["null_passes"] is True and rec["controls"]["planted_passes"] is True
+    assert rec["census"]["pairs"] == 3488
+    assert rec["cells"]["PE-H rate"]["disposition"] == "SMALL WIN"
+    assert rec["cells"]["PE-H total"]["disposition"] == "SMALL WIN"
+    assert rec["team_guard"]["non_inferior"] is True
+    assert rec["admission"]["passes"] is False
+    text = _flat()
+    results = text.split("## 11. Results", 1)[1]
+    assert "### 11.1 2026-10-23: the read, run once" in results
+    assert "**Admission (part 5): NOT PASS.**" in results
+    assert "| PE-H rate | 3,488 | +0.00884 | +0.00499 to +0.01252 |" in results

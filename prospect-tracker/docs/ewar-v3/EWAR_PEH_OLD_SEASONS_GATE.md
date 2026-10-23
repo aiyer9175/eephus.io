@@ -247,4 +247,90 @@ the holdout's PE-H numbers (part 2) were read, as part 0 states.
 
 ## 11. Results
 
-(empty at registration)
+### 11.1 2026-10-23: the read, run once (lab at abe7886c; UTC 12:04 to 12:07, local 08:04)
+
+Lab `peh_old_seasons_lab/1`, started 2026-10-23T12:04:59+00:00, finished 2026-10-23T12:07:42+00:00; B = 4,000, seed 20261023; vintage 2026-10-02-a020cf64844a. Record: `docs/ewar-v3/peh_old_seasons_eval.json`. `python -u tools/peh_old_seasons_lab.py --read`, stdout and stderr teed to the task's output directory before the run; no exception, runtime 163 s. The read ran on 2026-10-23, a date Part 8's calendar lists; look days are waived (EW3-5), and the only wait was for the 2002 to 2010 play-by-play to exist on disk (fetched 2026-10-23 00:51 to 12:04 UTC, 21,859 payloads, 16.2 GB, no request inside the 06:00 to 11:00 UTC window).
+
+**Input receipts (before any statistic).**
+- Solved weights: the vintage solve reproduces `data/league_constants.json` for 2011 to 2015 (pass True; largest scale difference 0.00000, largest league wOBA difference 0.00000, largest weight difference 0.00000).
+- Season tables: 2019 rebuilt by this path matches `data/count_value.json` (RE288 max difference 0.0, RE24 0.0).
+
+| Season | Hitters | RE288 identity | Pitch coverage | Game coverage | w_s (runs per pitch) | Admitted |
+|---|---|---|---|---|---|---|
+| 2002 | 1,101 | 1.0 | 0.9996 | 0.9996 | -0.006528 | yes |
+| 2003 | 1,134 | 1.0 | 1.0000 | 1.0000 | -0.006122 | yes |
+| 2004 | 1,136 | 1.0 | 1.0000 | 1.0000 | -0.006563 | yes |
+| 2005 | 1,141 | 1.0 | 1.0000 | 1.0000 | -0.005656 | yes |
+| 2006 | 1,134 | 1.0 | 1.0000 | 1.0000 | -0.006467 | yes |
+| 2007 | 1,173 | 1.0 | 1.0000 | 1.0000 | -0.006941 | yes |
+| 2008 | 1,188 | 1.0 | 1.0000 | 1.0000 | -0.005831 | yes |
+| 2009 | 1,156 | 1.0 | 1.0000 | 1.0000 | -0.005719 | yes |
+| 2010 | 1,157 | 1.0 | 1.0000 | 1.0000 | -0.005815 | yes |
+| 2011 | 1,173 | 1.0 | 1.0000 | 1.0000 | -0.006121 | yes |
+| 2012 | 1,185 | 1.0 | 1.0000 | 1.0000 | -0.007308 | yes |
+| 2013 | 1,202 | 1.0 | 1.0000 | 1.0000 | -0.006805 | yes |
+| 2014 | 1,212 | 1.0 | 1.0000 | 1.0000 | -0.006465 | yes |
+| 2015 | 1,252 | 1.0 | 1.0000 | 1.0000 | -0.006192 | yes |
+
+2002 holds 2,425 of 2,430 listed games: four the endpoint answers 404 for (never played) and one whose play list does not end the game (game 11499, refused as partial by the fetcher), so 0.9996 of its pitches and games. The runner record's baserunning receipts I1 and I2 (stolen bases, caught stealing and double plays against the official season lines) do not pass in 2002, 2004, 2007 and 2008; PE-H reads no baserunning count, and the receipts it does read (the RE288 identity, the pitch and game coverage) hold in every season.
+
+**The frame.** 3,488 pairs, 810 players, 30 franchises; predictor seasons 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014; pairs by predictor season 2002 266, 2003 273, 2004 266, 2005 268, 2006 268, 2007 263, 2008 270, 2009 269, 2010 270, 2011 263, 2012 265, 2013 275, 2014 272.
+
+**n and the minimum detectable effect, printed first** (convention v2):
+
+| Cell | n | sd | half-width | MDE95 |
+|---|---|---|---|---|
+| PE-H rate | 3,488 | 0.00194 | 0.00377 | 0.00319 |
+| PE-H total | 3,488 | 0.00207 | 0.00400 | 0.00340 |
+
+**Controls (part 4).** Null comparator: PE-H rate EQUIVALENT (gap +0.00000); PE-H total EQUIVALENT (gap +0.00000); passes True. Planted recovery: PE-H rate WIN (components) (gap +0.26663, twin lo95 -0.05809); PE-H total WIN (components) (gap +0.25394, twin lo95 -0.04595); passes True.
+
+**The cells, against B0 = wRAA(Y)** (target wRAA(Y+1) + W(Y+1); Holm k = 2; B1 at k = 427 PA):
+
+| Cell | n | Gap | 95% interval | 90% interval | p | Holm | vs B1 lo95 | Twin lo95 | v1 gap | Club-clustered 95% | Disposition |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| PE-H rate | 3,488 | +0.00884 | +0.00499 to +0.01252 | +0.00559 to +0.01199 | 0.0003 | True | +0.00016 | -0.00501 | +0.00892 | +0.00478 to +0.01274 (30 franchises) | SMALL WIN |
+| PE-H total | 3,488 | +0.00862 | +0.00461 to +0.01262 | +0.00526 to +0.01199 | 0.0003 | True | +0.00522 | -0.00426 | +0.00886 | +0.00434 to +0.01267 (30 franchises) | SMALL WIN |
+
+- PE-H rate: rho(test) +0.4887, rho(B0) +0.4798, rho(B1) +0.4836; Pearson gap beside +0.00771; SHIP flag (no weight) None.
+- PE-H total: rho(test) +0.4945, rho(B0) +0.4859, rho(B1) +0.4844; Pearson gap beside +0.00441; SHIP flag (no weight) None.
+- Sensitivity guard (rate cell on wRAA(Y+1) alone): gap +0.00893, 95 percent interval +0.00508 to +0.01259; LOSS False.
+- Beside, no weight: the count-lift term alone, rate gap +0.00925, total gap +0.00902; the starter-pitch term alone, rate gap -0.00055, total gap -0.00072.
+
+**The team guard** (390 club-seasons, 30 franchises; 1.0000 of the frame's Y+1 PA on a standings club):
+
+| Outcome | dT | player sd | club sd | lower (player) | lower (club) | r frame | r part | r bWAR (reference) | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| run_differential | +0.00545 | 0.00208 | 0.00187 | +0.00204 | +0.00238 | +0.6340 | +0.6394 | +0.5879 | NON-INFERIOR |
+| runs_scored | +0.00597 | 0.00288 | 0.00507 | +0.00122 | -0.00237 | +0.3528 | +0.3587 | +0.3710 | NON-INFERIOR |
+| wins | +0.00518 | 0.00202 | 0.00206 | +0.00186 | +0.00179 | +0.6209 | +0.6261 | +0.5579 | NON-INFERIOR |
+
+Guard: NON-INFERIOR.
+
+**Secondary estimand (published fWAR(Y+1); decides nothing):** PE-H rate EQUIVALENT, gap +0.00303 (-0.00071 to +0.00673), n 3,488; PE-H total EQUIVALENT, gap +0.00138 (-0.00212 to +0.00478), n 3,488.
+
+**Admission (part 5): NOT PASS.** PE-H rate SMALL WIN (club lo95 +0.0048), PE-H total SMALL WIN, sensitivity not LOSS True, team guard NON-INFERIOR; not admitted: eWAR carries no pitch-economy term (EBR_GATE.md 11.4.5).
+
+### 11.2 What the read says
+
+- **NOT PASS.** Both cells read SMALL WIN: the rate gap +0.00884 (95 percent interval +0.00499 to
+  +0.01252) and the total gap +0.00862 (+0.00461 to +0.01262) are positive, Holm rejects both, the
+  club-clustered intervals also exclude 0, convention v1 agrees in sign and the twin fails; but both
+  gaps sit far under the +0.02 margin a WIN needs. The minimum detectable effect was 0.0032 on 3,488
+  pairs, so the read had the pairs to see a WIN; what it measured is an effect about a third the size
+  of the margin. PE-H is not admitted and eWAR carries no pitch-economy term (EBR_GATE.md 11.4.5).
+- **Against the cited reads.** The point gap has the look's sign and about two thirds of its size
+  (look +0.01304 on 1,071 pairs; the holdout's +0.00216 on 263 pairs read EQUIVALENT). The two
+  larger frames, 2002 to 2015 and 2021 to 2025, both measure a small positive ranking gain whose
+  interval excludes 0 and stays below the registered margin, which is the registered expectation of
+  part 7.
+- **Where the gap comes from** (beside, no weight): the count-lift term alone carries it (rate gap
+  +0.00925); the starter-pitch term alone reads near 0 (-0.00055). The season's starter-wear price
+  w_s is negative in every season of the frame, as 11.4.3 defines it on these seasons' pooled
+  reliever and starter FIP.
+- **The team guard** is NON-INFERIOR on all three outcomes, with dT positive on each (+0.00597 runs
+  scored, +0.00545 run differential, +0.00518 wins); it decides nothing once the cells do not pass.
+- **The secondary estimand** (published fWAR(Y+1)) reads EQUIVALENT on both cells and decides nothing.
+- **Copy.** Part 6: a NOT PASS licenses no sentence. Nothing served moves, no flag is added and no
+  owner question is raised. Part 9 closes PE-H on these seasons: it is not rerun with another frame,
+  floor, constant or margin.
