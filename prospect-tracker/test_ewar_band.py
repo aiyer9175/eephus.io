@@ -74,6 +74,7 @@ def test_build_refuses_without_a_pass_and_copies_the_constants():
 
 
 def test_write_goes_to_the_preview_while_off(tmp_path, monkeypatch):
+    monkeypatch.setattr(EB, "BAND_LIVE", False)  # the dark path, pinned explicitly since the EWUB-Q1 flip
     monkeypatch.setattr(EB, "PREVIEW", tmp_path / "preview" / "ewar_band.json")
     monkeypatch.setattr(EB, "OUT", tmp_path / "served" / "ewar_band.json")
     path = EB.write(EB.build(RECORD))
@@ -109,6 +110,8 @@ def _r2_rows():
 
 
 def test_card_rows_carry_the_band_only_when_live(lines, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(EB, "BAND_LIVE", False)  # the dark path, pinned explicitly since the EWUB-Q1 flip
+    EB.set_payload(None)
     served, bwar, ref, _provider = _maps()
     real = {mid: {s: dict(c) for s, c in by.items()} for mid, by in served.items()}
     refs = {"real": real, "ewar2": {}}
@@ -147,6 +150,8 @@ def _league_rows():
 
 
 def test_awards_rows_carry_the_band_only_when_live(monkeypatch):
+    monkeypatch.setattr(EB, "BAND_LIVE", False)  # the dark path, pinned explicitly since the EWUB-Q1 flip
+    EB.set_payload(None)
     off = A.mvp_ballot(_league_rows(), "AL", 2024, n=5)
     assert all("realized_pm_display" not in r for r in off["top"])
     cy_off = A.cy_young_ballot(_league_rows(), "AL", 2024, n=5)
@@ -169,6 +174,7 @@ def test_awards_rows_carry_the_band_only_when_live(monkeypatch):
 
 
 def test_glossary_registry_tool_refuses_while_off_and_is_idempotent(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(EB, "BAND_LIVE", False)  # the dark path, pinned explicitly since the EWUB-Q1 flip
     import ewar_band_glossary_registry as G
     assert G.main([]) == 2 and "refusing" in capsys.readouterr().out
     gl, rg, fr = (tmp_path / "glossary.json", tmp_path / "model_registry.json",
