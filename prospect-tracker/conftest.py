@@ -607,6 +607,10 @@ _SIDECAR_GLOBS = (
     "data/betting*.json",
     "data/dfs.json",
     ".cache/betting/**/*",
+    # named again for the two run-environment directories redirected on their own
+    # (test_the_redirect_list_and_the_watch_list_agree reads a glob under each)
+    ".cache/betting/run_env/**/*",
+    ".cache/betting/regular_finals/**/*",
     ".cache/odds/**/*",
     ".cache/dfs_history/**/*",
     ".cache/two_start_ledger.jsonl",
@@ -1148,6 +1152,12 @@ _SIDECAR_WRITE_DIRS = (
     # bat-tracking cache and its dark preview; both resolved at call time.
     ("bat_tracking_blend", "SERVED_CACHE_DIR", ".cache/bat_tracking/served"),
     ("bat_tracking_blend", "PREVIEW_DIR", ".cache/bat_tracking/preview"),
+    # the section 5k run-environment harness (6c7e0db9): its listings and prefit
+    # under .cache/betting, which test_betting_sidecar_isolation found unlisted once a
+    # linked .cache counted as inside the checkout (PORT_RED_TESTS_CLEAR, 2026-10-26)
+    ("betting_model", "RUN_ENV_DIR", ".cache/betting/run_env"),
+    ("tools.betting_run_env_prefit", "FINALS_DIR", ".cache/betting/regular_finals"),
+    ("tools.betting_run_env_prefit", "OUT_DIR", ".cache/betting/run_env"),
 )
 
 #: Modules that turn one of these paths into a STRING for readers of a

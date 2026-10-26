@@ -279,8 +279,13 @@ def fingerprint_term() -> str:
             spec["tracking_head"] = {"blend_w": T.BLEND_W, "ships": sorted(T.shipped_sides())}
         import efv5_refit as R5
         if R5.EFV_V5_REFIT_ON:
-            # the re-fit's flip serves a stored fit, so its file trips the pinned fingerprint
-            spec["refit"] = hashlib.sha256(R5.WEIGHTS_PATH.read_bytes()).hexdigest()[:12]
+            # the re-fit's flip serves a stored fit, so its file trips the pinned fingerprint.
+            # Line endings are normalized first: the git blob is LF while a Windows working
+            # copy may be CRLF, and the term must read the same on every checkout (the
+            # PORT_RED_TESTS_CLEAR finding of 2026-10-26: efv_v2@22ec625f on a CRLF copy,
+            # efv_v2@afcf9904 on the LF blob, for one stored fit).
+            raw = R5.WEIGHTS_PATH.read_bytes().replace(b"\r\n", b"\n")
+            spec["refit"] = hashlib.sha256(raw).hexdigest()[:12]
         spec = json.dumps(spec, sort_keys=True)
         return f"{SERVED_MODEL_ID}@{hashlib.sha256(spec.encode()).hexdigest()[:8]}"
     except Exception:                                             # noqa: BLE001
@@ -585,8 +590,13 @@ class HistoryGrader:
 def served_score(grades, order_idx) -> list[float]:
     """The board's ordering as one number: the grade, with the order index breaking an
     exact grade tie (the board's board_sort_key rule). Raises when the tie break could
-    cross a gap between two distinct grades."""
-    g = np.asarray(grades, dtype=np.float64)
+    cross a gap between two distinct grades.
+
+    Grades are compared at 9 decimals: two grades one float ulp apart are the same
+    grade (PORT_RED_TESTS_CLEAR, 2026-10-26: on the rebuilt v1 hitter matrix, decision
+    year 2022 carried a gap of 7.1e-15 between two equal grades, the guard raised, and
+    source_backtest dropped eFV from Source Comparison as "OOS grades unavailable")."""
+    g = np.round(np.asarray(grades, dtype=np.float64), 9)
     o = np.asarray(order_idx, dtype=np.float64)
     if g.size == 0:
         return []

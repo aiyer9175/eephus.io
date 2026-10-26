@@ -213,6 +213,9 @@ def test_served_score_breaks_only_exact_grade_ties_by_the_order_index():
     assert order == [3, 0, 1, 2]
     with pytest.raises(ValueError):
         S.served_score([45.0, 45.0000001], [1.0, -1.0])
+    # a float ulp is not a gap: the two grades are one grade and the order index breaks it
+    s = S.served_score([45.0, 45.0 + 7.1e-15, 50.0], [1.0, -1.0, 0.5])
+    assert sorted(range(3), key=lambda i: s[i]) == [1, 0, 2]
 
 
 def test_production_fit_reads_no_reserved_row():

@@ -66,6 +66,8 @@ def test_the_rebuild_runs_once_per_season(monkeypatch):
     monkeypatch.setattr(fpl.storage, "record_source_check",
                         lambda src, scope="", n_rows=None: checks.__setitem__(
                             (src, scope), {"checked_at": "2026-10-08", "n_rows": n_rows}))
+    # the stored ledger already reads the displayed series (the basis check has its own test)
+    monkeypatch.setattr(fpl, "_ledger_bases_off_display", lambda last_year: {})
     today = date(2026, 10, 8)
     first = fpl.rebuild_realized_ledger(today=today)
     assert first["ran"] and first["season"] == 2026
@@ -78,6 +80,42 @@ def test_the_rebuild_runs_once_per_season(monkeypatch):
     assert fpl.rebuild_realized_ledger(today=today, force=True)["ran"]
     assert fpl.rebuild_realized_ledger(2026)["ran"]
     assert len(calls) == 3
+
+
+def test_a_recorded_season_rebuilds_once_more_when_the_displayed_war_moved(monkeypatch):
+    """PORT_RED_TESTS_CLEAR (2026-10-26): the 2026 rebuild ran on 2026-10-08 on eWAR v2 and
+    recorded the season, the display then moved to eWAR v3, and the once-per-season check
+    kept the archive on v2 (1,576 rows). A recorded season whose stored rows read another
+    series rebuilds once more; after that the rows read the displayed series and it stops."""
+    _calendar(monkeypatch, {2026: "2026-09-27"})
+    want = war_source.DISPLAY_PROVIDER
+    stored = {2026: {("a", 2026): {"player_key": "a", "ledger": {"war_basis": "ewar_v2"}},
+                     ("b", 2026): {"player_key": "b", "ledger": {}},
+                     ("c", 2026): {"player_key": "c", "ledger": {"war_basis": want}}},
+              2025: {("d", 2025): {"player_key": "d", "ledger": {"method": "x"}}}}
+    calls = []
+
+    def fake_backfill(**kw):
+        calls.append(kw)
+        for rows in stored.values():
+            for r in rows.values():
+                if r.get("ledger"):
+                    r["ledger"]["war_basis"] = want
+        return {"persisted": True, "ledger_rows": 3}
+
+    monkeypatch.setattr(fpl, "get_config", lambda: {"backfill": {"first_class_year": 2025}})
+    monkeypatch.setattr(fpl.storage, "load_fa_signings", lambda y: stored.get(y, {}))
+    monkeypatch.setattr(fpl, "backfill_historical", fake_backfill)
+    monkeypatch.setattr(fpl.storage, "load_source_checks", lambda: {
+        (fpl.REALIZED_LEDGER_CHECK, "2026"): {"checked_at": "2026-10-08"}})
+    monkeypatch.setattr(fpl.storage, "record_source_check", lambda *a, **k: None)
+    # an unstamped row is the legacy bWAR basis
+    assert fpl._ledger_bases_off_display(2026) == {"ewar_v2": 1, "bwar": 1}
+    out = fpl.rebuild_realized_ledger(today=date(2026, 10, 26))
+    assert out["ran"] and want in out["basis"] and len(calls) == 1
+    assert fpl._ledger_bases_off_display(2026) == {}
+    again = fpl.rebuild_realized_ledger(today=date(2026, 10, 26))
+    assert again["ran"] is False and "already rebuilt" in again["reason"] and len(calls) == 1
 
 
 def test_a_failed_war_read_records_nothing(monkeypatch):

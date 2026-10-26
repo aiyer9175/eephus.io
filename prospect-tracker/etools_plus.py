@@ -66,7 +66,10 @@ MIN_GROUP_ROWS = 20
 
 
 def _sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """sha256 of the file with line endings normalized to LF: the git blob is LF while a
+    Windows working copy may be CRLF, and the receipt must read the same on every checkout
+    (PORT_RED_TESTS_CLEAR, 2026-10-26)."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def _r(v, dp=4):

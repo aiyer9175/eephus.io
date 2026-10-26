@@ -48,6 +48,7 @@ the scope tests below capture the constants from fixtures of each scope.
 from __future__ import annotations
 
 import importlib
+import os
 from pathlib import Path
 
 import pytest
@@ -96,12 +97,21 @@ def _module(name):
         return None
 
 
+def _checkout_rel(p) -> str | None:
+    """The checkout-relative posix path, or None outside the checkout. Read as
+    configured first (links not followed), then resolved: a checkout whose .cache is a
+    link (a worktree junction, a data volume) still holds it at .cache/odds."""
+    for mine, root in ((Path(os.path.abspath(p)), Path(os.path.abspath(ROOT))),
+                       (Path(p).resolve(), ROOT)):
+        try:
+            return mine.relative_to(root).as_posix()
+        except (ValueError, OSError):
+            continue
+    return None
+
+
 def _inside_checkout(p) -> bool:
-    try:
-        Path(p).resolve().relative_to(ROOT)
-    except (ValueError, OSError):
-        return False
-    return True
+    return _checkout_rel(p) is not None
 
 
 def _redirect_state() -> dict[str, str]:
@@ -389,7 +399,7 @@ def test_no_module_still_resolves_a_watched_artifact_by_default():
                 continue
             if not _inside_checkout(val):
                 continue
-            rel = val.resolve().relative_to(ROOT).as_posix()
+            rel = _checkout_rel(val)
             if ct._sidecar_is_watched(rel):
                 offenders.append(f"{mod_name}.{attr} -> {rel}")
     assert not offenders, (
