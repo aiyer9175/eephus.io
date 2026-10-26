@@ -1,47 +1,47 @@
 {
- "generated_at": "2026-10-15",
+ "generated_at": "2026-10-26",
  "scope": "HITTERS",
  "n_scored": 1985,
  "calibration_scale": {
   "a": 0.037,
-  "b": 1.037
+  "b": 1.036
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
   "mean_abs_delta": 0.78,
   "max_up": 6.1,
   "max_down": -4.2,
-  "share_within_2_grades": 0.882
+  "share_within_2_grades": 0.883
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 5.98,
+  "mean_abs_delta": 5.97,
   "max_up": 8.1,
   "max_down": -20.7
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0824,
+  "spearman_adj_vs_consensus_miss": 0.0821,
   "n": 560,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 41039.0,
+  "xfv": 41026.2,
   "consensus": 40490.6
  },
  "example_up_adjustments": [
   {
    "player_key": "zach_mckinstry",
    "consensus_fv": 40.5,
-   "xfv_grade": 47.2,
+   "xfv_grade": 47.1,
    "delta": 6.7,
    "realized_war_6yr": 5.82
   },
   {
    "player_key": "connor_wong",
    "consensus_fv": 37.9,
-   "xfv_grade": 44.3,
+   "xfv_grade": 44.2,
    "delta": 6.3,
-   "realized_war_6yr": 0.84
+   "realized_war_6yr": 0.77
   },
   {
    "player_key": "tommy_edman",
@@ -53,7 +53,7 @@
   {
    "player_key": "jake_alu",
    "consensus_fv": 37.9,
-   "xfv_grade": 44.0,
+   "xfv_grade": 43.9,
    "delta": 6.0,
    "realized_war_6yr": -0.41
   },
@@ -62,7 +62,7 @@
    "consensus_fv": 37.9,
    "xfv_grade": 43.8,
    "delta": 5.9,
-   "realized_war_6yr": 8.13
+   "realized_war_6yr": 8.19
   },
   {
    "player_key": "stuart_fairchild",

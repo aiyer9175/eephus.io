@@ -2,15 +2,15 @@
  "schema": 1,
  "model": "ewar_history",
  "version": "ewar_history_v1",
- "generated_at": "2026-10-22T04:08:19+00:00",
+ "generated_at": "2026-10-26T20:57:00+00:00",
  "registration": "docs/ewar/EWAR_HISTORY_GATE.md",
  "first_season": 2000,
  "last_season": 2026,
  "why_it_stops": "eWAR starts in 2000, the first season of the frozen FanGraphs WAR copy it is built on; that copy is never refetched, so an earlier season would need a new copy or another frame.",
  "fwar_vintage_id": "2026-10-02-a020cf64844a",
- "fwar_vintage_sha256": "02232201dc3242c605829707389044efc4a34a84f5209dd972dac90a61b31ba0",
- "ewar_v3_generated_at": "2026-10-22T02:17:24+00:00",
- "ewar_v3_sha256": "40ea0196102beb793e2aeae1d6503d160acbec92c6eebf6e583fae8bcc81fe69",
+ "fwar_vintage_sha256": "5c3df434f892606eef6e0a112edb7056c1bda67ec0a4cb49e688b0575b7c9fd7",
+ "ewar_v3_generated_at": "2026-10-26T20:56:58+00:00",
+ "ewar_v3_sha256": "46d4ede11583743cf5ef378cd8a2d879175a7ac17153a7d858da8c188c4188fd",
  "parts": [
   {
    "id": "batting",
@@ -67,6 +67,12 @@
    "core": false
   },
   {
+   "id": "xhem",
+   "label": "xHEM+ expected batting, half weight (provisional)",
+   "series": "headline",
+   "core": false
+  },
+  {
    "id": "r2",
    "label": "realized pitching (runs allowed)",
    "series": "realized",
@@ -99,12 +105,13 @@
    "missing": [
     "bsr_rest",
     "framing",
+    "xhem",
     "r2"
    ],
-   "short": "2000-2001: baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008); eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "short_headline": "2000-2001: baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008).",
+   "short": "2000-2001: baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016); eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
+   "short_headline": "2000-2001: baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016).",
    "short_realized": "2000-2001: eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "reason_headline": "baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008)",
+   "reason_headline": "baserunning is steals only (FanGraphs published no UBR or double-play runs for these seasons); no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016)",
    "reason_realized": "eWAR realized equals eWAR (its runs-allowed pitching starts in 2016)"
   },
   {
@@ -133,12 +140,13 @@
    "text_headline": "2002-2007: FanGraphs' batting, baserunning (wSB steals, UBR and wGDP double plays), fielding, the positional, league and replacement terms and pitching.",
    "missing": [
     "framing",
+    "xhem",
     "r2"
    ],
-   "short": "2002-2007: no catcher framing (FanGraphs' WAR carries it from 2008); eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "short_headline": "2002-2007: no catcher framing (FanGraphs' WAR carries it from 2008).",
+   "short": "2002-2007: no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016); eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
+   "short_headline": "2002-2007: no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016).",
    "short_realized": "2002-2007: eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "reason_headline": "no catcher framing (FanGraphs' WAR carries it from 2008)",
+   "reason_headline": "no catcher framing (FanGraphs' WAR carries it from 2008); batting is FanGraphs' alone (the xHEM+ part starts in 2016)",
    "reason_realized": "eWAR realized equals eWAR (its runs-allowed pitching starts in 2016)"
   },
   {
@@ -168,12 +176,13 @@
    "text": "2008-2015: FanGraphs' batting, baserunning (wSB steals, UBR and wGDP double plays), fielding and catcher framing, the positional, league and replacement terms and pitching; eWAR realized equals eWAR.",
    "text_headline": "2008-2015: FanGraphs' batting, baserunning (wSB steals, UBR and wGDP double plays), fielding and catcher framing, the positional, league and replacement terms and pitching.",
    "missing": [
+    "xhem",
     "r2"
    ],
-   "short": "2008-2015: eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "short_headline": "",
+   "short": "2008-2015: batting is FanGraphs' alone (the xHEM+ part starts in 2016); eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
+   "short_headline": "2008-2015: batting is FanGraphs' alone (the xHEM+ part starts in 2016).",
    "short_realized": "2008-2015: eWAR realized equals eWAR (its runs-allowed pitching starts in 2016).",
-   "reason_headline": "",
+   "reason_headline": "batting is FanGraphs' alone (the xHEM+ part starts in 2016)",
    "reason_realized": "eWAR realized equals eWAR (its runs-allowed pitching starts in 2016)"
   },
   {
@@ -187,7 +196,8 @@
     "framing",
     "positional",
     "league_replacement",
-    "pitching"
+    "pitching",
+    "xhem"
    ],
    "realized": [
     "batting",
@@ -201,8 +211,8 @@
     "r2"
    ],
    "bsr_label": "FanGraphs' other baserunning runs",
-   "text": "2016-2025: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching; eWAR realized prices pitchers on runs allowed.",
-   "text_headline": "2016-2025: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching.",
+   "text": "2016-2025: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus half of xHEM+ expected batting (provisional); eWAR realized prices pitchers on runs allowed and keeps FanGraphs' batting.",
+   "text_headline": "2016-2025: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus half of xHEM+ expected batting (provisional).",
    "missing": [],
    "short": "",
    "short_headline": "",
@@ -222,7 +232,8 @@
     "positional",
     "league_replacement",
     "pitching",
-    "eabs"
+    "eabs",
+    "xhem"
    ],
    "realized": [
     "batting",
@@ -237,8 +248,8 @@
     "r2"
    ],
    "bsr_label": "FanGraphs' other baserunning runs",
-   "text": "2026: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus eABS (ABS challenges); eWAR realized prices pitchers on runs allowed.",
-   "text_headline": "2026: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus eABS (ABS challenges).",
+   "text": "2026: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus eABS (ABS challenges) and half of xHEM+ expected batting (provisional); eWAR realized prices pitchers on runs allowed and keeps FanGraphs' batting.",
+   "text_headline": "2026: FanGraphs' batting, baserunning (wSB steals and FanGraphs' other baserunning runs), fielding and catcher framing, the positional, league and replacement terms and pitching, plus eABS (ABS challenges) and half of xHEM+ expected batting (provisional).",
    "missing": [],
    "short": "",
    "short_headline": "",
@@ -2045,7 +2056,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2064,22 +2076,23 @@
      "bsr_rest_rows": 701,
      "framing_rows": 100,
      "abs_receipt": false,
-     "r2_rows": 720
+     "r2_rows": 720,
+     "xhem_rows": 638
     }
    },
    "rpw_fg": 9.7783,
    "identities": {
     "max_row_error": {
-     "row_headline": 4.440892098500626e-16,
+     "row_headline": 7.771561172376096e-16,
      "row_realized": 4.440892098500626e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 569.5308,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -9.999999974752427e-07,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.00032,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2117,15 +2130,26 @@
       "spearman_core_full": 0.9792,
       "frame_n": 268
      },
+     "xhem": {
+      "rows": 1248,
+      "nonzero": 638,
+      "sd": 0.2349,
+      "mean_abs": 0.1215,
+      "max_abs": 1.421,
+      "cells_moved_1dp": 527,
+      "share_moved_1dp": 0.4223,
+      "spearman_core_full": 0.9603,
+      "frame_n": 268
+     },
      "total_headline": {
       "rows": 1248,
       "nonzero": 970,
-      "sd": 0.247,
-      "mean_abs": 0.0889,
-      "max_abs": 2.856,
-      "cells_moved_1dp": 413,
-      "share_moved_1dp": 0.3309,
-      "spearman_core_full": 0.9678,
+      "sd": 0.3271,
+      "mean_abs": 0.1525,
+      "max_abs": 3.1111,
+      "cells_moved_1dp": 564,
+      "share_moved_1dp": 0.4519,
+      "spearman_core_full": 0.9348,
       "frame_n": 268
      }
     },
@@ -2176,7 +2200,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2195,22 +2220,23 @@
      "bsr_rest_rows": 696,
      "framing_rows": 99,
      "abs_receipt": false,
-     "r2_rows": 732
+     "r2_rows": 732,
+     "xhem_rows": 625
     }
    },
    "rpw_fg": 10.0476,
    "identities": {
     "max_row_error": {
-     "row_headline": 4.85722573273506e-16,
+     "row_headline": 6.661338147750939e-16,
      "row_realized": 4.85722573273506e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 570.00003,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -3.999999989900971e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.00031350000000000003,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2248,15 +2274,26 @@
       "spearman_core_full": 0.981,
       "frame_n": 287
      },
+     "xhem": {
+      "rows": 1229,
+      "nonzero": 625,
+      "sd": 0.2389,
+      "mean_abs": 0.1252,
+      "max_abs": 1.3932,
+      "cells_moved_1dp": 532,
+      "share_moved_1dp": 0.4329,
+      "spearman_core_full": 0.9628,
+      "frame_n": 287
+     },
      "total_headline": {
       "rows": 1229,
       "nonzero": 957,
-      "sd": 0.1995,
-      "mean_abs": 0.0776,
-      "max_abs": 2.0433,
-      "cells_moved_1dp": 409,
-      "share_moved_1dp": 0.3328,
-      "spearman_core_full": 0.9732,
+      "sd": 0.2729,
+      "mean_abs": 0.1386,
+      "max_abs": 1.937,
+      "cells_moved_1dp": 559,
+      "share_moved_1dp": 0.4548,
+      "spearman_core_full": 0.949,
       "frame_n": 287
      }
     },
@@ -2307,7 +2344,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2326,22 +2364,23 @@
      "bsr_rest_rows": 710,
      "framing_rows": 108,
      "abs_receipt": false,
-     "r2_rows": 752
+     "r2_rows": 752,
+     "xhem_rows": 632
     }
    },
    "rpw_fg": 9.7145,
    "identities": {
     "max_row_error": {
-     "row_headline": 7.632783294297951e-16,
+     "row_headline": 7.771561172376096e-16,
      "row_realized": 7.632783294297951e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 570.23446,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": 8.999999977277184e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.000317,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2379,15 +2418,26 @@
       "spearman_core_full": 0.9783,
       "frame_n": 278
      },
+     "xhem": {
+      "rows": 1270,
+      "nonzero": 632,
+      "sd": 0.2212,
+      "mean_abs": 0.1145,
+      "max_abs": 1.3544,
+      "cells_moved_1dp": 519,
+      "share_moved_1dp": 0.4087,
+      "spearman_core_full": 0.9648,
+      "frame_n": 278
+     },
      "total_headline": {
       "rows": 1270,
       "nonzero": 991,
-      "sd": 0.2086,
-      "mean_abs": 0.0795,
-      "max_abs": 2.1796,
-      "cells_moved_1dp": 414,
-      "share_moved_1dp": 0.326,
-      "spearman_core_full": 0.9665,
+      "sd": 0.2827,
+      "mean_abs": 0.1367,
+      "max_abs": 2.6333,
+      "cells_moved_1dp": 550,
+      "share_moved_1dp": 0.4331,
+      "spearman_core_full": 0.9399,
       "frame_n": 278
      }
     },
@@ -2438,7 +2488,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2457,22 +2508,23 @@
      "bsr_rest_rows": 712,
      "framing_rows": 105,
      "abs_receipt": false,
-     "r2_rows": 775
+     "r2_rows": 775,
+     "xhem_rows": 638
     }
    },
    "rpw_fg": 10.2957,
    "identities": {
     "max_row_error": {
-     "row_headline": 7.91033905045424e-16,
+     "row_headline": 1.1102230246251565e-15,
      "row_realized": 7.91033905045424e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 569.76531,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -1.2999999967178155e-05,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.00032,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2510,15 +2562,26 @@
       "spearman_core_full": 0.9867,
       "frame_n": 273
      },
+     "xhem": {
+      "rows": 1287,
+      "nonzero": 638,
+      "sd": 0.2225,
+      "mean_abs": 0.1164,
+      "max_abs": 1.4883,
+      "cells_moved_1dp": 543,
+      "share_moved_1dp": 0.4219,
+      "spearman_core_full": 0.9753,
+      "frame_n": 273
+     },
      "total_headline": {
       "rows": 1287,
       "nonzero": 990,
-      "sd": 0.1738,
-      "mean_abs": 0.067,
-      "max_abs": 1.7909,
-      "cells_moved_1dp": 387,
-      "share_moved_1dp": 0.3007,
-      "spearman_core_full": 0.9821,
+      "sd": 0.2682,
+      "mean_abs": 0.133,
+      "max_abs": 2.0456,
+      "cells_moved_1dp": 557,
+      "share_moved_1dp": 0.4328,
+      "spearman_core_full": 0.9606,
       "frame_n": 273
      }
     },
@@ -2569,7 +2632,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2588,22 +2652,23 @@
      "bsr_rest_rows": 530,
      "framing_rows": 86,
      "abs_receipt": false,
-     "r2_rows": 709
+     "r2_rows": 709,
+     "xhem_rows": 578
     }
    },
    "rpw_fg": 10.2821,
    "identities": {
     "max_row_error": {
-     "row_headline": 2.220446049250313e-16,
+     "row_headline": 2.8449465006019636e-16,
      "row_realized": 2.220446049250313e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 210.66297,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -4.9999999873762135e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.00029,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2641,14 +2706,25 @@
       "spearman_core_full": null,
       "frame_n": 0
      },
+     "xhem": {
+      "rows": 620,
+      "nonzero": 578,
+      "sd": 0.1837,
+      "mean_abs": 0.1335,
+      "max_abs": 0.701,
+      "cells_moved_1dp": 438,
+      "share_moved_1dp": 0.7065,
+      "spearman_core_full": null,
+      "frame_n": 0
+     },
      "total_headline": {
       "rows": 620,
       "nonzero": 583,
-      "sd": 0.091,
-      "mean_abs": 0.0524,
-      "max_abs": 0.5742,
-      "cells_moved_1dp": 255,
-      "share_moved_1dp": 0.4113,
+      "sd": 0.1994,
+      "mean_abs": 0.1458,
+      "max_abs": 0.818,
+      "cells_moved_1dp": 445,
+      "share_moved_1dp": 0.7177,
       "spearman_core_full": null,
       "frame_n": 0
      }
@@ -2700,7 +2776,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2719,22 +2796,23 @@
      "bsr_rest_rows": 718,
      "framing_rows": 105,
      "abs_receipt": false,
-     "r2_rows": 850
+     "r2_rows": 850,
+     "xhem_rows": 664
     }
    },
    "rpw_fg": 9.9725,
    "identities": {
     "max_row_error": {
-     "row_headline": 4.440892098500626e-16,
+     "row_headline": 7.771561172376096e-16,
      "row_realized": 4.440892098500626e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 569.77649,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": 4.9999999873762135e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.000333,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2772,15 +2850,26 @@
       "spearman_core_full": 0.9925,
       "frame_n": 262
      },
+     "xhem": {
+      "rows": 1374,
+      "nonzero": 664,
+      "sd": 0.2046,
+      "mean_abs": 0.1039,
+      "max_abs": 1.5196,
+      "cells_moved_1dp": 546,
+      "share_moved_1dp": 0.3974,
+      "spearman_core_full": 0.9754,
+      "frame_n": 262
+     },
      "total_headline": {
       "rows": 1374,
       "nonzero": 1052,
-      "sd": 0.1505,
-      "mean_abs": 0.0574,
-      "max_abs": 2.3043,
-      "cells_moved_1dp": 412,
-      "share_moved_1dp": 0.2999,
-      "spearman_core_full": 0.9867,
+      "sd": 0.2344,
+      "mean_abs": 0.1174,
+      "max_abs": 2.1746,
+      "cells_moved_1dp": 566,
+      "share_moved_1dp": 0.4119,
+      "spearman_core_full": 0.9688,
       "frame_n": 262
      }
     },
@@ -2831,7 +2920,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2850,22 +2940,23 @@
      "bsr_rest_rows": 633,
      "framing_rows": 101,
      "abs_receipt": false,
-     "r2_rows": 807
+     "r2_rows": 807,
+     "xhem_rows": 688
     }
    },
    "rpw_fg": 9.5241,
    "identities": {
     "max_row_error": {
-     "row_headline": 4.85722573273506e-16,
+     "row_headline": 8.881784197001252e-16,
      "row_realized": 8.881784197001252e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 570.04535,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": 1.3999999964653398e-05,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.000345,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -2903,15 +2994,26 @@
       "spearman_core_full": 0.988,
       "frame_n": 277
      },
+     "xhem": {
+      "rows": 794,
+      "nonzero": 688,
+      "sd": 0.2783,
+      "mean_abs": 0.1844,
+      "max_abs": 1.5238,
+      "cells_moved_1dp": 566,
+      "share_moved_1dp": 0.7128,
+      "spearman_core_full": 0.9736,
+      "frame_n": 277
+     },
      "total_headline": {
       "rows": 794,
       "nonzero": 693,
-      "sd": 0.2222,
-      "mean_abs": 0.1099,
-      "max_abs": 1.8785,
-      "cells_moved_1dp": 393,
-      "share_moved_1dp": 0.495,
-      "spearman_core_full": 0.9806,
+      "sd": 0.3337,
+      "mean_abs": 0.2123,
+      "max_abs": 1.9277,
+      "cells_moved_1dp": 569,
+      "share_moved_1dp": 0.7166,
+      "spearman_core_full": 0.958,
       "frame_n": 277
      }
     },
@@ -2962,7 +3064,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -2981,22 +3084,23 @@
      "bsr_rest_rows": 613,
      "framing_rows": 94,
      "abs_receipt": false,
-     "r2_rows": 804
+     "r2_rows": 804,
+     "xhem_rows": 653
     }
    },
    "rpw_fg": 10.0283,
    "identities": {
     "max_row_error": {
-     "row_headline": 7.494005416219807e-16,
+     "row_headline": 8.881784197001252e-16,
      "row_realized": 7.494005416219807e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 570.00005,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": 8.999999977277184e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.0003275,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -3034,15 +3138,26 @@
       "spearman_core_full": 0.9813,
       "frame_n": 293
      },
+     "xhem": {
+      "rows": 769,
+      "nonzero": 653,
+      "sd": 0.2717,
+      "mean_abs": 0.1814,
+      "max_abs": 1.5543,
+      "cells_moved_1dp": 529,
+      "share_moved_1dp": 0.6879,
+      "spearman_core_full": 0.973,
+      "frame_n": 293
+     },
      "total_headline": {
       "rows": 769,
       "nonzero": 657,
-      "sd": 0.2479,
-      "mean_abs": 0.1166,
-      "max_abs": 1.7594,
-      "cells_moved_1dp": 373,
-      "share_moved_1dp": 0.485,
-      "spearman_core_full": 0.9756,
+      "sd": 0.3594,
+      "mean_abs": 0.2253,
+      "max_abs": 2.0725,
+      "cells_moved_1dp": 540,
+      "share_moved_1dp": 0.7022,
+      "spearman_core_full": 0.9516,
       "frame_n": 293
      }
     },
@@ -3093,7 +3208,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -3112,22 +3228,23 @@
      "bsr_rest_rows": 605,
      "framing_rows": 92,
      "abs_receipt": false,
-     "r2_rows": 802
+     "r2_rows": 802,
+     "xhem_rows": 649
     }
    },
    "rpw_fg": 9.6826,
    "identities": {
     "max_row_error": {
-     "row_headline": 5.689893001203927e-16,
+     "row_headline": 7.077671781985373e-16,
      "row_realized": 5.689893001203927e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 569.76551,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -1.9999999949504854e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.0003255,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -3165,15 +3282,26 @@
       "spearman_core_full": 0.9844,
       "frame_n": 286
      },
+     "xhem": {
+      "rows": 742,
+      "nonzero": 649,
+      "sd": 0.2569,
+      "mean_abs": 0.1812,
+      "max_abs": 1.1374,
+      "cells_moved_1dp": 544,
+      "share_moved_1dp": 0.7332,
+      "spearman_core_full": 0.9752,
+      "frame_n": 286
+     },
      "total_headline": {
       "rows": 742,
       "nonzero": 652,
-      "sd": 0.2238,
-      "mean_abs": 0.1111,
-      "max_abs": 2.5031,
-      "cells_moved_1dp": 385,
-      "share_moved_1dp": 0.5189,
-      "spearman_core_full": 0.9795,
+      "sd": 0.336,
+      "mean_abs": 0.214,
+      "max_abs": 3.0659,
+      "cells_moved_1dp": 544,
+      "share_moved_1dp": 0.7332,
+      "spearman_core_full": 0.9547,
       "frame_n": 286
      }
     },
@@ -3224,7 +3352,8 @@
      "framing",
      "positional",
      "league_replacement",
-     "pitching"
+     "pitching",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -3243,22 +3372,23 @@
      "bsr_rest_rows": 627,
      "framing_rows": 98,
      "abs_receipt": false,
-     "r2_rows": 803
+     "r2_rows": 803,
+     "xhem_rows": 667
     }
    },
    "rpw_fg": 9.774,
    "identities": {
     "max_row_error": {
-     "row_headline": 8.881784197001252e-16,
+     "row_headline": 1.4432899320127035e-15,
      "row_realized": 8.881784197001252e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 570.00002,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": 0.0,
+      "full_minus_fwar": -8.999999977277184e-06,
       "realized_minus_fwar": 0.0,
-      "tol_full": 1e-06,
+      "tol_full": 0.0003345,
       "tol_realized": 1e-06
      },
      "pit": {
@@ -3296,15 +3426,26 @@
       "spearman_core_full": 0.9899,
       "frame_n": 277
      },
+     "xhem": {
+      "rows": 765,
+      "nonzero": 667,
+      "sd": 0.2753,
+      "mean_abs": 0.1869,
+      "max_abs": 1.1552,
+      "cells_moved_1dp": 552,
+      "share_moved_1dp": 0.7216,
+      "spearman_core_full": 0.9705,
+      "frame_n": 277
+     },
      "total_headline": {
       "rows": 765,
       "nonzero": 674,
-      "sd": 0.1968,
-      "mean_abs": 0.0992,
-      "max_abs": 1.9261,
-      "cells_moved_1dp": 376,
-      "share_moved_1dp": 0.4915,
-      "spearman_core_full": 0.9825,
+      "sd": 0.3142,
+      "mean_abs": 0.2038,
+      "max_abs": 1.7391,
+      "cells_moved_1dp": 543,
+      "share_moved_1dp": 0.7098,
+      "spearman_core_full": 0.9603,
       "frame_n": 277
      }
     },
@@ -3356,7 +3497,8 @@
      "positional",
      "league_replacement",
      "pitching",
-     "eabs"
+     "eabs",
+     "xhem"
     ],
     "realized": [
      "batting",
@@ -3376,20 +3518,21 @@
      "bsr_rest_rows": 620,
      "framing_rows": 101,
      "abs_receipt": true,
-     "r2_rows": 812
+     "r2_rows": 812,
+     "xhem_rows": 659
     }
    },
    "rpw_fg": 9.8218,
    "identities": {
     "max_row_error": {
-     "row_headline": 5.551115123125783e-16,
+     "row_headline": 7.216449660063518e-16,
      "row_realized": 5.551115123125783e-16
     },
     "side_sums": {
      "bat": {
       "fwar": 569.76549,
       "core_minus_fwar": 0.0,
-      "full_minus_fwar": -9.999999974752427e-07,
+      "full_minus_fwar": -4.9999999873762135e-06,
       "realized_minus_fwar": -9.999999974752427e-07,
       "tol_full": 0.000332,
       "tol_realized": 0.000332
@@ -3440,15 +3583,26 @@
       "spearman_core_full": 0.9985,
       "frame_n": 267
      },
+     "xhem": {
+      "rows": 751,
+      "nonzero": 659,
+      "sd": 0.2806,
+      "mean_abs": 0.1907,
+      "max_abs": 1.2503,
+      "cells_moved_1dp": 537,
+      "share_moved_1dp": 0.715,
+      "spearman_core_full": 0.968,
+      "frame_n": 267
+     },
      "total_headline": {
       "rows": 751,
       "nonzero": 662,
-      "sd": 0.1756,
-      "mean_abs": 0.099,
-      "max_abs": 1.1369,
-      "cells_moved_1dp": 394,
-      "share_moved_1dp": 0.5246,
-      "spearman_core_full": 0.9868,
+      "sd": 0.3284,
+      "mean_abs": 0.2179,
+      "max_abs": 1.5227,
+      "cells_moved_1dp": 550,
+      "share_moved_1dp": 0.7324,
+      "spearman_core_full": 0.9561,
       "frame_n": 267
      }
     },

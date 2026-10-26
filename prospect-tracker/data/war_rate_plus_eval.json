@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-21",
+ "generated_at": "2026-10-26",
  "experiment": "WAR-RATE-1",
  "model": "war_pa_plus / war_ip_plus",
  "seed": 20260729,
@@ -74,92 +74,92 @@
    ],
    "results_by_convention": {
     "v1": {
-     "rho_primary": 0.3843,
+     "rho_primary": 0.4211,
      "rho_baselines": {
-      "plus_shrunk": 0.3959,
-      "rate": 0.3848,
-      "war_total": 0.4133,
-      "ops_plus": 0.2416,
-      "placebo": -0.0111
+      "plus_shrunk": 0.4304,
+      "rate": 0.4208,
+      "war_total": 0.4415,
+      "ops_plus": 0.2483,
+      "placebo": -0.0098
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.0117,
-       "lo95": -0.0161,
-       "hi95": -0.007
+       "mean": -0.0094,
+       "lo95": -0.0138,
+       "hi95": -0.0045
       },
       "rate": {
-       "mean": -0.0005,
-       "lo95": -0.0019,
-       "hi95": 0.0009
+       "mean": 0.0003,
+       "lo95": -0.0022,
+       "hi95": 0.003
       },
       "war_total": {
-       "mean": -0.0292,
-       "lo95": -0.0413,
-       "hi95": -0.0171
+       "mean": -0.0206,
+       "lo95": -0.033,
+       "hi95": -0.0083
       },
       "ops_plus": {
-       "mean": 0.1426,
-       "lo95": 0.1214,
-       "hi95": 0.1644
+       "mean": 0.1729,
+       "lo95": 0.1497,
+       "hi95": 0.1967
       },
       "placebo": {
-       "mean": 0.3957,
-       "lo95": 0.355,
-       "hi95": 0.4376
+       "mean": 0.4313,
+       "lo95": 0.3918,
+       "hi95": 0.474
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.3959,
+      "rho": 0.4304,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0117,
-       "lo95": 0.007,
-       "hi95": 0.0161
+       "mean": 0.0094,
+       "lo95": 0.0045,
+       "hi95": 0.0138
       }
      }
     },
     "v2": {
-     "rho_primary": 0.3836,
+     "rho_primary": 0.4224,
      "rho_baselines": {
-      "plus_shrunk": 0.3958,
-      "rate": 0.3841,
-      "war_total": 0.4127,
-      "ops_plus": 0.241,
-      "placebo": -0.011
+      "plus_shrunk": 0.4319,
+      "rate": 0.421,
+      "war_total": 0.4417,
+      "ops_plus": 0.2479,
+      "placebo": -0.0095
      },
      "gap_ci_primary_minus_baseline": {
       "plus_shrunk": {
-       "mean": -0.0122,
-       "lo95": -0.0167,
-       "hi95": -0.0073
+       "mean": -0.0096,
+       "lo95": -0.0145,
+       "hi95": -0.0047
       },
       "rate": {
-       "mean": -0.0005,
-       "lo95": -0.0018,
-       "hi95": 0.0008
+       "mean": 0.0014,
+       "lo95": -0.0014,
+       "hi95": 0.004
       },
       "war_total": {
-       "mean": -0.0291,
-       "lo95": -0.0423,
-       "hi95": -0.0159
+       "mean": -0.0193,
+       "lo95": -0.0329,
+       "hi95": -0.0053
       },
       "ops_plus": {
-       "mean": 0.1427,
-       "lo95": 0.1171,
-       "hi95": 0.1685
+       "mean": 0.1748,
+       "lo95": 0.1471,
+       "hi95": 0.2026
       },
       "placebo": {
-       "mean": 0.3941,
-       "lo95": 0.3446,
-       "hi95": 0.4426
+       "mean": 0.4315,
+       "lo95": 0.3809,
+       "hi95": 0.4792
       }
      },
      "arm_S_shrunk": {
-      "rho": 0.3958,
+      "rho": 0.4319,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0122,
-       "lo95": 0.0073,
-       "hi95": 0.0167
+       "mean": 0.0096,
+       "lo95": 0.0047,
+       "hi95": 0.0145
       }
      },
      "cluster": {
@@ -174,9 +174,9 @@
    "g3b_volume_control": {
     "post_hoc": true,
     "rho_with_predictor_denominator": {
-     "plus": 0.3697,
-     "plus_shrunk": 0.3659,
-     "war_total": 0.648
+     "plus": 0.3622,
+     "plus_shrunk": 0.3525,
+     "war_total": 0.6514
     },
     "by_predictor_volume_tercile": {
      "low": {
@@ -185,12 +185,12 @@
        100.0,
        329.0
       ],
-      "rho_unshrunk": 0.1814,
-      "rho_shrunk": 0.1812,
+      "rho_unshrunk": 0.2183,
+      "rho_shrunk": 0.2189,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": -0.0004,
-       "lo95": -0.0083,
-       "hi95": 0.0086
+       "mean": 0.0005,
+       "lo95": -0.0074,
+       "hi95": 0.0103
       }
      },
      "mid": {
@@ -199,12 +199,12 @@
        330.0,
        532.0
       ],
-      "rho_unshrunk": 0.3362,
-      "rho_shrunk": 0.3364,
+      "rho_unshrunk": 0.3741,
+      "rho_shrunk": 0.3756,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0003,
-       "lo95": -0.0025,
-       "hi95": 0.0028
+       "mean": 0.0015,
+       "lo95": -0.0017,
+       "hi95": 0.0045
       }
      },
      "high": {
@@ -213,12 +213,12 @@
        533.0,
        753.0
       ],
-      "rho_unshrunk": 0.5059,
-      "rho_shrunk": 0.5091,
+      "rho_unshrunk": 0.5421,
+      "rho_shrunk": 0.5439,
       "gap_ci_shrunk_minus_unshrunk": {
-       "mean": 0.0032,
-       "lo95": 0.0014,
-       "hi95": 0.005
+       "mean": 0.0018,
+       "lo95": -0.0008,
+       "hi95": 0.0045
       }
      }
     }
@@ -228,9 +228,9 @@
     "g1_sanity_vs_placebo": {
      "pass": true,
      "gap": {
-      "mean": 0.3941,
-      "lo95": 0.3446,
-      "hi95": 0.4426
+      "mean": 0.4315,
+      "lo95": 0.3809,
+      "hi95": 0.4792
      }
     },
     "g2_ship_vs_best_baseline": {
@@ -241,23 +241,23 @@
       "rate",
       "war_total"
      ],
-     "rho_primary": 0.3836,
-     "rho_baseline": 0.4127,
+     "rho_primary": 0.4224,
+     "rho_baseline": 0.4417,
      "gap": {
-      "mean": -0.0291,
-      "lo95": -0.0423,
-      "hi95": -0.0159
+      "mean": -0.0193,
+      "lo95": -0.0329,
+      "hi95": -0.0053
      }
     },
     "g3_shrink": {
      "pre_registered_rule_fired": true,
      "gap_shrunk_minus_unshrunk": {
-      "mean": 0.0122,
-      "lo95": 0.0073,
-      "hi95": 0.0167
+      "mean": 0.0096,
+      "lo95": 0.0047,
+      "hi95": 0.0145
      },
-     "rho_shrunk": 0.3958,
-     "rho_unshrunk": 0.3836
+     "rho_shrunk": 0.4319,
+     "rho_unshrunk": 0.4224
     },
     "status": "unvalidated_display_index"
    },
@@ -266,21 +266,21 @@
     "window_years": 3,
     "results_by_convention": {
      "v1": {
-      "rho_window": 0.4168,
-      "rho_one_season": 0.3843,
+      "rho_window": 0.4505,
+      "rho_one_season": 0.4211,
       "gap_ci_window_minus_one": {
-       "mean": 0.0326,
-       "lo95": 0.0139,
-       "hi95": 0.051
+       "mean": 0.0295,
+       "lo95": 0.012,
+       "hi95": 0.0468
       }
      },
      "v2": {
-      "rho_window": 0.4157,
-      "rho_one_season": 0.3836,
+      "rho_window": 0.4503,
+      "rho_one_season": 0.4224,
       "gap_ci_window_minus_one": {
-       "mean": 0.0321,
-       "lo95": 0.0137,
-       "hi95": 0.0503
+       "mean": 0.0279,
+       "lo95": 0.0107,
+       "hi95": 0.0445
       }
      }
     },
@@ -296,26 +296,24 @@
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
     "displayed_n": 465,
-    "displayed_plus_mean": 101.24,
-    "measured_points_per_displayed_sigma": 9.11,
+    "displayed_plus_mean": 100.93,
+    "measured_points_per_displayed_sigma": 9.62,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
     "shipped": "unshrunk",
     "pre_registered_rule_fired": true,
     "pooled_gap": {
-     "mean": 0.0122,
-     "lo95": 0.0073,
-     "hi95": 0.0167
+     "mean": 0.0096,
+     "lo95": 0.0047,
+     "hi95": 0.0145
     },
     "within_volume_tercile_gap_means": {
-     "low": -0.0004,
-     "mid": 0.0003,
-     "high": 0.0032
+     "low": 0.0005,
+     "mid": 0.0015,
+     "high": 0.0018
     },
-    "terciles_clearing_zero": [
-     "high"
-    ],
+    "terciles_clearing_zero": [],
     "post_hoc_control": true,
     "g2_failed_so_no_forward_claim_is_shipped": true,
     "owner_call": "OPEN. The pre-registered rule as written says ship shrunk on this pool, and the ship is unshrunk on the four reasons in shrink_ruling.__doc__. Registered here as a measured candidate rather than acted on silently."
@@ -873,7 +871,7 @@
   }
  },
  "war_provider": "ewar_v3",
- "ewar_generated_at": "2026-10-22T02:17:24+00:00",
+ "ewar_generated_at": "2026-10-26T20:56:58+00:00",
  "verdict": {
   "g1_beats_zero_information_control_by_pool": {
    "hit": true,
@@ -896,7 +894,7 @@
    "RP": false
   },
   "shrink_decision": "UNSHRUNK on every pool. The pre-registered arm-S rule FIRED on ['hit'] and is being overridden, not ignored: see pools[*].shrink_ruling for the argument and the open owner call.",
-  "summary": "NO PASS on the ship gate. The indexes carry real signal (they beat a zero-information control) on hitters, starters, relievers. Hitters (WAR/PA+): index 0.3836 vs plain season WAR on the same series 0.4127 (gap lo95 -0.0423), G2 FAIL. Starters (WAR/IP+): index 0.4544 vs the same rate left unstandardized 0.4539 (gap lo95 -0.0036), G2 FAIL; against season WAR (0.4183) it clears (lo95 +0.0146). Relievers (WAR/IP+): index 0.2552 vs the same rate left unstandardized 0.2553 (gap lo95 -0.0021), G2 FAIL; against season WAR (0.2519) it does not clear (lo95 -0.0094). They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. Where season WAR itself is the binding baseline (hitters), the mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
+  "summary": "NO PASS on the ship gate. The indexes carry real signal (they beat a zero-information control) on hitters, starters, relievers. Hitters (WAR/PA+): index 0.4224 vs plain season WAR on the same series 0.4417 (gap lo95 -0.0329), G2 FAIL. Starters (WAR/IP+): index 0.4544 vs the same rate left unstandardized 0.4539 (gap lo95 -0.0036), G2 FAIL; against season WAR (0.4183) it clears (lo95 +0.0146). Relievers (WAR/IP+): index 0.2552 vs the same rate left unstandardized 0.2553 (gap lo95 -0.0021), G2 FAIL; against season WAR (0.2519) it does not clear (lo95 -0.0094). They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. Where season WAR itself is the binding baseline (hitters), the mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
  },
- "runtime_seconds": 252.5
+ "runtime_seconds": 388.3
 }

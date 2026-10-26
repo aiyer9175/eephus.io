@@ -104,7 +104,9 @@ def test_served_card_parts_match_the_artifact():
             continue
         assert r.get("war_parts") == (want or None) or ("war_parts" not in r and not want), (mid, r["y"])
         if r.get("war_parts") and r.get("war_fwar") is not None:
-            # eWAR minus FanGraphs WAR is the eabs part, within two 1dp roundings
-            assert abs(r["war"] - r["war_fwar"] - r["war_parts"].get("eabs", 0.0)) <= 0.1 + 1e-9
+            # eWAR minus FanGraphs WAR is its own parts (eabs, and xhem since owner EW3-53),
+            # within two 1dp roundings and the parts' 2dp roundings
+            own = r["war_parts"].get("eabs", 0.0) + r["war_parts"].get("xhem", 0.0)
+            assert abs(r["war"] - r["war_fwar"] - own) <= 0.1 + 0.01 + 1e-9
             n += 1
     assert n > 0

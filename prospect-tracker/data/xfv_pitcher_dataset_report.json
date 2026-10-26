@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-10-15",
+ "generated_at": "2026-10-26",
  "scope": "PITCHERS; debut 2011-2025 + never-MLB bust pool",
- "target": "first-6-season summed WAR (fwar); resolved<= 2026",
+ "target": "first-6-season summed WAR (ewar_headline); resolved<= 2026",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2767,
+  "debuted_seen": 2768,
   "debuted_hitter": 1300,
   "debuted_no_pre_fv": 143,
   "debuted_no_war": 40,
@@ -64,11 +64,11 @@
   },
   "full_pool_km_censored": {
    "n": 2100,
-   "spearman": 0.2795
+   "spearman": 0.279
   },
   "debuted_km_censored": {
    "n": 1116,
-   "spearman": 0.3529
+   "spearman": 0.3518
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr label WAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

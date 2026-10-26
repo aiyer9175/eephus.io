@@ -1,6 +1,6 @@
 {
 "meta": {
-"generated_at": "2026-10-15",
+"generated_at": "2026-10-26",
 "modeled_tools": {
 "hit": {
 "n": 703,
@@ -99,7 +99,7 @@
 "blend_rho": 0.3242,
 "grade_rho": 0.3987,
 "margin": -0.0745,
-"delta_lo95": -0.0961,
+"delta_lo95": -0.0959,
 "gate": "paired bootstrap on br - gr, one-sided 95% lower bound > 0",
 "boot": 2000,
 "knife_edge": false,

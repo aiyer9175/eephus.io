@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-10-15",
+ "generated_at": "2026-10-26",
  "scope": "HITTERS; debut 2011-2025 + never-MLB bust pool",
- "target": "first-6-season summed WAR (fwar); resolved<= 2026",
+ "target": "first-6-season summed WAR (ewar_headline); resolved<= 2026",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2767,
+  "debuted_seen": 2768,
   "debuted_hitter": 1108,
   "debuted_no_pre_fv": 114,
   "debuted_no_war": 23,
@@ -48,8 +48,8 @@
  "war_distribution_resolved_debuted": {
   "n": 560,
   "p10": -0.88,
-  "p50": 0.84,
-  "p90": 13.51,
+  "p50": 0.82,
+  "p90": 13.54,
   "mean": 4.09,
   "max": 47.16,
   "pct_under_0.5": 0.463
@@ -61,11 +61,11 @@
   },
   "full_pool_resolved": {
    "n": 1577,
-   "spearman": 0.2596
+   "spearman": 0.2614
   },
   "full_pool_km_censored": {
    "n": 1985,
-   "spearman": 0.2933
+   "spearman": 0.2959
   },
   "debuted_km_censored": {
    "n": 968,
