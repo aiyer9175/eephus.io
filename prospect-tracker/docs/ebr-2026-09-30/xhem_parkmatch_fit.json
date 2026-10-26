@@ -1,0 +1,65 @@
+{
+ "arms": {
+  "hem": {
+   "b": 0.093827627,
+   "n": 1116,
+   "se": 0.242794106,
+   "seasons": [
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "slope": 0.093827627
+  },
+  "xhem": {
+   "b": 0.46773014,
+   "n": 1417,
+   "se": 0.08757253,
+   "seasons": [
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "slope": 0.46773014
+  }
+ },
+ "b": {
+  "hem": 0.093828,
+  "xhem": 0.46773
+ },
+ "fit_seasons": [
+  2016,
+  2017,
+  2018,
+  2019
+ ],
+ "fitted_at": "2026-10-26T17:57:47+00:00",
+ "park_factor": "FanGraphs Guts, Basic (5yr), .cache/fangraphs/park_factors_{s}.json",
+ "preview": {
+  "fwar_vintage_id": "2026-10-02-a020cf64844a",
+  "generated_at": "2026-10-22T01:32:40+00:00",
+  "path": ".cache/swar/preview/swar.json",
+  "sha256": "fc640b0117ef07fd9e43fb16a428912231132d32ae450103e13cead1a05cd97d"
+ },
+ "rows_by_season": {
+  "2016": {
+   "hem": 285,
+   "xhem": 353
+  },
+  "2017": {
+   "hem": 276,
+   "xhem": 349
+  },
+  "2018": {
+   "hem": 277,
+   "xhem": 355
+  },
+  "2019": {
+   "hem": 278,
+   "xhem": 360
+  }
+ },
+ "what_this_is": "The frozen shares b of the park-matched xHEM+ part (docs/ebr-2026-09-30/EBR_GATE.md 11.12.2): per arm, the PA-weighted least-squares slope of S1x's g_batx per PA on fWAR's park term per PA, one intercept per season, fit seasons 2016 to 2019, clamped to 0 to 1. Same-season quantities only; fitted once, before the read."
+}
