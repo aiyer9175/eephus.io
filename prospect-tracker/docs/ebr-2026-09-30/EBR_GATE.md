@@ -2490,6 +2490,193 @@ Registered reading, fixed now:
 - Committed alone, docs and its pin test only, before any number of the part exists. No served number
   moves at this commit.
 
+### 11.12 2026-10-26: the park-matched xHEM+ part, re-specified and read once (clauses (i) and (ii), owner decision EW3-52)
+
+- **Owner answer, as recorded** (`DECISIONS_FOR_OWNER.md`, EW3-52, 2026-10-26): told that the built
+  xHEM+ half-weight part charges run-friendly parks twice, the owner answered "Hold, build
+  park-matched": the flip of 11.11 is held (`ewar_v3.XHEM_HALF_LIVE` stays False); task
+  EWAR_XHEM_PARKMATCH registers a park-matched re-specification of the part, builds it dark behind
+  its own flag, reads it once on the skill look's frames with a park-pattern check, and does not flip
+  it; the part may flip only if it is non-inferior to fWAR batting on the look's statistic AND the
+  park pattern is gone. Part 1 gains this row, recorded here because part 1 is not edited in place:
+
+| Id | Question | Recorded answer | Status |
+|---|---|---|---|
+| EW3-52 | Whether the xHEM+ half-weight part flips as built | no: the flip is held; a park-matched re-specification (11.12.2) is registered, built dark and read once (11.12.3 to 11.12.6); it may flip only on a PASS of 11.12.7, and only by a later owner answer | answered 2026-10-26 (`DECISIONS_FOR_OWNER.md`, EW3-52); registered by queue task EWAR_XHEM_PARKMATCH |
+
+- **What this amendment is.** A re-specified part, not a re-score of S1x: the skill look's record
+  of S1x (part 12.2), the holdout's (part 12.3) and 11.11's definition stand as written, and nothing
+  they read changes. Clause (ii) lets an amendment fix a definition defect, stating the defect, its
+  evidence and the fix; the evidence below is same-season only, and no year-to-year or forward number
+  chose the fix. Clause (i) records the owner's answer, which also asks for one read of the
+  re-specified part on frames the skill look already read; part 9.5 forbids a second run of the look
+  or the holdout, so this read is a new, separately registered read of a new object, recorded as an
+  owner decision for this item alone. The 2025 to 2026 holdout is not read for the re-specified part:
+  part 9.5 permits no second holdout run, so S1x's holdout result is cited as S1x's and never as the
+  re-specified part's.
+
+#### 11.12.1 The defect and its evidence (same season only)
+
+- **Defect.** FanGraphs' batting runs are wRAA plus a park term, (1 - PF) * lgR/PA * PA per stint on
+  FanGraphs' Basic (5yr) park factor, plus a league term that is one rate per plate appearance within
+  a league (`fwar_frame.batting_runs`). S1x swaps actual wOBA for the re-levelled Savant xwOBA inside
+  wRAA and keeps the park term. Savant xwOBA carries only part of a park's effect on wOBA, so the
+  swap removes part of the park's inflation a second time: a hitter in a run-friendly park is charged
+  by the park term and again by the swap. The defect is in the part's definition (11.11.1 and part
+  9.4's S1x), not in the look's arithmetic.
+- **Evidence** (task EWAR_XHEM_HALF's census of 2026-10-22 and this task's same-season reads on the
+  swar preview of 2026-10-22, sha256 `fc640b01...`; no year-to-year, split-half or forward number was
+  computed):
+  - Identity: published batting minus wRAA minus the park term built from the cached Guts table
+    (`.cache/fangraphs/park_factors_{s}.json`, Basic (5yr)) and B-Ref stint shares is one constant
+    per plate appearance within each league-season, with an sd at most 0.0000018 runs per PA in
+    2016 to 2021 and at most 0.00034 in 2022 to 2026 (single-team hitters at 100 PA or more). The
+    park term rebuilt here is therefore the one FanGraphs applied.
+  - Hitter level: the PA-weighted slope of the as-built xHEM+ arm's g_batx per PA on the park term
+    per PA reads 0.441 over 3,697 xHEM+-arm hitter-seasons of 2016 to 2026. A part free of the park
+    would read 0; a part that re-introduced the whole park term would read 1.
+  - Club level (330 club-seasons, 2016 to 2026, the half-weight part, wins): the slope of the club
+    total on the club's park factor reads -0.132 wins per PF point, against -0.332 for half of
+    fWAR's own park term. Coors Field (COL): the part's mean is -2.72 wins a club-season against
+    -4.59 for half the park term. ATH at Sutter Health Park (PF 107.52): 2025 -4.29 (half the park
+    term -2.75), 2026 -1.52 (-2.71). Nolan Arenado's career moves -9.07.
+  - Consequence for full removal: subtracting the whole park term from the swap (park-neutral
+    expected runs against park-neutralized actual runs, treating xwOBA as free of the park) moves
+    the club slope to about +0.200 wins per PF point and Coors to about +1.87 wins a club-season,
+    because xwOBA itself carries a share of the park's effect. Full removal is therefore not
+    registered; 11.12.2 removes the share the swap re-introduces.
+
+#### 11.12.2 The re-specified part: definition
+
+```
+season s, 2016 on; rows: S1x's rule rows (part 9.4), pitcher-batters outside the rule (delta 0)
+PF_t,s    = FanGraphs' Basic (5yr) park factor / 100 of club t in season s, read from the cached
+            Guts table .cache/fangraphs/park_factors_{s}.json, never fetched
+PA_i,t    = hitter i's StatsAPI season PA split by his B-Ref stint PA shares, stint teams mapped to
+            StatsAPI ids by tools/fwar_replica_eval.team_map (the replica's stint rule)
+P_i       = sum over i's stints t of (1 - PF_t,s) * lgR/PA_s * PA_i,t      (fwar_frame.park_runs;
+            lgR/PA_s from data/league_constants.json); a stint whose club has no factor stops the build
+b_a       = the PA-weighted least-squares slope of g_a,i / PA_i on P_i / PA_i, one intercept per
+            season, over arm a's rows with PA > 0 in the FIT SEASONS 2016, 2017, 2018 and 2019,
+            clamped to 0 to 1; a = xhem on rows on the xHEM+ arm, a = hem on every other rule row
+            (the HEM+ arm's shrink also re-introduces part of the park); fitted once, frozen with its
+            fit log before the read, never refit on the read's outcomes
+g_pm,i    = g_batx,i - b_arm(i) * P_i                 runs; g_batx,i part 9.4's S1x before re-centring
+d_pm,i    = g_pm,i - PA_i * (sum_k g_pm,k) / (sum_k PA_k)   per season over the rule's rows
+LAMBDA    = 0.5, fixed in advance by EW3-51 and EW3-52, never tuned
+x_pm,i    = LAMBDA * d_pm,i / RPW*_s              wins, hitting side of the headline series only
+```
+
+- **What it means.** b_a is the share of fWAR's park term that the arm's own rate re-introduces; the
+  part subtracts that share, so the park is removed once, by fWAR's own park term, and the part keeps
+  only what the arm says beyond the park. b = 0 is S1x as built; b = 1 is full removal (11.12.1).
+- **Why the fit seasons are 2016 to 2019.** They lie outside the read's deciding seasons (2021 to
+  2025) and outside the park-pattern check's seasons (2021 to 2026), so both read the constants out of
+  sample; 2020 (60 games) stays out of the fit. The read's reported 2016 to 2018 block (11.12.3)
+  overlaps the fit and is labelled so.
+- **Unchanged from 11.11:** the rows (S1x's), the seasons (2016 on, 2015 none), LAMBDA, the
+  conversion at RPW*_s, the zero-sum identity, eWAR realized, the pitching side, the ABS part, the
+  runs-per-win form, `data/ewar.json` and the frozen eFV label (11.11.3: the label reads the
+  headline without the part, so it reproduces whichever construction the part uses).
+- **The flag.** `ewar_v3.XHEM_PARKMATCH_LIVE` (default False). With it on and
+  `ewar_v3.XHEM_HALF_LIVE` on, `tools/build_ewar_v3.py` carries x_pm in place of 11.11.1's x; with
+  it off the build is exactly the one 11.11 registered. `--xhem-preview --parkmatch` writes the
+  part-on build with x_pm to `.cache/ewar_v3/preview/ewar_v3_xhem_pm.json` only, for the census
+  (11.11.4's rule) and the tests. The flag is flipped only by a later owner answer after a PASS.
+
+#### 11.12.3 The read: frame, base, target, statistic
+
+| Item | Registered value |
+|---|---|
+| Runs | once, by `tools/xhem_parkmatch_lab.py --run`, after the fit of 11.12.2 is frozen and committed and the dry run on fixtures with nulls passes; any day (owner EW3-5) |
+| Pairs (deciding) | the skill look's primary frame: (Y, Y+1) for Y = 2021, 2022, 2023, 2024, 2020 out on both sides; hitters with 200 PA or more in both seasons; MLB player-seasons by MLBAM |
+| B0 | park-neutral batting runs in Y: wRAA_i(Y) (11.2.1's batting base, on the season's solved weights) + P_i(Y), which is FanGraphs' batting runs less its league term, the base the part departs from |
+| Test value | B0 + LAMBDA * d_pm,i(Y), LAMBDA 0.5 (the part as it would be served, in runs) |
+| Target | park-neutral batting runs in Y+1: wRAA_i(Y+1) + P_i(Y+1), the same construction; rate cell PM-rate (per PA, unrounded) and total cell PM-total (runs) |
+| Statistic | part 9.5's: Spearman gap rho(test, target) - rho(B0, target); convention v2 primary (player-clustered, season-stratified bootstrap, within-outcome-season z target); convention v1 (the iid pair bootstrap on the raw target) reported beside; B = 2,000; seed 20261008; each cell's bootstrap sd, half-width and MDE95 printed before any gap |
+| Lower bound | the one-sided 95 percent lower bound of a cell's gap: the 5th percentile of its convention-v2 bootstrap distribution |
+| NON-INFERIOR (per cell) | the lower bound is above -0.02 (part 9.5's margin) |
+| Reported beside, no weight | the as-built half part (B0 + LAMBDA * d_batx) on the same pairs and its gap, and the contrast PM minus as-built on the rate cell (same draws); the part at LAMBDA 1; both parts on 11.2.1's unadjusted frame (B0 wRAA(Y), target wRAA(Y+1)); per-season gaps; the 2016 to 2018 predictor block (outcomes 2017 to 2019), which overlaps the fit seasons |
+
+- **Why the frame is park-neutral.** The part is served as a departure from FanGraphs' batting runs,
+  which carry the park term; the defect lives in that term, and 11.2.1's frame leaves it out of both
+  base and target, so a read on 11.2.1's frame cannot see it. 11.2.1's frame is reported beside.
+- **The team guard** (11.2.4 unchanged): outcome seasons 2022 to 2025, 120 club-seasons, the series
+  fWAR + x_pm against fWAR on runs scored, run differential and wins, both bootstraps, B = 2,000, seed
+  20261024, NON-INFERIOR when dT - 1.645 sd is above -0.02 under both. Computed and recorded; it is
+  not part of EW3-52's flip condition (11.12.7), because EW3-51 entered the part without a
+  NON-INFERIOR guard and EW3-52 names the statistic and the park pattern. Its r values and dT appear
+  only in part 12 and the tracked record, never on a page or in copy.
+
+#### 11.12.4 The park-pattern check (deciding)
+
+| Item | Registered value |
+|---|---|
+| Club-season change | c_t,s = sum over hitters i of x_pm,i * PA_i,t / PA_i, in wins, the part as served (LAMBDA 0.5), clubs by B-Ref stint mapped to StatsAPI ids |
+| Club-seasons (deciding) | 2021 to 2026, every club with a park factor (180), all outside the fit seasons; 2016 to 2020 reported beside, labelled in-fit or short season |
+| Statistic | the OLS slope of c_t,s on the club-season's park factor in points, 100 * (PF_t,s - 1), one row per club-season |
+| Tolerance | the slope lies from -0.05 to +0.05 wins per PF point: at most 15 percent of half of fWAR's own park term (-0.332 per point, 11.12.1), and at most 0.65 wins a club-season at Coors' 13 points |
+| Named parks | Coors Field (COL, 2021 to 2026) and Sutter Health Park, Sacramento (ATH, 2025 and 2026): each one's mean c lies within 1.96 * sd_n / sqrt(n_park) of 0, sd_n the sd of c over the deciding club-seasons whose park factor lies from 97 to 103, n_park its club-seasons |
+| Interval, reported | the slope's 95 percent interval under a club-clustered bootstrap (franchises drawn with all their club-seasons), B = 2,000, seed 20261026; it decides nothing |
+| PASS | the slope inside the tolerance AND both named parks inside their bands |
+
+- **The check's controls** (each must hold, or the check is INVALID and the read licenses nothing):
+  K0, an all-zero part reads slope 0; K1, the as-built half part (x of 11.11.1) on the same
+  club-seasons reads a slope outside the tolerance (the check sees the defect it exists for); K2, the
+  re-specified part with fWAR's whole park term planted back (x_pm + LAMBDA * P_i / RPW*_s) reads a
+  slope outside the tolerance.
+- **Disclosed.** The as-built slope and the park term's slope (11.12.1) were read before this
+  registration, so with b fitted on 2016 to 2019 a slope near 0 on 2021 to 2026 is expected if the
+  share transports across seasons; the check tests that transport and the named parks, not a blind
+  hypothesis. The forward read of 11.12.3 is the blind leg: no number of it exists at this commit.
+
+#### 11.12.5 Null and planted checks of the read (each must hold)
+
+- **N0, the zero part:** an all-zero delta reads gap 0 in both cells (the machinery's identity). It
+  also shows that non-inferiority alone cannot tell the part from no part, which N1 does.
+- **N1, the null comparator:** the twin of part 9.5, d_pm permuted within (predictor season, PA decile)
+  and added at LAMBDA 0.5. The rate-cell contrast rho(test) - rho(twin), same pairs and draws, must
+  have its 95 percent lower bound (2.5th percentile) above 0: the part carries information its own
+  permutation does not.
+- **PL1, planted recovery:** u_i = sd(d_pm over the frame) * (z_i + e_i) / sd(z + e), z_i the
+  within-outcome-season z of (target rate - B0 rate) and e_i standard normal noise (seed 20261026),
+  added at LAMBDA 0.5. The rate cell must read a lower bound (5th percentile) above 0.
+- **PL2, planted harm:** -u_i added at LAMBDA 0.5. The rate cell must read NOT NON-INFERIOR.
+- The dry run (`--dry-run`) runs every path on fixtures with nulls and a fixture with a planted signal
+  first; on a crash after scoring began: STOP, no rerun, an owner question.
+
+#### 11.12.6 Registered expectations and power (predictions, not measurements)
+
+- The fitted b_xhem lands near the pooled 0.44 of 11.12.1, and b_hem between 0 and 1. The park-pattern
+  slope on 2021 to 2026 lies inside the tolerance; K1 and K2 lie outside it.
+- PM-rate's point gap is positive and smaller than LAMBDA 1's; the contrast PM minus as-built is small
+  next to its interval. The look's xHEM+ H-rate cell at LAMBDA 1 had a bootstrap sd of 0.0175; at half
+  weight the sd is expected near half that, so the lower bound sits about 0.015 under the point gap
+  and a cell reads NON-INFERIOR whenever its point gap is above about -0.005. Non-inferiority at a
+  0.02 margin is reachable on 1,071 pairs; superiority is not what EW3-52 asks.
+- The team guard is underpowered as in the look (half-widths above 0.02 on 120 club-seasons).
+
+#### 11.12.7 What the read licenses
+
+| Result | What follows |
+|---|---|
+| PASS: PM-rate and PM-total NON-INFERIOR, the park-pattern check PASS, its controls hold, and N0, N1, PL1 and PL2 hold | an owner question quoting the result: whether to flip `XHEM_HALF_LIVE` and `XHEM_PARKMATCH_LIVE` together (a flip commit under the FLIP RULE); this task does not flip |
+| NOT PASS: any of those fails | the flags stay False; an owner question quoting the result |
+| INVALID: a control of 11.12.4 or a check of 11.12.5 fails | licenses nothing; the flags stay False; an owner question |
+| VOID: a crash after scoring began, or a precondition found broken after the run | licenses nothing; no rerun; an owner question |
+
+- **Copy.** No site sentence follows from this read. If a later owner answer flips the re-specified
+  part, its copy is that answer's; 11.11.2's sentence cites S1x's look and holdout and is not this
+  part's evidence.
+- **Never:** b or LAMBDA tuned on the read; a second run; another frame, subset, season, target or
+  tolerance substituted after the read; the 2025 to 2026 holdout read for this part.
+- **The record.** The read writes the tracked file `docs/ebr-2026-09-30/xhem_parkmatch_eval.json`
+  and part 12.4 in one commit; the fit writes `docs/ebr-2026-09-30/xhem_parkmatch_fit.json` in the
+  build's commit, before the read. Nothing under `data/` is written.
+
+- Committed alone, docs and its pin test only, before any number of the re-specified part exists. No
+  served number moves at this commit.
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**

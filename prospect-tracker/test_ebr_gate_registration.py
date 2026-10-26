@@ -868,6 +868,42 @@ def test_amendment_11_11_xhem_at_half_weight_by_owner_decision():
     assert doc.index("### 11.10 2026-10-21") < doc.index("### 11.11 2026-10-22") < doc.index(RESULTS_HEADING)
 
 
+def test_amendment_11_12_park_matched_xhem_registered_before_any_number():
+    flat = _flat(_section(_doc(), "### 11.12 2026-10-26", RESULTS_HEADING))
+    assert ("### 11.12 2026-10-26: the park-matched xHEM+ part, re-specified and read once (clauses (i) "
+            "and (ii), owner decision EW3-52)") in flat
+    assert "| EW3-52 | Whether the xHEM+ half-weight part flips as built |" in flat
+    assert "A re-specified part, not a re-score of S1x" in flat
+    assert "S1x's holdout result is cited as S1x's and never as the re-specified part's" in flat
+    # the defect and the fix
+    assert "reads 0.441 over 3,697 xHEM+-arm hitter-seasons of 2016 to 2026" in flat
+    assert "Full removal is therefore not registered" in flat
+    assert "g_pm,i = g_batx,i - b_arm(i) * P_i" in flat
+    assert "FIT SEASONS 2016, 2017, 2018 and 2019" in flat
+    assert "LAMBDA = 0.5, fixed in advance by EW3-51 and EW3-52, never tuned" in flat
+    assert "x_pm,i = LAMBDA * d_pm,i / RPW*_s" in flat
+    assert "`ewar_v3.XHEM_PARKMATCH_LIVE` (default False)" in flat
+    # the read
+    assert "| Pairs (deciding) | the skill look's primary frame: (Y, Y+1) for Y = 2021, 2022, 2023, 2024" in flat
+    assert "| NON-INFERIOR (per cell) | the lower bound is above -0.02 (part 9.5's margin) |" in flat
+    assert "B = 2,000; seed 20261008" in flat
+    # the park-pattern check, its controls, the null and planted checks
+    assert "| Tolerance | the slope lies from -0.05 to +0.05 wins per PF point" in flat
+    assert "Coors Field (COL, 2021 to 2026) and Sutter Health Park, Sacramento (ATH, 2025 and 2026)" in flat
+    for tag in ("K0, an all-zero part", "K1, the as-built half part", "K2, the re-specified part",
+                "**N0, the zero part:**", "**N1, the null comparator:**", "**PL1, planted recovery:**",
+                "**PL2, planted harm:**"):
+        assert tag in flat, tag
+    assert ("| PASS: PM-rate and PM-total NON-INFERIOR, the park-pattern check PASS, its controls hold, and "
+            "N0, N1, PL1 and PL2 hold |") in flat
+    assert "this task does not flip" in flat
+    assert "the 2025 to 2026 holdout read for this part" in flat
+    assert ("Committed alone, docs and its pin test only, before any number of the re-specified part exists. "
+            "No served number moves at this commit.") in flat
+    doc = _doc()
+    assert doc.index("### 11.11 2026-10-22") < doc.index("### 11.12 2026-10-26") < doc.index(RESULTS_HEADING)
+
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
