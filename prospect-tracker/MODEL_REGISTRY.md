@@ -4,7 +4,7 @@
 Source: `data/model_registry.json` via `model_registry.load()`. Freshness columns
 (artifact age / stale) are the registry's own stamps, written by
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 120);
-stamped as of **2026-10-02**. `validate()` at generation time: **1 problem(s)** (listed below).
+stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
 **406 models.** Verdicts: validated: 54, provisional: 209, unvalidated: 51, deprecated: 92.
 
@@ -427,10 +427,6 @@ can be measured.
 | `xm` | Provisional: the /fa/ market model, generalized to every player, beat a WAR-times-price rule on the held-out 2025 and 2026 winters (log-total MAE 0.736 against 0.899); MLB Trade Rumors beat it. | served from 2026-10-22 (owner XM-FLIP): xM$ and Fair $ on... | the free-agent market price this winter: years, the deferral-adjusted NPV total guarantee and AAV with a P10-P90 band, for sign... | a_incumbent: fa_market.MarketModel (fa_mkt_v2, NPV basis) refit per fold, sel... | NULL 1: platform WAR x the one-step $/WAR index, years from the training medi... | log-total MAE on the NPV guarantee, paired against each comparator with a pla... | **provisional** | `data/xm_eval.json` | - | - |
 
 Stored problems at last refresh: none.
-
-Live `validate()` problems:
-
-- ewar_band: artifact missing: data/ewar_band.json
 
 Verdict semantics (from `model_registry.py`): validated = committed forward
 backtest beats the stated baseline; provisional = partially measured;

@@ -1,0 +1,117 @@
+{
+ "claim": "On seasons held out from its constants the band covered the other published WAR and a split-half rescaled season at a rate between 70 and 90 percent in every playing-time band. It is not a confidence interval for talent.",
+ "constants": {
+  "k": {
+   "bat": 0.123787,
+   "ebr": 0.014762,
+   "fip": 0.538254,
+   "ra": 2.084767,
+   "src_bat": 0.000528,
+   "src_pit": 0.004024
+  },
+  "m": {
+   "bat": [
+    0.951752,
+    1.131842,
+    1.166486,
+    1.188814
+   ],
+   "ebr": [
+    0.957767,
+    1.035876,
+    1.056955,
+    1.044616
+   ],
+   "fip": [
+    0.954881,
+    0.907226,
+    0.904445,
+    0.831849
+   ],
+   "ra": [
+    0.875587,
+    0.746368,
+    0.715508,
+    0.623943
+   ],
+   "src_bat": [
+    0.59614,
+    0.852173,
+    0.95211,
+    0.972338
+   ],
+   "src_pit": [
+    0.879096,
+    0.936437,
+    1.05277,
+    1.028575
+   ]
+  }
+ },
+ "decimals": 1,
+ "edges": {
+  "bat": [
+   20.0,
+   100.0,
+   300.0,
+   500.0
+  ],
+  "pit": [
+   5.0,
+   20.0,
+   60.0,
+   120.0
+  ]
+ },
+ "floors": {
+  "bat": 20.0,
+  "pit": 5.0
+ },
+ "gate": "docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md",
+ "generated_at": "2026-10-26T18:00:36+00:00",
+ "how": "sigma^2 = [m_bat^2 k_bat PA + m_ebr^2 k_ebr PA + m_pit^2 k_pit IP] / RPW_s^2 + m_src,bat^2 k_src,bat PA + m_src,pit^2 k_src,pit IP; band = eWAR +/- 1.2816 sigma; k_pit = k_fip (eWAR) or k_ra (an eWAR realized pitcher-season on R2)",
+ "model": "ewar_band",
+ "nominal": 0.8,
+ "record": "data/_labs/ewar_uncertainty_band/record.json",
+ "record_sha256": "a59f8091b56fad2b66d3a43da659b6c75c7ecc12d0a55976d8dd6b7272f1a61e",
+ "schema": 1,
+ "test_coverage_by_family": {
+  "C1-bat": [
+   0.821,
+   0.797,
+   0.821,
+   0.819
+  ],
+  "C1-pit": [
+   0.795,
+   0.778,
+   0.792,
+   0.813
+  ],
+  "C2-bat": [
+   0.809,
+   0.801,
+   0.774,
+   0.789
+  ],
+  "C2-ebr": [
+   0.801,
+   0.785,
+   0.792,
+   0.789
+  ],
+  "C2-fip": [
+   0.822,
+   0.813,
+   0.871,
+   0.79
+  ],
+  "C2-ra": [
+   0.805,
+   0.774,
+   0.842,
+   0.799
+  ]
+ },
+ "z": 1.2816
+}
