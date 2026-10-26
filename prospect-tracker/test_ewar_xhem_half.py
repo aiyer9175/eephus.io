@@ -39,6 +39,15 @@ from test_ewar_v3 import FixtureInputs  # noqa: E402
 
 OWNER_COPY = ("Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the "
               "same way on 2025-26 (+0.068, range -0.003 to +0.141). A 2027 read decides whether it stays.")
+# The served sentence since the park-matched flip (owner EW3-53 2026-10-26).
+PM_COPY = ("Provisional. With its park effect counted once, xHEM+ improved next-season prediction over FanGraphs' batting in the 2021-2024 test (+0.045, range +0.028 to +0.060). A 2027 read decides whether it stays.")
+
+
+@pytest.fixture(autouse=True)
+def _part_as_built(monkeypatch):
+    # These tests pin 11.11's as-built part; the park-matched construction has its
+    # own tests (test_xhem_parkmatch.py), so the park match is pinned off here.
+    monkeypatch.setattr(V3, "XHEM_PARKMATCH_LIVE", False)
 
 
 class XInputs(FixtureInputs):
@@ -74,7 +83,7 @@ def fx(monkeypatch):
 
 # (a) ------------------------------------------------------------------------
 def test_flag_defaults_off_with_a_fixed_half_weight_from_2016():
-    assert V3.XHEM_HALF_LIVE is False, "the orchestrator flips this on the owner's authorization"
+    assert V3.XHEM_HALF_LIVE is True  # owner EW3-53 2026-10-26
     assert V3.XHEM_LAMBDA == 0.5
     assert V3.XHEM_FIRST_SEASON == 2016
     assert V3.PART_LABELS["xhem"] == "xHEM+ (expected batting, half weight)"
@@ -218,15 +227,26 @@ def test_the_site_sentence_is_the_owners_and_derives_from_the_record():
     assert "override" not in OWNER_COPY.lower()
 
 
+def test_the_park_matched_sentence_derives_from_its_record():
+    assert V3.xhem_copy(parkmatch=True) == PM_COPY
+    rec = json.loads(V3.PM_EVAL.read_text(encoding="utf-8"))
+    moved = copy.deepcopy(rec)
+    moved["cells"]["PM-rate"]["gap"] = 0.05
+    assert "(+0.050, range" in V3.xhem_copy(parkmatch=True, pm_record=moved)
+    assert "override" not in PM_COPY.lower()
+
+
 def test_the_card_tip_carries_the_sentence():
     js = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
     block = js.split("const EWAR_PARTS = [", 1)[1].split("];", 1)[0]
     assert '{ id: "xhem", label: "xHEM+ (expected batting, half weight)"' in block
-    assert OWNER_COPY in block
+    assert PM_COPY in block and OWNER_COPY not in block
     assert "override" not in block.lower()
 
 
-def test_copy_that_names_the_parts_reads_as_before_while_off():
+def test_copy_that_names_the_parts_carries_the_suffix_since_the_flip():
+    # These strings are built at import, so they follow the module flag (on since
+    # owner EW3-53); xhem_suffix(False) is the dark path.
     import awards_core
     import mlb_player_export as mpe
     import pal_export
@@ -234,12 +254,15 @@ def test_copy_that_names_the_parts_reads_as_before_while_off():
     assert V3.xhem_suffix(True) == " and, provisionally, half of xHEM+ expected batting from 2016"
     assert awards_core.CREDIT_LINES["bref_v3"] == (
         "Rosters by league and club come from Baseball-Reference's WAR file; eWAR starts from "
-        "FanGraphs' published WAR, with the site's ABS challenge part from 2026.")
+        "FanGraphs' published WAR, with the site's ABS challenge part from 2026 and, provisionally, "
+        "half of xHEM+ expected batting from 2016.")
     assert pal_export._WAR_SERIES["ewar_v3"] == (
         "eWAR: FanGraphs' published WAR from the frozen vintage plus the site's named "
-        "departures (the ABS challenge part from 2026)")
-    assert "plus the ABS challenge part from 2026, data/ewar_v3.json); war_real" in mpe._CAREER_NOTE_V3
-    assert "xhem" not in mpe._CAREER_NOTE_V3
+        "departures (the ABS challenge part from 2026 and, provisionally, half of xHEM+ expected "
+        "batting from 2016)")
+    assert ("plus the ABS challenge part from 2026 and, provisionally, half of xHEM+ expected batting "
+            "from 2016, data/ewar_v3.json); war_real") in mpe._CAREER_NOTE_V3
+    assert "xhem: half of the xHEM+ batting part" in mpe._CAREER_NOTE_V3
 
 
 def test_the_board_states_the_sentence_only_when_a_season_carries_the_part():
@@ -254,8 +277,9 @@ def test_the_board_states_the_sentence_only_when_a_season_carries_the_part():
     assert "xhem" not in wbe._components_block(groups)
 
 
-def test_the_glossary_and_registry_tool_waits_for_the_flag():
+def test_the_glossary_and_registry_tool_waits_for_the_flag(monkeypatch):
     import ewar_xhem_glossary_registry as T
+    monkeypatch.setattr(V3, "XHEM_HALF_LIVE", False)  # the dark path, pinned since the EW3-53 flip
     assert T.main(["--check"]) == 2          # refuses while the flag is off
     row = T.registry_row(json.loads(V3.SWAR_EVAL.read_text(encoding="utf-8")))
     assert row["verdict"] == "provisional" and row["provisional_kind"] == "shipped_partial_measurement"

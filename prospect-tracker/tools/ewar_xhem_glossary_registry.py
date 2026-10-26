@@ -68,11 +68,15 @@ def entry(copy: str) -> dict:
                         "HEM+ construction) stand in; pitchers batting carry none. The runs are re-centred so "
                         "the league's hitters sum to zero each season, so the league's hitting total stays "
                         "FanGraphs', converted to wins at FanGraphs' runs per win for the season, and halved. "
-                        "The half is fixed and was never tuned. There is no part before 2016, the first "
-                        "season of the Statcast expected stats the site holds. A read after the 2027 season "
-                        "keeps it or removes it."),
-        "formula": ("xHEM+ part = 0.5 x [PA x (xwOBA x lgwOBA / pool xwOBA - wOBA) / wOBA scale, re-centred "
-                    "per season] / runs per win (HEM+'s shrunk rates below 200 PA)"),
+                        "The half is fixed and was never tuned. Expected wOBA carries part of a park's effect "
+                        "that FanGraphs' batting already adjusts for, so the part subtracts that share of "
+                        "FanGraphs' park term: 0.468 of it on Statcast rows and 0.094 on HEM+ rows, fitted "
+                        "once on 2016-2019 and frozen, so each park's effect is counted once. There is no "
+                        "part before 2016, the first season of the Statcast expected stats the site holds. A "
+                        "read after the 2027 season keeps it or removes it."),
+        "formula": ("xHEM+ part = 0.5 x [PA x (xwOBA x lgwOBA / pool xwOBA - wOBA) / wOBA scale - b x park "
+                    "runs, re-centred per season] / runs per win; b = 0.468 (Statcast rows), 0.094 (HEM+'s "
+                    "shrunk rates below 200 PA)"),
         "seeAlso": ["ewar", "ewar_realized", "xhem_plus", "hem_plus"],
         "shelf": "ark",
         "origin": ("Arkmetric, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast); "
@@ -135,14 +139,17 @@ def registry_row(record: dict) -> dict:
 
     return {
         "model_id": "ewar_xhem_half",
-        "summary": ("Provisional, owner decision: half of xHEM+ expected batting in headline eWAR from 2016, "
-                    "though the registered admission rule was not met; a 2027 read keeps or removes it."),
+        "summary": ("Provisional: half of xHEM+ expected batting, park-matched, in headline eWAR from 2016; "
+                    "non-inferior to FanGraphs' batting on next-season park-neutral runs (2021-2024); a "
+                    "2027 read keeps or removes it."),
         "surface": ("The displayed eWAR site-wide on the hitting side from 2016 (season lines, career totals, the "
                     "MLB Stats boards and Earned board, Awards' eWAR, the trade lookup, club totals); the player "
                     "pages' eWAR parts table (xhem); data/ewar_v3.json parts.xhem"),
         "predicts": ("Nothing claimed beyond the record: candidate part 4's xHEM+ arm (S1x) ranked next-season "
                      "batting runs better than the season's own batting runs in the 2016-2024 look"),
-        "champion": (f"x = {V3.XHEM_LAMBDA} * d_batx / RPW*_s (EBR_GATE.md 11.11.1), d_batx the re-centred S1x "
+        "champion": (f"x_pm = {V3.XHEM_LAMBDA} * d_pm / RPW*_s (EBR_GATE.md 11.12.2), d_pm = d_batx - b_arm * P "
+                     "(fWAR's park term, b frozen in docs/ebr-2026-09-30/xhem_parkmatch_fit.json: xHEM+ "
+                     "0.467730, HEM+ 0.093828, fitted on 2016-2019); 11.11.1's d_batx the re-centred S1x "
                      "delta from the swar preview, RPW*_s league_constants.league_totals(s)['rpw'], 2016 on, "
                      "hitting side of the headline series only; LAMBDA fixed in advance, never tuned"),
         "baseline": "FanGraphs' batting runs (the headline eWAR without the part); eWAR realized keeps them",
@@ -152,7 +159,8 @@ def registry_row(record: dict) -> dict:
         "eval_artifact": "data/swar_eval.json",
         "verdict": "provisional",
         "provisional_kind": "shipped_partial_measurement",
-        "remeasure_pending": ("EWAR_XHEM_2027_READ, not before 2027-11-10 (EBR_GATE.md 11.11.5): KEEP if the "
+        "remeasure_pending": ("EWAR_XHEM_2027_READ, not before 2027-11-10 (EBR_GATE.md 11.11.5, amended by "
+                              "EW3-53 to score the park-matched part d_pm): KEEP if the "
                               "gap's one-sided 95 percent lower bound is above 0 and the team guard is "
                               "NON-INFERIOR, otherwise the flag goes False"),
         "notes": ("OWNER DECISION EW3-51 (2026-10-22, 'Half weight + 2027 check'), TAKEN WHILE THE REGISTERED "
@@ -165,13 +173,21 @@ def registry_row(record: dict) -> dict:
                   "realized, the ABS part and the runs-per-win form unchanged; the eFV training label stays on "
                   "its frozen headline vintage (the label reads the headline without the part). Rows: S1x as "
                   "scored (the HEM+ arm below 200 PA or without a Savant xwOBA). Site copy states the evidence "
-                  "only and never says override."),
+                  "only and never says override. OWNER DECISION EW3-53 (2026-10-26, 'Flip, cite this read'): the "
+                  "part serves park-matched (ewar_v3.XHEM_PARKMATCH_LIVE, EBR_GATE.md 11.12) after the "
+                  "read of 2026-10-26 PASSED 11.12.7: PM-rate +0.04451 (lower bound +0.03106), PM-total "
+                  "+0.03490 (lower bound +0.02207), 1,071 pairs, Y 2021-2024, park-neutral batting runs; "
+                  "park slope +0.0149 wins per PF point (as built -0.1324; club-clustered 95 percent "
+                  "interval -0.064 to +0.160, wider than the 0.05 tolerance, a point check); team guard "
+                  "underpowered. Record docs/ebr-2026-09-30/xhem_parkmatch_eval.json; the site sentence "
+                  "cites its PM-rate cell."),
     }
 
 
 V3_NOTE = (" 2026-10-22 EWAR_XHEM_HALF: from 2016 the headline eWAR's hitting side also carries half of "
            "candidate part 4's xHEM+ arm (EBR_GATE.md 11.11, owner decision EW3-51 taken while the registered "
-           "admission rule was not met; row ewar_xhem_half); eWAR realized does not.")
+           "admission rule was not met; row ewar_xhem_half); eWAR realized does not. Park-matched since "
+           "2026-10-26 (EBR_GATE.md 11.12, owner EW3-53).")
 
 FRESH_ANCHOR = '    "ewar": ["ewar"],\n'
 FRESH_LINE = '    "ewar_xhem_half": ["ewar_xhem", "ewar"],\n'

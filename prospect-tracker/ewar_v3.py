@@ -67,7 +67,7 @@ SIDES = ("bat", "pit")
 #: while the registered admission rule was not met, provisional until the 2027 read
 #: (EWAR_XHEM_2027_READ). Off, tools/build_ewar_v3.py writes the artifact it wrote
 #: before 11.11; the orchestrator flips it on the owner's authorization.
-XHEM_HALF_LIVE: bool = False
+XHEM_HALF_LIVE: bool = True   # owner EW3-53 2026-10-26: on with the park match (EBR_GATE.md 11.12.7 PASS)
 #: LAMBDA, fixed in advance by EW3-51 and never tuned (11.11.1).
 XHEM_LAMBDA: float = 0.5
 #: The first season of the part: the S1x source and the swar preview start in 2016.
@@ -78,11 +78,14 @@ PREVIEW_XHEM = ROOT / ".cache" / "ewar_v3" / "preview" / "ewar_v3_xhem.json"
 #: EW3-52): with XHEM_HALF_LIVE also on, the part carries x_pm, S1x less the share of
 #: fWAR's park term its rate re-introduces (xhem_parkmatch.py), in place of 11.11.1's x.
 #: Off, the part is 11.11's. Flipped only by a later owner answer after 11.12.7's PASS.
-XHEM_PARKMATCH_LIVE: bool = False
+XHEM_PARKMATCH_LIVE: bool = True   # owner EW3-53 2026-10-26, 'Flip, cite this read'
 #: Where the park-matched census build goes whatever the flags say (11.12.2).
 PREVIEW_XHEM_PM = ROOT / ".cache" / "ewar_v3" / "preview" / "ewar_v3_xhem_pm.json"
 #: The tracked record whose holdout block the site sentence's numbers come from.
 SWAR_EVAL = DATA_DIR / "swar_eval.json"
+#: The park-matched part's record (EBR_GATE.md 12.4); its PM-rate cell is the site
+#: sentence's source while XHEM_PARKMATCH_LIVE is on (owner EW3-53).
+PM_EVAL = ROOT / "docs" / "ebr-2026-09-30" / "xhem_parkmatch_eval.json"
 
 #: Card labels of the parts (11.10.2, 11.10.3, 11.11.2).
 PART_LABELS = {
@@ -92,11 +95,19 @@ PART_LABELS = {
 }
 
 
-def xhem_copy(record: dict | None = None) -> str:
-    """The one site sentence for the xHEM+ part (owner EW3-51 copy), its three
-    numbers read from the holdout block of data/swar_eval.json (the xHEM+ H-rate
-    cell's gap and 95 percent interval, three decimals). Raises when the record
-    lacks the cell, so no page prints a number the record does not hold."""
+def xhem_copy(record: dict | None = None, parkmatch: bool | None = None,
+              pm_record: dict | None = None) -> str:
+    """The one site sentence for the xHEM+ part, its three numbers read from a
+    record, so no page prints a number the record does not hold (a missing cell
+    raises). With the park match on (owner EW3-53): the PM-rate cell of
+    docs/ebr-2026-09-30/xhem_parkmatch_eval.json, gap and 95 percent interval.
+    Off (owner EW3-51 copy): the xHEM+ H-rate cell of data/swar_eval.json's holdout."""
+    if XHEM_PARKMATCH_LIVE if parkmatch is None else parkmatch:
+        pm = pm_record if pm_record is not None else json.loads(PM_EVAL.read_text(encoding="utf-8"))
+        c = pm["cells"]["PM-rate"]
+        return ("Provisional. With its park effect counted once, xHEM+ improved next-season prediction "
+                f"over FanGraphs' batting in the 2021-2024 test ({float(c['gap']):+.3f}, range "
+                f"{float(c['lo95']):+.3f} to {float(c['hi95']):+.3f}). A 2027 read decides whether it stays.")
     rec = record if record is not None else json.loads(SWAR_EVAL.read_text(encoding="utf-8"))
     cell = rec["holdout"]["block"]["cells"]["batting"]["xHEM+ H-rate"]
     return ("Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the "

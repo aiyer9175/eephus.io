@@ -2735,9 +2735,9 @@
       tip: "The change when pitchers are priced on the runs they allowed, adjusted for park, defense and inherited runners, in place of FanGraphs' FIP-based pitching. In eWAR realized only." },
     // EBR_GATE.md 11.11 (owner EW3-51): present only when the payload carries it. The
     // tip's last three sentences are the owner's copy, pinned by test_ewar_xhem_half.py
-    // to the numbers of the record (ewar_v3.xhem_copy).
+    // to the numbers of the record (ewar_v3.xhem_copy; the park-matched read since EW3-53).
     { id: "xhem", label: "xHEM+ (expected batting, half weight)", head: "xHEM+ (half weight)",
-      tip: "Half the change when a hitter's batting runs are priced on his Statcast expected wOBA (xwOBA) in place of his actual results; below 200 PA his shrunk event rates (HEM+) stand in. In eWAR only: eWAR realized keeps FanGraphs' batting. Provisional. xHEM+ improved next-season prediction in the 2016-2024 test and pointed the same way on 2025-26 (+0.068, range -0.003 to +0.141). A 2027 read decides whether it stays." },
+      tip: "Half the change when a hitter's batting runs are priced on his Statcast expected wOBA (xwOBA) in place of his actual results, less the share of FanGraphs' park adjustment that xwOBA already carries; below 200 PA his shrunk event rates (HEM+) stand in. In eWAR only: eWAR realized keeps FanGraphs' batting. Provisional. With its park effect counted once, xHEM+ improved next-season prediction over FanGraphs' batting in the 2021-2024 test (+0.045, range +0.028 to +0.060). A 2027 read decides whether it stays." },
   ];
   function warBarsSVG(ss, sides) {
     const use = (ss || []).filter(s => s.a != null || s.b != null);

@@ -60,9 +60,9 @@ def quiet(monkeypatch):
 
 
 # (a) ------------------------------------------------------------------------
-def test_flag_defaults_off():
-    assert V3.XHEM_PARKMATCH_LIVE is False, "flipped only by an owner answer after 11.12.7's PASS"
-    assert V3.XHEM_HALF_LIVE is False
+def test_flags_are_on():
+    assert V3.XHEM_PARKMATCH_LIVE is True  # owner EW3-53 2026-10-26, after 11.12.7's PASS
+    assert V3.XHEM_HALF_LIVE is True
     assert V3.PREVIEW_XHEM_PM.parent == ROOT / ".cache" / "ewar_v3" / "preview"
     assert V3.PREVIEW_XHEM_PM != V3.PREVIEW_XHEM
 
