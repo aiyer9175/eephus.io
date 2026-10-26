@@ -272,7 +272,9 @@ HOLDOUT_HEADER = ("**2026-10-21, `python -u tools/swar_lab.py --holdout` at `ad5
 def _part_12_3() -> str:
     doc = _doc()
     i = doc.index("### 12.3 The skill holdout (part 9.5)")
-    return doc[i:doc.index("No identity receipt of the final build", i)]
+    # part 12.4 (the park-matched xHEM+ read of 11.12) follows 12.3 when it exists
+    end = doc.find("### 12.4 The park-matched xHEM+ read (11.12)", i)
+    return doc[i:end if end >= 0 else doc.index("No identity receipt of the final build", i)]
 
 
 def test_part_12_3_holds_exactly_one_holdout_run_dated_with_its_commit_and_the_waiver():
@@ -380,3 +382,43 @@ def test_the_skill_holdout_owner_waived_early_read_note_follows_the_last_section
     flat = _flat(doc[doc.index(note):])
     assert "part 7.4's date (not before 2026-11-17)" in flat
     assert "The holdout ran once and is not rerun whatever it printed (part 9.5)" in flat
+
+
+# ---- part 12.4: the park-matched xHEM+ read (11.12) ------------------------------
+
+PM_RECORD = ROOT / "docs" / "ebr-2026-09-30" / "xhem_parkmatch_eval.json"
+
+
+def _part_12_4() -> str:
+    doc = _doc()
+    i = doc.index("### 12.4 The park-matched xHEM+ read (11.12)")
+    return doc[i:doc.index("No identity receipt of the final build", i)]
+
+
+def test_part_12_4_holds_one_park_matched_read_that_matches_its_record():
+    sec = _part_12_4()
+    flat = _flat(sec)
+    assert sec.count("`python -u tools/xhem_parkmatch_lab.py --run` at `1ed1e087`, once (owner EW3-52)") == 1
+    assert "**Result: PASS (11.12.7).**" in flat
+    assert "this task does not flip, and both flags stay False" in flat
+    assert "The 2025 to 2026 holdout was not read." in flat
+    rec = json.loads(PM_RECORD.read_text(encoding="ascii"))
+    assert rec["status"] == "SCORED" and rec["result"] == "PASS" and rec["run_on"] == "2026-10-26"
+    assert rec["b"] == {"hem": 0.093828, "xhem": 0.46773} and rec["lambda"] == 0.5
+    assert rec["seed"] == 20261008 and rec["boot"] == 2000 and rec["frame"]["pairs"] == 1071
+    assert rec["preview"]["sha256"] in sec and rec["preview"]["generated_at"] in sec
+    for name in ("PM-rate", "PM-total"):
+        c = rec["cells"][name]
+        assert c["non_inferior"] and c["lower_bound"] > -0.02 and c["n_pairs"] == 1071
+        row = [ln for ln in sec.splitlines() if ln.startswith(f"| {name} | 1,071 | ")]
+        assert len(row) == 1 and f"{c['gap']:+.5f}" in row[0] and f"{c['lower_bound']:+.5f}" in row[0]
+    assert rec["null_and_planted"]["checks"] == {"N0": True, "N1": True, "PL1": True, "PL2": True}
+    pp = rec["park_pattern"]
+    assert pp["pass"] and pp["controls"] == {"K0": True, "K1": True, "K2": True}
+    assert f"{pp['series']['part']['slope']:+.4f}" in flat
+    assert f"{pp['series']['K1_as_built']['slope']:+.4f}" in flat
+    assert not rec["team_guard"]["non_inferior"] and rec["team_guard"]["underpowered"]
+    v = _verbatim(sec)
+    assert v.count("xhem_parkmatch_lab xhem_parkmatch_lab/1 on 2026-10-26") == 1
+    assert v.index("[read] FLOORS") < v.index("  PM-rate        gap ")
+    assert "=> PASS (11.12.7)" in v
