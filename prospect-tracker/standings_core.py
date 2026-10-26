@@ -44,6 +44,54 @@ The WCGB convention here keeps MLB's printed form: the feed's "+9.5" (ahead of
 the cutoff) is `wcgb` 9.5 with `wc_ahead` true. The nightly reader
 `fa_fit_backtest.standings_now` serves a signed number for its numeric readers
 instead; the two differ on purpose (plan C20).
+
+The page (assets/standings.js; its header comment moved here on 2026-10-26 so the
+served script stays inside plan 5.1's 45 KB budget):
+
+  /standings/ (STANDINGS_4, behind standings_core.STANDINGS_LIVE): a pure
+  reader of the Scores job's standings files under /data/scores/standings/.
+
+  SERVED NUMBERS ONLY. Every number prints as the job served it; the page
+  joins, sorts and formats (rounding, signs, W-L joins, a served date written
+  out) and makes the stale comparison, nothing else. STANDINGS_5: only when the
+  mount root names the chart chunk (data-charts-src, standings_core.STANDINGS_CHARTS)
+  the page adds the Charts view and a Race disclosure under each division table,
+  and loads the chunk on the first of them. Seeds, how a club
+  qualified, league records, RD/G, W - xW, games left and the projected record
+  (two integers) are served by standings_core. A date written from a UTC
+  stamp is Eastern and says so. Fetch: latest.json and index.json once per
+  load and on becoming visible, then the season file; never the race or the
+  odds history files (charts only), never a poll. The Playoffs view mounts
+  the SCORES_4b bracket chunk unchanged with the season index's bracket.
+  STANDINGS_6: Season and As of; ODDS only on the newest latest file.
+  STANDINGS_7: the mount root's data-glmap names each header's glossary id
+  (standings_core.HEADER_GLOSSARY) and each chart's (CHART_GLOSSARY); every
+  header's abbr carries its id as data-gl and the chart chunk gets the map.
+
+Its helper notes, in source order:
+
+  - a served calendar date ("YYYY-MM-DD") written out; no zone is involved
+  - a UTC stamp written as an Eastern date (or time), labelled (plan 4.7)
+  - the club's name without its city ("Rays", "Red Sox"), for the wide cell and the sentences
+  - odds cells: the Franchise tile's pct(v, 1) with no "%" (the header carries it)
+  - columns. k: key (CSV and sort), g: group, a: header, t: full name,
+    d: the first press (best first), w: [phone, 768+, 1024+] px, v: the cell.
+  - the labelled group line: source and verdict from the season file's registry block
+  - the Playoffs seeds tables: the served seed and how-qualified text, and
+    the bracket simulator's Pennant and World Series chances in their own labelled group
+  - the lazy chart chunk: loaded once, on the first Race disclosure or the Charts view
+
+Its section and line notes, in source order:
+
+  - helpers
+  - the app
+  - tabindex -1: the sort button stays the one tab stop
+  - season and date checked against the index; unknown values dropped
+  - defaults that read the payload
+  - the one table component: a shared <colgroup>, table-layout fixed
+  - #team=CODE opens its detail row once per arrival (plan 5.2)
+  - events
+  - logoLink: the club's logo rides inside its link, so the mark is part of the one club link
 """
 from __future__ import annotations
 

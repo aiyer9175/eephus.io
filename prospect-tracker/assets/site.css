@@ -1360,7 +1360,10 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
 .otd-cal { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; vertical-align: -1px; color: var(--band-c, var(--text-primary)); }
 .otd-cal .ico { display: block; }
 .otd-cal-day { font: 400 12px/16px "PixelMplus12", var(--font-retro-mono); letter-spacing: 0; }
-.hist-cal h1 { position: relative; --cal-day: ""; }
+/* the rest default sits on the root the shell writes --cal-day on inline, so the h1
+   inherits the day (on the h1 itself it shadowed the inline value: a blank day) */
+.hist-cal { --cal-day: ""; }
+.hist-cal h1 { position: relative; }
 .hist-cal h1 > .ico:first-child { vertical-align: top; margin-top: 2px; }
 .hist-cal h1::before {
   content: var(--cal-day) / ""; position: absolute; left: 8px; top: 12px; width: 16px; height: 14px;
@@ -1443,9 +1446,7 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
    Like every animation on the site it runs under Reduce Motion (owner,
    2026-10-01). */
 /* pixel-wordmark:begin */
-.eephus-wordmark-px { display: inline-block; position: relative; line-height: 0; margin: 0;
-  /* the per-glyph values the markup sets inline (PB-04); these are the rest defaults */
-  --u: 2px; --nudge: 0px; --i: 0; --step: 0ms; --drop-at: 0ms; --glint-at: 0ms; }
+.eephus-wordmark-px { display: inline-block; position: relative; line-height: 0; margin: 0; --u: 2px; --nudge: 0px; --i: 0; --step: 0ms; --drop-at: 0ms; --glint-at: 0ms; }
 .eephus-wordmark-px .wm-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wm-px { display: block; overflow: visible; shape-rendering: crispEdges; }
 .wm-px .wm-ink { fill: var(--text-primary); }

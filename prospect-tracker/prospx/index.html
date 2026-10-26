@@ -34864,8 +34864,9 @@ function _stripCompTitle(p, cv) {
   const t = (p && p.tools) || {};
   if (_ETOOLS_UI && t.composite_basis === "etools" && t.composite_cons) {
     const c = t.composite_cons.composite_overall;
-    return `Tool composite ${cv}: eTool composite, the power mean of the shown grades (an eTool where one passed)`
-      + (c != null ? `; consensus composite ${fvCeil(c)}` : "");
+    // Two short sentences, so the definition does not repeat on every row (copy rule L11).
+    return `Tool composite ${cv}: the power mean of the shown grades. An eTool counts where one passed`
+      + (c != null ? `; consensus composite ${fvCeil(c)}` : "") + ".";
   }
   return `Tool composite grade ${cv} (power mean of the 20-80 tool grades)`;
 }
@@ -34924,7 +34925,7 @@ function toolGradeTip(p, cardKey, info, grades) {
   if (ePow) {
     const gp = _consToolVal(g, "game_pwr"), rp = _consToolVal(g, "raw_pwr");
     cons = [gp != null ? `game power ${fvCeil(gp)}` : "", rp != null ? `raw power ${fvCeil(rp)}` : ""].filter(Boolean).join(", ");
-    cons = cons ? `Consensus ${cons} (rounded up; raw power has no eTool).` : "";
+    cons = cons ? `Consensus ${cons} (rounded up). Raw power has no eTool.` : "";
   } else {
     cons = info.cons != null ? `Consensus ${fvCeil(info.cons)} (all sources, rounded up).` : "";
   }
@@ -34933,8 +34934,8 @@ function toolGradeTip(p, cardKey, info, grades) {
   const band = _eToolBand(r);
   const dated = _eToolGradeDate(r);
   const stale = dated ? ` Its consensus is the last on file: ${dated}${r.grade_age_months != null ? `, ${Math.round(r.grade_age_months)} months old` : ""}; the stats are current.` : "";
-  return `${name} ${r.shown} (${r.key}): the consensus grade moved by the prospect's own minor-league stats,`
-    + ` ${Number(r.etool).toFixed(1)} shown to the nearest grade. ${cons}${start}${stale}${band ? ` 80% band ${band}.` : ""}`;
+  return `${name} ${r.shown} (${r.key}), ${Number(r.etool).toFixed(1)} before rounding to the nearest grade.`
+    + ` The consensus grade moved by his own minor-league stats. ${cons}${start}${stale}${band ? ` 80% band ${band}.` : ""}`;
 }
 // The block under the card's grade grid: each eTool with its band, its start
 // and the sub-drivers that moved it, in grade points.

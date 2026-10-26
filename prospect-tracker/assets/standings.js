@@ -3,25 +3,7 @@
  * Proprietary and confidential
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
-/* /standings/ (STANDINGS_4, behind standings_core.STANDINGS_LIVE): a pure
-   reader of the Scores job's standings files under /data/scores/standings/.
-
-   SERVED NUMBERS ONLY. Every number prints as the job served it; the page
-   joins, sorts and formats (rounding, signs, W-L joins, a served date written
-   out) and makes the stale comparison, nothing else. STANDINGS_5: only when the
-   mount root names the chart chunk (data-charts-src, standings_core.STANDINGS_CHARTS)
-   the page adds the Charts view and a Race disclosure under each division table,
-   and loads the chunk on the first of them. Seeds, how a club
-   qualified, league records, RD/G, W - xW, games left and the projected record
-   (two integers) are served by standings_core. A date written from a UTC
-   stamp is Eastern and says so. Fetch: latest.json and index.json once per
-   load and on becoming visible, then the season file; never the race or the
-   odds history files (charts only), never a poll. The Playoffs view mounts
-   the SCORES_4b bracket chunk unchanged with the season index's bracket.
-   STANDINGS_6: Season and As of; ODDS only on the newest latest file.
-   STANDINGS_7: the mount root's data-glmap names each header's glossary id
-   (standings_core.HEADER_GLOSSARY) and each chart's (CHART_GLOSSARY); every
-   header's abbr carries its id as data-gl and the chart chunk gets the map. */
+/* /standings/: the page contract is in standings_core.py, "The page". */
 (function () {
   "use strict";
 
@@ -42,7 +24,6 @@
   var CUT = { division: "the division lead", bye: "the bye line", wild_card: "the last wild card spot" };
   var RANK = { division: "div", wildcard: "wc", league: "lg", mlb: "mlb", playoffs: "div", seeds: "wc" };
 
-  // ---- helpers
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -73,13 +54,11 @@
     var s = v.toFixed(3);
     return s.charAt(0) === "0" ? s.slice(1) : s;
   }
-  // a served calendar date ("YYYY-MM-DD") written out; no zone is involved
   function ymd(ds, year) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ds || ""));
     if (!m) return "";
     return MONTHS[+m[2] - 1] + " " + (+m[3]) + (year ? ", " + m[1] : "");
   }
-  // a UTC stamp written as an Eastern date (or time), labelled (plan 4.7)
   function eastern(iso, time) {
     var t = Date.parse(iso || "");
     if (isNaN(t)) return "";
@@ -91,7 +70,6 @@
 
   function hub() { return window.EEPHUS_HUB || null; }
   function clubOf(code) { var H = hub(); return H && H.club ? H.club(code) : null; }
-  // the club's name without its city ("Rays", "Red Sox"), for the wide cell and the sentences
   function nick(code) {
     var c = clubOf(code);
     if (!c) return code;
@@ -104,6 +82,10 @@
     var c = clubOf(code);
     return c && c.code ? '<a class="club-link" href="/franchise/#team=' + esc(c.code) + '">' + esc(c.code) + "</a>"
       : '<span data-club-nolink="unresolved">' + esc(code) + "</span>";
+  }
+  function logoLink(code, img) {
+    var a = clubLink(code);
+    return img && a.indexOf("<a ") === 0 ? a.replace(">", ">" + img) : img + a;
   }
   var sprite = null;
   function ico(key, size, cls) {
@@ -124,7 +106,6 @@
       '><div class="px-state-msg">' + msg + "</div></div>";
   }
 
-  // ---- odds cells: the Franchise tile's pct(v, 1) with no "%" (the header carries it)
   function tint(v) {
     var T = window.EephusTiers, c = T && T.pctColor ? T.pctColor(v * 100) : "";
     return c ? "color:" + c : "";
@@ -137,8 +118,6 @@
     return { s: s, n: v, style: tint(v) };
   }
 
-  // ---- columns. k: key (CSV and sort), g: group, a: header, t: full name,
-  // d: the first press (best first), w: [phone, 768+, 1024+] px, v: the cell.
   function strkN(s) {
     var m = /^([WL])(\d+)$/.exec(String(s || ""));
     return m ? (m[1] === "W" ? 1 : -1) * +m[2] : null;
@@ -257,12 +236,10 @@
   function colW(c) { var w = width(); return c.w[w >= 1024 ? 2 : w >= 768 ? 1 : 0]; }
   function clubW() { var w = width(); return w >= 1024 ? 190 : w >= 768 ? 116 : 100; }
 
-  // ---- the app
   function boot(root) {
     var CH = root.getAttribute("data-charts-src"), VW = CH ? VIEWS.concat([["charts", "Charts"]]) : VIEWS;
     var GLM = { h: {}, c: {} };
     try { GLM = JSON.parse(root.getAttribute("data-glmap") || "") || GLM; } catch (e) { /* headers keep their titles */ }
-    // tabindex -1: the sort button stays the one tab stop
     function glAttr(a) { var id = (GLM.h || {})[a]; return id ? ' tabindex="-1" data-gl="' + esc(id) + '"' : ""; }
     function glWire(el) { if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(el || root); }
     var app = { route: parse(location.hash), L: null, IX: null, S: null, serverAt: null, clientAt: null,
@@ -328,7 +305,6 @@
         return get("index.json?v=" + encodeURIComponent(L.index_rev || "")).then(function (r) { return r.json(); });
       }).then(function (IX) { app.IX = IX; return choose(); });
     }
-    // season and date checked against the index; unknown values dropped
     function choose() {
       var ss = app.IX.standings_seasons || [], r = app.route, y = app.L.standings.season, e = null, n = ++app.seq;
       if (r.season && ss.some(function (s) { return s.season === r.season; })) y = r.season;
@@ -360,7 +336,6 @@
       load().catch(function () { if (!app.S) fail(); });
     }
 
-    // ---- defaults that read the payload
     function oddsWin() { return !app.route.date && app.S.season === app.L.standings.season; }
     function ours() { return oddsWin() ? app.S.ours || null : null; }
     function view() { var O = ours(); return app.route.view || (O && O.phase === "postseason" ? "playoffs" : "division"); }
@@ -376,7 +351,6 @@
       for (var i = 0; i < reg.length; i++) if (reg[i].model_id === model) return reg[i];
       return null;
     }
-    // the labelled group line: source and verdict from the season file's registry block
     function oddsLabel(model) {
       var g = regFor(model), O = app.S.ours, src = (O.regular || {}).model_id === model ? O.regular : O.postseason;
       var asof = eastern((src || {}).generated_at);
@@ -397,7 +371,6 @@
       };
     }
 
-    // ---- the one table component: a shared <colgroup>, table-layout fixed
     function tableHTML(rows, cs, x, cap, cut) {
       var base = cmpRank(RANK[x.view]), sort = x.sort;
       rows = rows.slice().sort(base);
@@ -453,8 +426,7 @@
       var m = r.mark || (r.e ? "e" : ""), wide = width() >= 1024, H = hub();
       return '<th scope="row" class="st-club"><span class="st-mk">' +
         (m ? ico(r.e ? "st-elim" : "st-clinch", 12, r.e ? "st-mk-e" : "st-mk-c") : "") + "</span>" +
-        (wide && H && H.teamLogo ? H.teamLogo(r.code, "sp-logo st-logo", { decorative: true, size: 16 }) : "") +
-        '<span class="st-code">' + clubLink(r.code) + "</span>" +
+        '<span class="st-code">' + logoLink(r.code, wide && H && H.teamLogo ? H.teamLogo(r.code, "sp-logo st-logo", { decorative: true, size: 16 }) : "") + "</span>" +
         (m ? '<sup class="st-letter"><abbr title="' + esc(MARK[m]) + '">' + m + "</abbr></sup>" + sr(MARK[m]) : "") +
         (wide ? '<span class="st-nick">' + esc(nick(r.code)) + "</span>" : "") +
         (follow ? sr("followed") : "") + (cut ? sr("Last wild card spot") : "") +
@@ -598,8 +570,6 @@
       }
       return o;
     }
-    // the Playoffs seeds tables: the served seed and how-qualified text, and
-    // the bracket simulator's Pennant and World Series chances in their own labelled group
     function seedsHTML(x) {
       var O = x.ours, model = O && O.models && O.models.p_pennant === O.models.p_ws ? O.models.p_pennant : null;
       var xs = { view: "seeds", cols: [], sort: x.sort, mine: x.mine, mineOnly: x.mineOnly, team: x.team, ours: O, model: model };
@@ -615,7 +585,6 @@
 
     function render() {
       if (!app.S) return;
-      // #team=CODE opens its detail row once per arrival (plan 5.2)
       if (app.route.team && !app.teamOpened) { app.open = app.route.team; app.teamOpened = true; }
       var v = view(), cs = cols(), O = ours();
       var x = { view: v, cols: cs, sort: app.route.sort || null, mine: mine(), mineOnly: !!app.route.mine, team: app.route.team,
@@ -673,7 +642,6 @@
       }).catch(function () { /* the seeds stand without the bracket */ });
     }
 
-    // the lazy chart chunk: loaded once, on the first Race disclosure or the Charts view
     function mountCharts(els) {
       if (!els.length) return;
       Array.prototype.forEach.call(els, function (el) { el.innerHTML = stateHTML("loading", "Loading the race."); });
@@ -704,7 +672,6 @@
       if (d.open) mountCharts([d.querySelector(".st-cm")]);
     }, true);
 
-    // ---- events
     root.addEventListener("click", function (ev) {
       var t = ev.target.closest ? ev.target.closest("button") : null;
       if (!t || !root.contains(t) || !app.S && !t.classList.contains("st-retry")) return;
