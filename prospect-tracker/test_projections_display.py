@@ -239,6 +239,52 @@ def test_veteran_paths_card_prints_the_remeasure_disclosure_from_the_registry():
     assert 'proj-acct-pending' in html
 
 
+def test_veteran_paths_card_prints_the_zero_path_table_with_its_own_frame():
+    """SWEEP-Q2 (owner 2026-10-22): the receipts gain a zero-path column, on the
+    null comparator sweep's row-matched frame, printed as its own table so the
+    year-4 loss of the decay path /fa/ prices shows beside the engines."""
+    board = json.loads(S.BOARD)
+    zp = {"frame": "row-matched", "bases": [2017, 2018, 2019, 2021], "label": "fwar",
+          "n_players": 8053, "run_at": "2026-10-22T04:31:36Z", "run": "S2",
+          "models": ["proj_lgbm_v1", "marcel_decay_v2"],
+          "by_horizon": [
+              {"h": 1, "n": 8053, "mae": {"proj_lgbm_v1": 0.4925, "marcel_decay_v2": 0.5142, "zero": 0.6177},
+               "vs_zero": {"proj_lgbm_v1": {"verdict": "BEATS", "lo95": 0.1, "hi95": 0.15},
+                           "marcel_decay_v2": {"verdict": "BEATS", "lo95": 0.08, "hi95": 0.13}}},
+              {"h": 4, "n": 8053, "mae": {"proj_lgbm_v1": 0.3305, "marcel_decay_v2": 0.3604, "zero": 0.3378},
+               "vs_zero": {"proj_lgbm_v1": {"verdict": "TIES", "lo95": -0.005, "hi95": 0.02},
+                           "marcel_decay_v2": {"verdict": "LOSES", "lo95": -0.0369, "hi95": -0.0074}}}]}
+    board["accountability"] = {
+        "verdict_enum": ["validated", "provisional", "unvalidated", "deprecated"],
+        "models": [{"label": "Veteran WAR paths", "model_id": "fa_war_paths_decay",
+                    "verdict": "validated", "eval_artifact": "data/proj_horizon_eval.json"}],
+        "backtests": {"data/proj_horizon_eval.json": {
+            "frame": "2022-2024 holdout",
+            "champion": {"model": "proj_lgbm_v1", "horizons": [{"h": 1, "mae": 0.54, "bias": -0.1, "coverage": 0.81}]},
+            "baseline": {"model": "marcel_decay_v2", "horizons": [{"h": 1, "mae": 0.62, "coverage": 0.67}]},
+            "zero_path": zp}}}
+    saved = S.BOARD
+    S.BOARD = json.dumps(board)
+    try:
+        html = S._render("#view=accountability")
+    finally:
+        S.BOARD = saved
+    assert "Zero path" in html
+    assert "0.338" in html and "0.360" in html
+    assert re.search(r'class="proj-neg">loses<', html)
+    assert re.search(r'class="proj-dim">ties<', html)
+    assert "bases 2017, 2018, 2019, 2021, fWAR label, 8,053 player rows per horizon" in html
+    assert "decay path: marcel_decay_v2" in html and "/fa/ prices the decay path" in html
+    # absent block, absent table
+    del board["accountability"]["backtests"]["data/proj_horizon_eval.json"]["zero_path"]
+    S.BOARD = json.dumps(board)
+    try:
+        html = S._render("#view=accountability")
+    finally:
+        S.BOARD = saved
+    assert "Zero path" not in html
+
+
 def test_the_accountability_rows_carry_no_dash_banned_word_or_retired_name():
     """QMLC08 + QMLC12: what the card prints from these rows passes the
     owner's copy rules; the champion line no longer says it beat a challenger

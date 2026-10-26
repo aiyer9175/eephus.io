@@ -9103,7 +9103,7 @@
    ],
    "priority": 40,
    "definition": "The expected wins above replacement over the first six seasons of a draft pick at a given slot, read off the realized slot curve, used here for a club's projected first-round pick.",
-   "methodology": "data/draft_slot_curve.json fitted_first6_by_bucket (validated) at the bucket holding the projected slot from the latest lottery snapshot; not lottery-weighted because the snapshot carries only the odds of pick one and of a top-six pick, and not priced in dollars.",
+   "methodology": "data/draft_slot_curve.json fitted_first6_by_bucket (provisional: it does not beat a flat curve on its right-censored holdout) at the bucket holding the projected slot from the latest lottery snapshot; not lottery-weighted because the snapshot carries only the odds of pick one and of a top-six pick, and not priced in dollars.",
    "example": "",
    "formula": "",
    "seeAlso": [

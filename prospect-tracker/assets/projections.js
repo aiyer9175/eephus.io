@@ -1455,7 +1455,45 @@
         <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
         <th title="Baseline coverage" class="fa-sub">Baseline cov.</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}${pending ? `: ${esc(pending)}` : ""}.</div>`;
+      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}${pending ? `: ${esc(pending)}` : ""}.</div>${zeroPathTable(vh.zero_path)}`;
+  }
+
+  // The zero-path column (owner answer SWEEP-Q2, 2026-10-22): both engines and
+  // a path of 0 WAR every season, scored on the same rows by the null comparator
+  // sweep's one run. Its frame is not the holdout above, so it is its own table
+  // under its own frame line. A verdict reads the CI95 of the engine's edge over
+  // zero: above zero beats, across zero ties, below zero loses.
+  function zeroPathTable(zp) {
+    const rows = (zp && zp.by_horizon) || [];
+    const models = (zp && zp.models) || [];
+    if (!rows.length || models.length < 2) return "";
+    const word = { BEATS: ["beats", ""], TIES: ["ties", "proj-dim"], LOSES: ["loses", "proj-neg"] };
+    const cell = (r, m, key) => {
+      const v = (r.vs_zero || {})[m] || {};
+      const w = word[v.verdict] || [String(v.verdict || "").toLowerCase(), ""];
+      const ci = v.lo95 != null && v.hi95 != null ? ` title="Edge over zero, CI95 ${_signed(v.lo95, 3)} to ${_signed(v.hi95, 3)} WAR"` : "";
+      return `<td class="${key ? "proj-acct-key" : "fa-sub"}">${_num((r.mae || {})[m], 3)}</td>
+        <td${ci}${w[1] ? ` class="${w[1]}"` : ""}>${esc(w[0])}</td>`;
+    };
+    const body = rows.map(r => `<tr>
+        <td>h${r.h}</td>
+        ${cell(r, models[0], true)}
+        ${cell(r, models[1], false)}
+        <td>${_num((r.mae || {}).zero, 3)}</td>
+      </tr>`).join("");
+    const bases = (zp.bases || []).join(", ");
+    const n = zp.n_players != null ? String(Math.round(Number(zp.n_players))).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : EM_DASH;
+    const day = String(zp.run_at || "").slice(0, 10);
+    const lab = zp.label === "fwar" ? "fWAR" : (zp.label || "");
+    return `<table class="detail-table proj-table proj-acct-table">
+      <thead><tr><th title="Projection horizon, seasons ahead">Horizon</th>
+        <th title="${esc(models[0])}: mean absolute WAR error on these rows">ML heads</th>
+        <th title="${esc(models[0])} against the zero path">vs zero</th>
+        <th title="${esc(models[1])}: mean absolute WAR error on these rows" class="fa-sub">Decay path</th>
+        <th title="${esc(models[1])} against the zero path">vs zero</th>
+        <th title="Mean absolute WAR error of a path of 0 WAR in every season">Zero path</th></tr></thead>
+      <tbody>${body}</tbody></table>
+      <div class="fa-sub proj-acct-foot"><span data-gl="mae">MAE</span> by horizon. ML heads: ${esc(models[0])}; decay path: ${esc(models[1])}; zero path: 0 WAR in every season. All three are scored on the same rows: bases ${esc(bases)}, ${esc(lab)} label, ${n} player rows per horizon, a season with no play counted as 0. Source: the null comparator sweep, run ${esc(zp.run || "")}, ${esc(day)}. A verdict reads the CI95 of the engine's edge over zero: above zero beats, across zero ties, below zero loses. /fa/ prices the decay path.</div>`;
   }
 
   // Prospect post-ETA paths - forward-chained debut cohorts: the FV-only

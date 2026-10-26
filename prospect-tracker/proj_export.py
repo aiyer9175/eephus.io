@@ -54,6 +54,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -4222,6 +4223,55 @@ def _read_data_json(name: str) -> dict:
         return {}
 
 
+#: The null comparator sweep's run S2 cells, by the model each one scores.
+_ZERO_PATH_CELLS = (("proj_lgbm_v1", "challenger_proj_lgbm"),
+                    ("marcel_decay_v2", "champion_decay"))
+
+
+def _zero_path_receipt(sweep: dict) -> dict:
+    """The zero-path column for the Veteran WAR paths receipts (owner answer
+    SWEEP-Q2, 2026-10-22): both engines and a path of 0 WAR every season on
+    the null comparator sweep's row-matched frame (run S2, one registered run),
+    with each engine's verdict against zero. Copied from the committed sweep
+    artifact, never computed here. Its frame differs from the 2022-2024
+    holdout table above it, so the card prints it as its own table under its
+    own frame line. Empty when the run or any cell is absent."""
+    s2 = ((sweep or {}).get("runs") or {}).get("S2") or {}
+    cells = s2.get("cells") or {}
+    if not all(cells.get(c) for _, c in _ZERO_PATH_CELLS):
+        return {}
+    hs = sorted({k for _, c in _ZERO_PATH_CELLS for k in cells[c]
+                 if k.startswith("h") and k[1:].isdigit()}, key=lambda k: int(k[1:]))
+    rows = []
+    for k in hs:
+        cell = {m: cells[c].get(k) or {} for m, c in _ZERO_PATH_CELLS}
+        zero = {m: (cell[m].get("nulls") or {}).get("ZERO") or {} for m in cell}
+        z = {v.get("mae_null") for v in zero.values()}
+        if len(z) != 1 or None in z:
+            return {}                     # the engines must share the rows
+        rows.append({
+            "h": int(k[1:]),
+            "n": cell[_ZERO_PATH_CELLS[0][0]].get("n"),
+            "mae": {**{m: cell[m].get("mae_model") for m in cell}, "zero": z.pop()},
+            "vs_zero": {m: {"verdict": zero[m].get("verdict"),
+                            "lo95": zero[m].get("lo95"), "hi95": zero[m].get("hi95")}
+                        for m in cell},
+            "instrument": {m: (cell[m].get("instrument") or {}).get("verdict") for m in cell},
+        })
+    return {
+        "frame": s2.get("frame"),
+        "bases": ([int(x) for x in re.findall(r"\d{4}", m.group(1))]
+                  if (m := re.search(r"bases \[([^\]]*)\]", s2.get("frame") or "")) else None),
+        "label": s2.get("label"),
+        "n_players": s2.get("n_players_matched"),
+        "run_at": sweep.get("generated_at"),
+        "registration": sweep.get("registration"),
+        "run": "S2",
+        "models": [m for m, _ in _ZERO_PATH_CELLS],
+        "by_horizon": rows,
+    }
+
+
 def _accountability_block() -> dict:
     """The Model Accountability surface: the projection models' verdicts +
     methodology from data/model_registry.json, plus the held-out backtest
@@ -4312,6 +4362,10 @@ def _accountability_block() -> dict:
         "baseline": {"model": "marcel_decay_v2",
                      "horizons": _horizon_rows(cb.get("holdout_2022_2024_champion"))},
     } if cb.get("holdout_2022_2024") else {}
+    if vet_horizons:
+        zp = _zero_path_receipt(_read_data_json("null_comparator_sweep.json"))
+        if zp:
+            vet_horizons["zero_path"] = zp
 
     # Prospect post-ETA paths: forward-chained debut cohorts. The FV-only
     # scouting-consensus model (the shipped champion, labeled "baseline" in
