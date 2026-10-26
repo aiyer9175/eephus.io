@@ -73,14 +73,34 @@ def test_the_bust_pool_is_entirely_never_debuted():
 # The screens
 # --------------------------------------------------------------------------
 
-def test_a_player_with_real_major_league_war_is_not_a_bust():
-    """Exactly one qualifies and he is a real reliever. Scoring him as a
-    never-debuted failure would be a plain lie about a player a reader may
-    remember."""
+def test_a_player_with_real_major_league_war_is_not_a_bust(tmp_path):
+    """A row carrying career WAR is never scored as a never-debuted failure. When the
+    lane was built exactly one real row qualified, Zack Britton (11.73 WAR); since then
+    he is served from debuts.json with his debut, and inactive.json's zach_britton is a
+    different player (a Toronto prospect with no MLB line), so the screen is checked on a
+    planted row and the real pool is checked for the invariant itself."""
+    planted = [
+        {"player_key": "planted_reliever", "mlbam_id": 990001,
+         "career_war_label": {"career_war": 11.73}, "career_war": {}},
+        {"player_key": "planted_display_only", "mlbam_id": 990002,
+         "career_war": {"career_war": 0.5}},
+        {"player_key": "planted_bust", "mlbam_id": 990003,
+         "career_war_label": {}, "career_war": {}},
+    ]
+    (tmp_path / "inactive.json").write_text(json.dumps(planted), encoding="utf-8")
+    kept, excluded = sb._load_bust_universe(tmp_path, [])
+    war_drops = {e["player_key"] for e in excluded if "career WAR" in e["reason"]}
+    assert war_drops == {"planted_reliever", "planted_display_only"}, (
+        "the WAR screen must catch a row carrying career WAR on either block")
+    assert [k["player_key"] for k in kept] == ["planted_bust"]
+    # the real pool: no kept row carries career WAR on either block
     uni = sb._load_universe(sb.DATA_DIR)
     kept, excluded = sb._load_bust_universe(sb.DATA_DIR, uni)
+    assert kept, "the real bust pool is empty"
+    for k in kept:
+        for blk in ("career_war_label", "career_war"):
+            assert not float(((k.get(blk) or {}).get("career_war")) or 0) > 0, k["player_key"]
     war_drops = [e for e in excluded if "career WAR" in e["reason"]]
-    assert war_drops, "the WAR screen fired on nobody; it should catch Britton"
     assert all(k.get("player_key") != d["player_key"]
                for k in kept for d in war_drops)
 

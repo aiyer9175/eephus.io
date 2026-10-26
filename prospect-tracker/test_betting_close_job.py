@@ -172,24 +172,38 @@ def test_the_heartbeat_never_breaks_the_capture(tmp_path):
 
 
 def test_the_diagnosis_separates_not_scheduled_from_never_firing(tmp_path, monkeypatch):
-    """The two states name two different repairs, so they get two messages."""
+    """The two states name two different repairs, so they get two messages.
+
+    Hermetic since PORT_RED_TESTS_CLEAR (2026-10-26): the odds cache is replaced by one
+    in-window OPEN snapshot, so the branch under test does not depend on whether this
+    machine pulled odds in the last 14 days (with none, snapshot_health takes its
+    no-snapshot branch first and the assertions below were never reached)."""
+    from datetime import datetime, timezone
+
     import betting_export as be
     hb = tmp_path / "close_job_heartbeat.json"
+    now = datetime.now(timezone.utc)
+    today = now.date().isoformat()
+    monkeypatch.setattr(be.bi, "list_snapshots",
+                        lambda *a, **k: [{"date": today, "path": str(tmp_path / "open.json")}])
+    monkeypatch.setattr(be.bi, "load_snapshot",
+                        lambda path, *a, **k: {"slate_date": today, "kind": "open",
+                                               "captured_at": now.isoformat()})
 
     monkeypatch.setattr(be, "CLOSE_HEARTBEAT_PATH", hb)
     never = be.snapshot_health(14)
-    if never["n_slates_with_close"] == 0:
-        assert "never run on this machine" in never["diagnosis"], never["diagnosis"]
-        assert never["close_job_ever_ran"] is False
+    assert never["n_slates_with_close"] == 0
+    assert "never run on this machine" in never["diagnosis"], never["diagnosis"]
+    assert never["close_job_ever_ran"] is False
 
     job.write_heartbeat({"fire": False, "reason": "too late: first pitch has passed",
                          "slate_date": "2026-08-12"}, path=hb)
     running = be.snapshot_health(14)
-    if running["n_slates_with_close"] == 0:
-        assert "never run on this machine" not in running["diagnosis"]
-        assert "firing window is never opening" in running["diagnosis"], \
-            running["diagnosis"]
-        assert running["close_job_ever_ran"] is True
+    assert running["n_slates_with_close"] == 0
+    assert "never run on this machine" not in running["diagnosis"]
+    assert "firing window is never opening" in running["diagnosis"], \
+        running["diagnosis"]
+    assert running["close_job_ever_ran"] is True
 
 
 # ---------------------------------------------------------------------------

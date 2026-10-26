@@ -871,9 +871,31 @@ def test_every_published_slot_is_a_row_off_the_board(payload):
                              ("total", (b.get("total") or {}).get("sides") or [])):
             for r in rows or []:
                 board[(b.get("game_pk"), market, r.get("side"), r.get("point"))] = r
+    # THE SLOT LOCK (apply_slot_lock, test_betting_slot_lock.py): a slot is published
+    # once per slate and every later build serves that row VERBATIM, so a slot served
+    # from the lock is checked against the row the lock recorded when it was published
+    # off the board, not against a board that has re-priced since.
+    lock = payload.get("slot_lock") or {}
+    from_lock = set(lock.get("served_from_lock") or [])
+    lock_rows = {}
+    if from_lock and lock.get("path"):
+        lp = ROOT / lock["path"]
+        if lp.exists():
+            ldoc = json.loads(lp.read_text(encoding="utf-8"))
+            lock_rows = {k: (v or {}).get("row") or {} for k, v in (ldoc.get("slots") or {}).items()}
     for key in _published_slots(payload):
         pick = payload.get(key)
         if pick is None:
+            continue
+        if key in from_lock:
+            assert key in (lock.get("locked") or {}), f"{key} is served from a lock it does not name"
+            row = lock_rows.get(key)
+            if row is None:
+                continue        # the lock file lives in .cache, absent on a clean checkout
+            for f in priced:
+                assert pick.get(f) == row.get(f), (
+                    f"{key}.{f} is {pick.get(f)!r} on the pick and {row.get(f)!r} in the "
+                    "slot lock; a locked slot is served verbatim")
             continue
         src = board.get((pick.get("game_pk"), pick.get("market"),
                          pick.get("side"), pick.get("point")))

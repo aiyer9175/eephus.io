@@ -76,7 +76,7 @@ def test_the_arbitration_ladder_makes_no_free_agency_claim(server):
         print("arbitration aria sample:", r["sample"][:160])
 
 
-_CSV = """() => {
+_CSV = """(name) => {
   const t = document.querySelector('table.proj-board-table');
   const X = window.EephusExport;
   const model = X && X.scrape ? X.scrape(t) : null;
@@ -86,28 +86,43 @@ _CSV = """() => {
   model.rows.forEach(r => { rows[r[idx('Player')]] = r; });
   return {headers: model.headers, iGuar: idx('Guaranteed thru'),
           iCtrl: idx('Control thru'), iBasis: idx('Control basis'),
-          caminero: rows['Junior Caminero'] || null,
+          caminero: rows[name] || null,
           nRows: model.rows.length,
           widthOk: model.rows.every(r => r.length === model.headers.length)};
 }"""
 
 
+# The player the export is read on: the first served row whose guarantee ends
+# before his club control does (basis contract+arb). The owner's report named Junior
+# Caminero (2026-09-17), whose 2026 guarantee ran out with the season, so the row is
+# taken from the payload rather than pinned by name.
+_PICK = """async () => {
+  const d = await (await fetch('/data/mlb_projections.json')).json();
+  const m = (d.vets || []).find(v => v.salSrc === 'contract+arb' && v.thru && v.ctrlThru > v.thru);
+  return m ? m.name : null;
+}"""
+
+
 def test_the_csv_carries_the_control_window(server):
     with _page(server, "projections/", "table.proj-board-table tbody tr[data-key]") as page:
-        r = page.evaluate(_CSV)
+        name = page.evaluate(_PICK)
+        if name is None:
+            pytest.skip("no served row has a guarantee that ends before his club control")
+        page.fill("#proj-q", name)
+        page.wait_for_timeout(600)
+        r = page.evaluate(_CSV, name)
         if r.get("noExport"):
             pytest.skip("eephus-export.js not loaded on this build")
         for h in ("Guaranteed thru", "Control thru", "Control basis"):
             assert h in r["headers"], f"{h} missing from the export: {r['headers']}"
         assert r["widthOk"], "an exported row does not paint the header's columns"
         cam = r["caminero"]
-        if cam is None:
-            pytest.skip("Junior Caminero is not in the first page of the board")
+        assert cam is not None, f"{name} is not in the export after searching for him"
         guar, ctrl, basis = cam[r["iGuar"]], cam[r["iCtrl"]], cam[r["iBasis"]]
         assert ctrl and ctrl != guar, f"control {ctrl!r} vs guarantee {guar!r}"
         assert int(str(ctrl).rstrip("+")) > int(guar)
         assert basis == "contract+arb", basis
-        print(f"csv caminero: guaranteed {guar}, control {ctrl}, basis {basis}")
+        print(f"csv {name}: guaranteed {guar}, control {ctrl}, basis {basis}")
 
 
 _CELL = """() => {

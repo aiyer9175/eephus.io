@@ -410,7 +410,7 @@ def _dump(x) -> str:
     return json.dumps(x, sort_keys=True, default=str)
 
 
-def test_screen_flag_off_keeps_the_lists_the_heads_and_the_assembly(tmp_path):
+def test_screen_flag_off_keeps_the_lists_the_heads_and_the_assembly(tmp_path, monkeypatch):
     import efv_v2_serve as S
     assert H.V2_SCREEN_CANDIDATES_ON is False
     for side in F.SIDES:
@@ -425,9 +425,19 @@ def test_screen_flag_off_keeps_the_lists_the_heads_and_the_assembly(tmp_path):
         a = H.fit_v2(rows, side, frame="lv", weights=_W, absent_ok=False)
         b = committed.fit_v2(rows, side, frame="lv", weights=_W, absent_ok=False)
         assert _dump(a) == _dump(b)
-    # the served heads: production_models() fits what the committed module fits
+    # the V2 heads: production_models() fits what the committed module fits. The served
+    # chain reads eFV v5 COMBINED and its re-fit since 2026-10-15 (EW3-10, 8ae40518), so
+    # the later model flags are held off here to reach the V2 branch (PORT_RED_TESTS_CLEAR).
+    import efv5_combined as V5C
+    import efv5_group_drivers as V5
+    import efv_v3 as V3
+    import efv_v4 as V4
+    for mod, flag in ((V5C, "EFV_V5_COMBINED_ON"), (V5, "EFV_V5_ON"),
+                      (V4, "EFV_V4_ON"), (V3, "EFV_V3_ON")):
+        monkeypatch.setattr(mod, flag, False)
+    monkeypatch.setattr(S, "_MODELS", None)
     weights = H.load_weights()
-    served = S.production_models()
+    served = S.production_models(refresh=True)
     for side in F.SIDES:
         train = [r for r in H.matrix_training_rows(side)
                  if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]

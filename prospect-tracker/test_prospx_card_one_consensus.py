@@ -82,9 +82,12 @@ def page():
             browser.close()
 
 
+# The card's own eyebrow: the one beside the "Prospect Card" label (the section
+# eyebrows above the card name consensus FV in their copy too).
 _CARD_JS = r"""() => {
   const eb = Array.from(document.querySelectorAll('.newsprint-eyebrow-meta'))
-    .find(e => /Consensus FV|No source grade/.test(e.textContent));
+    .find(e => /^Prospect Card/i.test(((e.parentElement || {}).querySelector
+      ? (e.parentElement.querySelector('.newsprint-eyebrow-label') || {}).textContent || '' : '').trim()));
   const hdr = document.querySelector('.detail-page-header');
   const right = hdr ? hdr.querySelector(':scope > div[style*="text-align:right"]') : null;
   const badge = hdr ? hdr.querySelector('.fv-badge.size-lg') : null;
@@ -144,14 +147,22 @@ def test_split_card_prints_one_consensus_and_the_chip_on_it(page, key):
     want = math.ceil(p["fv_close"])     # 52 for jackson_flora, 49 for cijntje on 2026-10-02
     c = _card(pg, base, key)
     assert not errs, errs[:3]
-    assert c["eyebrow"] == f"Consensus FV {want}", c["eyebrow"]
+    if pg.evaluate("() => efvDisplaySwaps()"):
+        # EFV_DISPLAY_SWAPS on (003e406a, 2026-10-14): the eyebrow leads with eFV and
+        # names the consensus beside it, "eFV 43 · consensus 52".
+        assert re.fullmatch(r"(?:Provisional )?eFV %s · (?:latest )?consensus %d" % (c["badge"], want),
+                            c["eyebrow"] or ""), c["eyebrow"]
+    else:
+        assert c["eyebrow"] == f"Consensus FV {want}", c["eyebrow"]
     m = re.search(r"Consensus FV (\d+)(?: · eFV ([+-]?\d+))?", c["right"])
     assert m, c["right"]
     assert int(m.group(1)) == want, c["right"]
     if m.group(2) is not None:
         assert int(c["badge"]) - want == int(m.group(2)), (c["badge"], c["right"])
-    # No second consensus number anywhere in the header.
-    others = {int(v) for v in re.findall(r"Consensus FV (\d+)", c["html"])}
+    # No second consensus number anywhere in the header, read off the rendered text:
+    # "Consensus FV 52" in the right column and, with the display swaps on, the
+    # eyebrow's "consensus 52" (the markup wraps the number in its own tags).
+    others = {int(v) for v in re.findall(r"[Cc]onsensus(?: FV)? (\d+)", c["text"])}
     assert others == {want}, others
 
 
@@ -163,7 +174,12 @@ def test_placeholder_card_prints_no_consensus_fv(page):
         pytest.skip(f"{PLACEHOLDER_KEY} no longer carries a placeholder consensus")
     c = _card(pg, base, PLACEHOLDER_KEY)
     assert not errs, errs[:3]
-    assert c["eyebrow"] == "No source grade", c["eyebrow"]
+    if pg.evaluate("() => efvDisplaySwaps()"):
+        # swaps on: the eyebrow prints the eFV alone and names no consensus
+        assert c["eyebrow"] and "onsensus" not in c["eyebrow"], c["eyebrow"]
+        assert re.fullmatch(r"(?:Provisional )?eFV \d+|No source grade", c["eyebrow"]), c["eyebrow"]
+    else:
+        assert c["eyebrow"] == "No source grade", c["eyebrow"]
     assert "Consensus FV 35" not in c["html"], "placeholder printed as a consensus FV"
     assert not re.search(r"Range \S+.* · O \S+ · C ", c["right"]), c["right"]
     assert not re.search(r"\b35 FV\b", c["text"]), "quick-read still prints the placeholder"

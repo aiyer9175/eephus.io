@@ -147,7 +147,10 @@ TEXT_FIELDS = ("#hof-q", "#proj-q", "#dfs-f-q", "#dyn-f-q", "#rd-f-q",
 COARSE_ROUTES = [
     ("hof", "hof/"), ("trademachine", "trademachine/"), ("management", "management/"),
     ("fantasy", "fantasy/"), ("betting", "betting/"), ("arbitration", "arbitration/"),
-    ("glossary", "glossary/#view=calculators"),
+    # the surplus calculator (#gx-surplus-side) sits in the Methodology view's Value
+    # chapter since the Library's chapters rewrite (8e40db54); #view=calculators names
+    # no view and opens Terms
+    ("glossary", "glossary/#view=methodology&ch=meth-value"),
 ]
 # The team selects (#mgmt-club, #dfs-f-team, #dyn-f-org, #rd-f-team, #arb-team)
 # are hidden behind the team picker since 2026-09-24 (assets/eephus-teampick.js);

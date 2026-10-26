@@ -285,8 +285,12 @@ def test_spent_frames_are_labelled_and_never_ledger_rows():
 
 def test_the_repair_is_dark_until_the_refit():
     """The production heads refit on every export and this column moves their slopes, so
-    the repair reaches the board only with EFV_FIX_B_REFIT's registered re-fit."""
-    assert P.POP_REPAIR_ON is False
+    the repair reaches the board only with EFV_FIX_B_REFIT's registered re-fit. That re-fit
+    flipped (8ae40518, owner EFV-REFIT-1, 2026-10-15), so the repair is on and moves with
+    efv5_refit.EFV_V5_REFIT_ON."""
+    import efv5_refit as X
+    assert P.POP_REPAIR_ON is True
+    assert bool(P.POP_REPAIR_ON) == bool(X.EFV_V5_REFIT_ON)
     assert P.NON_AFFILIATED_LEAGUES == frozenset({(11, "MEX")})
 
 
@@ -304,8 +308,10 @@ def test_norms_sum_each_count_once_under_the_repair(world, monkeypatch):
     so = sum(r["so"] for r in rows)
     pa = sum(r["pa"] for r in rows)
     bb = sum(r["bb"] for r in rows)
+    monkeypatch.setattr(P, "POP_REPAIR_ON", False)
+    _clear()
     legacy = P.norms(2010, "hit")["lv"]["A"]
-    assert abs(legacy["k"] - so / (4 * pa)) < 1e-12, "the legacy loop, kept while dark"
+    assert abs(legacy["k"] - so / (4 * pa)) < 1e-12, "the legacy loop, kept byte-identical with the flag off"
     monkeypatch.setattr(P, "POP_REPAIR_ON", True)
     _clear()
     fixed = P.norms(2010, "hit")["lv"]["A"]
@@ -322,6 +328,7 @@ def test_non_affiliated_lines_leave_the_population_under_the_repair(world, monke
     store[(11, 2010, "hitting")] = [
         _hit(950000 + i, 2010, level="AAA", league="MEX", age=30) for i in range(25)]
     store[(11, 2010, "hitting")].append(_hit(960000, 2010, level="AAA", league="PCL"))
+    monkeypatch.setattr(P, "POP_REPAIR_ON", False)
     _clear()
     assert sum(1 for t in P.season_lines(2010, "hit") if t[2] == "MEX") == 25
     monkeypatch.setattr(P, "POP_REPAIR_ON", True)

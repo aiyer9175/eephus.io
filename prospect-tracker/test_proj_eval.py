@@ -93,9 +93,12 @@ def test_no_persist_leaves_artifact_untouched(tmp_path, monkeypatch):
 # can run on a fixture without the corpus build, so their source text is
 # pinned instead. A deliberate edit to either updates its hash here, in the
 # same commit, with the reason.
+# Restamped by PORT_RED_TESTS_CLEAR (2026-10-26) for 629fd13d (AG_5, aging v3
+# service built dark): run and run_rowmatch call fitted_models(..., aging="v2")
+# explicitly, the incumbent engine unchanged (docs/AGING_V3_GATE.md section 2).
 _PINNED_SOURCE_SHA256 = {
-    "run": "1c36bb43bd8ad8fac17918474403bd65bf913dd0df42cc5b8060a68ffcf897d7",
-    "run_rowmatch": "9ad58b4d390657e1e6edca1928260255c958a73297fd92a2694ca8a10a24902f",
+    "run": "f7dbad25a1b58e50876b5c568165ff28e188c29969104b65c441046ff795e64d",
+    "run_rowmatch": "6f495aacf08b30970b74a3d264a7a882ca62763b0f5aec1027b2fe7796a0aedf",
 }
 
 

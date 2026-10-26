@@ -56,12 +56,19 @@ def test_surplus_50_hitter_stays_model_scale_not_table():
     # the FV-to-WAR map and every price with it. The SEPARATION invariant this test actually
     # exists to pin is unchanged and still checked below: the model FV50 price 41.2 stays
     # clearly under the prospx_current TABLE price 48.2, a gap of 7.0.
-    assert vf.surplus_value_mm(50.0, False) == pytest.approx(41.2, abs=0.6)
+    # 2026-10-26 (PORT_RED_TESTS_CLEAR): RESTAMPED 41.2 -> 68.1 and re-examined, not widened
+    # silently. The one $/WAR level (410cccce, owner FP2-1) and the knots-only calibration
+    # refit at the live level (70a50b24 and eb4f8426, owner VAL1-Q2) moved the model price;
+    # the uncalibrated mixture reads 36.8 and the refit isotonic map takes it to 68.1, while
+    # the prospx_current TABLE reads 56.6. The model now sits ABOVE the table by 11.5, so the
+    # separation is pinned in the direction it now holds (owner question PRT-Q1 in
+    # docs/port/RED_TESTS_CLEARED.md); a convergence still trips it.
+    assert vf.surplus_value_mm(50.0, False) == pytest.approx(68.1, abs=0.6)
     with vf.valuation_set("prospx_current"):
         table_50 = vf.surplus_value_mm(50.0, False)
-    assert vf.surplus_value_mm(50.0, False) < table_50 - 1.0, (
-        "the model FV50 price must stay materially below the prospx_current TABLE price; "
-        "if these converge the board has been snapped to table scale")
+    assert vf.surplus_value_mm(50.0, False) > table_50 + 1.0, (
+        "the model FV50 price must stay materially apart from the prospx_current TABLE "
+        "price; if these converge the board has been snapped to table scale")
 
 
 def test_fit_reported_not_forced():
@@ -142,7 +149,9 @@ def test_cache_cleared_on_set_switch():
         # Re-stamped 2026-09-04: 47.4 -> 48.2 for the eWAR label epoch. Same cause as the
         # model-scale move above, an anchor re-derivation on the rebased label, and the
         # prospx_current tier grid was re-captured inside its own set in the same change.
-        assert base_50 == pytest.approx(48.2, abs=0.1)
+        # Re-stamped 2026-10-26: 48.2 -> 56.6, the one $/WAR level (410cccce) and the
+        # knots-only calibration refit (70a50b24, eb4f8426), as above.
+        assert base_50 == pytest.approx(56.6, abs=0.1)
     # The CACHE-CLEARING fact this test exists for, stated scale-free so a future
     # re-price restamps one literal instead of silently voiding the guard: the two
     # contexts must price differently, and leaving must restore the clemens price.
