@@ -4,9 +4,9 @@
 Source: `data/model_registry.json` via `model_registry.load()`. Freshness columns
 (artifact age / stale) are the registry's own stamps, written by
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 120);
-stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
+stamped as of **2026-10-02**. `validate()` at generation time: **1 problem(s)** (listed below).
 
-**405 models.** Verdicts: validated: 54, provisional: 208, unvalidated: 51, deprecated: 92.
+**406 models.** Verdicts: validated: 54, provisional: 209, unvalidated: 51, deprecated: 92.
 
 ## Instrument boundary
 
@@ -78,6 +78,7 @@ can be measured.
 | `ewar` | Provisional, a basis choice: eWAR loses team-wins fit to bWAR (r 0.8595 vs 0.8803) and doubles pitcher persistence (0.3617 vs 0.1768); the label swap bought no eFV accuracy. | A reference column (eWAR v2) beside the displayed eWAR (e... | eephus WAR v2: Baseball-Reference WAR with pitching re-priced on FIP, centred per season and role; all else B-Ref | eWAR v2 (ewar.py) on the Baseball-Reference run frame; bWAR (pybaseball war_d... | bWAR on identical rows, identical window, identical replacement re-derivation | Team wins r 2016-2025 (300 team-seasons), pitcher year-to-year persistence (m... | **provisional** | `data/ewar_eval.json` | 28 | no |
 | `ewar_v3` | Measured, not a prediction: the displayed eWAR, FanGraphs' published WAR plus the ABS challenge part from 2026 (owner override); no look-decided part was admitted. | The displayed WAR site-wide behind war_source.EWAR_V3_LIV... | Nothing forward: WAR on FanGraphs' frame with named, zero-sum departures, published per player and part | ewar_v3_1 (tools/build_ewar_v3.py, ewar_v3.py): the frozen fWAR vintage plus... | published fWAR on identical rows: every player-season the artifact does not l... | Refusing identities, no forward claim: zero-sum departures per season and sid... | **provisional** | `data/ewar_v3.json` | - | - |
 | `ewar_v3_realized` | Measured, not a prediction: eWAR realized, eWAR with pitchers priced on runs allowed adjusted for park, defense and inherited runners (R2, 2016 on); shown beside eWAR. | Beside eWAR on MLB player pages and in Awards (war_real,... | Nothing forward: the season that happened, on the same frame (EBR_GATE.md 11.2.8: no forward target, no look) | eWAR plus R2's re-pinned Delta_r (EBR_GATE.md 11.3.3) on the replica's feed-o... | eWAR on identical rows | Accounting checks only: Delta_r sums to zero per season within the preview's... | **provisional** | `data/ewar_v3.json` | - | - |
+| `ewar_band` | Measured, not a prediction: an 80 percent +/- beside eWAR and eWAR realized from split-half component noise plus fWAR and bWAR disagreement, coverage-checked by playing-time band on held-out seasons. | Beside eWAR and eWAR realized on MLB player pages (war_pm... | Nothing forward: the spread of a season's measured value, same season | sigma^2 = [m^2 k_bat PA + m^2 k_ebr PA + m^2 k_pit IP] / RPW^2 + m^2 k_src,ba... | N0, an exposure-blind band of one width per family, and N1, the Awards measur... | TEST coverage by playing-time band (24 cells) under player- and club-clustere... | **provisional** | `data/ewar_band.json` | - | - |
 | `ewar_history` | Measured, not a prediction: the displayed eWAR shown for every season 2000 to 2026, each season stamped with the parts its eWAR carries. | /mlbstats/ eWAR board year selector and windows (data/war... | Nothing forward: which parts each season's eWAR carries, and how far the later parts move it | ewar_history_v1 (ewar_history.py, tools/build_ewar_history.py): stamps measur... | CORE: eWAR from the parts present in every season (batting, wSB, fielding, po... | Refusing identities, no forward claim: FULL minus CORE equals the named parts... | **provisional** | `data/ewar_history.json` | - | - |
 | `ewar_core_label` | Measured, not a prediction: core eWAR (fWAR less the rest of baserunning and framing), a candidate eFV label whose circularity guard did not hold. | None served: data/ewar_core_label.json (off the webroot)... | Nothing: a label definition, checked against next-season published fWAR and club runs and wins | ewar-core-2026-10-02-a020cf64844a-9f947d8f87ac (ewar_core_label.py, tools/bui... | published fWAR (the label in force) | Circularity guard (gate part 4): G-1 within-season Spearman gap against next-... | **provisional** | `docs/efv-2026-10-22/ewar_core_label_guard.json` | - | - |
 | `ewar_headline_label` | Measured, not a prediction: the headline eWAR (published fWAR plus the eABS part from 2026) as eFV's training label, frozen as its own vintage. | None served directly: data/ewar_headline_label.json (off... | Nothing: a label definition, checked against next-season published fWAR and club runs and wins | ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d (ewar_headline_label.py, t... | published fWAR (the label before the switch) | Circularity guard (the core label gate's part 4 on this series): G-1 within-s... | **provisional** | `docs/efv-2026-10-22/ewar_headline_label_guard.json` | - | - |
@@ -426,6 +427,10 @@ can be measured.
 | `xm` | Provisional: the /fa/ market model, generalized to every player, beat a WAR-times-price rule on the held-out 2025 and 2026 winters (log-total MAE 0.736 against 0.899); MLB Trade Rumors beat it. | served from 2026-10-22 (owner XM-FLIP): xM$ and Fair $ on... | the free-agent market price this winter: years, the deferral-adjusted NPV total guarantee and AAV with a P10-P90 band, for sign... | a_incumbent: fa_market.MarketModel (fa_mkt_v2, NPV basis) refit per fold, sel... | NULL 1: platform WAR x the one-step $/WAR index, years from the training medi... | log-total MAE on the NPV guarantee, paired against each comparator with a pla... | **provisional** | `data/xm_eval.json` | - | - |
 
 Stored problems at last refresh: none.
+
+Live `validate()` problems:
+
+- ewar_band: artifact missing: data/ewar_band.json
 
 Verdict semantics (from `model_registry.py`): validated = committed forward
 backtest beats the stated baseline; provisional = partially measured;

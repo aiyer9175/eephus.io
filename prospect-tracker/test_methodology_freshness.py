@@ -181,6 +181,7 @@ MODEL_GLOSSARY = {
     # default provider ewar_v2); the glossary entry carries the frame disclosure
     # and the gate record, so it is reader-facing and no longer internal.
     "ewar": ["ewar"],
+    "ewar_band": ["ewar_band", "ewar"],
     # The 2026-10-03 fWAR label epoch: published fWAR is the TRAINING label (the WAR
     # glossary entry carries the frame disclosure and names both series), while eWAR v2
     # stays the displayed WAR (owner answer EPOCH-Q4). The epoch lab measures the swap

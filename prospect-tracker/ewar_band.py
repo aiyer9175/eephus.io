@@ -45,7 +45,7 @@ RECORD = ROOT / "data" / "_labs" / "ewar_uncertainty_band" / "record.json"
 GATE_DOC = U.GATE_DOC
 
 #: The flip (owner question EWUB-Q1). Off: no consumer prints a band.
-BAND_LIVE = False
+BAND_LIVE = True   # owner EWUB-Q1 2026-10-26: cards, eWAR board, beside eWAR realized in Awards
 
 #: Decimals the +/- prints with, as eWAR itself.
 DECIMALS = 1

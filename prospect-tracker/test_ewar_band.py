@@ -51,8 +51,14 @@ def live(monkeypatch):
     EB.set_payload(None)
 
 
-def test_flag_is_off_and_nothing_serves():
-    assert EB.BAND_LIVE is False
+def test_the_flag_is_on():
+    # owner EWUB-Q1 2026-10-26
+    assert EB.BAND_LIVE is True
+
+
+def test_flag_is_off_and_nothing_serves(monkeypatch):
+    monkeypatch.setattr(EB, "BAND_LIVE", False)
+    EB.set_payload(None)
     assert EB.load() is None
     assert EB.half_width(season=2024, pa=600) is None
     assert EB.pm(None) is None

@@ -2033,6 +2033,33 @@
    "origin": "Arkmetric, original to eephus.io, on FanGraphs' published pitcher WAR chain."
   },
   {
+   "id": "ewar_band",
+   "term": "eWAR band (+/-)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "projections",
+    "mlbstats",
+    "awards"
+   ],
+   "aliases": [
+    "eWAR uncertainty band",
+    "eWAR +/-",
+    "the band"
+   ],
+   "priority": 7,
+   "definition": "The +/- printed beside eWAR and eWAR realized: how far a season's number could sit from another measure of the same season. It adds two spreads: how much the season's own events vary (batting, baserunning and pitching runs measured on two halves of the season, odd and even games) and how far two published WAR systems (FanGraphs and Baseball-Reference) disagree for the same playing time. On seasons held out from its constants it covered the other measure 77 to 87 percent of the time in every playing-time band, for a stated 80 percent. It is not a range for a player's talent.",
+   "methodology": "Per component, the noise per plate appearance or inning comes from the two halves of each season (2011 on for batting and baserunning, 2018 on for pitching); the method spread comes from FanGraphs WAR minus Baseball-Reference WAR, halved in variance, 2000 on. Fielding's own sampling noise has no half-season split in the site's data, so it rides in the method spread. Each spread is then rescaled per playing-time band so its coverage on the fitting seasons is 80 percent. The check read held-out seasons once: every 5th to 95th percentile interval of coverage, by playing-time band, sat between 70 and 90 percent. A side under 20 plate appearances or 5 innings carries no band.",
+   "formula": "band = eWAR +/- 1.2816 x sqrt( [batting + baserunning noise per PA x PA + pitching noise per IP x IP] / RPW^2 + method spread per PA x PA + per IP x IP ), each term rescaled by its playing-time band",
+   "seeAlso": [
+    "ewar",
+    "ewar_realized",
+    "war"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io, on FanGraphs' and Baseball-Reference's published WAR."
+  },
+  {
    "id": "consensus_fv",
    "term": "Consensus FV",
    "category": "methodology",

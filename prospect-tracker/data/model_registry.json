@@ -1211,6 +1211,19 @@
    "notes": "Assembled by tools/build_ewar_v3.py (task EWAR_V3_ASSEMBLE, folding EBR_3_EWAR_V3) on fWAR vintage 2026-10-02-a020cf64844a, build 2026-10-22T02:17:24+00:00; registered in docs/ebr-2026-09-30/EBR_GATE.md parts 9.2, 9.7 and 11.10 (11.10 committed alone before any number). After the outcome look (12.1), the skill look (12.2) and the holdout (12.3) no look-decided part is admitted. R2 source: {\"fwar_vintage_id\": \"2026-10-02-a020cf64844a\", \"generated_at\": \"2026-10-22T01:32:40+00:00\", \"path\": \".cache/swar/preview/swar.json\", \"seasons\": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026], \"sha256\": \"fc640b0117ef07fd9e43fb16a428912231132d32ae450103e13cead1a05cd97d\", \"zero_sum\": {\"2016\": -2.1697053875779915e-15, \"2017\": 3.3042145408668233e-15, \"2018\": -1.8995222061946038e-16,. The ABS part (candidate part 8) is carried by OWNER OVERRIDE EW3-32 of a NULL stability read, from 2026: 10,558 zone challenges, 592.5 catcher-won runs moved against an average catcher per inning at C and charged to pitchers per IP, 198.4 runs of failure cost charged to challengers and re-centred per side; hitters move -0.507 to +0.422 wins (662 rows), pitchers -0.214 to +0.189 (868 rows). "
   },
   {
+   "model_id": "ewar_band",
+   "summary": "Measured, not a prediction: an 80 percent +/- beside eWAR and eWAR realized from split-half component noise plus fWAR and bWAR disagreement, coverage-checked by playing-time band on held-out seasons.",
+   "surface": "Beside eWAR and eWAR realized on MLB player pages (war_pm, war_real_pm), on the MLB Stats eWAR board (war_pm) and beside eWAR realized in Awards (realized_pm_display); data/ewar_band.json",
+   "predicts": "Nothing forward: the spread of a season's measured value, same season",
+   "champion": "sigma^2 = [m^2 k_bat PA + m^2 k_ebr PA + m^2 k_pit IP] / RPW^2 + m^2 k_src,bat PA + m^2 k_src,pit IP; k_bat 0.1238, k_ebr 0.0148, k_fip 0.5383, k_ra 2.0848 runs^2 per PA or IP; k_src 0.000528 per PA and 0.004024 per IP (wins^2); split-conformal m per playing-time band",
+   "baseline": "N0, an exposure-blind band of one width per family, and N1, the Awards measurement band with no sampling term",
+   "metric": "TEST coverage by playing-time band (24 cells) under player- and club-clustered bootstraps, B 4,000, seed 20261023; interval score against N0 and N1; the planted check",
+   "eval_artifact": "data/ewar_band.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Registered alone in docs/ewar-v3/EWAR_UNCERTAINTY_BAND_GATE.md (2026-10-22); amended before the read (13.1: constants and multipliers on FIT and CAL together, the multiplier always applied, equivalence range [0.70, 0.90]) after the planted check failed the registered design; read once 2026-10-22: PASS, TEST coverage 0.774 to 0.871 across the 24 cells, planted truth 19 of 20 and broken 0 of 20. Under the registered range [0.75, 0.85] five cells would sit outside. The Awards realized read keeps its measurement band for its verdicts (owner question EWUB-Q1)."
+  },
+  {
    "model_id": "ewar_history",
    "summary": "Measured, not a prediction: the displayed eWAR shown for every season 2000 to 2026, each season stamped with the parts its eWAR carries.",
    "surface": "/mlbstats/ eWAR board year selector and windows (data/war_seasons.json components), MLB player pages' season lines (careerHist, ewarParts in the per-card shard), the league averages' eWAR rows; data/ewar_history.json",
