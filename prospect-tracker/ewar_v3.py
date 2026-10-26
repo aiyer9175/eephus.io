@@ -74,6 +74,13 @@ XHEM_LAMBDA: float = 0.5
 XHEM_FIRST_SEASON = 2016
 #: Where the part's census build goes whatever the flag says (11.11.2).
 PREVIEW_XHEM = ROOT / ".cache" / "ewar_v3" / "preview" / "ewar_v3_xhem.json"
+#: The park-matched construction of the xHEM+ part (EBR_GATE.md 11.12, owner decision
+#: EW3-52): with XHEM_HALF_LIVE also on, the part carries x_pm, S1x less the share of
+#: fWAR's park term its rate re-introduces (xhem_parkmatch.py), in place of 11.11.1's x.
+#: Off, the part is 11.11's. Flipped only by a later owner answer after 11.12.7's PASS.
+XHEM_PARKMATCH_LIVE: bool = False
+#: Where the park-matched census build goes whatever the flags say (11.12.2).
+PREVIEW_XHEM_PM = ROOT / ".cache" / "ewar_v3" / "preview" / "ewar_v3_xhem_pm.json"
 #: The tracked record whose holdout block the site sentence's numbers come from.
 SWAR_EVAL = DATA_DIR / "swar_eval.json"
 

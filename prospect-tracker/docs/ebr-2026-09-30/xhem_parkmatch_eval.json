@@ -1,0 +1,2865 @@
+{
+ "b": {
+  "hem": 0.093828,
+  "xhem": 0.46773
+ },
+ "beside": {
+  "cells": {
+   "PM-rate-L1": {
+    "cell": "PM-rate-L1",
+    "floors": {
+     "half_width95": 0.033674,
+     "mde95": 0.027803,
+     "n_draws": 2000,
+     "sd": 0.016902
+    },
+    "gap": 0.057015,
+    "hi90": 0.085592,
+    "hi95": 0.091118,
+    "kind": "rate",
+    "lo90": 0.028962,
+    "lo95": 0.023771,
+    "lower_bound": 0.028962,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.105179,
+     "hi95": 0.144725,
+     "lo95": 0.064895
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.072705,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.057015,
+      "n_pairs": 1071,
+      "rho_b0": 0.442822,
+      "rho_test": 0.499836
+     }
+    },
+    "rho_b0": 0.442822,
+    "rho_test": 0.499836,
+    "twin_gap": -0.048164,
+    "twin_hi95": -0.019339,
+    "twin_lo95": -0.077989,
+    "v1_gap": 0.057487,
+    "v1_hi95": 0.090644,
+    "v1_lo95": 0.02486,
+    "v1_sign_agrees": true
+   },
+   "PM-total-L1": {
+    "cell": "PM-total-L1",
+    "floors": {
+     "half_width95": 0.033653,
+     "mde95": 0.028042,
+     "n_draws": 2000,
+     "sd": 0.017047
+    },
+    "gap": 0.032851,
+    "hi90": 0.062586,
+    "hi95": 0.066404,
+    "kind": "cum",
+    "lo90": 0.0057,
+    "lo95": -0.000902,
+    "lower_bound": 0.0057,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.087142,
+     "hi95": 0.127089,
+     "lo95": 0.045943
+    },
+    "p_one_sided": 0.029985,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.047038,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.032851,
+      "n_pairs": 1071,
+      "rho_b0": 0.471043,
+      "rho_test": 0.503893
+     }
+    },
+    "rho_b0": 0.471043,
+    "rho_test": 0.503893,
+    "twin_gap": -0.054291,
+    "twin_hi95": -0.024271,
+    "twin_lo95": -0.085456,
+    "v1_gap": 0.033941,
+    "v1_hi95": 0.067046,
+    "v1_lo95": 0.002081,
+    "v1_sign_agrees": true
+   },
+   "as-built-rate": {
+    "cell": "as-built-rate",
+    "floors": {
+     "half_width95": 0.016145,
+     "mde95": 0.013367,
+     "n_draws": 2000,
+     "sd": 0.008126
+    },
+    "gap": 0.046807,
+    "hi90": 0.060571,
+    "hi95": 0.062522,
+    "kind": "rate",
+    "lo90": 0.033175,
+    "lo95": 0.030233,
+    "lower_bound": 0.033175,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.061871,
+     "hi95": 0.082303,
+     "lo95": 0.041207
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.056327,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.046807,
+      "n_pairs": 1071,
+      "rho_b0": 0.442822,
+      "rho_test": 0.489628
+     }
+    },
+    "rho_b0": 0.442822,
+    "rho_test": 0.489628,
+    "twin_gap": -0.015064,
+    "twin_hi95": 0.000285,
+    "twin_lo95": -0.031215,
+    "v1_gap": 0.047088,
+    "v1_hi95": 0.063849,
+    "v1_lo95": 0.03076,
+    "v1_sign_agrees": true
+   },
+   "as-built-total": {
+    "cell": "as-built-total",
+    "floors": {
+     "half_width95": 0.015485,
+     "mde95": 0.012996,
+     "n_draws": 2000,
+     "sd": 0.0079
+    },
+    "gap": 0.03722,
+    "hi90": 0.050679,
+    "hi95": 0.053545,
+    "kind": "cum",
+    "lo90": 0.024618,
+    "lo95": 0.022575,
+    "lower_bound": 0.024618,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.052448,
+     "hi95": 0.072697,
+     "lo95": 0.032118
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.043358,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.03722,
+      "n_pairs": 1071,
+      "rho_b0": 0.471043,
+      "rho_test": 0.508263
+     }
+    },
+    "rho_b0": 0.471043,
+    "rho_test": 0.508263,
+    "twin_gap": -0.015228,
+    "twin_hi95": 0.000401,
+    "twin_lo95": -0.031298,
+    "v1_gap": 0.037759,
+    "v1_hi95": 0.053687,
+    "v1_lo95": 0.02259,
+    "v1_sign_agrees": true
+   },
+   "early-PM-rate": {
+    "cell": "early-PM-rate",
+    "floors": {
+     "half_width95": 0.019962,
+     "mde95": 0.01693,
+     "n_draws": 2000,
+     "sd": 0.010292
+    },
+    "gap": 0.032544,
+    "hi90": 0.049362,
+    "hi95": 0.052345,
+    "kind": "rate",
+    "lo90": 0.015904,
+    "lo95": 0.012421,
+    "lower_bound": 0.015904,
+    "n_pairs": 800,
+    "n_players": 380,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.033625,
+     "hi95": 0.058844,
+     "lo95": 0.006707
+    },
+    "p_one_sided": 0.001,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.032812,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.032544,
+      "n_pairs": 800,
+      "rho_b0": 0.426886,
+      "rho_test": 0.45943
+     }
+    },
+    "rho_b0": 0.426886,
+    "rho_test": 0.45943,
+    "twin_gap": -0.001082,
+    "twin_hi95": 0.018562,
+    "twin_lo95": -0.020355,
+    "v1_gap": 0.031914,
+    "v1_hi95": 0.052868,
+    "v1_lo95": 0.011537,
+    "v1_sign_agrees": true
+   },
+   "early-PM-total": {
+    "cell": "early-PM-total",
+    "floors": {
+     "half_width95": 0.019274,
+     "mde95": 0.016324,
+     "n_draws": 2000,
+     "sd": 0.009924
+    },
+    "gap": 0.024409,
+    "hi90": 0.040462,
+    "hi95": 0.04377,
+    "kind": "cum",
+    "lo90": 0.008114,
+    "lo95": 0.005222,
+    "lower_bound": 0.008114,
+    "n_pairs": 800,
+    "n_players": 380,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.025908,
+     "hi95": 0.052366,
+     "lo95": -0.000103
+    },
+    "p_one_sided": 0.007496,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.01605,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.024409,
+      "n_pairs": 800,
+      "rho_b0": 0.453133,
+      "rho_test": 0.477542
+     }
+    },
+    "rho_b0": 0.453133,
+    "rho_test": 0.477542,
+    "twin_gap": -0.001499,
+    "twin_hi95": 0.01755,
+    "twin_lo95": -0.021171,
+    "v1_gap": 0.024089,
+    "v1_hi95": 0.045594,
+    "v1_lo95": 0.003549,
+    "v1_sign_agrees": true
+   },
+   "raw-PM-rate": {
+    "cell": "raw-PM-rate",
+    "floors": {
+     "half_width95": 0.016781,
+     "mde95": 0.013931,
+     "n_draws": 2000,
+     "sd": 0.008469
+    },
+    "gap": 0.048307,
+    "hi90": 0.062644,
+    "hi95": 0.064819,
+    "kind": "rate",
+    "lo90": 0.034504,
+    "lo95": 0.031257,
+    "lower_bound": 0.034504,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.060028,
+     "hi95": 0.081375,
+     "lo95": 0.038436
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.057391,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.048307,
+      "n_pairs": 1071,
+      "rho_b0": 0.420809,
+      "rho_test": 0.469115
+     }
+    },
+    "rho_b0": 0.420809,
+    "rho_test": 0.469115,
+    "twin_gap": -0.011721,
+    "twin_hi95": 0.004989,
+    "twin_lo95": -0.028453,
+    "v1_gap": 0.048679,
+    "v1_hi95": 0.066053,
+    "v1_lo95": 0.031999,
+    "v1_sign_agrees": true
+   },
+   "raw-as-built-rate": {
+    "cell": "raw-as-built-rate",
+    "floors": {
+     "half_width95": 0.016816,
+     "mde95": 0.013953,
+     "n_draws": 2000,
+     "sd": 0.008482
+    },
+    "gap": 0.049647,
+    "hi90": 0.063816,
+    "hi95": 0.066189,
+    "kind": "rate",
+    "lo90": 0.035476,
+    "lo95": 0.032558,
+    "lower_bound": 0.035476,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.062861,
+     "hi95": 0.084504,
+     "lo95": 0.041531
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.058224,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.049647,
+      "n_pairs": 1071,
+      "rho_b0": 0.420809,
+      "rho_test": 0.470456
+     }
+    },
+    "rho_b0": 0.420809,
+    "rho_test": 0.470456,
+    "twin_gap": -0.013213,
+    "twin_hi95": 0.003476,
+    "twin_lo95": -0.029708,
+    "v1_gap": 0.049953,
+    "v1_hi95": 0.066978,
+    "v1_lo95": 0.033063,
+    "v1_sign_agrees": true
+   }
+  },
+  "contrast_pm_minus_as_built_rate": {
+   "gap": -0.002301,
+   "hi95": 8.2e-05,
+   "lo95": -0.004585,
+   "n_pairs": 1071,
+   "sd": 0.001175
+  },
+  "per_season_rate_gaps": {
+   "2021": {
+    "as_built_rate": 0.046702,
+    "n_pairs": 267,
+    "pm_rate": 0.041905
+   },
+   "2022": {
+    "as_built_rate": 0.037651,
+    "n_pairs": 261,
+    "pm_rate": 0.036425
+   },
+   "2023": {
+    "as_built_rate": 0.078834,
+    "n_pairs": 278,
+    "pm_rate": 0.077791
+   },
+   "2024": {
+    "as_built_rate": 0.021244,
+    "n_pairs": 265,
+    "pm_rate": 0.016691
+   }
+  },
+  "weight": "descriptive: no verdict weight; claims nothing (part 8)"
+ },
+ "boot": 2000,
+ "cells": {
+  "PM-rate": {
+   "cell": "PM-rate",
+   "floors": {
+    "half_width95": 0.015911,
+    "mde95": 0.013361,
+    "n_draws": 2000,
+    "sd": 0.008122
+   },
+   "gap": 0.044505,
+   "hi90": 0.058119,
+   "hi95": 0.060234,
+   "kind": "rate",
+   "lo90": 0.031063,
+   "lo95": 0.028412,
+   "lower_bound": 0.031063,
+   "n_pairs": 1071,
+   "n_players": 434,
+   "non_inferior": true,
+   "over_twin": {
+    "gap": 0.057751,
+    "hi95": 0.078516,
+    "lo95": 0.037245
+   },
+   "p_one_sided": 0.0005,
+   "part": "batting (park-matched)",
+   "pearson_gap_v2": 0.055244,
+   "per_system": {
+    "park-neutral": {
+     "gap": 0.044505,
+     "n_pairs": 1071,
+     "rho_b0": 0.442822,
+     "rho_test": 0.487327
+    }
+   },
+   "rho_b0": 0.442822,
+   "rho_test": 0.487327,
+   "twin_gap": -0.013245,
+   "twin_hi95": 0.002682,
+   "twin_lo95": -0.029184,
+   "v1_gap": 0.044827,
+   "v1_hi95": 0.061638,
+   "v1_lo95": 0.028362,
+   "v1_sign_agrees": true
+  },
+  "PM-total": {
+   "cell": "PM-total",
+   "floors": {
+    "half_width95": 0.015638,
+    "mde95": 0.013032,
+    "n_draws": 2000,
+    "sd": 0.007922
+   },
+   "gap": 0.034896,
+   "hi90": 0.048493,
+   "hi95": 0.050839,
+   "kind": "cum",
+   "lo90": 0.022069,
+   "lo95": 0.019564,
+   "lower_bound": 0.022069,
+   "n_pairs": 1071,
+   "n_players": 434,
+   "non_inferior": true,
+   "over_twin": {
+    "gap": 0.049339,
+    "hi95": 0.069957,
+    "lo95": 0.029094
+   },
+   "p_one_sided": 0.0005,
+   "part": "batting (park-matched)",
+   "pearson_gap_v2": 0.042109,
+   "per_system": {
+    "park-neutral": {
+     "gap": 0.034896,
+     "n_pairs": 1071,
+     "rho_b0": 0.471043,
+     "rho_test": 0.505938
+    }
+   },
+   "rho_b0": 0.471043,
+   "rho_test": 0.505938,
+   "twin_gap": -0.014444,
+   "twin_hi95": 0.001461,
+   "twin_lo95": -0.031085,
+   "v1_gap": 0.035435,
+   "v1_hi95": 0.051262,
+   "v1_lo95": 0.020252,
+   "v1_sign_agrees": true
+  }
+ },
+ "fit": {
+  "b": {
+   "hem": 0.093828,
+   "xhem": 0.46773
+  },
+  "fitted_at": "2026-10-26T17:57:47+00:00",
+  "path": "docs/ebr-2026-09-30/xhem_parkmatch_fit.json"
+ },
+ "frame": {
+  "base_target": "park-neutral batting runs, wRAA + P (11.12.3)",
+  "deciding": [
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "floor_pa": 200.0,
+  "pairs": 1071
+ },
+ "holdout": "not read (11.12.7): S1x's 2025 to 2026 holdout stands as S1x's",
+ "lab_version": "xhem_parkmatch_lab/1",
+ "lambda": 0.5,
+ "non_inferior": true,
+ "null_and_planted": {
+  "cells": {
+   "N0-rate": {
+    "cell": "N0-rate",
+    "floors": {
+     "half_width95": 0.0,
+     "mde95": 0.0,
+     "n_draws": 2000,
+     "sd": 0.0
+    },
+    "gap": 0.0,
+    "hi90": 0.0,
+    "hi95": 0.0,
+    "kind": "rate",
+    "lo90": 0.0,
+    "lo95": 0.0,
+    "lower_bound": 0.0,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.0,
+     "hi95": 0.0,
+     "lo95": 0.0
+    },
+    "p_one_sided": 1.0,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.0,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.0,
+      "n_pairs": 1071,
+      "rho_b0": 0.442822,
+      "rho_test": 0.442822
+     }
+    },
+    "rho_b0": 0.442822,
+    "rho_test": 0.442822,
+    "twin_gap": 0.0,
+    "twin_hi95": 0.0,
+    "twin_lo95": 0.0,
+    "v1_gap": 0.0,
+    "v1_hi95": 0.0,
+    "v1_lo95": 0.0,
+    "v1_sign_agrees": false
+   },
+   "N0-total": {
+    "cell": "N0-total",
+    "floors": {
+     "half_width95": 0.0,
+     "mde95": 0.0,
+     "n_draws": 2000,
+     "sd": 0.0
+    },
+    "gap": 0.0,
+    "hi90": 0.0,
+    "hi95": 0.0,
+    "kind": "cum",
+    "lo90": 0.0,
+    "lo95": 0.0,
+    "lower_bound": 0.0,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.0,
+     "hi95": 0.0,
+     "lo95": 0.0
+    },
+    "p_one_sided": 1.0,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.0,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.0,
+      "n_pairs": 1071,
+      "rho_b0": 0.471043,
+      "rho_test": 0.471043
+     }
+    },
+    "rho_b0": 0.471043,
+    "rho_test": 0.471043,
+    "twin_gap": 0.0,
+    "twin_hi95": 0.0,
+    "twin_lo95": 0.0,
+    "v1_gap": 0.0,
+    "v1_hi95": 0.0,
+    "v1_lo95": 0.0,
+    "v1_sign_agrees": false
+   },
+   "PL1-rate": {
+    "cell": "PL1-rate",
+    "floors": {
+     "half_width95": 0.022044,
+     "mde95": 0.018516,
+     "n_draws": 2000,
+     "sd": 0.011256
+    },
+    "gap": 0.154143,
+    "hi90": 0.172504,
+    "hi95": 0.175962,
+    "kind": "rate",
+    "lo90": 0.135874,
+    "lo95": 0.131873,
+    "lower_bound": 0.135874,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": true,
+    "over_twin": {
+     "gap": 0.160042,
+     "hi95": 0.187904,
+     "lo95": 0.133383
+    },
+    "p_one_sided": 0.0005,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": 0.150859,
+    "per_system": {
+     "park-neutral": {
+      "gap": 0.154143,
+      "n_pairs": 1071,
+      "rho_b0": 0.442822,
+      "rho_test": 0.596964
+     }
+    },
+    "rho_b0": 0.442822,
+    "rho_test": 0.596964,
+    "twin_gap": -0.005899,
+    "twin_hi95": 0.014998,
+    "twin_lo95": -0.025086,
+    "v1_gap": 0.154136,
+    "v1_hi95": 0.178029,
+    "v1_lo95": 0.132907,
+    "v1_sign_agrees": true
+   },
+   "PL2-rate": {
+    "cell": "PL2-rate",
+    "floors": {
+     "half_width95": 0.016172,
+     "mde95": 0.013802,
+     "n_draws": 2000,
+     "sd": 0.008391
+    },
+    "gap": -0.146475,
+    "hi90": -0.133005,
+    "hi95": -0.130669,
+    "kind": "rate",
+    "lo90": -0.159934,
+    "lo95": -0.163012,
+    "lower_bound": -0.159934,
+    "n_pairs": 1071,
+    "n_players": 434,
+    "non_inferior": false,
+    "over_twin": {
+     "gap": -0.112434,
+     "hi95": -0.087401,
+     "lo95": -0.137446
+    },
+    "p_one_sided": 1.0,
+    "part": "batting (park-matched)",
+    "pearson_gap_v2": -0.160163,
+    "per_system": {
+     "park-neutral": {
+      "gap": -0.146475,
+      "n_pairs": 1071,
+      "rho_b0": 0.442822,
+      "rho_test": 0.296347
+     }
+    },
+    "rho_b0": 0.442822,
+    "rho_test": 0.296347,
+    "twin_gap": -0.03404,
+    "twin_hi95": -0.013513,
+    "twin_lo95": -0.055259,
+    "v1_gap": -0.146461,
+    "v1_hi95": -0.130129,
+    "v1_lo95": -0.163409,
+    "v1_sign_agrees": true
+   }
+  },
+  "checks": {
+   "N0": true,
+   "N1": true,
+   "PL1": true,
+   "PL2": true
+  }
+ },
+ "park_pattern": {
+  "controls": {
+   "K0": true,
+   "K1": true,
+   "K2": true
+  },
+  "controls_hold": true,
+  "pass": true,
+  "series": {
+   "K0_zero": {
+    "beside_2016_to_2020": {
+     "label": "in-fit (2016 to 2019) and short (2020) seasons; no weight",
+     "n_club_seasons": 150,
+     "slope": 0.0
+    },
+    "n_club_seasons": 180,
+    "n_neutral": 128,
+    "named": [
+     {
+      "band": 0.0,
+      "club": 115,
+      "inside": true,
+      "mean": 0.0,
+      "n": 6,
+      "park": "Coors Field (COL)"
+     },
+     {
+      "band": 0.0,
+      "club": 133,
+      "inside": true,
+      "mean": 0.0,
+      "n": 2,
+      "park": "Sutter Health Park, Sacramento (ATH)"
+     }
+    ],
+    "pass": true,
+    "sd_neutral": 0.0,
+    "slope": 0.0,
+    "slope_inside": true,
+    "slope_interval95": null,
+    "tolerance": 0.05
+   },
+   "K1_as_built": {
+    "beside_2016_to_2020": {
+     "label": "in-fit (2016 to 2019) and short (2020) seasons; no weight",
+     "n_club_seasons": 150,
+     "slope": -0.131116
+    },
+    "n_club_seasons": 180,
+    "n_neutral": 128,
+    "named": [
+     {
+      "band": 1.259921,
+      "club": 115,
+      "inside": false,
+      "mean": -2.097914,
+      "n": 6,
+      "park": "Coors Field (COL)"
+     },
+     {
+      "band": 2.182247,
+      "club": 133,
+      "inside": false,
+      "mean": -2.901511,
+      "n": 2,
+      "park": "Sutter Health Park, Sacramento (ATH)"
+     }
+    ],
+    "pass": false,
+    "sd_neutral": 1.574573,
+    "slope": -0.132365,
+    "slope_inside": false,
+    "slope_interval95": null,
+    "tolerance": 0.05
+   },
+   "K2_park_planted_back": {
+    "beside_2016_to_2020": {
+     "label": "in-fit (2016 to 2019) and short (2020) seasons; no weight",
+     "n_club_seasons": 150,
+     "slope": -0.326573
+    },
+    "n_club_seasons": 180,
+    "n_neutral": 128,
+    "named": [
+     {
+      "band": 1.280178,
+      "club": 115,
+      "inside": false,
+      "mean": -4.847052,
+      "n": 6,
+      "park": "Coors Field (COL)"
+     },
+     {
+      "band": 2.217334,
+      "club": 133,
+      "inside": false,
+      "mean": -4.566361,
+      "n": 2,
+      "park": "Sutter Health Park, Sacramento (ATH)"
+     }
+    ],
+    "pass": false,
+    "sd_neutral": 1.599889,
+    "slope": -0.341564,
+    "slope_inside": false,
+    "slope_interval95": null,
+    "tolerance": 0.05
+   },
+   "part": {
+    "beside_2016_to_2020": {
+     "label": "in-fit (2016 to 2019) and short (2020) seasons; no weight",
+     "n_club_seasons": 150,
+     "slope": -0.002224
+    },
+    "club_seasons": [
+     {
+      "c": -0.791238,
+      "club": 121,
+      "pf_pts": -6.209171,
+      "season": 2016
+     },
+     {
+      "c": -3.726824,
+      "club": 111,
+      "pf_pts": 4.715085,
+      "season": 2016
+     },
+     {
+      "c": -0.087697,
+      "club": 147,
+      "pf_pts": 1.268363,
+      "season": 2016
+     },
+     {
+      "c": 0.950028,
+      "club": 140,
+      "pf_pts": 7.587636,
+      "season": 2016
+     },
+     {
+      "c": 0.759141,
+      "club": 120,
+      "pf_pts": 1.760602,
+      "season": 2016
+     },
+     {
+      "c": 0.938828,
+      "club": 144,
+      "pf_pts": -0.529557,
+      "season": 2016
+     },
+     {
+      "c": -1.600309,
+      "club": 145,
+      "pf_pts": -1.453608,
+      "season": 2016
+     },
+     {
+      "c": -0.706005,
+      "club": 134,
+      "pf_pts": -2.155769,
+      "season": 2016
+     },
+     {
+      "c": 0.619518,
+      "club": 141,
+      "pf_pts": -0.214821,
+      "season": 2016
+     },
+     {
+      "c": 0.707786,
+      "club": 114,
+      "pf_pts": 4.065573,
+      "season": 2016
+     },
+     {
+      "c": -0.649081,
+      "club": 146,
+      "pf_pts": -5.315733,
+      "season": 2016
+     },
+     {
+      "c": 3.152835,
+      "club": 116,
+      "pf_pts": 0.292861,
+      "season": 2016
+     },
+     {
+      "c": 1.226102,
+      "club": 119,
+      "pf_pts": -4.483104,
+      "season": 2016
+     },
+     {
+      "c": 3.062323,
+      "club": 108,
+      "pf_pts": -3.305304,
+      "season": 2016
+     },
+     {
+      "c": -2.333113,
+      "club": 112,
+      "pf_pts": -0.30939,
+      "season": 2016
+     },
+     {
+      "c": -0.665189,
+      "club": 138,
+      "pf_pts": -2.255905,
+      "season": 2016
+     },
+     {
+      "c": -2.753179,
+      "club": 115,
+      "pf_pts": 15.549338,
+      "season": 2016
+     },
+     {
+      "c": -0.315989,
+      "club": 136,
+      "pf_pts": -4.94014,
+      "season": 2016
+     },
+     {
+      "c": -1.276508,
+      "club": 142,
+      "pf_pts": 2.130663,
+      "season": 2016
+     },
+     {
+      "c": 1.207305,
+      "club": 137,
+      "pf_pts": -3.205019,
+      "season": 2016
+     },
+     {
+      "c": -1.459821,
+      "club": 113,
+      "pf_pts": 1.779199,
+      "season": 2016
+     },
+     {
+      "c": 0.383851,
+      "club": 118,
+      "pf_pts": 1.426494,
+      "season": 2016
+     },
+     {
+      "c": 3.210132,
+      "club": 133,
+      "pf_pts": -2.39284,
+      "season": 2016
+     },
+     {
+      "c": -1.365742,
+      "club": 158,
+      "pf_pts": 1.244164,
+      "season": 2016
+     },
+     {
+      "c": -0.167694,
+      "club": 135,
+      "pf_pts": -3.094727,
+      "season": 2016
+     },
+     {
+      "c": -0.743816,
+      "club": 109,
+      "pf_pts": 5.13736,
+      "season": 2016
+     },
+     {
+      "c": 1.054182,
+      "club": 110,
+      "pf_pts": 0.476646,
+      "season": 2016
+     },
+     {
+      "c": -0.175442,
+      "club": 143,
+      "pf_pts": -0.735831,
+      "season": 2016
+     },
+     {
+      "c": 0.720074,
+      "club": 139,
+      "pf_pts": -2.694404,
+      "season": 2016
+     },
+     {
+      "c": 0.825542,
+      "club": 117,
+      "pf_pts": -4.052365,
+      "season": 2016
+     },
+     {
+      "c": 0.171954,
+      "club": 144,
+      "pf_pts": 2.069676,
+      "season": 2017
+     },
+     {
+      "c": -0.907918,
+      "club": 142,
+      "pf_pts": 0.933158,
+      "season": 2017
+     },
+     {
+      "c": 1.702391,
+      "club": 140,
+      "pf_pts": 9.153724,
+      "season": 2017
+     },
+     {
+      "c": -3.969456,
+      "club": 117,
+      "pf_pts": -3.362292,
+      "season": 2017
+     },
+     {
+      "c": -0.574563,
+      "club": 120,
+      "pf_pts": 2.105999,
+      "season": 2017
+     },
+     {
+      "c": -1.922167,
+      "club": 113,
+      "pf_pts": 2.300644,
+      "season": 2017
+     },
+     {
+      "c": -0.506814,
+      "club": 147,
+      "pf_pts": -0.287879,
+      "season": 2017
+     },
+     {
+      "c": -2.122771,
+      "club": 146,
+      "pf_pts": -4.705298,
+      "season": 2017
+     },
+     {
+      "c": 4.520265,
+      "club": 116,
+      "pf_pts": 1.127255,
+      "season": 2017
+     },
+     {
+      "c": -0.300366,
+      "club": 119,
+      "pf_pts": -4.494464,
+      "season": 2017
+     },
+     {
+      "c": 2.203486,
+      "club": 108,
+      "pf_pts": -2.397233,
+      "season": 2017
+     },
+     {
+      "c": -0.760827,
+      "club": 112,
+      "pf_pts": -0.397092,
+      "season": 2017
+     },
+     {
+      "c": -0.869398,
+      "club": 109,
+      "pf_pts": 5.13736,
+      "season": 2017
+     },
+     {
+      "c": -1.556791,
+      "club": 121,
+      "pf_pts": -5.821687,
+      "season": 2017
+     },
+     {
+      "c": 0.91242,
+      "club": 138,
+      "pf_pts": -3.546661,
+      "season": 2017
+     },
+     {
+      "c": 0.368083,
+      "club": 136,
+      "pf_pts": -3.89117,
+      "season": 2017
+     },
+     {
+      "c": 0.775165,
+      "club": 114,
+      "pf_pts": 4.184556,
+      "season": 2017
+     },
+     {
+      "c": 1.337792,
+      "club": 110,
+      "pf_pts": 1.772475,
+      "season": 2017
+     },
+     {
+      "c": -1.224582,
+      "club": 139,
+      "pf_pts": -3.541315,
+      "season": 2017
+     },
+     {
+      "c": 2.107846,
+      "club": 141,
+      "pf_pts": -0.266004,
+      "season": 2017
+     },
+     {
+      "c": 1.602921,
+      "club": 137,
+      "pf_pts": -4.375815,
+      "season": 2017
+     },
+     {
+      "c": -0.781183,
+      "club": 135,
+      "pf_pts": -2.998745,
+      "season": 2017
+     },
+     {
+      "c": -0.910403,
+      "club": 143,
+      "pf_pts": 0.254297,
+      "season": 2017
+     },
+     {
+      "c": -0.919064,
+      "club": 145,
+      "pf_pts": -2.128673,
+      "season": 2017
+     },
+     {
+      "c": 3.054189,
+      "club": 118,
+      "pf_pts": 1.931071,
+      "season": 2017
+     },
+     {
+      "c": 1.092914,
+      "club": 111,
+      "pf_pts": 4.545069,
+      "season": 2017
+     },
+     {
+      "c": 1.59377,
+      "club": 133,
+      "pf_pts": -3.452712,
+      "season": 2017
+     },
+     {
+      "c": -2.934067,
+      "club": 158,
+      "pf_pts": 0.968003,
+      "season": 2017
+     },
+     {
+      "c": -2.357288,
+      "club": 115,
+      "pf_pts": 14.796972,
+      "season": 2017
+     },
+     {
+      "c": 1.174462,
+      "club": 134,
+      "pf_pts": -1.846272,
+      "season": 2017
+     },
+     {
+      "c": 1.728265,
+      "club": 140,
+      "pf_pts": 9.153724,
+      "season": 2018
+     },
+     {
+      "c": 2.172237,
+      "club": 136,
+      "pf_pts": -3.689015,
+      "season": 2018
+     },
+     {
+      "c": 2.24246,
+      "club": 116,
+      "pf_pts": 1.853907,
+      "season": 2018
+     },
+     {
+      "c": -3.049999,
+      "club": 119,
+      "pf_pts": -4.537755,
+      "season": 2018
+     },
+     {
+      "c": 2.831424,
+      "club": 108,
+      "pf_pts": -0.610948,
+      "season": 2018
+     },
+     {
+      "c": -0.989515,
+      "club": 115,
+      "pf_pts": 14.286351,
+      "season": 2018
+     },
+     {
+      "c": 0.515756,
+      "club": 109,
+      "pf_pts": 1.116085,
+      "season": 2018
+     },
+     {
+      "c": -0.359826,
+      "club": 142,
+      "pf_pts": 0.908792,
+      "season": 2018
+     },
+     {
+      "c": -0.631429,
+      "club": 121,
+      "pf_pts": -5.422372,
+      "season": 2018
+     },
+     {
+      "c": 0.764385,
+      "club": 111,
+      "pf_pts": 4.416776,
+      "season": 2018
+     },
+     {
+      "c": -2.070479,
+      "club": 144,
+      "pf_pts": 2.069676,
+      "season": 2018
+     },
+     {
+      "c": 0.490849,
+      "club": 138,
+      "pf_pts": -3.517342,
+      "season": 2018
+     },
+     {
+      "c": 0.652914,
+      "club": 114,
+      "pf_pts": 2.899575,
+      "season": 2018
+     },
+     {
+      "c": 0.13786,
+      "club": 133,
+      "pf_pts": -4.193318,
+      "season": 2018
+     },
+     {
+      "c": -0.762935,
+      "club": 143,
+      "pf_pts": -0.181478,
+      "season": 2018
+     },
+     {
+      "c": -2.23859,
+      "club": 112,
+      "pf_pts": -0.998157,
+      "season": 2018
+     },
+     {
+      "c": 2.063839,
+      "club": 110,
+      "pf_pts": 0.061488,
+      "season": 2018
+     },
+     {
+      "c": 1.923883,
+      "club": 141,
+      "pf_pts": 0.748098,
+      "season": 2018
+     },
+     {
+      "c": -0.830121,
+      "club": 158,
+      "pf_pts": 0.306344,
+      "season": 2018
+     },
+     {
+      "c": -4.04845,
+      "club": 117,
+      "pf_pts": -3.986162,
+      "season": 2018
+     },
+     {
+      "c": 3.891351,
+      "club": 118,
+      "pf_pts": 2.176881,
+      "season": 2018
+     },
+     {
+      "c": 0.420915,
+      "club": 120,
+      "pf_pts": 1.680243,
+      "season": 2018
+     },
+     {
+      "c": -1.292575,
+      "club": 147,
+      "pf_pts": 0.012565,
+      "season": 2018
+     },
+     {
+      "c": 2.390595,
+      "club": 146,
+      "pf_pts": -5.499393,
+      "season": 2018
+     },
+     {
+      "c": -3.81647,
+      "club": 139,
+      "pf_pts": -3.918964,
+      "season": 2018
+     },
+     {
+      "c": 0.916804,
+      "club": 137,
+      "pf_pts": -3.293633,
+      "season": 2018
+     },
+     {
+      "c": -0.147154,
+      "club": 134,
+      "pf_pts": -1.28203,
+      "season": 2018
+     },
+     {
+      "c": -1.035812,
+      "club": 145,
+      "pf_pts": -1.343256,
+      "season": 2018
+     },
+     {
+      "c": -1.522872,
+      "club": 135,
+      "pf_pts": -3.136641,
+      "season": 2018
+     },
+     {
+      "c": -0.347312,
+      "club": 113,
+      "pf_pts": 2.384591,
+      "season": 2018
+     },
+     {
+      "c": -2.3907,
+      "club": 147,
+      "pf_pts": -0.512457,
+      "season": 2019
+     },
+     {
+      "c": -1.907539,
+      "club": 136,
+      "pf_pts": -4.433525,
+      "season": 2019
+     },
+     {
+      "c": 3.175403,
+      "club": 108,
+      "pf_pts": 0.675046,
+      "season": 2019
+     },
+     {
+      "c": 2.23907,
+      "club": 116,
+      "pf_pts": 0.427783,
+      "season": 2019
+     },
+     {
+      "c": 1.516506,
+      "club": 140,
+      "pf_pts": 9.153724,
+      "season": 2019
+     },
+     {
+      "c": -1.637226,
+      "club": 121,
+      "pf_pts": -6.813645,
+      "season": 2019
+     },
+     {
+      "c": 1.13377,
+      "club": 138,
+      "pf_pts": -4.509664,
+      "season": 2019
+     },
+     {
+      "c": -0.865259,
+      "club": 109,
+      "pf_pts": 1.116085,
+      "season": 2019
+     },
+     {
+      "c": -4.948683,
+      "club": 117,
+      "pf_pts": -2.275091,
+      "season": 2019
+     },
+     {
+      "c": 1.347934,
+      "club": 141,
+      "pf_pts": -0.910008,
+      "season": 2019
+     },
+     {
+      "c": -1.131503,
+      "club": 112,
+      "pf_pts": 0.857842,
+      "season": 2019
+     },
+     {
+      "c": -2.215488,
+      "club": 119,
+      "pf_pts": -3.173071,
+      "season": 2019
+     },
+     {
+      "c": 1.646105,
+      "club": 133,
+      "pf_pts": -3.684866,
+      "season": 2019
+     },
+     {
+      "c": 1.876925,
+      "club": 146,
+      "pf_pts": -4.648501,
+      "season": 2019
+     },
+     {
+      "c": 0.224091,
+      "club": 134,
+      "pf_pts": -1.227903,
+      "season": 2019
+     },
+     {
+      "c": -0.303878,
+      "club": 114,
+      "pf_pts": 0.396109,
+      "season": 2019
+     },
+     {
+      "c": -0.217554,
+      "club": 120,
+      "pf_pts": 1.390529,
+      "season": 2019
+     },
+     {
+      "c": -2.505489,
+      "club": 135,
+      "pf_pts": -4.149538,
+      "season": 2019
+     },
+     {
+      "c": 1.113874,
+      "club": 144,
+      "pf_pts": 2.069676,
+      "season": 2019
+     },
+     {
+      "c": -2.076623,
+      "club": 115,
+      "pf_pts": 13.373435,
+      "season": 2019
+     },
+     {
+      "c": -1.168317,
+      "club": 142,
+      "pf_pts": 0.294948,
+      "season": 2019
+     },
+     {
+      "c": -0.046734,
+      "club": 110,
+      "pf_pts": 1.998913,
+      "season": 2019
+     },
+     {
+      "c": -0.23035,
+      "club": 158,
+      "pf_pts": 1.002467,
+      "season": 2019
+     },
+     {
+      "c": -0.022806,
+      "club": 145,
+      "pf_pts": -0.595248,
+      "season": 2019
+     },
+     {
+      "c": 2.149531,
+      "club": 118,
+      "pf_pts": 2.187586,
+      "season": 2019
+     },
+     {
+      "c": 3.141823,
+      "club": 137,
+      "pf_pts": -3.59655,
+      "season": 2019
+     },
+     {
+      "c": 0.314768,
+      "club": 143,
+      "pf_pts": 1.025259,
+      "season": 2019
+     },
+     {
+      "c": 0.905414,
+      "club": 139,
+      "pf_pts": -5.160159,
+      "season": 2019
+     },
+     {
+      "c": -0.517348,
+      "club": 113,
+      "pf_pts": 4.922295,
+      "season": 2019
+     },
+     {
+      "c": 1.400284,
+      "club": 111,
+      "pf_pts": 4.731965,
+      "season": 2019
+     },
+     {
+      "c": 0.208121,
+      "club": 108,
+      "pf_pts": 1.799738,
+      "season": 2020
+     },
+     {
+      "c": 1.213461,
+      "club": 116,
+      "pf_pts": -1.23058,
+      "season": 2020
+     },
+     {
+      "c": 1.733975,
+      "club": 140,
+      "pf_pts": 0.235212,
+      "season": 2020
+     },
+     {
+      "c": -2.149818,
+      "club": 121,
+      "pf_pts": -6.710196,
+      "season": 2020
+     },
+     {
+      "c": 0.620276,
+      "club": 138,
+      "pf_pts": -4.210508,
+      "season": 2020
+     },
+     {
+      "c": -0.802175,
+      "club": 145,
+      "pf_pts": 0.552988,
+      "season": 2020
+     },
+     {
+      "c": -0.875144,
+      "club": 120,
+      "pf_pts": 0.815713,
+      "season": 2020
+     },
+     {
+      "c": -0.335212,
+      "club": 143,
+      "pf_pts": 0.768387,
+      "season": 2020
+     },
+     {
+      "c": -0.260846,
+      "club": 142,
+      "pf_pts": -1.385605,
+      "season": 2020
+     },
+     {
+      "c": 0.244774,
+      "club": 109,
+      "pf_pts": 1.116085,
+      "season": 2020
+     },
+     {
+      "c": 0.999979,
+      "club": 158,
+      "pf_pts": -0.21795,
+      "season": 2020
+     },
+     {
+      "c": -1.2571,
+      "club": 137,
+      "pf_pts": -2.419853,
+      "season": 2020
+     },
+     {
+      "c": 0.074945,
+      "club": 146,
+      "pf_pts": -3.0563,
+      "season": 2020
+     },
+     {
+      "c": -1.4857,
+      "club": 110,
+      "pf_pts": 1.998913,
+      "season": 2020
+     },
+     {
+      "c": -0.293492,
+      "club": 144,
+      "pf_pts": 1.780701,
+      "season": 2020
+     },
+     {
+      "c": 0.076542,
+      "club": 115,
+      "pf_pts": 14.454436,
+      "season": 2020
+     },
+     {
+      "c": 0.144866,
+      "club": 117,
+      "pf_pts": -0.577158,
+      "season": 2020
+     },
+     {
+      "c": -0.501207,
+      "club": 147,
+      "pf_pts": -0.777084,
+      "season": 2020
+     },
+     {
+      "c": 0.740243,
+      "club": 112,
+      "pf_pts": -1.055688,
+      "season": 2020
+     },
+     {
+      "c": -0.642621,
+      "club": 119,
+      "pf_pts": -2.404773,
+      "season": 2020
+     },
+     {
+      "c": 1.453589,
+      "club": 113,
+      "pf_pts": 6.4448,
+      "season": 2020
+     },
+     {
+      "c": 0.041991,
+      "club": 118,
+      "pf_pts": 3.230703,
+      "season": 2020
+     },
+     {
+      "c": 1.506448,
+      "club": 114,
+      "pf_pts": 0.151098,
+      "season": 2020
+     },
+     {
+      "c": -0.387678,
+      "club": 135,
+      "pf_pts": -4.517096,
+      "season": 2020
+     },
+     {
+      "c": -0.531061,
+      "club": 139,
+      "pf_pts": -4.982561,
+      "season": 2020
+     },
+     {
+      "c": 0.194124,
+      "club": 133,
+      "pf_pts": -5.137795,
+      "season": 2020
+     },
+     {
+      "c": -1.68764,
+      "club": 111,
+      "pf_pts": 5.548143,
+      "season": 2020
+     },
+     {
+      "c": 1.648099,
+      "club": 134,
+      "pf_pts": -0.181735,
+      "season": 2020
+     },
+     {
+      "c": -0.78773,
+      "club": 141,
+      "pf_pts": 3.917146,
+      "season": 2020
+     },
+     {
+      "c": 1.095994,
+      "club": 136,
+      "pf_pts": -4.72824,
+      "season": 2020
+     },
+     {
+      "c": -0.129201,
+      "club": 108,
+      "pf_pts": 1.85715,
+      "season": 2021
+     },
+     {
+      "c": -0.517119,
+      "club": 119,
+      "pf_pts": -2.635986,
+      "season": 2021
+     },
+     {
+      "c": 1.16653,
+      "club": 116,
+      "pf_pts": 0.255573,
+      "season": 2021
+     },
+     {
+      "c": 2.499411,
+      "club": 144,
+      "pf_pts": 1.218021,
+      "season": 2021
+     },
+     {
+      "c": -0.032619,
+      "club": 114,
+      "pf_pts": -2.102911,
+      "season": 2021
+     },
+     {
+      "c": -0.361678,
+      "club": 120,
+      "pf_pts": 0.174844,
+      "season": 2021
+     },
+     {
+      "c": 0.113381,
+      "club": 138,
+      "pf_pts": -2.59341,
+      "season": 2021
+     },
+     {
+      "c": -1.597574,
+      "club": 117,
+      "pf_pts": -0.869447,
+      "season": 2021
+     },
+     {
+      "c": -3.117515,
+      "club": 137,
+      "pf_pts": -4.031116,
+      "season": 2021
+     },
+     {
+      "c": 2.789766,
+      "club": 142,
+      "pf_pts": -1.301783,
+      "season": 2021
+     },
+     {
+      "c": -4.584275,
+      "club": 139,
+      "pf_pts": -4.53099,
+      "season": 2021
+     },
+     {
+      "c": -1.036988,
+      "club": 109,
+      "pf_pts": 0.012648,
+      "season": 2021
+     },
+     {
+      "c": -0.975931,
+      "club": 158,
+      "pf_pts": 0.013566,
+      "season": 2021
+     },
+     {
+      "c": -1.102288,
+      "club": 146,
+      "pf_pts": 0.239992,
+      "season": 2021
+     },
+     {
+      "c": 2.478417,
+      "club": 147,
+      "pf_pts": -2.057981,
+      "season": 2021
+     },
+     {
+      "c": -1.180126,
+      "club": 112,
+      "pf_pts": -1.19791,
+      "season": 2021
+     },
+     {
+      "c": 0.957333,
+      "club": 121,
+      "pf_pts": -4.851556,
+      "season": 2021
+     },
+     {
+      "c": -1.452785,
+      "club": 113,
+      "pf_pts": 4.97793,
+      "season": 2021
+     },
+     {
+      "c": -0.856783,
+      "club": 115,
+      "pf_pts": 14.982581,
+      "season": 2021
+     },
+     {
+      "c": -0.396169,
+      "club": 135,
+      "pf_pts": -5.522972,
+      "season": 2021
+     },
+     {
+      "c": 1.902109,
+      "club": 134,
+      "pf_pts": 1.200318,
+      "season": 2021
+     },
+     {
+      "c": 0.282585,
+      "club": 143,
+      "pf_pts": 0.318885,
+      "season": 2021
+     },
+     {
+      "c": -1.085264,
+      "club": 145,
+      "pf_pts": 0.953805,
+      "season": 2021
+     },
+     {
+      "c": 1.322112,
+      "club": 133,
+      "pf_pts": -4.59215,
+      "season": 2021
+     },
+     {
+      "c": 1.278713,
+      "club": 118,
+      "pf_pts": 4.083085,
+      "season": 2021
+     },
+     {
+      "c": 1.951969,
+      "club": 136,
+      "pf_pts": -4.240859,
+      "season": 2021
+     },
+     {
+      "c": 0.822321,
+      "club": 140,
+      "pf_pts": 0.235212,
+      "season": 2021
+     },
+     {
+      "c": 1.497255,
+      "club": 111,
+      "pf_pts": 6.051338,
+      "season": 2021
+     },
+     {
+      "c": -1.660377,
+      "club": 141,
+      "pf_pts": 3.917146,
+      "season": 2021
+     },
+     {
+      "c": 1.024791,
+      "club": 110,
+      "pf_pts": 1.998913,
+      "season": 2021
+     },
+     {
+      "c": -3.409702,
+      "club": 138,
+      "pf_pts": -2.128989,
+      "season": 2022
+     },
+     {
+      "c": 1.353597,
+      "club": 116,
+      "pf_pts": -0.912505,
+      "season": 2022
+     },
+     {
+      "c": -0.354467,
+      "club": 144,
+      "pf_pts": 0.590932,
+      "season": 2022
+     },
+     {
+      "c": -2.547866,
+      "club": 121,
+      "pf_pts": -4.220343,
+      "season": 2022
+     },
+     {
+      "c": -1.993561,
+      "club": 135,
+      "pf_pts": -4.387134,
+      "season": 2022
+     },
+     {
+      "c": 1.792436,
+      "club": 108,
+      "pf_pts": 1.985443,
+      "season": 2022
+     },
+     {
+      "c": 0.81212,
+      "club": 120,
+      "pf_pts": -1.000381,
+      "season": 2022
+     },
+     {
+      "c": -0.242191,
+      "club": 109,
+      "pf_pts": 1.042604,
+      "season": 2022
+     },
+     {
+      "c": -0.89826,
+      "club": 139,
+      "pf_pts": -3.709388,
+      "season": 2022
+     },
+     {
+      "c": -0.250426,
+      "club": 137,
+      "pf_pts": -2.639294,
+      "season": 2022
+     },
+     {
+      "c": -1.365856,
+      "club": 115,
+      "pf_pts": 12.768114,
+      "season": 2022
+     },
+     {
+      "c": -0.417531,
+      "club": 117,
+      "pf_pts": -1.259166,
+      "season": 2022
+     },
+     {
+      "c": 0.534206,
+      "club": 110,
+      "pf_pts": -1.833147,
+      "season": 2022
+     },
+     {
+      "c": -0.641804,
+      "club": 158,
+      "pf_pts": -0.248128,
+      "season": 2022
+     },
+     {
+      "c": 1.147973,
+      "club": 113,
+      "pf_pts": 5.990052,
+      "season": 2022
+     },
+     {
+      "c": 0.404555,
+      "club": 136,
+      "pf_pts": -5.987769,
+      "season": 2022
+     },
+     {
+      "c": -2.146464,
+      "club": 119,
+      "pf_pts": -2.364695,
+      "season": 2022
+     },
+     {
+      "c": 0.047488,
+      "club": 145,
+      "pf_pts": 0.752282,
+      "season": 2022
+     },
+     {
+      "c": 2.996604,
+      "club": 133,
+      "pf_pts": -3.631198,
+      "season": 2022
+     },
+     {
+      "c": 2.03207,
+      "club": 118,
+      "pf_pts": 4.623199,
+      "season": 2022
+     },
+     {
+      "c": 3.305153,
+      "club": 146,
+      "pf_pts": 2.051842,
+      "season": 2022
+     },
+     {
+      "c": 0.126411,
+      "club": 111,
+      "pf_pts": 5.921102,
+      "season": 2022
+     },
+     {
+      "c": -1.98236,
+      "club": 112,
+      "pf_pts": -3.230703,
+      "season": 2022
+     },
+     {
+      "c": 0.157436,
+      "club": 147,
+      "pf_pts": 0.258398,
+      "season": 2022
+     },
+     {
+      "c": -2.284041,
+      "club": 114,
+      "pf_pts": -0.963908,
+      "season": 2022
+     },
+     {
+      "c": 2.138298,
+      "club": 142,
+      "pf_pts": -0.40893,
+      "season": 2022
+     },
+     {
+      "c": 0.666001,
+      "club": 143,
+      "pf_pts": -0.025862,
+      "season": 2022
+     },
+     {
+      "c": 0.923957,
+      "club": 140,
+      "pf_pts": 0.235212,
+      "season": 2022
+     },
+     {
+      "c": -1.531822,
+      "club": 141,
+      "pf_pts": -1.066315,
+      "season": 2022
+     },
+     {
+      "c": 1.628048,
+      "club": 134,
+      "pf_pts": 2.015805,
+      "season": 2022
+     },
+     {
+      "c": 2.477926,
+      "club": 116,
+      "pf_pts": 0.305438,
+      "season": 2023
+     },
+     {
+      "c": 1.722879,
+      "club": 138,
+      "pf_pts": -2.499866,
+      "season": 2023
+     },
+     {
+      "c": 0.490556,
+      "club": 135,
+      "pf_pts": -4.095417,
+      "season": 2023
+     },
+     {
+      "c": -0.795587,
+      "club": 119,
+      "pf_pts": -0.856006,
+      "season": 2023
+     },
+     {
+      "c": 0.695565,
+      "club": 133,
+      "pf_pts": -3.631198,
+      "season": 2023
+     },
+     {
+      "c": -1.585124,
+      "club": 109,
+      "pf_pts": 0.641978,
+      "season": 2023
+     },
+     {
+      "c": 0.302561,
+      "club": 115,
+      "pf_pts": 13.349581,
+      "season": 2023
+     },
+     {
+      "c": -0.657365,
+      "club": 117,
+      "pf_pts": -0.518596,
+      "season": 2023
+     },
+     {
+      "c": -1.226034,
+      "club": 142,
+      "pf_pts": 0.811338,
+      "season": 2023
+     },
+     {
+      "c": 0.82313,
+      "club": 134,
+      "pf_pts": 1.544023,
+      "season": 2023
+     },
+     {
+      "c": -1.05635,
+      "club": 111,
+      "pf_pts": 4.24087,
+      "season": 2023
+     },
+     {
+      "c": -2.933329,
+      "club": 113,
+      "pf_pts": 4.549813,
+      "season": 2023
+     },
+     {
+      "c": 1.451851,
+      "club": 145,
+      "pf_pts": 0.311852,
+      "season": 2023
+     },
+     {
+      "c": 0.072849,
+      "club": 158,
+      "pf_pts": -1.102209,
+      "season": 2023
+     },
+     {
+      "c": -1.336198,
+      "club": 141,
+      "pf_pts": -0.546861,
+      "season": 2023
+     },
+     {
+      "c": 0.788113,
+      "club": 146,
+      "pf_pts": 0.999868,
+      "season": 2023
+     },
+     {
+      "c": 0.078341,
+      "club": 108,
+      "pf_pts": 1.23049,
+      "season": 2023
+     },
+     {
+      "c": 1.144835,
+      "club": 121,
+      "pf_pts": -3.656477,
+      "season": 2023
+     },
+     {
+      "c": -0.049471,
+      "club": 144,
+      "pf_pts": 0.127089,
+      "season": 2023
+     },
+     {
+      "c": -2.044351,
+      "club": 140,
+      "pf_pts": -1.346594,
+      "season": 2023
+     },
+     {
+      "c": 3.841655,
+      "club": 147,
+      "pf_pts": -1.070106,
+      "season": 2023
+     },
+     {
+      "c": 3.874675,
+      "club": 118,
+      "pf_pts": 3.064454,
+      "season": 2023
+     },
+     {
+      "c": 1.590808,
+      "club": 137,
+      "pf_pts": -2.745992,
+      "season": 2023
+     },
+     {
+      "c": -4.178208,
+      "club": 139,
+      "pf_pts": -3.709388,
+      "season": 2023
+     },
+     {
+      "c": -1.062541,
+      "club": 112,
+      "pf_pts": -2.143049,
+      "season": 2023
+     },
+     {
+      "c": -0.962645,
+      "club": 143,
+      "pf_pts": 1.270163,
+      "season": 2023
+     },
+     {
+      "c": -1.306783,
+      "club": 110,
+      "pf_pts": -1.833147,
+      "season": 2023
+     },
+     {
+      "c": -0.73304,
+      "club": 136,
+      "pf_pts": -6.459796,
+      "season": 2023
+     },
+     {
+      "c": -0.816666,
+      "club": 120,
+      "pf_pts": -0.36543,
+      "season": 2023
+     },
+     {
+      "c": 1.387946,
+      "club": 114,
+      "pf_pts": -1.126289,
+      "season": 2023
+     },
+     {
+      "c": 0.117573,
+      "club": 135,
+      "pf_pts": -4.627937,
+      "season": 2024
+     },
+     {
+      "c": 0.401577,
+      "club": 115,
+      "pf_pts": 12.535274,
+      "season": 2024
+     },
+     {
+      "c": 3.680693,
+      "club": 145,
+      "pf_pts": -0.029629,
+      "season": 2024
+     },
+     {
+      "c": 2.196806,
+      "club": 134,
+      "pf_pts": 2.88192,
+      "season": 2024
+     },
+     {
+      "c": 0.362898,
+      "club": 136,
+      "pf_pts": -6.561852,
+      "season": 2024
+     },
+     {
+      "c": -0.301698,
+      "club": 141,
+      "pf_pts": -0.553244,
+      "season": 2024
+     },
+     {
+      "c": -1.318741,
+      "club": 142,
+      "pf_pts": 0.25928,
+      "season": 2024
+     },
+     {
+      "c": 1.534911,
+      "club": 118,
+      "pf_pts": 2.608526,
+      "season": 2024
+     },
+     {
+      "c": -1.069322,
+      "club": 119,
+      "pf_pts": -0.808233,
+      "season": 2024
+     },
+     {
+      "c": 2.034393,
+      "club": 108,
+      "pf_pts": -0.353152,
+      "season": 2024
+     },
+     {
+      "c": -0.056779,
+      "club": 138,
+      "pf_pts": -2.343285,
+      "season": 2024
+     },
+     {
+      "c": -0.077052,
+      "club": 121,
+      "pf_pts": -2.454543,
+      "season": 2024
+     },
+     {
+      "c": -0.554816,
+      "club": 117,
+      "pf_pts": -0.854826,
+      "season": 2024
+     },
+     {
+      "c": 1.700917,
+      "club": 144,
+      "pf_pts": -0.433975,
+      "season": 2024
+     },
+     {
+      "c": 1.777666,
+      "club": 147,
+      "pf_pts": 0.146008,
+      "season": 2024
+     },
+     {
+      "c": 0.203416,
+      "club": 137,
+      "pf_pts": -3.079897,
+      "season": 2024
+     },
+     {
+      "c": -0.000144,
+      "club": 146,
+      "pf_pts": 0.865293,
+      "season": 2024
+     },
+     {
+      "c": -0.424564,
+      "club": 112,
+      "pf_pts": -2.583885,
+      "season": 2024
+     },
+     {
+      "c": -0.445976,
+      "club": 139,
+      "pf_pts": -3.709388,
+      "season": 2024
+     },
+     {
+      "c": 1.122309,
+      "club": 140,
+      "pf_pts": -1.757324,
+      "season": 2024
+     },
+     {
+      "c": -0.85721,
+      "club": 110,
+      "pf_pts": -1.833147,
+      "season": 2024
+     },
+     {
+      "c": -2.6189,
+      "club": 109,
+      "pf_pts": 0.137877,
+      "season": 2024
+     },
+     {
+      "c": 0.136975,
+      "club": 120,
+      "pf_pts": 1.495111,
+      "season": 2024
+     },
+     {
+      "c": -0.761091,
+      "club": 143,
+      "pf_pts": 3.076637,
+      "season": 2024
+     },
+     {
+      "c": 0.147006,
+      "club": 116,
+      "pf_pts": 0.784504,
+      "season": 2024
+     },
+     {
+      "c": -0.991126,
+      "club": 113,
+      "pf_pts": 1.840889,
+      "season": 2024
+     },
+     {
+      "c": -2.730261,
+      "club": 158,
+      "pf_pts": -1.873481,
+      "season": 2024
+     },
+     {
+      "c": -1.376242,
+      "club": 114,
+      "pf_pts": -0.415802,
+      "season": 2024
+     },
+     {
+      "c": -2.58359,
+      "club": 111,
+      "pf_pts": 3.099954,
+      "season": 2024
+     },
+     {
+      "c": 0.750374,
+      "club": 133,
+      "pf_pts": -3.631198,
+      "season": 2024
+     },
+     {
+      "c": 0.597677,
+      "club": 135,
+      "pf_pts": -4.627937,
+      "season": 2025
+     },
+     {
+      "c": -2.198722,
+      "club": 136,
+      "pf_pts": -6.561852,
+      "season": 2025
+     },
+     {
+      "c": 1.955872,
+      "club": 140,
+      "pf_pts": -1.757324,
+      "season": 2025
+     },
+     {
+      "c": 3.056082,
+      "club": 134,
+      "pf_pts": 2.88192,
+      "season": 2025
+     },
+     {
+      "c": 0.398386,
+      "club": 112,
+      "pf_pts": -2.583885,
+      "season": 2025
+     },
+     {
+      "c": 0.677513,
+      "club": 114,
+      "pf_pts": -0.415802,
+      "season": 2025
+     },
+     {
+      "c": 0.164751,
+      "club": 119,
+      "pf_pts": -0.808233,
+      "season": 2025
+     },
+     {
+      "c": -0.811692,
+      "club": 147,
+      "pf_pts": 0.146008,
+      "season": 2025
+     },
+     {
+      "c": 0.634276,
+      "club": 144,
+      "pf_pts": -0.433975,
+      "season": 2025
+     },
+     {
+      "c": -1.114248,
+      "club": 117,
+      "pf_pts": -0.854826,
+      "season": 2025
+     },
+     {
+      "c": 1.416827,
+      "club": 121,
+      "pf_pts": -2.454543,
+      "season": 2025
+     },
+     {
+      "c": 2.803794,
+      "club": 108,
+      "pf_pts": -0.353152,
+      "season": 2025
+     },
+     {
+      "c": 1.420382,
+      "club": 118,
+      "pf_pts": 2.608526,
+      "season": 2025
+     },
+     {
+      "c": -0.794425,
+      "club": 137,
+      "pf_pts": -3.079897,
+      "season": 2025
+     },
+     {
+      "c": 0.927979,
+      "club": 146,
+      "pf_pts": 0.865293,
+      "season": 2025
+     },
+     {
+      "c": -0.988826,
+      "club": 109,
+      "pf_pts": 0.137877,
+      "season": 2025
+     },
+     {
+      "c": 2.193886,
+      "club": 115,
+      "pf_pts": 12.535274,
+      "season": 2025
+     },
+     {
+      "c": -0.689506,
+      "club": 141,
+      "pf_pts": -0.553244,
+      "season": 2025
+     },
+     {
+      "c": 0.19252,
+      "club": 142,
+      "pf_pts": 0.25928,
+      "season": 2025
+     },
+     {
+      "c": -1.120922,
+      "club": 143,
+      "pf_pts": 3.076637,
+      "season": 2025
+     },
+     {
+      "c": 1.494975,
+      "club": 145,
+      "pf_pts": -0.029629,
+      "season": 2025
+     },
+     {
+      "c": -3.245782,
+      "club": 133,
+      "pf_pts": 7.5212,
+      "season": 2025
+     },
+     {
+      "c": -0.227883,
+      "club": 138,
+      "pf_pts": -2.343285,
+      "season": 2025
+     },
+     {
+      "c": -3.042812,
+      "club": 158,
+      "pf_pts": -1.873481,
+      "season": 2025
+     },
+     {
+      "c": 1.732929,
+      "club": 120,
+      "pf_pts": 1.495111,
+      "season": 2025
+     },
+     {
+      "c": -0.685837,
+      "club": 116,
+      "pf_pts": 0.784504,
+      "season": 2025
+     },
+     {
+      "c": -1.689852,
+      "club": 111,
+      "pf_pts": 3.099954,
+      "season": 2025
+     },
+     {
+      "c": 1.201861,
+      "club": 110,
+      "pf_pts": -1.833147,
+      "season": 2025
+     },
+     {
+      "c": -2.774252,
+      "club": 113,
+      "pf_pts": 1.840889,
+      "season": 2025
+     },
+     {
+      "c": -1.484951,
+      "club": 139,
+      "pf_pts": 0.900626,
+      "season": 2025
+     },
+     {
+      "c": -0.855733,
+      "club": 140,
+      "pf_pts": -1.757324,
+      "season": 2026
+     },
+     {
+      "c": 0.336695,
+      "club": 109,
+      "pf_pts": 0.137877,
+      "season": 2026
+     },
+     {
+      "c": 1.055821,
+      "club": 119,
+      "pf_pts": -0.808233,
+      "season": 2026
+     },
+     {
+      "c": -0.416372,
+      "club": 145,
+      "pf_pts": -0.029629,
+      "season": 2026
+     },
+     {
+      "c": 2.663317,
+      "club": 121,
+      "pf_pts": -2.454543,
+      "season": 2026
+     },
+     {
+      "c": 0.411172,
+      "club": 147,
+      "pf_pts": 0.146008,
+      "season": 2026
+     },
+     {
+      "c": 0.669981,
+      "club": 144,
+      "pf_pts": -0.433975,
+      "season": 2026
+     },
+     {
+      "c": -1.839346,
+      "club": 117,
+      "pf_pts": -0.854826,
+      "season": 2026
+     },
+     {
+      "c": 1.194048,
+      "club": 118,
+      "pf_pts": 2.608526,
+      "season": 2026
+     },
+     {
+      "c": 1.190635,
+      "club": 108,
+      "pf_pts": -0.353152,
+      "season": 2026
+     },
+     {
+      "c": -1.317414,
+      "club": 134,
+      "pf_pts": 2.88192,
+      "season": 2026
+     },
+     {
+      "c": -0.98906,
+      "club": 141,
+      "pf_pts": -0.553244,
+      "season": 2026
+     },
+     {
+      "c": 2.588905,
+      "club": 143,
+      "pf_pts": 3.076637,
+      "season": 2026
+     },
+     {
+      "c": 2.845173,
+      "club": 113,
+      "pf_pts": 1.840889,
+      "season": 2026
+     },
+     {
+      "c": -0.157297,
+      "club": 120,
+      "pf_pts": 1.495111,
+      "season": 2026
+     },
+     {
+      "c": -1.079775,
+      "club": 111,
+      "pf_pts": 3.099954,
+      "season": 2026
+     },
+     {
+      "c": 1.05347,
+      "club": 135,
+      "pf_pts": -4.627937,
+      "season": 2026
+     },
+     {
+      "c": -1.924191,
+      "club": 158,
+      "pf_pts": -1.873481,
+      "season": 2026
+     },
+     {
+      "c": 0.893897,
+      "club": 116,
+      "pf_pts": 0.784504,
+      "season": 2026
+     },
+     {
+      "c": -0.536664,
+      "club": 114,
+      "pf_pts": -0.415802,
+      "season": 2026
+     },
+     {
+      "c": -2.349177,
+      "club": 146,
+      "pf_pts": 0.865293,
+      "season": 2026
+     },
+     {
+      "c": -3.951727,
+      "club": 139,
+      "pf_pts": 0.900626,
+      "season": 2026
+     },
+     {
+      "c": 2.669458,
+      "club": 138,
+      "pf_pts": -2.343285,
+      "season": 2026
+     },
+     {
+      "c": -0.662697,
+      "club": 142,
+      "pf_pts": 0.25928,
+      "season": 2026
+     },
+     {
+      "c": -1.548547,
+      "club": 115,
+      "pf_pts": 12.535274,
+      "season": 2026
+     },
+     {
+      "c": 0.667903,
+      "club": 137,
+      "pf_pts": -3.079897,
+      "season": 2026
+     },
+     {
+      "c": -3.987033,
+      "club": 112,
+      "pf_pts": -2.583885,
+      "season": 2026
+     },
+     {
+      "c": 1.596417,
+      "club": 136,
+      "pf_pts": -6.561852,
+      "season": 2026
+     },
+     {
+      "c": -0.431853,
+      "club": 133,
+      "pf_pts": 7.5212,
+      "season": 2026
+     },
+     {
+      "c": 2.209994,
+      "club": 110,
+      "pf_pts": -1.833147,
+      "season": 2026
+     }
+    ],
+    "n_club_seasons": 180,
+    "n_neutral": 128,
+    "named": [
+     {
+      "band": 1.27576,
+      "club": 115,
+      "inside": true,
+      "mean": -0.145527,
+      "n": 6,
+      "park": "Coors Field (COL)"
+     },
+     {
+      "band": 2.209682,
+      "club": 133,
+      "inside": true,
+      "mean": -1.838817,
+      "n": 2,
+      "park": "Sutter Health Park, Sacramento (ATH)"
+     }
+    ],
+    "pass": true,
+    "sd_neutral": 1.594368,
+    "slope": 0.014938,
+    "slope_inside": true,
+    "slope_interval95": {
+     "hi95": 0.15964,
+     "lo95": -0.063655,
+     "n_draws": 2000
+    },
+    "tolerance": 0.05
+   }
+  }
+ },
+ "preview": {
+  "fwar_vintage_id": "2026-10-02-a020cf64844a",
+  "generated_at": "2026-10-22T01:32:40+00:00",
+  "sha256": "fc640b0117ef07fd9e43fb16a428912231132d32ae450103e13cead1a05cd97d"
+ },
+ "registration": "docs/ebr-2026-09-30/EBR_GATE.md 11.12 (owner decision EW3-52)",
+ "result": "PASS",
+ "run_on": "2026-10-26",
+ "seed": 20261008,
+ "status": "SCORED",
+ "team_guard": {
+  "non_inferior": false,
+  "outcomes": {
+   "run_differential": {
+    "club_half_width95": 0.017774,
+    "club_lower": -0.005771,
+    "dT": 0.009064,
+    "n_club_seasons": 120,
+    "non_inferior": true,
+    "player_half_width95": 0.018262,
+    "player_lower": -0.006015
+   },
+   "runs_scored": {
+    "club_half_width95": 0.034614,
+    "club_lower": -0.022343,
+    "dT": 0.006781,
+    "n_club_seasons": 120,
+    "non_inferior": false,
+    "player_half_width95": 0.027715,
+    "player_lower": -0.016468
+   },
+   "wins": {
+    "club_half_width95": 0.018422,
+    "club_lower": -0.012139,
+    "dT": 0.003341,
+    "n_club_seasons": 120,
+    "non_inferior": true,
+    "player_half_width95": 0.018155,
+    "player_lower": -0.01217
+   }
+  },
+  "underpowered": true,
+  "weight": "recorded; not in EW3-52's flip condition (11.12.3)"
+ }
+}

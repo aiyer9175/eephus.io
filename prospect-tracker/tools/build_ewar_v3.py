@@ -12,6 +12,9 @@
     python tools/build_ewar_v3.py --xhem-preview   # the build WITH the xHEM+ part, whatever
                                              # ewar_v3.XHEM_HALF_LIVE says, written to
                                              # .cache/ewar_v3/preview/ewar_v3_xhem.json only
+    python tools/build_ewar_v3.py --xhem-preview --parkmatch
+                                             # the same with the park-matched part (11.12),
+                                             # written to .cache/ewar_v3/preview/ewar_v3_xhem_pm.json
 
 WHAT IT READS (caches and committed artifacts only; nothing is fetched):
   - the frozen fWAR vintage, data/fwar_vintage.json: the base of both series, the
@@ -27,7 +30,11 @@ WHAT IT READS (caches and committed artifacts only; nothing is fetched):
   - data/rpw_fit.json: the runs-per-win candidate RPW_GATE.md carries forward;
   - with the xHEM+ part on (ewar_v3.XHEM_HALF_LIVE, or --xhem-preview), the same swar
     preview's candidate part 4 xHEM+ arm: the re-centred d_batx per hitter-season and
-    the season's runs per win (EBR_GATE.md 11.11.1).
+    the season's runs per win (EBR_GATE.md 11.11.1);
+  - with the park-matched construction on as well (ewar_v3.XHEM_PARKMATCH_LIVE, or
+    --parkmatch), fWAR's park term per hitter-season (tools/xhem_park_terms.py: the
+    cached Guts Basic (5yr) factors and B-Ref stints) and the frozen shares
+    xhem_parkmatch.B_FROZEN; the part then carries d_pm in place of d_batx (11.12.2).
 
 WHAT IT WRITES: one file (above). The admitted parts are part 12.1 to 12.3's
 (none) plus the ABS part by owner override (11.10.2); R2 enters eWAR realized only.
@@ -160,6 +167,34 @@ class Inputs:
                "seasons": sorted(out)}
         return out, rec
 
+    def park(self, season: int) -> dict[int, float]:
+        """{mlbam: fWAR's park term P_i in runs} of one season (EBR_GATE.md 11.12.2)."""
+        if getattr(self, "_park", None) is None:
+            import xhem_park_terms
+            self._park = xhem_park_terms.ParkInputs()
+        return self._park.park_rows(int(season))["P"]
+
+    def park_shares(self) -> dict | None:
+        """The frozen shares b per arm (xhem_parkmatch.B_FROZEN), None before the fit."""
+        import xhem_parkmatch
+        return None if xhem_parkmatch.B_FROZEN is None else dict(xhem_parkmatch.B_FROZEN)
+
+
+def parkmatch_rows(season: int, src: dict, park: dict, b: dict) -> tuple[dict, dict]:
+    """The season's preview rows with d_pm in place of d_batx (EBR_GATE.md 11.12.2),
+    and the construction's receipt. Refuses when b is not frozen or a row with PA
+    has no park term."""
+    import xhem_parkmatch as PM
+    try:
+        dpm = PM.pm_deltas(src["rows"], park, b)
+    except PM.ParkMatchStop as e:
+        raise V3.EwarV3Refusal(f"{season}: {e}") from e
+    rows = {m: dict(r, d=dpm[m]) for m, r in src["rows"].items()}
+    rec = {"b": dict(b), "rows_with_park_term": sum(1 for m in src["rows"] if m in park),
+           "sum_park_runs": sum(float(park.get(m, 0.0)) for m, r in src["rows"].items() if not r["pb"]),
+           "registration": "EBR_GATE.md 11.12.2, owner decision EW3-52"}
+    return dict(src, rows=rows), rec
+
 
 def _incumbent_rpw(season: int) -> float:
     return float(LCM.league_totals(int(season))["rpw"])
@@ -196,11 +231,14 @@ def xhem_terms(season: int, src: dict, bat_rows: set, lam: float) -> tuple[dict[
     return out, rec
 
 
-def build(inp: Inputs | None = None, log=print, xhem: bool | None = None) -> dict:
+def build(inp: Inputs | None = None, log=print, xhem: bool | None = None,
+          parkmatch: bool | None = None) -> dict:
     """The payload. `xhem` None follows ewar_v3.XHEM_HALF_LIVE; True or False forces
-    the xHEM+ part on or off (the --xhem-preview census and the tests)."""
+    the xHEM+ part on or off (the --xhem-preview census and the tests). `parkmatch`
+    None follows ewar_v3.XHEM_PARKMATCH_LIVE; it matters only with the part on."""
     inp = inp or Inputs()
     xhem_on = V3.XHEM_HALF_LIVE if xhem is None else bool(xhem)
+    pm_on = xhem_on and (V3.XHEM_PARKMATCH_LIVE if parkmatch is None else bool(parkmatch))
     ewar_sha_before = _sha(EWAR_V2)
     vin = inp.vintage()
     vid = str(vin.get("vintage_id") or "")
@@ -242,12 +280,21 @@ def build(inp: Inputs | None = None, log=print, xhem: bool | None = None) -> dic
         if str(xh_rec.get("fwar_vintage_id") or "") != vid:
             raise V3.EwarV3Refusal(f"the swar preview is on vintage {xh_rec.get('fwar_vintage_id')}, "
                                    f"not {vid}; rebuild it: python tools/build_swar.py")
+        b_pm = inp.park_shares() if pm_on else None
+        if pm_on and b_pm is None:
+            raise V3.EwarV3Refusal("the park-matched part's shares b are not frozen (xhem_parkmatch.B_FROZEN)")
         for s in seasons:
             if s < V3.XHEM_FIRST_SEASON:
                 continue
             if s not in xsrc:
                 raise V3.EwarV3Refusal(f"{s}: the swar preview carries no xHEM+ arm for this season")
-            xh_by[s] = xhem_terms(s, xsrc[s], set(fside[s]["bat"]), V3.XHEM_LAMBDA)
+            src, pm_rec = xsrc[s], None
+            if pm_on:
+                src, pm_rec = parkmatch_rows(s, src, inp.park(s), b_pm)
+            terms, trec = xhem_terms(s, src, set(fside[s]["bat"]), V3.XHEM_LAMBDA)
+            if pm_rec is not None:
+                trec = dict(trec, park_match=pm_rec)
+            xh_by[s] = (terms, trec)
 
     # --- runs per win: the candidate RPW_GATE carries forward, behind the guard
     fit = inp.rpw_fit()
@@ -420,6 +467,14 @@ def build(inp: Inputs | None = None, log=print, xhem: bool | None = None) -> dic
                             "does not move (11.11.3)"),
             "source": xh_rec,
         }
+        if pm_on:
+            meta["parts"]["xhem"]["park_match"] = {
+                "construction": ("park-matched (EBR_GATE.md 11.12.2, owner decision EW3-52): d_pm = S1x's "
+                                 "d_batx less b times fWAR's park term (FanGraphs' Basic (5yr) factor by "
+                                 "B-Ref stint), b per arm the frozen share of that term the arm's rate "
+                                 "re-introduces, re-centred per season"),
+                "b": dict(b_pm), "fit": "docs/ebr-2026-09-30/xhem_parkmatch_fit.json",
+                "read": "EBR_GATE.md 11.12.3 to 11.12.7; flipped only by an owner answer after a PASS"}
     payload = {
         "schema": 1,
         "model": "ewar_v3",
@@ -485,19 +540,25 @@ def main(argv=None) -> int:
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--xhem-preview", action="store_true",
                     help="build with the xHEM+ part and write it under .cache/ewar_v3/preview/ only")
+    ap.add_argument("--parkmatch", action="store_true",
+                    help="with --xhem-preview: the park-matched part (EBR_GATE.md 11.12)")
     a = ap.parse_args(argv)
     if a.xhem_preview and a.write:
         print("REFUSED: --xhem-preview writes the preview only; run --write on its own")
         return 2
+    if a.parkmatch and not a.xhem_preview:
+        print("REFUSED: --parkmatch builds the preview only; pass it with --xhem-preview")
+        return 2
     try:
-        payload = build(xhem=True if a.xhem_preview else None)
+        payload = build(xhem=True if a.xhem_preview else None, **({"parkmatch": True} if a.parkmatch else {}))
     except V3.EwarV3Refusal as e:
         print(f"REFUSED: {e}")
         return 2
     census(payload)
     if a.xhem_preview:
-        write(payload, V3.PREVIEW_XHEM)
-        print(f"written {V3.PREVIEW_XHEM}")
+        out = V3.PREVIEW_XHEM_PM if a.parkmatch else V3.PREVIEW_XHEM
+        write(payload, out)
+        print(f"written {out}")
         return 0
     if a.write:
         path = V3.OUT if war_source.EWAR_V3_LIVE else V3.PREVIEW
