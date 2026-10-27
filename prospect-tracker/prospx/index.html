@@ -132,6 +132,7 @@
       --draft-r2-ink:  #5B616F; /* R2 (silver) */
       --draft-r35-ink: #7C4E2B; /* R3 to R5 (bronze) */
       --grade-ink-mix: 68%;     /* farm grade letters: the grade hue mixed with black */
+      --grade-lift:    1;       /* farm grade letters: dark lifts the raw palette 1.6x */
       /* Polish v1.0 (B2) - promoted from inlined literals. Column-header cream
          reads on the navy/near-black header band in both themes (theme-agnostic,
          so :root only). Byline lilac is theme-specific (dark lifts it). */
@@ -324,6 +325,7 @@
          Light theme: navy accent → cream text. Dark theme overrides
          below flip this so the light-blue accent gets near-black text. */
       --text-on-accent: #FBF8F0;
+      --text-on-amber:  #1A1508; /* ink on the --neon-amber fill (paper reads 2.28:1 on it) */
       /* Text intended to sit on an always-dark surface (e.g. the page
          header band - `--bg-header` is deep navy/charcoal in BOTH
          themes). v35 - `--text-on-dark-muted` retired: its sole consumer
@@ -395,6 +397,7 @@
       --draft-r2-ink:  #A8ADB8;
       --draft-r35-ink: #C28250;
       --grade-ink-mix: 100%;
+      --grade-lift:    1.6;
       --spend-ifa: #F5A623; /* amber - IFA */
       --spend-draft: #E040A0; /* magenta - Draft (v7 - was cyan, conflicted with neon-cyan accent) */
 
@@ -448,6 +451,7 @@
 
       /* Refractor accents are SATURATED - text on them flips to ink. */
       --text-on-accent: #05080F;
+      --text-on-amber:  var(--text-on-accent);
       --bg-hover: rgba(0, 217, 255, 0.08);
     }
 
@@ -5742,6 +5746,9 @@
        mode lifts the letters to 4.5:1 or better without changing the hue. */
     [data-theme="dark"] .farm-grade-cell .fg-letter,
     [data-theme="dark"] .farm-grade-cell .fg-comp-letter { filter: brightness(1.6); }
+    [data-theme="dark"] .gt-sub-letter,
+    [data-theme="dark"] .gt-branch-letter,
+    [data-theme="dark"] .gt-comp-letter { filter: brightness(1.6); }
     /* Compact "Org · pos · age" headline so a wider Org column doesn't
        create dead whitespace when team names are short. */
     .farm-org-cell {
@@ -19341,7 +19348,7 @@ function renderWatchlist() {
           <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${orgLinkHTML(org.org, escapeHtml(fullOrgName(org.org)), { cls: "px-club--text" })}</div>
           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: ${tp.player_key ? `<a href="#player=${escapeHtml(tp.player_key)}" onclick="event.stopPropagation();" style="color:var(--text-secondary);text-decoration:none;">${escapeHtml(tp.name)}</a>` : `<span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span>`} <span class="fv-badge ${fvClass(tp.fv_label)} size-xs"${tp.fv_basis === "consensus" ? ` data-grade-basis="consensus" style="border-style:dashed;" title="${CONS_FALLBACK_TIP}"` : ""}>${escapeHtml(tp.fv_label)}${tp.fv_basis === "consensus" ? GRADE_C_MARK : ""}</span>` : ""}</div>
         </div>
-        <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
+        <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${farmLetterInk(gradeColor(overall))};filter:brightness(var(--grade-lift, 1));font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
         <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:${dvm == null ? 'var(--text-tertiary)' : (dvm >= 110 ? 'var(--up)' : dvm <= 90 ? 'var(--down)' : 'var(--neon-violet)')};min-width:42px;text-align:right;" title="${win.toUpperCase()}DvM+">${dvm == null ? " - " : dvm}</div>
         <button class="watch-btn is-in" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Remove farm from watchlist" title="Remove farm from watchlist">${pxWatchIco(true)}</button>
       </div>
@@ -28315,7 +28322,7 @@ function _renderDraftTendencies(host, classes, year) {
     push(r.zColl, "college-heavy", "prep-heavy");
     push(r.zUpMid, "up-the-middle", "corner-heavy");
     if (!out.length) return `<span style="color:var(--text-tertiary);">league-typical</span>`;
-    return out.map(([lbl, c]) => `<span style="display:inline-block;padding:1px 6px;border-radius:3px;background:${c};color:#0c0c0e;font-size:9px;font-weight:700;white-space:nowrap;">${lbl}</span>`).join(" ");
+    return out.map(([lbl, c]) => `<span style="display:inline-block;padding:1px 6px;border-radius:3px;background:${c};color:var(--text-on-accent);font-size:9px;font-weight:700;white-space:nowrap;">${lbl}</span>`).join(" ");
   };
   const _posBar = (pb) => {
     if (!pb) return "";
@@ -40061,7 +40068,7 @@ function renderBucketBar(buckets, opts) {
     const pct = Math.round(s.p * 100);
     const tip = `${SV_BUCKET_LABEL[s.k]}: ${pct}% chance`;
     const lbl = (opts.labels && w >= 11)
-      ? `<span style="font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--text-on-accent);opacity:0.92;">${pct}</span>` : "";
+      ? `<span style="font-family:var(--font-mono);font-size:8px;font-weight:700;color:${s.k === "regular" ? "var(--text-on-amber)" : "var(--text-on-accent)"};opacity:0.92;">${pct}</span>` : "";
     return `<div title="${escapeHtml(tip)}" style="width:${w.toFixed(2)}%;background:${SV_BUCKET_COLOR[s.k]};height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${lbl}</div>`;
   }).join("");
   let legend = "";
@@ -42456,8 +42463,8 @@ function makeFarmReportCard(org) {
       : baseTip;
     const titleAttr = fullTip ? ` title="${escapeHtml(fullTip)}"` : '';
     const letterStyle = isMissing
-      ? `color:${gradeColor(letter)};opacity:0.55;`
-      : `color:${gradeColor(letter)};`;
+      ? `color:${farmLetterInk(gradeColor(letter))};opacity:0.55;`
+      : `color:${farmLetterInk(gradeColor(letter))};`;
     const _lslug = _FARM_LEAF_SLUG[letterKey];
     const labelHtml = (_lslug && (window.EEPHUS_GLOSSARY || {})[_lslug])
       ? `<span class="gt-sub-label g-term" data-term="${_lslug}">${escapeHtml(label)}</span>`
@@ -42487,7 +42494,7 @@ function makeFarmReportCard(org) {
       <summary title="${escapeHtml(tooltip)}">
         <span class="gt-marker">▾</span>
         ${labelHtml}
-        <span class="gt-branch-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter)}</span>
+        <span class="gt-branch-letter" style="color:${farmLetterInk(gradeColor(letter))};">${escapeHtml(letter)}</span>
         <span class="gt-branch-rank">#${rank ?? ' - '}</span>
         <span class="gt-branch-weight">${weightPct}%</span>
       </summary>
@@ -43426,7 +43433,7 @@ function makeFarmReportCard(org) {
           ${_windowSelector}
         </div>
         <div class="gt-comp-row">
-          <span class="gt-comp-letter" style="color:${gradeColor(_winOverall)};">${escapeHtml(_winOverall || ' - ')}</span>
+          <span class="gt-comp-letter" style="color:${farmLetterInk(gradeColor(_winOverall))};">${escapeHtml(_winOverall || ' - ')}</span>
           <span class="gt-comp-rank">#${_winRank ?? ' - '} of ${n}</span>
           <span class="gt-comp-score">farm_score ${_winScoreShown != null ? _winScoreShown.toFixed(1) : ' - '} / 100</span>
           ${cappedBadge}
@@ -44297,10 +44304,10 @@ function makeFarmLeagueRankBar(org) {
     const rank = ranks[key];
     const letter = grades[key] || ' - ';
     const pct = rank != null ? Math.round(100 * (n - rank + 1) / n) : 0;
-    const tone = letter === ' - ' ? 'var(--text-tertiary)' : gradeColor(letter);
+    const tone = letter === ' - ' ? 'var(--text-tertiary)' : farmLetterInk(gradeColor(letter));
     return `<div style="display:grid;grid-template-columns:120px 28px 1fr 70px;gap:10px;align-items:center;padding:5px 0;font-size:12px;">
       <span style="color:var(--text-secondary);font-weight:500;">${label}</span>
-      <span style="font-family:var(--font-mono);color:${tone};font-weight:700;text-align:center;">${letter}</span>
+      <span style="font-family:var(--font-mono);color:${tone};filter:brightness(var(--grade-lift, 1));font-weight:700;text-align:center;">${letter}</span>
       <div style="position:relative;height:9px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;">
         <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${tone};opacity:0.65;border-radius:4px;"></div>
       </div>
@@ -44313,12 +44320,12 @@ function makeFarmLeagueRankBar(org) {
   const overallLetter = ((org.letter_by_window || {})[_lrWin]) || grades.overall || ' - ';
   const overallRank = farmWindowRank(org) ?? ranks.overall;
   const overallPct = overallRank != null ? Math.round(100 * (n - overallRank + 1) / n) : 0;
-  const overallTone = overallLetter === ' - ' ? 'var(--text-tertiary)' : gradeColor(overallLetter);
+  const overallTone = overallLetter === ' - ' ? 'var(--text-tertiary)' : farmLetterInk(gradeColor(overallLetter));
   return `<div class="detail-title">League rank vs the 30-org field <span class="detail-title-sub">Percentile bars across each branch grade. Longer bar = better rank. Click into a tab for the per-leaf breakdown.</span></div>
     <div style="padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;">
       <div style="display:grid;grid-template-columns:120px 28px 1fr 70px;gap:10px;align-items:center;padding:6px 0 8px;font-size:13px;border-bottom:1px solid var(--border-light);margin-bottom:4px;">
         <span style="color:var(--text-primary);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;">Overall</span>
-        <span style="font-family:var(--font-mono);color:${overallTone};font-weight:700;text-align:center;font-size:15px;">${overallLetter}</span>
+        <span style="font-family:var(--font-mono);color:${overallTone};filter:brightness(var(--grade-lift, 1));font-weight:700;text-align:center;font-size:15px;">${overallLetter}</span>
         <div style="position:relative;height:11px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
           <div style="position:absolute;left:0;top:0;height:100%;width:${overallPct}%;background:${overallTone};opacity:0.75;border-radius:5px;"></div>
         </div>
@@ -44555,7 +44562,7 @@ function makeFarmFinancialComposite(org) {
                  s100 >= 100 ? 'var(--up)' : 'var(--down)';
     return `<div style="display:grid;grid-template-columns:140px 32px 1fr 56px 36px;gap:8px;align-items:center;padding:4px 0;font-size:11px;">
       <span style="color:var(--text-secondary);font-weight:500;">${LEAF_LABELS_FIN[key]}</span>
-      <span style="font-family:var(--font-mono);color:${gradeColor(letter)};font-weight:700;text-align:center;font-size:12px;">${letter}</span>
+      <span style="font-family:var(--font-mono);color:${farmLetterInk(gradeColor(letter))};filter:brightness(var(--grade-lift, 1));font-weight:700;text-align:center;font-size:12px;">${letter}</span>
       <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;">
         <div style="position:absolute;left:0;top:0;height:100%;width:${fp}%;background:${tone};opacity:0.6;border-radius:4px;"></div>
         <div style="position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:var(--text-tertiary);opacity:0.4;"></div>
@@ -44583,7 +44590,7 @@ function makeFarmFinancialComposite(org) {
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
       <div style="background:linear-gradient(135deg,${gradeColor(parentLetter)}22,${gradeColor(parentLetter)}08);border:1px solid ${gradeColor(parentLetter)}55;border-radius:6px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;min-width:96px;">
         <div style="font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Financial</div>
-        <div style="font-family:var(--font-mono);font-size:36px;font-weight:700;line-height:1;color:${gradeColor(parentLetter)};margin:2px 0;">${parentLetter}</div>
+        <div style="font-family:var(--font-mono);font-size:36px;font-weight:700;line-height:1;color:${farmLetterInk(gradeColor(parentLetter))};filter:brightness(var(--grade-lift, 1));margin:2px 0;">${parentLetter}</div>
         <div style="font-size:10px;color:var(--text-tertiary);">#${parentRank ?? ' - '} of 30</div>
       </div>
       ${tile('Gross Surplus',     fmtMM(grossActive),   `eFV expected surplus of ${activeSurplus.active_count ?? ' - '} actives, before bonuses`)}
@@ -46472,7 +46479,7 @@ function renderFarmSystems() {
     <span class="sort-header fc-age" style="text-align:center;" data-farm-sort="avg_age" title="Average age of the org's active prospects. Click to sort youngest first.">Avg age</span>
     <span class="sort-header fc-roi" style="text-align:center;" data-farm-sort="roi" title="Financial ROI - career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</span>
     <span class="fc-spend" style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
-      <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
+      <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:inherit;letter-spacing:0.04em;">
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-ifa);"></span>IFA</span>
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
@@ -56222,7 +56229,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
             ${fvB}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
-            <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : ' - '}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-gold);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : ' - '}</span>
           </div>`;
         }).join("")
       : '<span style="color:var(--text-tertiary);font-size:var(--fs-sm);">All tracked prospects healthy.</span>'}
@@ -59071,7 +59078,7 @@ function makeFarmCompareSideBySide(farms) {
         <span style="flex-shrink:0;">${teamLogoHTML(o.org, "lg", fullOrgName(o.org))}</span>
         <div style="min-width:0;flex:1;">
           <div class="csbs-name" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
-            <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
+            <span style="margin-left:6px;font-family:var(--font-mono);color:${farmLetterInk(gradeColor(grade))};filter:brightness(var(--grade-lift, 1));font-weight:700;">${escapeHtml(grade)}</span>
           </div>
           <div class="csbs-meta">#${farmWindowRank(o) ?? " - "} of 30 · ${o.count ?? 0} graded · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : " - "}</div>
           ${tpHtml}
