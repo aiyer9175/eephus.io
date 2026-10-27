@@ -228,6 +228,14 @@ def test_org_tendency_lean_badges_take_the_on_accent_ink():
     assert _ratio(paper, _rgb(SITE_LIGHT["--accent-red"])) >= 4.5
 
 
+def test_prospx_declares_the_orange_accent_it_reads():
+    # D6: var(--neon-orange) is read 36 times on the page (unsigned picks, reach
+    # markers, posting windows, below-league leans) but was declared only in the
+    # glossary port's .gl-app scope, so every read fell back to inherit or none.
+    assert LIGHT["--neon-orange"] == "var(--accent-red)"
+    assert "var(--neon-orange)" in PX
+
+
 def test_every_farm_grade_letter_reads_through_the_ink_and_lifts_in_dark():
     # D3, the rest of the family: the farm report card rows (B 3.0:1, B+ 3.3:1 on
     # the light paper), the grade-tree branch and composite letters, the 22px farm
