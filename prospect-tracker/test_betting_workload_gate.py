@@ -254,7 +254,9 @@ def test_no_served_module_imports_the_tool():
     hits = []
     for base, pat in ((ROOT, "*.py"), (ROOT / "tools", "*.py"), (ROOT / "assets", "*.js")):
         for p in base.glob(pat):
-            if p.name.startswith("test_") or p == TOOL_PATH:
+            # conftest.py is the test harness (it redirects the tool's output path for
+            # every test, aae0758b), not a served module
+            if p.name.startswith("test_") or p.name == "conftest.py" or p == TOOL_PATH:
                 continue
             if "betting_workload_gate" in p.read_text(encoding="utf-8", errors="replace"):
                 hits.append(p.name)

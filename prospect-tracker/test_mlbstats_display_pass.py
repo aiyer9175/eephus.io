@@ -188,7 +188,9 @@ def test_the_pager_turns_pages_and_csv_keeps_every_row(browser, server):
         total = page.evaluate("Number(document.querySelector('%stable[data-mlbpage]')"
                               ".getAttribute('data-mlbpage-total'))" % R)
         assert total > 100
-        shown = ("[...document.querySelectorAll('%stbody tr')]"
+        # the board's own rows: an opened caret's drawer draws a small table of its own
+        # inside the season line (LT-09), whose rows are not board rows
+        shown = ("[...document.querySelectorAll('%stable[data-mlbpage] > tbody > tr')]"
                  ".filter(r => !r.hidden && !r.classList.contains('mlbx-seasonrow')).length" % R)
         assert page.evaluate(shown) == 100
         status = page.locator(R + ".mlbx-pager-n")

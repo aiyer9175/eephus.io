@@ -43,10 +43,12 @@ import efv_vintage_frame as F
 
 ROOT = Path(__file__).parent
 
-#: git blob of efv_vintage_frame.py at the lane's base b5b0ae8a (and at the integration
-#: head 6c080ecd); the plan's c9d5a29d is the blob at 64bf1bb3 and 26b446d9, before
-#: 6fd30aee and fc5b9cc0 changed the file.
-VINTAGE_FRAME_BLOB = "09430d3b211c67a480b51aff0dbfb27d8f4ca669"
+#: git blob of efv_vintage_frame.py since 44f0097b (2026-10-15), which only added
+#: EFV_TRAIN_THROUGH_2026 with default False (restamped 2026-10-26, SURROGATE_2026_GATE.md
+#: s12.4). Before it: 09430d3b at the lane's base b5b0ae8a and the integration head
+#: 6c080ecd; the plan's c9d5a29d is the blob at 64bf1bb3 and 26b446d9, before 6fd30aee
+#: and fc5b9cc0 changed the file.
+VINTAGE_FRAME_BLOB = "218656980546b89b9abd2d0b828889705eb41ce1"
 SURR = G.SURROGATE_GATE_DOC
 EFV = F.GATE_DOC
 
@@ -61,6 +63,8 @@ def test_vintage_frame_blob_is_pinned():
     if r.returncode != 0:
         pytest.skip("not a git checkout")
     assert r.stdout.strip() == VINTAGE_FRAME_BLOB
+    # the one change since 09430d3b keeps the 2025 and 2026 debut classes out of every fit
+    assert F.EFV_TRAIN_THROUGH_2026 is False
 
 
 def test_the_r_lv_guard_keeps_its_signatures_and_doc():

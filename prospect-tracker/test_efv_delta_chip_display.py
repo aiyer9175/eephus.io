@@ -138,7 +138,9 @@ def test_the_rendered_badge_and_its_tooltip_reconcile(board):
     () => Array.from(document.querySelectorAll('#rows .fv-badge'))
       .map(el => ({txt: el.textContent.trim(), title: el.getAttribute('title') || ''}))
     """)
-    pat = re.compile(r"Consensus FV (\d+) \(([+-]?\d+)\)")
+    # The badge tooltip reads "cons. FV 62 (+1)", and "(±0)" for a zero gap, since the
+    # PROSPX copy passes of 2026-10-08 and 2026-10-09 (63c55499, db495f8c).
+    pat = re.compile(r"cons\. FV (\d+) \((±0|[+-]?\d+)\)")
     checked = 0
     for cell in pairs:
         m = pat.search(cell["title"])
@@ -147,7 +149,7 @@ def test_the_rendered_badge_and_its_tooltip_reconcile(board):
         grade = re.match(r"^(\d+)", cell["txt"])
         if not grade:
             continue
-        cons, chip = int(m.group(1)), int(m.group(2))
+        cons, chip = int(m.group(1)), (0 if m.group(2) == "±0" else int(m.group(2)))
         assert int(grade.group(1)) - cons == chip, cell
         checked += 1
     assert checked >= MIN_CHIPS, f"only {checked} rendered chips found on page one"

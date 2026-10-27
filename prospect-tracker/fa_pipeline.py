@@ -277,6 +277,25 @@ def last_completed_season(today: date | None = None) -> tuple[int | None, str]:
     return None, "no regular season has ended"
 
 
+def _ledger_bases_off_display(last_year: int) -> dict:
+    """{war_basis: rows} for the stored realized-ledger rows whose basis is not the
+    displayed series (war_source.DISPLAY_PROVIDER); empty when every row reads it.
+    A row with no war_basis predates the stamp (fa_export.LEGACY_LEDGER_WAR_BASIS)."""
+    import war_source
+    want = war_source.DISPLAY_PROVIDER
+    first = int(get_config()["backfill"]["first_class_year"])
+    off: dict = {}
+    for year in range(first, int(last_year) + 1):
+        for s in storage.load_fa_signings(year).values():
+            led = s.get("ledger") or {}
+            if not led:
+                continue
+            b = led.get("war_basis") or "bwar"
+            if b != want:
+                off[b] = off.get(b, 0) + 1
+    return off
+
+
 def rebuild_realized_ledger(completed_season: int | None = None, *,
                             today: date | None = None, force: bool = False) -> dict:
     """Rebuild the FA realized ledger through ``completed_season``.
@@ -292,9 +311,15 @@ def rebuild_realized_ledger(completed_season: int | None = None, *,
         if completed_season is None:
             return {"ran": False, "reason": basis}
         done = storage.load_source_checks().get((REALIZED_LEDGER_CHECK, str(completed_season)))
-        if done and not force:
+        stale = _ledger_bases_off_display(int(completed_season)) if done else {}
+        if done and not force and not stale:
             return {"ran": False, "season": completed_season,
                     "reason": f"already rebuilt for {completed_season} on {done.get('checked_at')}"}
+        if stale:
+            # The season's rebuild is recorded, but the stored ledger reads a WAR series
+            # the site no longer displays (the eWAR v3 display flip came after the
+            # 2026-10-08 rebuild): rebuild once more on the displayed series.
+            basis = f"displayed WAR moved to {war_source.DISPLAY_PROVIDER} ({dict(stale)})"
     summary = backfill_historical(completed_season=int(completed_season), from_store=True)
     if summary.get("persisted") and summary.get("ledger_rows"):
         storage.record_source_check(REALIZED_LEDGER_CHECK, str(completed_season),

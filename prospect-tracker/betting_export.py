@@ -617,11 +617,19 @@ def _public_path(p) -> str:
     returned verbatim: the only callers that can produce one are tests pointing
     the module at tmp fixtures (test_betting.py pins the verbatim echo), and a
     production path that ever landed outside the root would be its own defect
-    to fix at the source, not to disguise here."""
-    try:
-        return Path(p).resolve().relative_to(ROOT.resolve()).as_posix()
-    except (ValueError, OSError):
-        return str(p)
+    to fix at the source, not to disguise here.
+
+    The path is first read as written (absolute, links NOT followed), then resolved:
+    a checkout whose .cache is a link to another disk (a worktree junction, or a box
+    that keeps the caches on a data volume) still names .cache/odds, which is inside
+    the checkout as the reader sees it (PORT_RED_TESTS_CLEAR, 2026-10-26)."""
+    for mine, root in ((Path(os.path.abspath(p)), Path(os.path.abspath(ROOT))),
+                       (Path(p).resolve(), ROOT.resolve())):
+        try:
+            return mine.relative_to(root).as_posix()
+        except (ValueError, OSError):
+            continue
+    return str(p)
 
 
 # ===========================================================================

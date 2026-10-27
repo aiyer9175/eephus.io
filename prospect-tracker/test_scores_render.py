@@ -674,6 +674,9 @@ def test_chart_role_label_twin_crosshair_and_keys(site, pw):
         assert page.locator("details.sc-twin table tbody tr").count() == 70
         assert page.locator(".sc-wp-frame").evaluate("e => e.closest('[data-model-id]').dataset.modelId") == "scores_mlb_wp"
         assert page.locator(".sc-mark").count() == 5
+        # at 390 the chart opens below the fold (its top at 863 of a 900 px viewport on
+        # 2026-10-26), and the mouse can only hover what the viewport shows
+        fr.scroll_into_view_if_needed()
         box = frame.bounding_box()
         page.mouse.move(box["x"] + box["width"] * 0.5, box["y"] + 60)
         tip = page.locator(".sc-tip")

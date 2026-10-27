@@ -5773,8 +5773,14 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
                            "|label=ewar_headline@ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d"
-                           "|injsides=pit|served=efv_v2@22ec625f"
+                           "|injsides=pit|served=efv_v2@afcf9904"
                            "|section=label_graded")
+# served efv_v2@22ec625f -> efv_v2@afcf9904 on 2026-10-26 (PORT_RED_TESTS_CLEAR): no model,
+# weight or ranked row moved. efv_v2_serve.fingerprint_term hashed the stored re-fit file's raw
+# bytes, and the main tree's Windows copy is CRLF while the blob (and every Linux checkout) is
+# LF, so the pin held only on that one working copy. The term now hashes the file with line
+# endings normalized to LF, which is the blob's own hash input; the epoch is not bumped because
+# the board order is unchanged.
 # label fwar@2026-10-02-a020cf64844a -> ewar_headline@ewar-headline-2026-10-02-a020cf64844a-8b30fccf933d
 # on 2026-10-22: the headline eWAR label check's switch (EWAR_HEADLINE_LABEL_GATE.md part 3 under
 # amendment 9.2). The term names eFV's label (war_source.EFV_LABEL_PROVIDER) and the frozen

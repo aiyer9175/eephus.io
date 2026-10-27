@@ -172,6 +172,9 @@ def test_consensus_mode_detail_card_prints_sim_mean(booted_page):
     key = "jesus_made"
     if not page.evaluate(f"() => DATA.players.some(p => p.player_key === '{key}')"):
         pytest.skip(f"{key} is not on the served board")
+    # EFV_DISPLAY_SWAPS on (003e406a, 2026-10-14) pins _gradePrimary() to eFV; the
+    # consensus card is still built for swaps off, so the switch is held off here.
+    page.evaluate("() => { window.__swaps = efvDisplaySwaps; window.efvDisplaySwaps = () => false; }")
     page.evaluate("() => { state.gradePrimary = 'fv'; location.hash = 'player=jesus_made'; render(); }")
     page.wait_for_function(
         "() => { const b = document.getElementById('player-detail-body');"
@@ -186,4 +189,4 @@ def test_consensus_mode_detail_card_prints_sim_mean(booted_page):
         assert "risk-adj" not in card, card[-400:]
         assert not errs, "JS errors:\n  " + "\n  ".join(errs)
     finally:
-        page.evaluate("() => { state.gradePrimary = 'xfv'; render(); }")
+        page.evaluate("() => { window.efvDisplaySwaps = window.__swaps; state.gradePrimary = 'xfv'; render(); }")

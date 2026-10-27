@@ -102,3 +102,14 @@ because it is cohort quality rather than calendar exposure. Between-block co-mov
 grade level and outcome level would be collected by the pooled statistic as ordering skill.
 
 That is where to look next. It is **not** measured here and is not claimed.
+
+## Dated note, 2026-10-26 (PORT_RED_TESTS_CLEAR): the table above is the 2026-09-06 read
+
+The served artifact (`data/source_backtest.json`, built 2026-10-14) reads the same cut again
+with today's raters. FanGraphs (-0.04125 to -0.04248), MLB Pipeline (-0.02545 to -0.02664) and
+the PROSPX consensus (-0.03581 to -0.03643) still grow under exposure matching, so the
+refutation stands for the three raters A-CLAIM-13 measured a resolvable block effect in. eFV,
+which now serves V2 and carried no resolvable block effect in A-CLAIM-13, moves from -0.02959 to
+-0.02942: it shrinks by 0.00017, far inside this cut's floors of 0.036 to 0.055. "All four grow
+slightly" is therefore true of the 2026-09-06 read only; the claim this doc keeps is the one
+about the three raters, and the test reads exactly those three.

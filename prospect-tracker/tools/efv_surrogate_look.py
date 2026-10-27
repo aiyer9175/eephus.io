@@ -893,8 +893,10 @@ class T5Error(RuntimeError):
     """A T5 hygiene assertion failed (s5 T5): the read STOPs."""
 
 
-#: s11: efv_vintage_frame.py by git blob id (never a working-tree sha256).
-VINTAGE_FRAME_BLOB = "09430d3b211c67a480b51aff0dbfb27d8f4ca669"
+#: s11: efv_vintage_frame.py by git blob id (never a working-tree sha256). Restamped
+#: 2026-10-26 (s12.4) from 09430d3b to the blob of 44f0097b, which only added
+#: EFV_TRAIN_THROUGH_2026 (default False); t5_assert_static also asserts that flag off.
+VINTAGE_FRAME_BLOB = "218656980546b89b9abd2d0b828889705eb41ce1"
 #: Module names an S3 read may never load (AP+, s3: "AP+ is never read").
 BANNED_MODULE_TOKENS = ("ap_plus", "applus", "advancement_pace")
 
@@ -923,6 +925,10 @@ def t5_assert_static(ctx: dict) -> list[str]:
         raise T5Error(f"efv_vintage_frame.py is blob {blob} (clean {clean}), not the s11 "
                       f"pin {VINTAGE_FRAME_BLOB}")
     done.append(f"efv_vintage_frame.py at the s11 blob {VINTAGE_FRAME_BLOB}, clean")
+    if getattr(F, "EFV_TRAIN_THROUGH_2026", False):
+        raise T5Error("efv_vintage_frame.EFV_TRAIN_THROUGH_2026 is on: a fit would read the "
+                      "2025 and 2026 debut classes (s12.4)")
+    done.append("efv_vintage_frame.EFV_TRAIN_THROUGH_2026 is off (s12.4)")
     pins = S._pins()
     for block in ("frozen_2026", "mlb_event_ids_2026"):
         for name in sorted(pins.get(block) or {}):

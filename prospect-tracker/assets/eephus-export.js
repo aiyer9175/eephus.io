@@ -71,9 +71,11 @@
       aligns.push(_align(c));
     });
     var bodyRows = [];
-    var tbody = table.querySelector("tbody");
-    var trs = tbody ? tbody.querySelectorAll("tr")
-                    : table.querySelectorAll("tr");
+    var tbody = table.tBodies && table.tBodies.length ? table.tBodies[0] : null;
+    // The table's own rows only (HTMLTableElement.rows, as eephus-csv.js counts
+    // them): a table nested in a row's cell, such as the season lines and charts a
+    // caret opens on /mlbstats/, never adds its rows to the file.
+    var trs = tbody ? tbody.rows : table.rows;
     Array.prototype.forEach.call(trs, function (tr) {
       if (tr.querySelector("th") && !tr.querySelector("td")) return;  // header-only row
       if (tr.getAttribute("data-export-skip") != null) return;

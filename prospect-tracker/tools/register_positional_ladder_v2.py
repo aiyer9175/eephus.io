@@ -223,7 +223,8 @@ def gl_ladder(x: dict) -> dict:
                     "the Position Fit tab in the Alchemy Lab prints the current rungs."),
         "seeAlso": ["positional_adjustment", "position_fit", "pal_conversion"],
         "shelf": "ark",
-        "origin": ("Arkmetric fit, computed here from Baseball-Reference's positional runs. The position-switcher "
+        # the origin names the platform (test_glossary_provenance.py, 5bc67b32)
+        "origin": ("Arkmetric, original to eephus.io: fit here from Baseball-Reference's positional runs. The position-switcher "
                    "ladder (v2) is measured from Baseball-Reference, FanGraphs and Statcast fielding runs."),
     }
 

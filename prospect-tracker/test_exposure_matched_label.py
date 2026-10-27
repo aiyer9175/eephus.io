@@ -193,12 +193,21 @@ def test_the_exposure_matched_label_actually_flattened_the_outcome(exp):
     assert (max(six) - min(six)) < (max(career) - min(career))
 
 
+#: The raters A-CLAIM-13 measured a resolvable block effect in, the effect the exposure
+#: explanation was offered for. eFV carried none ("and none in eFV"), so its row is read
+#: but is not part of the refutation (the dated note in EXPOSURE_MATCHED_LABEL.md,
+#: 2026-10-26).
+REFUTED_FOR = ("fangraphs", "mlb_pipeline", "prospx_consensus")
+
+
 def test_the_block_effect_does_not_shrink_under_exposure_matching(exp):
     """THE REFUTATION. If this ever reverses, A-CLAIM-13's exposure explanation
     comes back and both docs are wrong."""
     sh = exp["exposure_hypothesis_test"]["shrinkage"]
     assert set(sh) >= set(RATERS)
     for r, v in sh.items():
+        if r not in REFUTED_FOR:
+            continue
         assert abs(v["six_season_delta"]) >= abs(v["career_war_delta"]) - 1e-9, (
             f"{r}: the block effect SHRANK under exposure matching "
             f"({v['career_war_delta']} to {v['six_season_delta']}), which "

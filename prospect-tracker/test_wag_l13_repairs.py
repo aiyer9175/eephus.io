@@ -173,7 +173,9 @@ def test_the_label_series_is_not_typed_as_bwar():
     for name in ("xfv_dataset_report.json", "xfv_pitcher_dataset_report.json"):
         rep = json.loads((ROOT / "data" / name).read_text(encoding="utf-8"))
         assert "bWAR" not in rep["target"] and "bWAR" not in rep["baseline_note"]
-        assert war_source.DEFAULT_PROVIDER in rep["target"]
+        # efv_dataset._label_provider names eFV's own label, EFV_LABEL_PROVIDER, which
+        # is the headline eWAR since 2026-10-22 (EWAR_HEADLINE_LABEL_GATE.md part 3)
+        assert war_source.EFV_LABEL_PROVIDER in rep["target"]
     curve = json.loads((ROOT / "data" / "fv_outcome_curves_pooled.json").read_text(encoding="utf-8"))
     assert "bWAR" not in curve["schema"]["curve"]
     reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))

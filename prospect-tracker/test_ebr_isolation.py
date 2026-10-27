@@ -140,9 +140,13 @@ def test_only_the_builder_and_the_look_import_the_core():
     # ebr_milb.py and tools/build_ebr_milb.py carry the same definition to the minor
     # leagues' runner record with s = (level, season) (task EBR_Q6B_MILB_CARDS, owner
     # answer EBR-Q6 (b)): display only, isolated by test_ebr_milb.py's own pins.
+    # tools/ewar_uncertainty_band_lab.py (5878497b) and tools/peh_old_seasons_lab.py
+    # (abe7886c) read eBR's frozen pool and RE24 table once each for their registered
+    # dark reads (owner EW3-50): measurements on the same terms, no fitted consumer.
     assert users == ["ebr_milb.py", "tools/build_count_value.py", "tools/build_ebr.py",
                      "tools/build_ebr_milb.py", "tools/build_pitch_ledger.py",
-                     "tools/ebr_gate.py", "tools/pitch_basis_build.py"]
+                     "tools/ebr_gate.py", "tools/ewar_uncertainty_band_lab.py",
+                     "tools/peh_old_seasons_lab.py", "tools/pitch_basis_build.py"]
 
 
 def test_only_the_look_computes_a_year_to_year_statistic():

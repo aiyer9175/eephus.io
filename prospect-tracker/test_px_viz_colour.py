@@ -136,9 +136,21 @@ def test_lamp_contrast_both_themes():
 PTS = [{"consensus_fv_raw": v} for v in (45, 47.5, 50, 50, 55)]
 
 
+def _accent_of(token):
+    """The accent a semantic token stands for: --down is var(--accent-red) and --up is
+    var(--accent-green) on :root (site.css), so a rule that paints with the semantic name
+    paints the same accent. The px block reads --down since aae0758b, because
+    test_reduced_motion_px.py keeps the accent names out of that block."""
+    if token in ("--up", "--down"):
+        m = re.search(r"(?m)^\s*" + re.escape(token) + r"\s*:\s*var\((--[a-z0-9-]+)\)\s*;", CSS)
+        assert m, token
+        return m.group(1)
+    return token
+
+
 def test_spark_direction_class_paints_from_the_sheet():
-    assert _fill_token(".px-spark.up .ln") == "--accent-green"
-    assert _fill_token(".px-spark.dn .ln") == "--accent-red"
+    assert _accent_of(_fill_token(".px-spark.up .ln")) == "--accent-green"
+    assert _accent_of(_fill_token(".px-spark.dn .ln")) == "--accent-red"
     assert _fill_token(".px-spark .gl") == "--border"
     for colour, cls in (("var(--accent-green)", "up"), ("var(--accent-red)", "dn")):
         svg = B._fv_sparkline(PTS, colour, w=56, h=20)

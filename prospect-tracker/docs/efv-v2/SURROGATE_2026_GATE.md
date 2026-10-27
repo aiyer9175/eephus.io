@@ -1085,3 +1085,16 @@ the W3 secondary 0.038 and 0.035; T2 (a) 0.033 and 0.037 on all rows, 0.036 and 
 V 2015-2019; T3's SE in z 0.035 (s9: about 0.035); T4 0.086 for hitters (s9 cited the
 lv_dev E_cond floor 0.0155) and undefined for pitchers. The old-cohort analog floor for S4
 is not measured (s11.2: S4 is void under OQ2 = A).
+
+### 12.4 The s11 blob pin restamped (dated amendment 2026-10-26, PORT_RED_TESTS_CLEAR)
+
+`efv_vintage_frame.py` moved from blob 09430d3b211c67a480b51aff0dbfb27d8f4ca669 to
+218656980546b89b9abd2d0b828889705eb41ce1 at 44f0097b (2026-10-15, owner EW3-13,
+`docs/efv-v2/EFV_2026_TRAINING.md`), after the S3 read of s12.1. That commit removed no line:
+it added `EFV_TRAIN_THROUGH_2026 = False` and the helpers that read it, and with the flag off
+every path is byte-identical. The s11 pin in `tools/efv_surrogate_look.py` and in
+`test_efv_surrogate_guard.py` now names the new blob, and T5 (`t5_assert_static`) and the
+guard test also assert `EFV_TRAIN_THROUGH_2026` is False, so a read still stops if a fit could
+reach the 2025 and 2026 debut classes. No read ran for this amendment and nothing it decides
+moves. Owner question PRT-Q2 (default taken): restamp with the flag assertion (default),
+or keep the old pin and leave the two tests red until the owner restamps.

@@ -7672,6 +7672,9 @@ def _franchise_root_is_fscore() -> bool:
 
 #: The /franchise/ shell lines once F-SCORE is the root (FS-Q4 (b)).
 FRANCHISE_STAGE_FSCORE = "Beta. F-SCORE is a descriptive score, not a forecast"
+#: The chip while the Franchise Index is the root (MODULE_STAGE reads the F-SCORE line
+#: since 192028b5, so the Index state names its own).
+FRANCHISE_STAGE_INDEX = "Beta. Franchise Index is a descriptive rank, not a forecast"
 FRANCHISE_DESC_FSCORE = ("One page per club: F-SCORE, seven seasons and today, and the three branches "
                          "beneath it (roster eWAR, provisional 2027 projection, PROSPX farm), "
                          "re-standardised across 30 clubs.")
@@ -7719,7 +7722,7 @@ def build_franchise() -> str:
     body = (
         '<div class="fa-app mlbstats-app fr-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
-        f'<h1>{_masthead_icon("franchise")}Franchises {_stage_chip("franchise", FRANCHISE_STAGE_FSCORE if fs_root else None)}</h1></div>'
+        f'<h1>{_masthead_icon("franchise")}Franchises {_stage_chip("franchise", FRANCHISE_STAGE_FSCORE if fs_root else FRANCHISE_STAGE_INDEX)}</h1></div>'
         f'<span class="section-sub" id="franchise-masthead">{root}'
         f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
         'with every number on the scale it was computed on.</span></div>'

@@ -419,12 +419,15 @@ def _six_year_label_map(universe: list[dict]):
 def _load_bust_universe(data_dir: Path, universe: list[dict]):
     """(kept, exclusions) from inactive.json, with every drop named.
 
-    TWO SCREENS, both of which fire on real rows:
+    TWO SCREENS (the identity screen fires on real rows; the WAR screen did when
+    the lane was built):
 
       REAL MLB VALUE. A player carrying career WAR is not a bust however he got
-      into this file. Measured: exactly one, Zack Britton at 11.73 over twelve
-      seasons. Scoring him as a never-debuted failure would be a straightforward
-      lie about a player a reader may well remember.
+      into this file. Measured 2026-09-06: exactly one, Zack Britton at 11.73 over
+      twelve seasons. Scoring him as a never-debuted failure would be a straightforward
+      lie about a player a reader may well remember. He is served from debuts.json
+      since, so on the 2026-10-26 build the screen catches nobody (the test plants a
+      row).
 
       IDENTITY COLLISION. A bust whose player_key or MLBAM id already appears in
       the debuted universe is the SAME HUMAN reached by two routes, and counting

@@ -225,7 +225,9 @@ def test_the_dollars_per_war_is_the_trade_values_own():
         pytest.skip("data/trade_values.json not built")
     dpw = board["calibration"]["dpw_level_usd"]
     assert art["dollars_per_war_mm"] * 1e6 == pytest.approx(dpw, abs=1.0)
-    assert art["war_provider"] == "ewar_v2", "the displayed WAR basis"
+    # the displayed WAR basis: eWAR v3 since the display flip (it read ewar_v2 before)
+    import war_source
+    assert art["war_provider"] == war_source.DISPLAY_PROVIDER, "the displayed WAR basis"
     assert art["fields"] == tre.FIELDS and art["n_players"] == len(art["players"])
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", art["as_of"])
 

@@ -81,6 +81,11 @@ def test_the_download_holds_the_whole_filtered_board(booted_page):
     label = page.evaluate(
         "() => (document.querySelector('#board-csv-btn .board-csv-n') || {}).textContent || ''")
     assert label.replace(",", "").startswith(str(n)), f"button reads {label!r} for {n} rows"
+    # every PROSPX filter bar opens closed since the sections redesign (9fd2dcdc,
+    # 2026-10-08), and the Download CSV control sits in the board's bar
+    page.evaluate("() => { const b = document.getElementById('filter-bar');"
+                  " if (b && !b.classList.contains('is-open'))"
+                  " document.getElementById('filter-toggle').click(); }")
     with page.expect_download(timeout=30_000) as dl:
         page.click("#board-csv-btn")
     d = dl.value

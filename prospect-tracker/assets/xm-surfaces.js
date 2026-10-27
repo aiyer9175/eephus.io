@@ -137,7 +137,7 @@
     s.id = "xm-style";
     s.textContent =
       ".xm-cf{display:inline-block;font-size:.72em;letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary,#4A5468);border:1px solid var(--border,#C9C1AE);padding:0 .3em;margin-left:.3em;vertical-align:middle;white-space:nowrap}" +
-      ".xm-chip{display:inline-flex;flex-wrap:wrap;gap:.2em .6em;align-items:baseline;font-size:11px;color:var(--text-secondary,#4A5468);margin-top:2px}" +
+      ".xm-chip{display:inline-flex;flex-wrap:wrap;gap:.2em .6em;align-items:baseline;font-size:11px;line-height:1.3;color:var(--text-secondary,#4A5468);margin-top:2px}" +
       ".xm-chip b{color:var(--text-primary,#0F1B2D);font-weight:600}" +
       ".xm-chip a,.xm-help{color:inherit}" +
       ".xm-pair{display:inline-flex;gap:.3em .9em;flex-wrap:wrap;align-items:baseline}" +
@@ -149,6 +149,9 @@
       ".xm-note{font-size:12px;color:var(--text-secondary,#4A5468);margin:6px 0 0;max-width:70ch}" +
       ".xm-col{white-space:nowrap;font-variant-numeric:tabular-nums}" +
       "th.xm-col{cursor:pointer}" +
+      // The /mlbstats/ named views fit their box (test_mlbstats_fit.py): below 1024px the
+      // injected xM$ column rides the All view only, which may scroll inside its frame.
+      "@media (max-width:1023px){.mlbstats-table:not(.mlbstats-cv-all) .xm-col{display:none}}" +
       ".xm-tm{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--text-secondary,#4A5468);padding:2px 0 4px}" +
       ".xm-tm b{color:var(--text-primary,#0F1B2D);font-weight:600}" +
       ".xm-tile-sub{display:block}" +
@@ -196,7 +199,27 @@
   }
 
   // ---- surfaces: /prospx/ board --------------------------------------------
+  // A definition sits once, on the Player column header; a row's chip titles carry
+  // that row's numbers only (copy rule L11).
+  function rowXmTip(r) {
+    if (!withheld(r)) return xmTip(r);
+    return "xM$ withheld: " + XM_WITHHELD + ".";
+  }
+  function rowFairTip(r) {
+    if (withheld(r)) return "Fair $ only: " + usd(r.fair) + (r.arrive != null ? ", on a path from " + r.arrive : "") + ".";
+    return "Fair $ " + usd(r.fair) + " over " + yrs(r.years) + ".";
+  }
+  function rowCfTag(r) {
+    return r.cf ? ' <span class="xm-cf" title="' + esc(withheld(r) ? "A counterfactual value, not a contract." : COUNTERFACTUAL) + '">' + esc(cfShort(r)) + "</span>" : "";
+  }
+  function prospxHeader() {
+    var h = document.querySelector('#rows .col-header .sort-header[data-sort-key="name_asc"]');
+    if (!h || h.getAttribute("data-xm-def")) return;
+    h.setAttribute("data-xm-def", "1");
+    h.setAttribute("title", (h.getAttribute("title") || "") + " Under the name: " + WITHHELD_NOTE + " " + PROSPECT_FAIR + " " + FAIR_NOTE);
+  }
   function prospxRows() {
+    prospxHeader();
     var rows = document.querySelectorAll("#rows .player-row[data-key]");
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i], k = row.getAttribute("data-key");
@@ -208,8 +231,8 @@
       var host = row.querySelector(".player-name-stack");
       if (!r || !host) continue;
       host.insertAdjacentHTML("beforeend",
-        '<div class="xm-chip"><span title="' + esc(xmTip(r)) + '">' + (withheld(r) ? "xM$ withheld" : "xM$ <b>" + esc(usd(r.aav)) + "</b> x " + esc(r.years) + "y") + cfTag(r) + "</span>" +
-        '<span title="' + esc(fairTip(r)) + '">Fair $ <b>' + esc(usd(r.fair)) + "</b></span></div>");
+        '<div class="xm-chip"><span title="' + esc(rowXmTip(r)) + '">' + (withheld(r) ? "xM$ withheld" : "xM$ <b>" + esc(usd(r.aav)) + "</b> x " + esc(r.years) + "y") + rowCfTag(r) + "</span>" +
+        '<span title="' + esc(rowFairTip(r)) + '">Fair $ <b>' + esc(usd(r.fair)) + "</b></span></div>");
     }
   }
   var SORTS = { xm_aav: "aav", xm_total: "total", xm_fair: "fair" };
@@ -370,11 +393,18 @@
       var gTh = hr.querySelector("th.fc-guar");
       if (!gTh) continue;
       if (!hr.querySelector("th.fc-xm")) {
+        // A header like the board's own: a column header around a sort button. xM$ AAV
+        // is the predicted AAV on every free-agent row (191 of 191 on 2026-10-26), so the
+        // button sorts through the AAV column's own button and reads its sort state.
+        var aTh = hr.querySelector("th.fc-aav");
         var th = document.createElement("th");
         th.className = "fc-xm";
         th.setAttribute("scope", "col");
-        th.title = "xM$: the market price the model predicts, as AAV x years. The same model as the predicted contract beside it, so a free agent's figures agree.";
-        th.textContent = "xM$";
+        th.setAttribute("aria-sort", (aTh && aTh.getAttribute("aria-sort")) || "none");
+        th.setAttribute("data-export-text", "xM$");
+        var ind = aTh && aTh.querySelector(".fa-sort-ind");
+        th.innerHTML = '<button type="button" class="fa-sort" title="xM$: the market price the model predicts, as AAV x years. The same model as the predicted contract beside it, so a free agent\'s figures agree. Sorts with the AAV column.">xM$<span class="fa-sort-ind" aria-hidden="true">' + (ind ? ind.innerHTML : "") + "</span></button>";
+        th.firstChild.addEventListener("click", faXmSort);
         gTh.parentNode.insertBefore(th, gTh.nextSibling);
       }
       var rows = tbl.tBodies[0].rows;
@@ -410,6 +440,12 @@
         gTd.parentNode.insertBefore(td, gTd.nextSibling);
       }
     }
+  }
+
+  // the xM$ header sorts through the AAV column's own button (xM$ AAV is the predicted AAV)
+  function faXmSort(e) {
+    var hb = e.currentTarget.closest("tr").querySelector('button[data-fsort="projAav"]');
+    if (hb) hb.click();
   }
 
   // ---- surfaces: /arbitration/ ---------------------------------------------------
@@ -485,7 +521,7 @@
         + (clip ? " " + clip + " outside the model's training range." : "")
         + (miss ? " " + miss + " not priced." : "");
       var msTip = "Market-rate surplus over control: each controlled season priced at the xM$ market rate (and, beside it, at Fair $), less the salary on the books, discounted and summed over the "
-        + nm + " of " + n + " players with a priced control window (" + ns + " seasons). The others are not summed.";
+        + nm + " of " + n + " players with a priced club control window (" + ns + " seasons). The others are not summed.";
       var html = '<div class="xm-tm" title="' + esc(tip) + '"><span>xM$ <b>' + esc(nx ? usd(tot) : "withheld") + "</b>" + (wh && nx ? " (" + nx + " of " + n + ")" : "") + '</span><span>Fair $ <b>' + esc(usd(fair)) + "</b></span>" +
         (cf ? '<span class="xm-cf">' + cf + " as if FA</span>" : "") +
         (wh ? '<span class="xm-cf">' + wh + " Fair $ only</span>" : "") +
@@ -571,6 +607,13 @@
   }
   var obs = null, pending = false;
   function schedule() {
+    // /fa/ pads a detail line the moment it opens, so the row never paints one cell
+    // short of the header for the 60 ms the deferred pass waits (test_fa_table_fit.py)
+    if (/^\/fa\//.test(location.pathname) && obs) {
+      obs.disconnect();
+      try { faBoard(); } catch (e) { if (window.console) console.warn("xm-surfaces", e); }
+      obs.observe(document.body, { childList: true, subtree: true });
+    }
     if (pending) return;
     pending = true;
     setTimeout(function () {
