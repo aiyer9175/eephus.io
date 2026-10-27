@@ -1359,11 +1359,16 @@
   // single source of truth, nothing is recomputed here. The numbers shown match
   // the committed *_eval.json files byte-for-byte.
   // ===========================================================================
+  // ink: the on-badge text colour. --text-on-accent is cream on the light
+  // theme's dark accents and near-black on the dark theme's bright ones, so
+  // green, red and grey fills read 5.1:1 or better in both themes. Gold is a
+  // light fill in both themes (8.1:1 light, 14:1 dark under near-black), so
+  // Provisional keeps the fixed near-black ink.
   const VERDICT_META = {
-    validated:   { label: "Validated",   col: "var(--accent-green)" },
-    provisional: { label: "Provisional", col: "var(--accent-gold)" },
-    unvalidated: { label: "Unvalidated", col: "var(--down)" },
-    deprecated:  { label: "Deprecated",  col: "var(--text-tertiary)" },
+    validated:   { label: "Validated",   col: "var(--accent-green)", ink: "var(--text-on-accent, #0b0b0b)" },
+    provisional: { label: "Provisional", col: "var(--accent-gold)", ink: "#0b0b0b" },
+    unvalidated: { label: "Unvalidated", col: "var(--down)", ink: "var(--text-on-accent, #0b0b0b)" },
+    deprecated:  { label: "Deprecated",  col: "var(--text-tertiary)", ink: "var(--text-on-accent, #0b0b0b)" },
   };
   const VERDICT_DESC = {
     validated: "forward-chained backtest beats the baseline",
@@ -1372,12 +1377,13 @@
     deprecated: "failed validation, retired",
   };
   function verdictBadge(v) {
-    const m = VERDICT_META[v] || { label: v || "?", col: "var(--text-tertiary)" };
+    const m = VERDICT_META[v] || { label: v || "?", col: "var(--text-tertiary)", ink: "var(--text-on-accent, #0b0b0b)" };
     // The 2026-08-03 move of these styles to a .proj-verdict rule never wrote
     // the rule, so the badge inherited the page text colour: light text on a
-    // bright fill in dark mode (1.1:1 on Validated). The on-badge colour is a
-    // fixed near-black because every fill is a bright accent in both themes.
-    return `<span class="proj-verdict" style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.02em;color:#0b0b0b;background:${m.col};">${esc(m.label)}</span>`;
+    // bright fill in dark mode (1.1:1 on Validated). A fixed near-black ink
+    // fixed dark mode but read 3.0 to 3.7:1 on the light theme's darker
+    // fills (2026-10-27 audit), so each verdict now names its own ink.
+    return `<span class="proj-verdict" style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.02em;color:${m.ink};background:${m.col};">${esc(m.label)}</span>`;
   }
   function _num(v, d) {
     return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(d == null ? 2 : d);
