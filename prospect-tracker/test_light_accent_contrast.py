@@ -167,3 +167,98 @@ def test_park_cold_cells_use_the_cyan_reading_ink():
     cyan = _rgb(SITE_LIGHT["--text-cyan"])
     for p in (SITE_LIGHT["--bg-primary"], SITE_LIGHT["--bg-secondary"], SITE_LIGHT["--bg-tertiary"]):
         assert _ratio(cyan, _rgb(p)) >= 4.5
+
+
+# ---------------------------------------------------------------------------
+# SITE_AUDIT_3B (2026-10-27): six PROSPX reading-text families the final audit
+# measured below 4.5:1 (or unfilled) on the farm, draft and card surfaces.
+# ---------------------------------------------------------------------------
+
+
+def test_bucket_bar_regular_segment_label_reads_through_the_amber_ink():
+    # D1: the eFV outcome bar printed its 'Regular' share in paper on the amber
+    # fill (2.28:1). The amber segment now takes --text-on-amber; the others keep
+    # the on-accent ink.
+    ink = _rgb(LIGHT["--text-on-amber"])
+    amber = _rgb(LIGHT["--neon-amber"])
+    assert _ratio(ink, amber) >= 4.5, f"--text-on-amber reads {_ratio(ink, amber):.2f}:1 on amber"
+    assert DARK["--text-on-amber"] == "var(--text-on-accent)"
+    dark_ink = _rgb(DARK["--text-on-accent"])
+    assert _ratio(dark_ink, _rgb(DARK["--neon-amber"])) >= 4.5
+    fn = PX[PX.index("function renderBucketBar("):PX.index("return `<div class=\"sv-bucket-bar\" role=\"img\" aria-label=\"Outcome-bucket probabilities\"")]
+    assert 'color:${s.k === "regular" ? "var(--text-on-amber)" : "var(--text-on-accent)"}' in fn
+
+
+def test_farm_org_injured_list_day_counts_use_the_gold_reading_ink():
+    # D2: the farm-org page's injured list printed its day counts in amber on
+    # the paper (2.28:1), the family Q4 fixed on the IL tab and the card.
+    fn = PX[PX.index("All tracked prospects healthy.") - 2500:PX.index("All tracked prospects healthy.")]
+    assert "color:var(--text-gold);font-variant-numeric:tabular-nums;\">${days != null ? days + 'd' : ' - '}" in fn
+    assert "color:var(--neon-amber);font-variant-numeric:tabular-nums;\">${days != null ? days + 'd'" not in PX
+
+
+def test_farm_sub_grade_letters_read_through_the_grade_ink_and_lift_in_dark():
+    # D3: the component sub-grade letters (.gt-sub-letter) took the raw 40%
+    # lightness palette (C 2.6:1 on the light paper, D- 2.88:1 on the dark card).
+    assert "? `color:${farmLetterInk(gradeColor(letter))};opacity:0.55;`" in PX
+    assert ": `color:${farmLetterInk(gradeColor(letter))};`;" in PX
+    assert "? `color:${gradeColor(letter)};opacity:0.55;`" not in PX
+    css = _COMMENT.sub("", PX)
+    assert re.search(r'\[data-theme="dark"\] \.gt-sub-letter,\s*\[data-theme="dark"\] \.gt-branch-letter,\s*\[data-theme="dark"\] \.gt-comp-letter \{ filter: brightness\(1\.6\); \}', css)
+
+
+def test_farm_header_spend_legend_inherits_the_header_ink():
+    # D4: the 'IFA / Draft' legend under 'Spend mix' set --text-tertiary on the
+    # navy header band (2.49:1); it now inherits --col-header-fg like its row.
+    i = PX.index('title="IFA vs Draft bonus-dollar mix over the last 3 years.')
+    head = PX[i:i + 700]
+    assert "font-size:9px;color:inherit;letter-spacing:0.04em;" in head
+    assert "color:var(--text-tertiary)" not in head
+    cream = _rgb(LIGHT["--col-header-fg"])
+    assert _ratio(cream, _rgb(LIGHT["--bg-header"])) >= 4.5
+
+
+def test_org_tendency_lean_badges_take_the_on_accent_ink():
+    # D5: the lean badges printed #0c0c0e on the navy / red fills (1.37:1 on navy).
+    fn = PX[PX.index("const _badges = (r) => {"):PX.index("const _posBar = (pb) => {")]
+    assert "background:${c};color:var(--text-on-accent);" in fn
+    assert "#0c0c0e" not in fn
+    paper = _rgb(LIGHT["--text-on-accent"])
+    assert _ratio(paper, _rgb(LIGHT["--neon-cyan"])) >= 4.5
+    assert _ratio(paper, _rgb(SITE_LIGHT["--accent-red"])) >= 4.5
+
+
+def test_prospx_declares_the_orange_accent_it_reads():
+    # D6: var(--neon-orange) is read 36 times on the page (unsigned picks, reach
+    # markers, posting windows, below-league leans) but was declared only in the
+    # glossary port's .gl-app scope, so every read fell back to inherit or none.
+    assert LIGHT["--neon-orange"] == "var(--accent-red)"
+    assert "var(--neon-orange)" in PX
+
+
+def test_every_farm_grade_letter_reads_through_the_ink_and_lifts_in_dark():
+    # D3, the rest of the family: the farm report card rows (B 3.0:1, B+ 3.3:1 on
+    # the light paper), the grade-tree branch and composite letters, the 22px farm
+    # list letter, the 36px parent letter and the org grade span all took the raw
+    # palette. Light reads the ink; dark lifts 1.6x through --grade-lift or the
+    # classed rule.
+    assert LIGHT["--grade-lift"] == "1" and DARK["--grade-lift"] == "1.6"
+    lift = "filter:brightness(var(--grade-lift, 1));"
+    for needle in (
+        "color:${farmLetterInk(gradeColor(overall))};" + lift,
+        "color:${farmLetterInk(gradeColor(letter))};" + lift + "font-weight:700;text-align:center;font-size:12px;",
+        "color:${farmLetterInk(gradeColor(parentLetter))};" + lift,
+        "color:${farmLetterInk(gradeColor(grade))};" + lift,
+        '<span class="gt-branch-letter" style="color:${farmLetterInk(gradeColor(letter))};">',
+        '<span class="gt-comp-letter" style="color:${farmLetterInk(gradeColor(_winOverall))};">',
+        "const tone = letter === ' - ' ? 'var(--text-tertiary)' : farmLetterInk(gradeColor(letter));",
+        "const overallTone = overallLetter === ' - ' ? 'var(--text-tertiary)' : farmLetterInk(gradeColor(overallLetter));",
+        "color:${tone};" + lift + "font-weight:700;text-align:center;\">${letter}</span>",
+        "color:${overallTone};" + lift + "font-weight:700;text-align:center;font-size:15px;",
+    ):
+        assert needle in PX, needle
+    assert not re.search(r"color:\$\{gradeColor\((overall|letter|parentLetter|grade|_winOverall)\)\};", PX)
+    assert not re.search(r"\? 'var\(--text-tertiary\)' : gradeColor\(", PX)
+    css = _COMMENT.sub("", PX)
+    rule = re.search(r'\[data-theme="dark"\] \.gt-sub-letter,\s*\[data-theme="dark"\] \.gt-branch-letter,\s*\[data-theme="dark"\] \.gt-comp-letter \{ filter: brightness\(1\.6\); \}', css)
+    assert rule, "the classed grade letters lift together in dark"
