@@ -349,6 +349,10 @@ def test_fa_fit_field_is_the_uncapped_frame(monkeypatch):
     acct: dict = {}
     monkeypatch.setattr(pe, "_org_farm_blocks", lambda: {})
     monkeypatch.setattr(pe, "_cohort_intercepts", lambda: {})
+    # _team_outlook writes data/team_outlook_eval.json as a side effect; on these toy
+    # clubs it served test_team_outlook_calibration a 279-WAR league for the rest of the
+    # session (the build-artifact guard restored it at the end, PORT_RED_TESTS_CLEAR)
+    monkeypatch.setattr(pe, "_write_team_outlook_eval", lambda *a, **k: None)
     off = pe._team_outlook(vets_off, [], depth_unc, acct, {}, live=False)
     on = pe._team_outlook(vets_on, [], depth_cap, acct, {}, live=False)
     pe._FA_FIT_CHAMP.clear()
