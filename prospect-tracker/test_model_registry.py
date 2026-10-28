@@ -256,9 +256,21 @@ def test_stale_threshold_is_reachable():
     docs/decision-2026-08-07-freshness-bar.md. One freshness concept, not
     three: this test guards the bar's VALUE, that one guards the INPUT the
     bar is computed from, and /models/ states the distribution for a reader.
+
+    AMENDED 2026-10-28 (EVAL_FOLLOWUPS_REFREEZE, owner answer EVAL-Q 'bar on
+    live rows'): the bar's oldest is taken over the rows whose verdict is
+    validated or provisional. A deprecated row's ledger is closed and is
+    never re-measured, so its stamp ages without bound and the first clause
+    would trip on a healthy tree every few weeks forever (2026-10-28:
+    xfv_isotonic_calibration 119 days, five deprecated xfv and park rows
+    118). Deprecated rows keep their stamps, ages and stale flags in the
+    freshness map and on /models/; they do not set the bar. STALE_DAYS is
+    unchanged (120).
     """
     fresh = mr.freshness()
-    oldest = max(f["artifact_age_days"] for f in fresh.values())
+    live = {m["model_id"] for m in mr.load()["models"]
+            if m.get("verdict") in ("validated", "provisional")}
+    oldest = max(f["artifact_age_days"] for mid, f in fresh.items() if mid in live)
     assert mr.STALE_DAYS > oldest, (
         f"STALE_DAYS={mr.STALE_DAYS} is below the oldest artifact ({oldest}d), "
         "so the registry would flag a healthy tree")

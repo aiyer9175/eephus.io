@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-30",
+ "generated_at": "2026-10-28",
  "model": "rem_plus",
  "seasons": [
   2018,
@@ -23,7 +23,7 @@
   "rem_plus": 0.2363,
   "raw_fip": 0.211,
   "era": 0.0901,
-  "raw_wpa": 0.1055
+  "raw_wpa": 0.101
  },
  "gap_ci_vs_RA9_next": {
   "vs_raw_fip": {
@@ -37,9 +37,9 @@
    "hi95": 0.2018
   },
   "vs_raw_wpa": {
-   "mean": 0.1299,
-   "lo95": 0.0681,
-   "hi95": 0.1915
+   "mean": 0.1343,
+   "lo95": 0.0742,
+   "hi95": 0.194
   }
  },
  "leverage_variant_bakeoff": {
@@ -50,7 +50,7 @@
    "0.25": 0.2346,
    "0.5": 0.2329,
    "0.75": 0.2305,
-   "1.0": 0.2272
+   "1.0": 0.2271
   },
   "rem_plus_pure_on_this_subset": 0.2363,
   "best": {
@@ -79,11 +79,11 @@
  "market_check_aav": {
   "n_signings_matched": 271,
   "rho_rem_plus_vs_aav": 0.5084,
-  "rho_leverage_weighted_vs_aav": 0.5157,
+  "rho_leverage_weighted_vs_aav": 0.5156,
   "reading": "leverage-weighted REM+ aligns better with what teams pay"
  },
  "verdict": {
   "status": "validated",
-  "summary": "Forward-chained OOS over 7 seasons (878 Y->Y+1 pairs): REM+ predicts next-year RA9 at rho=0.2363 vs raw FIP 0.211, ERA 0.0901, raw WPA 0.1055. CI on the rho gap: vs ERA {'mean': 0.1451, 'lo95': 0.0881, 'hi95': 0.2018}, vs raw WPA {'mean': 0.1299, 'lo95': 0.0681, 'hi95': 0.1915}, vs raw FIP {'mean': 0.0252, 'lo95': 0.0013, 'hi95': 0.0501}. LEVERAGE BAKE-OFF: leverage-weighting does NOT beat pure REM+ on forward RA9 (best gain within noise); ships as a separate Impact column (best d=0.0, rho=0.2363 vs pure 0.2363). MARKET CHECK: leverage-weighted REM+ aligns better with what teams pay. Shipped VALIDATED: REM+ beats ERA + raw WPA and is not worse than its raw-FIP parent; the leverage-weighted variant does not earn a forward edge, confirming the two-number design (leverage is a deployment/price layer, kept in a separate column)."
+  "summary": "Forward-chained OOS over 7 seasons (878 Y->Y+1 pairs): REM+ predicts next-year RA9 at rho=0.2363 vs raw FIP 0.211, ERA 0.0901, raw WPA 0.101. CI on the rho gap: vs ERA {'mean': 0.1451, 'lo95': 0.0881, 'hi95': 0.2018}, vs raw WPA {'mean': 0.1343, 'lo95': 0.0742, 'hi95': 0.194}, vs raw FIP {'mean': 0.0252, 'lo95': 0.0013, 'hi95': 0.0501}. LEVERAGE BAKE-OFF: leverage-weighting does NOT beat pure REM+ on forward RA9 (best gain within noise); ships as a separate Impact column (best d=0.0, rho=0.2363 vs pure 0.2363). MARKET CHECK: leverage-weighted REM+ aligns better with what teams pay. Shipped VALIDATED: REM+ beats ERA + raw WPA and is not worse than its raw-FIP parent; the leverage-weighted variant does not earn a forward edge, confirming the two-number design (leverage is a deployment/price layer, kept in a separate column)."
  }
 }
