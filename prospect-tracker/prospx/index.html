@@ -51933,7 +51933,7 @@ function renderPlayerDetail(key) {
         ? `<span style="font-size:9px;color:var(--neon-cyan);background:rgba(143,205,245,0.08);padding:1px 6px;border-radius:2px;font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-left:6px;">Now</span>`
         : "";
       return `<tr>
-        <td style="padding:4px 8px 4px 0;color:var(--text-secondary);font-family:var(--font-mono);font-size:var(--fs-sm);font-variant-numeric:tabular-nums;">${yr}${tag}</td>
+        <th scope="row" style="padding:4px 8px 4px 0;text-align:left;font-weight:400;color:var(--text-secondary);font-family:var(--font-mono);font-size:var(--fs-sm);font-variant-numeric:tabular-nums;">${yr}${tag}</th>
         <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-family:var(--font-mono);font-size:var(--fs-sm);font-variant-numeric:tabular-nums;font-weight:600;">${fmtUsd(sal)}</td>
       </tr>`;
     }).join("");

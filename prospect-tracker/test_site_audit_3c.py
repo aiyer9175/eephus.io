@@ -68,3 +68,13 @@ def test_the_dugout_rate_tables_mark_their_row_labels_as_headers():
     assert js.count('<th scope=\\"row\\" class=\\"bt-l\\">') == 3, js.count('<th scope=\\"row\\" class=\\"bt-l\\">')
     assert '<tr><td class=\\"bt-l\\">' not in js
     assert ".bt-dugout-t th[scope=row]{font:inherit;color:var(--text-primary);text-transform:none}" in js
+
+
+def test_the_prospx_contract_table_marks_the_season_as_the_row_header():
+    """C6: the player card's contract table (season | salary) had two <td>
+    per row and no header cell at all. The season cell is the row header,
+    left-aligned at the body weight so the card does not change."""
+    rows = re.findall(r"<th scope=\"row\" style=\"([^\"]*)\">\$\{yr\}\$\{tag\}</th>", PROSPX)
+    assert len(rows) == 1, rows
+    assert "text-align:left" in rows[0] and "font-weight:400" in rows[0]
+    assert "${yr}${tag}</td>" not in PROSPX
