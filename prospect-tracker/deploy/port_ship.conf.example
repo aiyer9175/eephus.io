@@ -15,6 +15,8 @@ EEPHUS_SHIP_KEY=<path to that user's private key>
 
 # Optional (defaults shown).
 EEPHUS_SHIP_PORT=22
+# The box's inbox exactly as its pin names it (paths.incoming): bin/shipgate
+# accepts no other spelling, so no trailing slash and no relative path.
 EEPHUS_SHIP_REMOTE_DIR=/opt/eephus/artifacts/incoming
 # The PC has no rsync by default: cwRsync, MSYS2 (pacman -S rsync) or "wsl rsync".
 EEPHUS_SHIP_RSYNC=rsync

@@ -7,6 +7,7 @@
     python tools/port_ship.py --bundle OUT_ROOT/<bundle-id> [--dry-run]
     python tools/port_ship.py --latest OUT_ROOT [--dry-run]
     python tools/port_ship.py --print-config
+    python tools/port_ship.py --print-remote <bundle-id> [--link-from <id>]
 
 tools/port_ship.ps1 and tools/port_ship.sh are thin wrappers around this file,
 for the Windows Task Scheduler and for a POSIX shell.
@@ -17,7 +18,9 @@ What a ship does, in order (docs/port/PORT_BUNDLE.md):
   2. rsync over ssh, everything but READY, into
      <EEPHUS_SHIP_REMOTE_DIR>/<bundle-id>/ (default /opt/eephus/artifacts/incoming),
      with --link-dest=../<last shipped id> so unchanged files are hard links on
-     the box and only changed bytes cross the wire;
+     the box and only changed bytes cross the wire, and --chmod=D775,F664 so
+     the box's receive step (group eephus) can write the receipt, rename READY
+     and prune;
   3. rsync READY alone, last, so the box's receive step never sees a bundle
      that is still arriving (it acts only on a directory that holds READY, and
      then checks SHA256SUMS with sha256sum -c);
@@ -31,11 +34,12 @@ deploy/port_ship.conf.example. KEY=VALUE lines:
 
     EEPHUS_SHIP_HOST          the box's address (an address that does not go
                               through Cloudflare: Cloudflare Free proxies no SSH)
-    EEPHUS_SHIP_USER          the restricted user (rrsync or a forced command)
+    EEPHUS_SHIP_USER          the restricted user (its key forces bin/shipgate)
     EEPHUS_SHIP_KEY           path to the private key for that user
     EEPHUS_SHIP_PORT          default 22
-    EEPHUS_SHIP_REMOTE_DIR    default /opt/eephus/artifacts/incoming ("." when
-                              rrsync already roots the user there)
+    EEPHUS_SHIP_REMOTE_DIR    default /opt/eephus/artifacts/incoming: the box's
+                              inbox spelled exactly as its pin's paths.incoming
+                              (bin/shipgate accepts no other spelling)
     EEPHUS_SHIP_RSYNC         rsync command, default "rsync" (cwRsync, MSYS2 or
                               "wsl rsync" on Windows: the PC has none by default)
     EEPHUS_SHIP_SSH           ssh command for rsync -e, default "ssh"
@@ -49,6 +53,18 @@ deploy/port_ship.conf.example. KEY=VALUE lines:
 
 --dry-run prints the commands and runs nothing, writes nothing. The tool never
 deletes anything on the box; the box keeps its own retention.
+
+The box side is the forced command on the ship user's key (bin/shipgate in
+the webmaster's repository, internal/shipgate). It reads the remote command
+rsync sends (SSH_ORIGINAL_COMMAND) and accepts exactly the two calls above:
+"rsync --server <options> . <inbox>/<bundle-id>/" with --partial, an optional
+--bwlimit and --link-dest=../<id>, then the same into <inbox>/<bundle-id>/READY,
+only after the body's MANIFEST.tsv, SHA256SUMS, BUNDLE.json and site/ have
+arrived, never into a bundle that already carries a marker, and never when the
+box's disk is under its floor. --print-remote prints the remote commands this
+tool's calls produce; the gate's test fixture
+(internal/shipgate/testdata/port_ship_remote_commands.txt) is that output, and
+test_port_ship.py pins the copy under test_fixtures/port_ship/ to the same bytes.
 """
 
 from __future__ import annotations
@@ -78,6 +94,16 @@ DEFAULTS = {
     "EEPHUS_SHIP_STATE_DIR": str(ROOT / ".cache" / "port_ship"),
 }
 PLACEHOLDER = re.compile(r"^<.*>$|^(CHANGE_ME|example\.invalid)$", re.I)
+# The two calls' file modes on the box: group-writable, so bin/receive (group
+# eephus, under bin/shipgate's umask 002) can mark, swap and prune a bundle.
+CHMOD = "--chmod=D775,F664"
+# The server option cluster rsync 3.2's client sends for "-rt" (protocol 31:
+# the option letters, then "e" and the capability letters). bin/shipgate
+# accepts any cluster of the letters it allows, so a client of another rsync
+# version that adds capability letters still passes; this is the spelling the
+# shared fixture records.
+REMOTE_SHORT = "-rte.iLsfxCIvu"
+REMOTE_DIR_RE = re.compile(r"^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$")
 
 
 class ShipError(RuntimeError):
@@ -126,6 +152,11 @@ def load_config(path: Path) -> dict:
         raise ShipError("EEPHUS_SHIP_PATH_STYLE must be native, cygdrive, msys or wsl")
     if not conf["EEPHUS_SHIP_PORT"].isdigit():
         raise ShipError("EEPHUS_SHIP_PORT must be a number")
+    remote = conf["EEPHUS_SHIP_REMOTE_DIR"]
+    if not REMOTE_DIR_RE.match(remote) or "/../" in remote + "/" or "/./" in remote + "/":
+        raise ShipError("EEPHUS_SHIP_REMOTE_DIR must be the box's inbox as an absolute "
+                        "path with no trailing slash (the pin's paths.incoming), "
+                        f"got {remote!r}")
     conf["_path"] = str(path)
     return conf
 
@@ -175,7 +206,7 @@ def commands(conf: dict, bundle: Path, bundle_id: str,
     """The two rsync calls: the bundle without READY, then READY alone."""
     style = conf["EEPHUS_SHIP_PATH_STYLE"]
     rsync = shlex.split(conf["EEPHUS_SHIP_RSYNC"])
-    common = ["-rt", "--partial", "--chmod=D755,F644", "-e", ssh_command(conf)]
+    common = ["-rt", "--partial", CHMOD, "-e", ssh_command(conf)]
     if conf.get("EEPHUS_SHIP_BWLIMIT"):
         common.append(f"--bwlimit={conf['EEPHUS_SHIP_BWLIMIT']}")
     first = rsync + common + ["--exclude=/READY"]
@@ -185,6 +216,22 @@ def commands(conf: dict, bundle: Path, bundle_id: str,
     second = rsync + common + [local_path(bundle / "READY", style),
                                remote_target(conf, bundle_id, "READY")]
     return [first, second]
+
+
+def remote_commands(conf: dict, bundle_id: str, link_from: str | None = None) -> list[str]:
+    """The remote commands the two calls make rsync send over ssh, the ones
+    bin/shipgate reads from SSH_ORIGINAL_COMMAND: the receiving side's options
+    (--chmod and --exclude stay on the client), ".", and the destination."""
+    base = conf["EEPHUS_SHIP_REMOTE_DIR"].rstrip("/")
+    head = ["rsync", "--server", REMOTE_SHORT, "--partial"]
+    if conf.get("EEPHUS_SHIP_BWLIMIT"):
+        head.append(f"--bwlimit={conf['EEPHUS_SHIP_BWLIMIT']}")
+    first = list(head)
+    if link_from and link_from != bundle_id:
+        first.append(f"--link-dest=../{link_from}")
+    first += [".", f"{base}/{bundle_id}/"]
+    second = head + [".", f"{base}/{bundle_id}/READY"]
+    return [" ".join(first), " ".join(second)]
 
 
 def _run(cmd: list[str]) -> int:
@@ -213,10 +260,12 @@ def ship(bundle: Path, conf: dict, dry_run: bool = False, runner=_run,
                                       ("missing", "mismatched", "extra", "problems")}))
     bundle_id = res["bundle_id"]
     info = json.loads((bundle / "BUNDLE.json").read_text(encoding="utf-8"))
-    cmds = commands(conf, bundle, bundle_id, last_shipped(conf))
+    link_from = last_shipped(conf)
+    cmds = commands(conf, bundle, bundle_id, link_from)
     out = {"bundle_id": bundle_id, "files": info.get("files"), "bytes": info.get("bytes"),
            "host": conf["EEPHUS_SHIP_HOST"], "dry_run": dry_run,
-           "commands": [" ".join(shlex.quote(c) for c in cmd) for cmd in cmds]}
+           "commands": [" ".join(shlex.quote(c) for c in cmd) for cmd in cmds],
+           "remote": remote_commands(conf, bundle_id, link_from)}
     if dry_run:
         out["ok"] = True
         return out
@@ -260,9 +309,28 @@ def main(argv: list[str] | None = None) -> int:
                    help="ship the newest bundle under OUT_ROOT")
     g.add_argument("--print-config", action="store_true",
                    help="print the parsed config (paths only) and exit")
+    g.add_argument("--print-remote", metavar="BUNDLE_ID",
+                   help="print the two remote commands bin/shipgate reads for a ship "
+                        "of BUNDLE_ID, one per line, and exit (no config needed)")
+    ap.add_argument("--link-from", metavar="ID", help="with --print-remote: the previous bundle id")
+    ap.add_argument("--remote-dir", default=DEFAULTS["EEPHUS_SHIP_REMOTE_DIR"],
+                    help="with --print-remote: the box's inbox")
+    ap.add_argument("--bwlimit", default="", help="with --print-remote: an rsync --bwlimit")
     ap.add_argument("--config", type=Path, default=None)
     ap.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
     a = ap.parse_args(argv)
+    if a.print_remote:
+        import port_bundle as pb
+        ids = [a.print_remote] + ([a.link_from] if a.link_from else [])
+        if not all(pb.BUNDLE_ID_RE.match(i) for i in ids) or not REMOTE_DIR_RE.match(a.remote_dir):
+            print("!!! port ship: --print-remote takes bundle ids and an absolute inbox",
+                  file=sys.stderr)
+            return 1
+        conf = {"EEPHUS_SHIP_REMOTE_DIR": a.remote_dir, "EEPHUS_SHIP_BWLIMIT": a.bwlimit}
+        # Bytes, so the lines are LF on every platform: the gate's fixture is LF.
+        sys.stdout.buffer.write("".join(line + "\n" for line in remote_commands(
+            conf, a.print_remote, a.link_from)).encode("ascii"))
+        return 0
     try:
         conf = load_config(a.config or default_config_path())
         if a.print_config:

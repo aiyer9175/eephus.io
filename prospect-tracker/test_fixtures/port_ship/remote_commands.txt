@@ -1,0 +1,9 @@
+# The remote commands tools/port_ship.py --print-remote writes for three ships
+# (first ship; a second night linked to the first; a ship with a bandwidth limit).
+# The same bytes are bin/shipgate's fixture internal/shipgate/testdata/port_ship_remote_commands.txt.
+rsync --server -rte.iLsfxCIvu --partial . /opt/eephus/artifacts/incoming/20261023T001053Z-6f82911d5778/
+rsync --server -rte.iLsfxCIvu --partial . /opt/eephus/artifacts/incoming/20261023T001053Z-6f82911d5778/READY
+rsync --server -rte.iLsfxCIvu --partial --link-dest=../20261023T001053Z-6f82911d5778 . /opt/eephus/artifacts/incoming/20261024T031000Z-0123456789ab/
+rsync --server -rte.iLsfxCIvu --partial . /opt/eephus/artifacts/incoming/20261024T031000Z-0123456789ab/READY
+rsync --server -rte.iLsfxCIvu --partial --bwlimit=20000 --link-dest=../20261024T031000Z-0123456789ab . /opt/eephus/artifacts/incoming/20261025T031000Z-abcdef012345/
+rsync --server -rte.iLsfxCIvu --partial --bwlimit=20000 . /opt/eephus/artifacts/incoming/20261025T031000Z-abcdef012345/READY
