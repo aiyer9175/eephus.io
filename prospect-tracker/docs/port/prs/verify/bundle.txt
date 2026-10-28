@@ -1,15 +1,19 @@
-=== git bundle ===
-The bundle contains these 6 refs:
-03b50135d9156d505228f7f37f24c970fbacb4da refs/heads/port-stage1-pages
+=== git bundle (2026-10-27, PRs 1 to 10) ===
+The bundle contains these 10 refs:
+1c3b963045d64f90604fcb349e5ddb62b618d6fe refs/heads/port-cutover-checklist
 33398bfc046a8b4914a42f7ab6381a5319505cc0 refs/heads/port-stage0-withheld-data
 f277e7cfec2c329463be9ec4449a95e8aebc58d5 refs/heads/port-stage1-publish-contract
 3eac0ba742f9bde48120f06fbca59e2cdcc4347d refs/heads/port-stage1-buildsite-ownership
 5e0bf2422776081020087a498d4144b8f1cdd4ba refs/heads/port-stage1-receive
 935dc8ca04b07d8d16d806cca1612d5b76785767 refs/heads/port-stage1-sidecars
+03b50135d9156d505228f7f37f24c970fbacb4da refs/heads/port-stage1-pages
+766a65ec52b0a89f70fd7180eae83d15d927d56f refs/heads/port-stage2-transport
+e14d10d69e57cb8ca772d5b757cd4d0208993e39 refs/heads/port-stage3-shadow-gates
+64b78aab3be7c612d917839f479d38b92d0c4e1d refs/heads/port-stage3-asof-accessor
 The bundle requires this ref:
 9e1423ccde2813262fcacd6f07b12fb59c474fe2 
 The bundle uses this hash algorithm: sha1
 ../eephus-port-prs.bundle is okay
--rw-r--r-- 1 noah 197121 3628499 Oct 22 20:47 ../eephus-port-prs.bundle
-=== pack size of the chain (what a push carries) ===
-loose object bytes: 19073
+-rw-r--r-- 1 noah 197121 3688074 Oct 27 20:07 ../eephus-port-prs.bundle
+=== uncompressed size of the chain's objects (main..port-cutover-checklist) ===
+objects: 338, bytes: 12522668
