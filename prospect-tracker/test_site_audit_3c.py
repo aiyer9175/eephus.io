@@ -66,7 +66,10 @@ def test_the_dugout_rate_tables_mark_their_row_labels_as_headers():
     face (the thead rule's small uppercase retro face is scoped off them)."""
     js = (ROOT / "assets" / "betting.js").read_text(encoding="utf-8")
     assert js.count('<th scope=\\"row\\" class=\\"bt-l\\">') == 3, js.count('<th scope=\\"row\\" class=\\"bt-l\\">')
-    assert '<tr><td class=\\"bt-l\\">' not in js
+    # the dugout card template, from its rate rows to its fine print; the
+    # board tables elsewhere in the file head their columns in a <thead>
+    dugout = js.split("var rates = (ctx.rate_columns", 1)[1].split("bt-dugout-fine", 1)[0]
+    assert '<tr><td class=\\"bt-l\\">' not in dugout
     assert ".bt-dugout-t th[scope=row]{font:inherit;color:var(--text-primary);text-transform:none}" in js
 
 
