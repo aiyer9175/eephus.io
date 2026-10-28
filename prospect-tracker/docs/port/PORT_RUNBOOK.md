@@ -121,10 +121,10 @@ takes as defaults"): the pages keep their `img.mlbstatic.com` headshot URLs; the
 and account layer ships inert; his repository's copy of the pages is LF with unstripped
 sources while the bundle carries the stripped copies; the ship gate refuses a body under
 8 GB free and sweeps a markerless upload after 48 hours; the shadow gates require the same
-printed digits on every row; bundle slimming is on. Open owner question from
-PORT_STAGE2_PREP: `data/scores/` is written by the PC's scores job and is in no bundle,
-so `/scores/` on the box loads without live data until a PR 11 lets the ship user sync
-it (recommended), the bundle carries a nightly snapshot, or the page says so.
+printed digits on every row; bundle slimming is on. PORT_STAGE2_PREP's open question
+on `data/scores/` was answered on 2026-10-27 (PORT-Q-SCORES, "Ship it in the bundle"):
+the bundle carries the store as of its build, PR 11 publishes it on the box, and the
+page says the scores came with the nightly build (PORT_BUNDLE.md section 11).
 
 ---
 
@@ -393,9 +393,10 @@ the heartbeat under 36 hours.
 8. **Confirm two things:** ADR-0004 (cited at `deploy/README.md:150`, not in
    `docs/adr/`), and your stance on the inert forums and accounts layer (shipped as is by
    default, or dropped and named as an explained difference).
-9. **`/scores/` data** (PORT_STAGE2_PREP OWNER-Q1): the PC's scores job writes
-   `data/scores/`; a PR 11 would let the ship user sync it into `/opt/eephus/scores`
-   behind the nginx alias already designed. Say whether you want that PR.
+9. **`/scores/` data** (PORT_STAGE2_PREP OWNER-Q1, answered 2026-10-27): the bundle
+   carries `data/scores/` as of its build and PR 11 (`port-stage2-scores-in-bundle`)
+   publishes it from the bundle; never add the `/opt/eephus/scores` alias of the old
+   design. Merge PR 11 with the others.
 
 ---
 
@@ -420,8 +421,9 @@ Deferred box items (`docs/DEPLOY_PENDING.md`): everything the seed carried in th
 Strategy A runbook is now a PC matter (the database, the caches, the migrations, the
 identity repairs and the fWAR rebase are already true on the producer). What is still
 owed on the box: the `error_page 404 /404.html;` line (LIBRARY_8's redirect map); the
-`/data/scores/` location and the PR 11 question; the scores and standings backfills run
-on the PC. Strike an item in `docs/DEPLOY_PENDING.md` with the date when it is done.
+`/data/scores/` publish entry (PR 11; the old alias is withdrawn); the scores and
+standings backfills run on the PC. Strike an item in `docs/DEPLOY_PENDING.md` with the
+date when it is done.
 
 ---
 
@@ -524,7 +526,8 @@ GitHub and the PC are untouched by any of it.
    ships the nine the nightly rsync ships. `pages_test.go` blocks publish on any manifest
    mismatch, which is the right failure.
 4. **Live jobs.** Betting odds every 15 minutes, the umpire job and the scores job are
-   Python and run on the PC; `data/scores/` reaches the box only with PR 11.
+   Python and run on the PC; `data/scores/` reaches the box once a night inside the
+   bundle (PR 11), so the published scores are up to a day old and the page says so.
 5. **Cloudflare caching.** `/data/*.json` has a 4-hour edge TTL and `/assets/` a 1-year
    one; a missed purge or an unchanged `?v=` stamp serves mixed versions. Purge after every
    publish; the two bundle heartbeats are no-store.

@@ -1,11 +1,11 @@
 # Port PR plan: the box's half of Strategy D, prepared locally (2026-10-22, extended 2026-10-27)
 
-**For:** the owner and the webmaster. **Prepared by:** tasks PORT_PR_PREP (PRs 1 to 6) and PORT_STAGE2_PREP (PRs 7 to 10), on the owner's PC, from the local read-only copy of `eephus/eephus` (`refs/eephusgit/heads/main` = 9e1423cc, the merge of PR #4; `main-deploy` 9c7c04e4 has the same tree).
+**For:** the owner and the webmaster. **Prepared by:** tasks PORT_PR_PREP (PRs 1 to 6), PORT_STAGE2_PREP (PRs 7 to 10) and PORT_SCORES_PR11 (PR 11), on the owner's PC, from the local read-only copy of `eephus/eephus` (`refs/eephusgit/heads/main` = 9e1423cc, the merge of PR #4; `main-deploy` 9c7c04e4 has the same tree).
 
-**Nothing was pushed, no remote was configured, the server was not touched.** The ten branches below live in a scratch clone and in a git bundle; the owner or the webmaster pushes them.
+**Nothing was pushed, no remote was configured, the server was not touched.** The eleven branches below live in a scratch clone and in a git bundle; the owner or the webmaster pushes them.
 
-- Scratch clone: `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/eephus` (branch `port-cutover-checklist` checked out; no remote).
-- Transport: `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/eephus-port-prs.bundle` (3,688,074 bytes, ten refs, `git bundle verify` okay, requires 9e1423cc; rebuilt 2026-10-27). `git fetch <bundle> 'refs/heads/*:refs/heads/*'` in a clone of `eephus/eephus` at `main` restores all ten branches.
+- Scratch clone: `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/eephus` (branch `port-stage2-scores-in-bundle` checked out; no remote).
+- Transport: `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/eephus-port-prs.bundle` (3,686,614 bytes, eleven refs, `git bundle verify` okay, requires 9e1423cc; rebuilt 2026-10-27 late evening). `git fetch <bundle> 'refs/heads/*:refs/heads/*'` in a clone of `eephus/eephus` at `main` restores all eleven branches.
 - Rehearsal bundle the pin references: `.../scratchpad/eephusgit/prs/bundle_out/20261023T001053Z-6f82911d5778` (17,837 files, 1,304,296,283 bytes, built from the producer's worktree commit 1a1bd74d in 2m17s).
 - Go toolchain used: `go1.25.14 windows/amd64`, portable zip at `C:/Users/noah/tools/go` (sha256 `119044a92b3987c341cd6aebb256676dd4780d292f7b4e72a3e9976677841697`, matched against go.dev's listing), `GOTOOLCHAIN=local`, matching `go.mod`'s `go 1.25.0`. No installer, no PATH change.
 
@@ -15,7 +15,7 @@ REPO.md: a feature branch per change, reviewed into `main`, then `main` into `ma
 
 ## Merge order
 
-The ten branches are **stacked**: each is one commit on top of the previous, so merging them in order is ten fast-forwards and the webmaster can review each diff alone. PR 1 is independent hygiene; PR 2 through PR 6 are Stage 1; PR 7 is Stage 2's transport; PR 8 and PR 9 are Stage 3's entry conditions; PR 10 is the cutover checklist (docs only).
+The eleven branches are **stacked**: each is one commit on top of the previous, so merging them in order is eleven fast-forwards and the webmaster can review each diff alone. PR 1 is independent hygiene; PR 2 through PR 6 are Stage 1; PR 7 is Stage 2's transport; PR 8 and PR 9 are Stage 3's entry conditions; PR 10 is the cutover checklist (docs only); PR 11 publishes the scores store from the bundle.
 
 | # | Branch | Commit | One line | Files |
 |---|---|---|---|---|
@@ -29,8 +29,9 @@ The ten branches are **stacked**: each is one commit on top of the previous, so 
 | 8 | `port-stage3-shadow-gates` | e14d10d | `deploy/shadow_gates.tsv` (20 registered per-field gates, 10 modules) and `cmd/shadoweq`: the Go models measured against the bundle, a report, nothing served | 6 |
 | 9 | `port-stage3-asof-accessor` | 64b78aa | `internal/asof`: an as-of connection through temp views, all 57 store tables classified, the schema test; `docs/AS_OF_ACCESSOR.md` | 4 |
 | 10 | `port-cutover-checklist` | 1c3b963 | `docs/port-cutover.md`: main-deploy day and its rollback, layer by layer | 1 |
+| 11 | `port-stage2-scores-in-bundle` | 48c2084 | `publish_paths.txt` gains `data/scores` (the scores store travels in the bundle as of its build, owner PORT-Q-SCORES); nginx serves it from the webroot and its comment forbids the old box-written alias; `internal/site/scores_test.go`; README and cutover lines | 6 |
 
-PR descriptions (what, why, how verified, asks): `PR_1_port-stage0-withheld-data.md` ... `PR_10_port-cutover-checklist.md` beside this file.
+PR descriptions (what, why, how verified, asks): `PR_1_port-stage0-withheld-data.md` ... `PR_11_port-stage2-scores-in-bundle.md` beside this file.
 
 ## Test lines, per branch
 
@@ -49,6 +50,7 @@ The box is Linux, so the gate that matters is `GOOS=linux GOARCH=amd64 go build 
 | `port-stage3-shadow-gates` | exit 0 | exit 0 | clean | same set as main; `internal/shadow` ok | `verify/port-stage3-shadow-gates.txt` |
 | `port-stage3-asof-accessor` | exit 0 | exit 0 | clean | same set as main; `internal/asof` ok | `verify/port-stage3-asof-accessor.txt` |
 | `port-cutover-checklist` | exit 0 | exit 0 | clean | same set as main | `verify/port-cutover-checklist.txt` |
+| `port-stage2-scores-in-bundle` | exit 0 | exit 0 | clean | same set as main; `internal/site` ok | `verify/port-stage2-scores-in-bundle.txt` |
 
 Targeted runs, verbatim:
 
@@ -101,13 +103,22 @@ PR 9   go test -count=1 -v ./internal/asof/   (5 PASS)
        asof_test.go:63: 57 tables: 11 observed, 21 seasonal, 2 reference, 23 unversioned
        ok   git.btq.ee/eephus/eephus-backend/internal/asof
 PR 10  docs only; GOOS=linux build and vet exit 0
+PR 11  go test -count=1 -v ./internal/site/ -run 'TestTheScoresStoreShipsFromTheBundle|TestSitemapSurfacesAreShipped'
+       --- PASS: TestSitemapSurfacesAreShipped (0.00s)
+       --- PASS: TestTheScoresStoreShipsFromTheBundle (0.05s)
+       ok   git.btq.ee/eephus/eephus-backend/internal/site 0.775s
+       (planted: data/scores removed from publish_paths.txt and an alias block added to nginx: each fails on its own line)
+       bin/receive -verify-only <producer bundle with the store>
+       ok: 20261028T025004Z-d763ad28d516, 19543 files, 1309775995 bytes verified in 3.493s
+       crawl of that bundle's site/ (verify/scores_bundle_crawl.txt): /data/scores/latest.json 200, the store's bytes;
+       /scores/ stamp "Updates paused. Scores as of 10:34 PM. Published with the nightly site build, October 27, 10:50 PM."
 ```
 
 Not executed on the preparing PC: the rsync in `publish.sh` (no rsync here; `bash -n` and a by-hand run of its include builder against the rehearsal bundle, 48 rules), the systemd units, and the symlink swap on a real `/opt/eephus/artifacts` (the swap's unit test runs on Linux).
 
 ## What the webmaster does, in order
 
-1. Fetch the bundle (or the branches) into a clone of `eephus/eephus`; push the ten branches; open ten PRs in the order above; merge each into `main` after review, then `main` into `main-deploy` on cutover day by `docs/port-cutover.md`.
+1. Fetch the bundle (or the branches) into a clone of `eephus/eephus`; push the eleven branches; open eleven PRs in the order above; merge each into `main` after review, then `main` into `main-deploy` on cutover day by `docs/port-cutover.md`.
 2. On the box: `git pull --ff-only`, `go build -o bin/ ./cmd/...` (now eight binaries: server, nightly, buildsite, chadwick, fit, receive, shipgate, shadoweq), `systemctl restart eephus-server` (it gains `-bundle-dir`), install `eephus-receive.path/.service` and `eephus-ship-sweep.service/.timer`, create the `ship` user and `/opt/eephus/artifacts` as the README section says (PR 4's asks), install `/etc/eephus/ship_authorized_keys` and the sshd drop-in (PR 7's asks), reload nginx with the two no-store locations, add the two paths to Cloudflare's Rule 3.
 3. Send the owner the ship host, user and host key; the owner fills `%USERPROFILE%\.eephus\port_ship.conf` and runs `deploy/port-nightly.ps1 -SkipPipeline` once by hand (PORT_BUNDLE.md section 7).
 4. The first bundle lands: `systemctl status eephus-receive.service`, `cat /opt/eephus/artifacts/current/RECEIVED`, then the owner runs `tools/port_equivalence.py compare-http --bundle <id> --origin https://eephus.io` (Gate C over HTTP) and `tools/port_live_check.py --origin https://eephus.io` (Gate B: the 44 withheld names answer 404).
@@ -128,7 +139,12 @@ Not executed on the preparing PC: the rsync in `publish.sh` (no rsync here; `bas
 
 - `tools/port_ship.py`, `.ps1` and `.sh` match the gate: `--chmod=D775,F664`, the remote dir must be the absolute inbox, and `--print-remote <id> [--link-from <id>]` prints the remote commands; `test_fixtures/port_ship/remote_commands.txt` is byte-identical to PR 7's testdata (sha256 pinned in `test_port_ship.py`).
 - Bundle slimming: `SLIM_EXCLUDE` in `tools/port_bundle.py` leaves out 37 payloads (5,865,389 bytes, 0.45%) that no page, asset, script or other served file names and no crawl fetched; a slimmed build refuses when something served starts to name one. Proved by `port_equivalence.py compare-bundles`: 214 page rows identical, nothing changed or added, every crawled file present and identical, 206 crawled requests answered the same by both bundles' sites; `bin/receive -verify-only` accepts the slim bundle. The shard directories (the bulk) are all reachable. `docs/port/PORT_BUNDLE.md` section 9.
-- Found: `data/scores/` is in no bundle (the scores job was meant to write it on the box behind its own nginx alias); under PORT-R1 the box runs no Python, so `/scores/` loads without its data. An owner question in the PORT_STAGE2_PREP report.
+- Found: `data/scores/` is in no bundle (the scores job was meant to write it on the box behind its own nginx alias); under PORT-R1 the box runs no Python, so `/scores/` loads without its data. An owner question in the PORT_STAGE2_PREP report, answered the same day (below).
+
+## Producer side, 2026-10-27 late evening (task PORT_SCORES_PR11, lane worktree branch wt-PORT_SCORES_PR11)
+
+- Owner PORT-Q-SCORES ("Ship it in the bundle"): `port_equivalence.LIVE_DIRS = ("data/scores",)` and `port_bundle.served_files` carry the scores store in every served bundle as of the build, never slimmed; a live file the job removed between the listing and the copy is left out and named in `BUNDLE.json` (`live_vanished`) rather than failing the night; `BUNDLE.json` counts the store under `live`. The nightly rsync's set is unchanged. `compare-bundles` reports live rows apart and never fails on their bytes. Measured: 19,462 files and 1,309,204,786 bytes before, 19,542 and 1,311,641,012 after (`--plan-served`, the store 80 files and 2,436,226 bytes); one real bundle `20261028T025004Z-d763ad28d516`, 19,543 files, 1,309,775,995 bytes, `--verify-served` ok, `bin/receive -verify-only` ok. `docs/port/PORT_BUNDLE.md` section 11.
+- The page: `assets/scores.js` asks `/data/bundle_info.json` once when the stale rule reads the job's updates as paused and appends "Published with the nightly site build, <month day>, <time>." to the stamp when a bundle answers; the local site (404) says nothing more. The producer's `deploy/README.md` and `deploy/WEBMASTER.md` section 10 mark the box-run scores job and its alias withdrawn.
 
 ## Risks carried forward (from PORT_RECON section 8, unchanged)
 

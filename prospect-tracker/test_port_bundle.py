@@ -168,10 +168,15 @@ def _site_tree(tmp_path: Path) -> Path:
     (root / "data" / "notes.txt").write_text("not served", encoding="utf-8")
     (root / "data" / "_labs" / "lab.json").write_text("{}", encoding="utf-8")
     (root / "data" / "pitch_plots" / "1.json").write_text('{"v": [1]}', encoding="utf-8")
+    # the live store (PORT_SCORES_PR11): the scores job's files, carried as of the build
+    (root / "data" / "scores" / "games").mkdir(parents=True)
+    (root / "data" / "scores" / "latest.json").write_text('{"schema": 1}', encoding="utf-8")
+    (root / "data" / "scores" / "games" / "7.json").write_text('{"pk": 7}', encoding="utf-8")
     return root
 
 
 _SERVED = ["assets/site.css", "data/a.json", "data/b.js", "data/pitch_plots/1.json",
+           "data/scores/games/7.json", "data/scores/latest.json",
            "fa/index.html", "index.html", "prospx/index.html"]
 
 
@@ -179,11 +184,14 @@ def _no_strip(site):
     return {}
 
 
-def test_served_set_is_the_nightly_rsync_set_minus_the_publisher_heartbeat(tmp_path):
+def test_served_set_is_the_nightly_rsync_set_plus_the_live_store_minus_the_heartbeat(tmp_path):
     root = _site_tree(tmp_path)
     assert pb.served_files(root) == _SERVED
-    both = set(pe.page_files(root)) | set(pe.payload_files(root))
-    assert set(_SERVED) == both - {"data/build_info.json"}
+    rsync = set(pe.page_files(root)) | set(pe.payload_files(root))
+    live = set(pe.live_files(root))
+    assert live == {"data/scores/games/7.json", "data/scores/latest.json"}
+    assert not (live & rsync), "the nightly rsync never ships the scores store"
+    assert set(_SERVED) == (rsync | live) - {"data/build_info.json"}
 
 
 def test_served_bundle_layout_and_verify(tmp_path):
@@ -359,6 +367,55 @@ def test_the_guard_refuses_a_build_once_something_served_names_an_excluded_file(
                     "--no-strip"]) == 1
     assert pb.main(["--root", str(root), "--served-bundle", str(tmp_path / "cli"),
                     "--no-strip", "--no-slim"]) == 0
+
+
+def test_the_live_store_travels_whole_and_is_never_slimmed(tmp_path, monkeypatch):
+    """PORT_SCORES_PR11 (owner PORT-Q-SCORES, 2026-10-27): data/scores/ ships in
+    the bundle as of the build, every file, slim or not, and BUNDLE.json counts it."""
+    root = _slim_tree(tmp_path, monkeypatch)
+    assert [r for r in pb.served_files(root, slim=True) if r.startswith("data/scores/")] == [
+        "data/scores/games/7.json", "data/scores/latest.json"]
+    info = pb.build_served(root, tmp_path / "out", strip=False, now=_T0, strips=_no_strip)
+    bundle = Path(info["path"])
+    assert info["live"] == {"data/scores": 2} and info["files_by_top"]["data/scores"] == 2
+    assert info["live_vanished"] == []
+    assert (bundle / "site" / "data" / "scores" / "latest.json").read_text(encoding="utf-8") == '{"schema": 1}'
+    assert (bundle / "site" / "data" / "scores" / "games" / "7.json").is_file()
+    rows = (bundle / "MANIFEST.tsv").read_text(encoding="utf-8").splitlines()
+    assert [r.split("\t")[0] for r in rows if r.startswith("data/scores/")] == [
+        "data/scores/games/7.json", "data/scores/latest.json"]
+    assert pb.verify_served(bundle)["ok"]
+    assert pb.plan_served(root)["by_top"]["data/scores"] == {"files": 2, "bytes": 13 + 9}
+    # a live file the job removed between the listing and the copy is left out, not an error
+    import shutil
+    real_copy = shutil.copy2
+
+    def copy_minus_one(src, dst, *a, **k):
+        if str(src).replace("\\", "/").endswith("data/scores/games/7.json"):
+            raise FileNotFoundError(src)
+        return real_copy(src, dst, *a, **k)
+    monkeypatch.setattr(pb.shutil, "copy2", copy_minus_one)
+    info = pb.build_served(root, tmp_path / "out1", strip=False, now=_T0, strips=_no_strip)
+    assert info["live"] == {"data/scores": 1} and info["live_vanished"] == ["data/scores/games/7.json"]
+    assert pb.verify_served(Path(info["path"]))["ok"]
+    monkeypatch.setattr(pb.shutil, "copy2", real_copy)
+    # a tree without the store builds without it, and says so
+    shutil.rmtree(root / "data" / "scores")
+    info = pb.build_served(root, tmp_path / "out2", strip=False, now=_T0, strips=_no_strip)
+    assert info["live"] == {"data/scores": 0}
+    assert not any(r.startswith("data/scores/") for r in pb.served_files(root))
+
+
+def test_the_real_tree_carries_its_whole_scores_store():
+    """Every file under data/scores/ (latest, the index, the dates, games/,
+    standings/) is in the served set, and none is in the nightly rsync's."""
+    store = ROOT / "data" / "scores"
+    if not (store / "latest.json").is_file():
+        pytest.skip("no scores store in this checkout")
+    files = sorted(p.relative_to(ROOT).as_posix() for p in store.rglob("*") if p.is_file())
+    served = set(pb.served_files(ROOT, slim=True))
+    assert set(files) <= served and "data/scores/latest.json" in served
+    assert not any(r.startswith("data/scores/") for r in pe.payload_files(ROOT))
 
 
 def test_the_real_tree_names_no_excluded_file():

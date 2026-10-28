@@ -175,6 +175,27 @@ def test_every_fetch_is_no_cache_and_revs_gate_the_files(v8):
     assert not any("player_links" in u for u in urls)
 
 
+def test_the_bundle_build_time_is_asked_once_and_only_a_bundle_answers(v8):
+    """PORT_SCORES_PR11: on the box the scores files ship inside the nightly site
+    bundle, whose /data/bundle_info.json carries built_at. The loader reads it
+    no-cache, once; a site without a bundle (404) reads null and asks no more."""
+    v8.eval("__files = {'/data/bundle_info.json': {'bundle_id': 'x', 'built_at': '2026-10-28T07:10:00Z'}};"
+            "__fetches = []; var __B = window.EephusScores.makeLoader(fakeFetch, function () { return 0; });"
+            "var __t1 = null, __t2 = null; __B.bundle().then(function (t) { __t1 = t; });"
+            "__B.bundle().then(function (t) { __t2 = t; });")
+    assert call(v8, "[__t1, __t2]") == [1793171400000, 1793171400000]
+    f = call(v8, "__fetches")
+    assert [x["url"] for x in f] == ["/data/bundle_info.json"] and f[0]["opts"] == {"cache": "no-cache"}
+    v8.eval("__files = {}; __fetches = []; var __N = window.EephusScores.makeLoader(fakeFetch, function () { return 0; });"
+            "var __n1 = 1, __n2 = 1; __N.bundle().then(function (t) { __n1 = t; }); __N.bundle().then(function (t) { __n2 = t; });")
+    assert call(v8, "[__n1, __n2]") == [None, None]
+    assert [x["url"] for x in call(v8, "__fetches")] == ["/data/bundle_info.json"]
+    # a heartbeat without a built_at string reads null too
+    v8.eval("__files = {'/data/bundle_info.json': {'bundle_id': 'x'}}; var __m = 1;"
+            "window.EephusScores.makeLoader(fakeFetch, function () { return 0; }).bundle().then(function (t) { __m = t; });")
+    assert call(v8, "__m") is None
+
+
 def test_s2_hides_the_live_only_fields_on_a_card(v8):
     card = {"pk": 1, "state": "live", "away": {"code": "PHI", "short": "Phillies", "r": 3},
             "home": {"code": "ATL", "short": "Braves", "r": 2}, "line": [[0, 1]],

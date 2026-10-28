@@ -26,6 +26,17 @@ def test_per_player_dirs_match_the_nightly_rsync():
     assert dirs == set(pe.PER_PLAYER_DIRS)
 
 
+def test_the_live_store_is_the_bundles_alone():
+    """PORT_SCORES_PR11: data/scores/ rides the served bundle as of its build
+    and no nightly consumer names it (the fence in test_scores_fence stands)."""
+    assert pe.LIVE_DIRS == ("data/scores",)
+    for name in ("nightly-build.sh", "publish_paths.txt", "data_exclude.txt"):
+        assert "data/scores" not in (ROOT / "deploy" / name).read_text(encoding="utf-8"), name
+    assert not set(pe.LIVE_DIRS) & set(pe.PER_PLAYER_DIRS)
+    assert pe.is_live("data/scores/latest.json") and pe.is_live("data/scores/games/1.json")
+    assert not pe.is_live("data/scores.json") and not pe.is_live("data/a.json")
+
+
 def test_publish_only_mode_skips_pull_pip_and_pipeline():
     """EEPHUS_SKIP_PIPELINE=1 (the runbook's first publish) guards exactly the
     three steps that would change the seeded tree; the gate and rsync still run."""
@@ -57,6 +68,13 @@ def _mod(tmp_path: Path, name: str, payload: str) -> Path:
 def test_payload_set_follows_the_exclude_list(tmp_path):
     root = _mod(tmp_path, "r", '{"x": 1}')
     assert pe.payload_files(root) == ["data/a.json", "data/pitch_plots/p.json"]
+    assert pe.live_files(root) == []
+    (root / "data" / "scores" / "standings").mkdir(parents=True)
+    (root / "data" / "scores" / "latest.json").write_text("{}", encoding="utf-8")
+    (root / "data" / "scores" / "standings" / "index.json").write_text("{}", encoding="utf-8")
+    assert pe.live_files(root) == ["data/scores/latest.json", "data/scores/standings/index.json"]
+    assert pe.payload_files(root) == ["data/a.json", "data/pitch_plots/p.json"], \
+        "the nightly set never gains the live store"
 
 
 def test_categories(tmp_path):
@@ -293,6 +311,49 @@ def test_compare_bundles_fails_a_dropped_fetched_file_a_page_change_or_an_additi
     full4, slim4, _ = _two_bundles(tmp_path / "c")
     res = pe.compare_bundles(full4, slim4, (), a, b)
     assert not res["ok"] and res["crawl_diff"] == ["/x: [200, '1'] -> [404, None]"]
+
+
+def test_compare_bundles_reports_live_store_rows_apart_and_fails_only_a_lost_fetched_one(tmp_path):
+    """PORT_SCORES_PR11: the scores job rewrites data/scores/ between two builds,
+    so a changed, added or dropped live row is reported, not a failure; a live
+    file a crawl fetched must still be present; a crawl of each site must have
+    answered a live path with the same status (its bytes may move)."""
+    root = tmp_path / "bmod"
+    full = _bundle(tmp_path)
+    (root / "data" / "scores" / "games").mkdir(parents=True)
+    (root / "data" / "scores" / "latest.json").write_text('{"n": 1}', encoding="utf-8")
+    (root / "data" / "scores" / "games" / "1.json").write_text('{"pk": 1}', encoding="utf-8")
+    (root / "data" / "scores" / "games" / "2.json").write_text('{"pk": 2}', encoding="utf-8")
+    t = _dt.datetime(2026, 10, 27, tzinfo=_dt.timezone.utc)
+    one = Path(pb.build_served(root, tmp_path / "one", strip=False, slim=False,
+                               strips=lambda site: {}, now=t)["path"])
+    # the job runs: latest moves, one game file goes, one arrives
+    (root / "data" / "scores" / "latest.json").write_text('{"n": 2}', encoding="utf-8")
+    (root / "data" / "scores" / "games" / "2.json").unlink()
+    (root / "data" / "scores" / "games" / "3.json").write_text('{"pk": 3}', encoding="utf-8")
+    two = Path(pb.build_served(root, tmp_path / "two", strip=False, slim=False,
+                               strips=lambda site: {}, now=t)["path"])
+    crawl1 = {"requests": {"/data/scores/latest.json": [200, "aa"], "/data/a.json": [200, "z"]}}
+    crawl2 = {"requests": {"/data/scores/latest.json": [200, "bb"], "/data/a.json": [200, "z"]}}
+    res = pe.compare_bundles(one, two, (crawl1, crawl2), crawl1, crawl2)
+    assert res["ok"], res
+    assert res["changed"] == [] and res["added"] == [] and res["dropped"] == []
+    assert res["live"] == {"dirs": ["data/scores"], "ref": 3, "new": 3,
+                           "changed": ["data/scores/latest.json"],
+                           "added": ["data/scores/games/3.json"],
+                           "dropped": ["data/scores/games/2.json"]}
+    assert res["fetched"]["changed"] == [] and res["crawl_diff"] == []
+    # the full bundle against the first: the live store is absent there, not a failure
+    res = pe.compare_bundles(full, one)
+    assert res["ok"] and res["live"]["added"] == [
+        "data/scores/games/1.json", "data/scores/games/2.json", "data/scores/latest.json"]
+    # a fetched live file the new bundle lost fails; so does a crawl status that moved
+    res = pe.compare_bundles(one, full, (crawl1,))
+    assert not res["ok"] and res["fetched"]["dropped"] == ["data/scores/latest.json"]
+    gone = {"requests": {"/data/scores/latest.json": [404, None], "/data/a.json": [200, "z"]}}
+    res = pe.compare_bundles(one, two, (), crawl1, gone)
+    assert not res["ok"] and res["crawl_diff"] == [
+        "/data/scores/latest.json: [200, 'aa'] -> [404, None]"]
 
 
 def test_compare_bundles_cli(tmp_path, capsys):

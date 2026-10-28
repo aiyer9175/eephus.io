@@ -1,0 +1,3 @@
+=== bin/receive -verify-only (built from port-stage2-scores-in-bundle 48c2084) ===
+ok: 20261028T025004Z-d763ad28d516, 19543 files, 1309775995 bytes verified in 3.493s
+exit 0

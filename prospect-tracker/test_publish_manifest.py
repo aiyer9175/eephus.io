@@ -378,7 +378,10 @@ def test_the_scores_page_ships_and_its_data_does_not():
     neither deploy consumer names a /data/scores rule. The job writes its own
     directory on the box, served by its own nginx location (deploy/README.md),
     so the rsync --delete and the CI copy never touch it and no stale twin
-    shadows latest.json."""
+    shadows latest.json. Under port Strategy D the served bundle carries
+    data/scores/ as of its build instead (PORT_SCORES_PR11, 2026-10-27:
+    tools/port_bundle.py, port_equivalence.LIVE_DIRS), still through neither
+    of these two consumers."""
     assert "scores" in _manifest_paths()
     assert not any(p.startswith("data/scores") for p in _manifest_paths())
     nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")

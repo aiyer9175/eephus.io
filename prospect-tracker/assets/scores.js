@@ -248,8 +248,19 @@
         return doc;
       });
     }
+    // Port Strategy D: on eephus.io the scores files ship once a night inside the site bundle, whose
+    // heartbeat carries built_at (a site without one answers 404). Asked once, only while paused.
+    function bundle() {
+      if (S.bundleAt !== undefined) return Promise.resolve(S.bundleAt);
+      return fetchFn("/data/bundle_info.json", { cache: "no-cache" }).then(function (r) {
+        return r && r.ok ? r.json() : null;
+      }).then(function (b) {
+        S.bundleAt = b && typeof b.built_at === "string" ? ms(b.built_at) : null;
+        return S.bundleAt;
+      }).catch(function () { S.bundleAt = null; return null; });
+    }
     return { state: S, latest: latest, serverNow: serverNow, season: season, date: date, game: game,
-      dateRev: dateRev };
+      dateRev: dateRev, bundle: bundle };
   }
 
   // ---- registry
@@ -755,7 +766,7 @@
     HX = { esc: esc, labelled: labelled, player: player, now: L.serverNow, gated: dmd, comma: comma, isNum: isNum };
     var app = { route: parseRoute(location.hash), stale: null, date: null, dateDoc: null, shown: {}, pending: [],
       timer: null, errors: 0, lastFetch: 0, paused: store("eephus.scores.paused") === "1", announceAt: 0, queue: null,
-      prev: {}, focusPk: null, game: null };
+      prev: {}, focusPk: null, game: null, bundleAsked: false, bundleAt: null };
     var announcer = document.createElement("div");
     announcer.className = "sr-only"; announcer.setAttribute("aria-live", "polite");
     root.parentNode.insertBefore(announcer, root);
@@ -852,6 +863,10 @@
     function refresh(nav) {
       var r = app.route, Lt = L.state.latest;
       app.stale = scoresStaleState(Lt, L.serverNow(), r.date || Lt.today);
+      if (!app.bundleAsked && paused(app.stale)) {
+        app.bundleAsked = true;
+        L.bundle().then(function (t) { if (t != null) { app.bundleAt = t; stamp(); } });
+      }
       if (r.view === "about") { renderAbout(); return null; }
       if (r.view === "bracket") {
         if (nav || !root.querySelector(".sc-bk")) {
@@ -871,9 +886,14 @@
         return null;
       });
     }
+    // S1, S2, S3: the job's next update is overdue, so the files are a copy.
+    function paused(s) { return !!(s && s.code !== "S0" && s.code !== "S4"); }
     function stampHTML() {
       var s = app.stale || {};
-      return '<span class="sc-stamp-text">' + esc(s.sentence || "") + "</span>" +
+      var build = app.bundleAt != null && paused(s)
+        ? '<span class="sc-stamp-build">Published with the nightly site build, ' +
+          esc(monthDay(app.bundleAt) + ", " + clock(app.bundleAt)) + ".</span>" : "";
+      return '<span class="sc-stamp-text">' + esc(s.sentence || "") + "</span>" + build +
         '<button type="button" class="sc-btn sc-pause" aria-pressed="' + (app.paused ? "true" : "false") + '">' +
         (app.paused ? "Resume live updates" : "Pause live updates") + "</button>";
     }

@@ -781,6 +781,43 @@ def test_the_fifty_percent_sentence_needs_every_pregame_value_at_500(tmp_path, p
         assert "50 percent" not in page.locator(".sc-about").inner_text()
 
 
+def test_a_bundled_copy_says_it_came_with_the_nightly_site_build(tmp_path, pw):
+    """PORT_SCORES_PR11 (owner PORT-Q-SCORES): on the box /data/scores/ is the
+    store as of the nightly bundle, so the job's next_by has passed (S1 on a
+    date with no live game) and
+    the bundle's heartbeat is beside it. The stamp then says so, with the
+    build time; without the heartbeat (the local site, the job stopped) it
+    keeps the S1 sentence alone; while the job is current (S0) nothing is asked."""
+    now = datetime.now(timezone.utc)
+    payloads = build_payloads(now - timedelta(hours=3))     # next_by three hours ago: S1
+    site = make_site(tmp_path / "site", payloads)
+    built = now - timedelta(hours=2, minutes=50)
+    (site / "data" / "bundle_info.json").write_text(json.dumps(
+        {"bundle_id": "20261028T071000Z-0123456789ab", "built_at": _iso(built)}), encoding="utf-8")
+    with serve_site(site) as base, scores_page(base, pw, hash_="#date=2026-09-29") as page:
+        _wait_cards(page, 2)
+        page.wait_for_selector(".sc-stamp .sc-stamp-build")
+        text = page.locator(".sc-stamp").inner_text()
+        assert "Updates paused. Scores as of " in text
+        clock = page.evaluate(f"window.EephusScores.clock({int(built.timestamp() * 1000)})")
+        month_day = page.evaluate(f"window.EephusScores.monthDay({int(built.timestamp() * 1000)})")
+        assert f"Published with the nightly site build, {month_day}, {clock}." in text
+        assert sum(u.endswith("/data/bundle_info.json") for u in page._requests) == 1
+        _no_errors(page)
+    (site / "data" / "bundle_info.json").unlink()
+    with serve_site(site) as base, scores_page(base, pw, hash_="#date=2026-09-29") as page:
+        _wait_cards(page, 2)
+        page.wait_for_function("/Updates paused/.test(document.querySelector('.sc-stamp').textContent)")
+        assert "nightly site build" not in page.locator(".sc-stamp").inner_text()
+        assert sum(u.endswith("/data/bundle_info.json") for u in page._requests) == 1
+        _no_errors(page)
+    make_site(tmp_path / "site", build_payloads())        # the job current: S0, nothing asked
+    with serve_site(site) as base, scores_page(base, pw, hash_=f"#date={TODAY}") as page:
+        _wait_cards(page, 5)
+        assert "Updated " in page.locator(".sc-stamp").inner_text()
+        assert not any(u.endswith("/data/bundle_info.json") for u in page._requests)
+
+
 def test_s4_state_when_latest_is_missing(tmp_path, pw):
     payloads = build_payloads()
     del payloads["latest.json"]

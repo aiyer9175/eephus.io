@@ -51,7 +51,12 @@ this tool: freeze what the site serves, so the box only publishes it::
                           nightly rsync ships (data/*.json and data/*.js at
                           depth one minus deploy/data_exclude.txt, plus the
                           per-player directories), the set computed by
-                          port_equivalence.page_files and payload_files, with
+                          port_equivalence.page_files and payload_files, plus
+                          the scores store data/scores/ as of the build
+                          (port_equivalence.LIVE_DIRS: written by
+                          tools/scores_job.py between builds, never in the
+                          nightly rsync's set; the box publishes it from the
+                          bundle and nothing there writes it), with
                           the nightly's two publish-time comment strips applied
                           (--no-strip ships the sources), minus the
                           SLIM_EXCLUDE payloads nothing fetches (--no-slim
@@ -478,13 +483,15 @@ def slim_violations(root: Path, exclude: dict[str, str] | None = None) -> dict[s
 
 
 def served_files(root: Path, slim: bool = False) -> list[str]:
-    """Webroot-relative paths the nightly rsync would publish from this tree,
+    """Webroot-relative paths the nightly rsync would publish from this tree
+    plus the live store (port_equivalence.live_files: data/scores/ as of now),
     and with slim=True the served bundle's set: the same minus SLIM_EXCLUDE.
+    The live store is never slimmed.
 
     The set is port_equivalence's (imported, never transcribed), so the bundle,
     the Gate C snapshot and deploy/nightly-build.sh's include lines agree."""
     import port_equivalence as pe
-    rels = set(pe.page_files(root)) | set(pe.payload_files(root))
+    rels = set(pe.page_files(root)) | set(pe.payload_files(root)) | set(pe.live_files(root))
     if slim:
         rels -= set(SLIM_EXCLUDE)
     return sorted(r for r in rels
@@ -554,10 +561,22 @@ def build_served(root: Path, out_root: Path, strip: bool = True,
     site = stage / "site"
     rels = served_files(root, slim=slim)
     slimmed = sorted(r for r in SLIM_EXCLUDE if (root / r).is_file()) if slim else []
+    import port_equivalence as pe
+    # The scores job may replace or remove a live file between the listing
+    # and the copy (it writes between builds); a file that vanished is
+    # left out of this bundle rather than failing the night.
+    vanished: list[str] = []
     for rel in rels:
         dst = site / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(root / rel, dst)
+        try:
+            shutil.copy2(root / rel, dst)
+        except FileNotFoundError:
+            if not pe.is_live(rel):
+                raise
+            vanished.append(rel)
+    rels = [r for r in rels if r not in vanished]
+    live = {d: sum(1 for r in rels if r.startswith(d + "/")) for d in pe.LIVE_DIRS}
     strip_rows = strips(site) if strip else {}
     rows = [(rel, (site / rel).stat().st_size, _sha256(site / rel)) for rel in rels]
     content = hashlib.sha256("".join(f"{r}\t{b}\t{s}\n" for r, b, s in rows)
@@ -594,6 +613,7 @@ def build_served(root: Path, out_root: Path, strip: bool = True,
         "withheld": _withheld_names(root),
         "left_out": sorted(PUBLISHER_FILES), "receipt": RECEIPT,
         "slim": slim, "slimmed": slimmed,
+        "live": live, "live_vanished": vanished,
     }
     (stage / "BUNDLE.json").write_text(json.dumps(info, indent=1) + "\n",
                                        encoding="utf-8", newline="\n")
