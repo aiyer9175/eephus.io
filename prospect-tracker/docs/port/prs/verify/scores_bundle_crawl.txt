@@ -1,0 +1,45 @@
+/scores/ stamp: 'Updates paused. Scores as of 10:34 PM.\nPublished with the nightly site build, October 27, 10:50 PM.\nPause live updates'
+/scores/#date=2026-10-26: console errors []
+/standings/ text head: DOWNLOAD CSV | 6 rows | Division | Wild Card | League | MLB | Playoffs | Charts | Record | Splits | Runs | Odds | Schedule | My teams | Season | 2026 | 2026 STANDINGS | Final standings, 2026 reg
+/standings/: console errors []
+/: wait for '.home-scores-state, #home-scores-state' failed: Page.wait_for_selector: Timeout 20000ms exceeded.
+Call log:
+  - waiting for locator(".home-scores-state, #home-scores-state") to be visible
+    43 ? locator resolved to hidden <div hidden="" id="home-scores-state" class="home-scores-state"></div>
+
+/: console errors []
+/data/scores/latest.json: [200, '24aadabcd7401994cc4f6d9738dc606ff9ebecc3f8444feabe75ec8f67ab9cf1'] (site file sha256 24aadabcd7401994cc4f6d9738dc606ff9ebecc3f8444feabe75ec8f67ab9cf1)
+scores requests: 6 ['/data/scores/2026-10-26.json', '/data/scores/2026-10-27.json', '/data/scores/index-2026.json', '/data/scores/index.json', '/data/scores/latest.json', '/data/scores/standings/2026.json']
+ok: True
+
+=== python tools/port_equivalence.py compare-bundles --ref <bundle> --new <bundle> --fetched crawl_bundle.json ===
+{
+ "rows": {
+  "ref": 19543,
+  "new": 19543
+ },
+ "pages": {
+  "ref": 214,
+  "new": 214,
+  "differing": 0
+ },
+ "changed": 0,
+ "added": 0,
+ "dropped": 0,
+ "dropped_bytes": 0,
+ "live": {
+  "ref": 80,
+  "new": 80,
+  "changed": 0,
+  "added": 0,
+  "dropped": 0
+ },
+ "fetched": {
+  "files": 42,
+  "in_ref": 41,
+  "dropped": 0,
+  "changed": 0
+ },
+ "crawl_diff": 0,
+ "ok": true
+}

@@ -1,0 +1,165 @@
+branch: port-stage2-scores-in-bundle
+commit: 48c2084ca8e80d28e4f4ae9c88635caa1d3269e3
+subject: Publish the scores store from the served bundle, and withdraw the box-written alias it was designed to have
+toolchain: go version go1.25.14 windows/amd64
+=== GOOS=linux GOARCH=amd64 go build ./... ===
+exit: 0
+=== GOOS=linux GOARCH=amd64 go vet ./... ===
+exit: 0
+=== gofmt -l . ===
+exit: 0
+=== native (windows/amd64) go test -count=1 -v ./internal/site/ (targeted) ===
+--- SKIP: TestArticleRenderingMatchesTheReference (0.00s)
+--- PASS: TestYouTubeDirective (0.00s)
+--- PASS: TestLinkifyPlayers (0.00s)
+--- PASS: TestPlayerLinksRejectsUnsafeNames (0.00s)
+--- PASS: TestTeamNoteAcceptsAStringOrAList (0.01s)
+--- PASS: TestRewriteAssetVersionsRepointsHandAuthoredPages (0.04s)
+--- PASS: TestRewriteAssetVersionsIsIdempotent (0.02s)
+--- PASS: TestRewriteAssetVersionsLeavesUnreadableAssetsAlone (0.01s)
+--- PASS: TestRewriteAssetVersionsRepointsPageLocalBundles (0.03s)
+--- PASS: TestRewriteAssetVersionsPrefersThePageLocalFile (0.04s)
+--- PASS: TestAnnivProximity (0.00s)
+--- PASS: TestFVLabel (0.00s)
+--- PASS: TestDebutOrgIsPointInTime (0.00s)
+--- PASS: TestDateCallout (0.00s)
+--- PASS: TestScatterTeaserIsStableWithinADay (0.00s)
+--- PASS: TestTradeMachineCardReadsTheBoard (0.00s)
+--- PASS: TestBoardCardsOmittedWithoutTheirBoards (0.00s)
+--- PASS: TestProjectionsCardReadsTheBoard (0.00s)
+--- PASS: TestHeadshotURLUsesTheBuildsResolvedContexts (0.00s)
+--- PASS: TestHeadshotURLWithoutContextsDegrades (0.00s)
+--- PASS: TestOwnershipOwnsFilesAndWholeDirectories (0.00s)
+--- PASS: TestOwnershipWithoutAPinOwnsNothing (0.00s)
+--- PASS: TestOwnershipRejectsAPathThatLeavesTheRoot (0.01s)
+--- PASS: TestRunSkipsBundleOwnedPages (0.04s)
+--- PASS: TestRunWithoutAPinWritesEverything (0.02s)
+--- PASS: TestCommittedPinOwnsTheStageOnePages (0.00s)
+--- PASS: TestSitemapSurfacesAreShipped (0.00s)
+--- PASS: TestRobotsDoesNotBlockTheSitemap (0.00s)
+--- PASS: TestExcludedDataIsNotFetchedByAnyPage (3.51s)
+--- PASS: TestExcludedDataIsNotARegistryArtifact (0.00s)
+--- PASS: TestTheScoresStoreShipsFromTheBundle (0.00s)
+--- SKIP: TestShellsMatchThePublishedPages (0.00s)
+--- PASS: TestNavMarksTheActiveModule (0.00s)
+--- SKIP: TestFooterMatchesTheNewestPublishedPage (0.00s)
+--- SKIP: TestTeamPageMatchesThePublishedPage (0.00s)
+--- SKIP: TestStaticNavCopiesMirrorTheCanonicalNav (0.00s)
+--- PASS: TestLatestFVChange (0.00s)
+--- PASS: TestWireLedgerPinsTheFirstSighting (0.02s)
+--- PASS: TestCollectEventsCapsFVItemsPerDay (0.00s)
+--- PASS: TestCollectEventsOrdersSameDayItems (0.00s)
+--- PASS: TestMoverStepGatesOnRecency (0.00s)
+--- PASS: TestDistinctTradesCollapsesRepeatsNotReversals (0.00s)
+ok  	git.btq.ee/eephus/eephus-backend/internal/site	4.640s
+exit: 0
+=== native (windows/amd64) go test -count=1 ./... ===
+ok  	git.btq.ee/eephus/eephus-backend/cmd/buildsite	1.600s
+?   	git.btq.ee/eephus/eephus-backend/cmd/chadwick	[no test files]
+?   	git.btq.ee/eephus/eephus-backend/cmd/fit	[no test files]
+FAIL	git.btq.ee/eephus/eephus-backend/cmd/nightly [build failed]
+?   	git.btq.ee/eephus/eephus-backend/cmd/receive	[no test files]
+?   	git.btq.ee/eephus/eephus-backend/cmd/server	[no test files]
+?   	git.btq.ee/eephus/eephus-backend/cmd/shadoweq	[no test files]
+?   	git.btq.ee/eephus/eephus-backend/cmd/shipgate	[no test files]
+ok  	git.btq.ee/eephus/eephus-backend/internal/acquisitionclass	1.903s
+ok  	git.btq.ee/eephus/eephus-backend/internal/affiliates	0.639s
+ok  	git.btq.ee/eephus/eephus-backend/internal/apollocache	0.248s
+ok  	git.btq.ee/eephus/eephus-backend/internal/artifact	0.942s
+ok  	git.btq.ee/eephus/eephus-backend/internal/asof	2.829s
+ok  	git.btq.ee/eephus/eephus-backend/internal/astuff	0.378s
+ok  	git.btq.ee/eephus/eephus-backend/internal/battedball	0.482s
+ok  	git.btq.ee/eephus/eephus-backend/internal/careerstats	0.677s
+ok  	git.btq.ee/eephus/eephus-backend/internal/careerwar	1.132s
+ok  	git.btq.ee/eephus/eephus-backend/internal/chadwick	1.230s
+ok  	git.btq.ee/eephus/eephus-backend/internal/charts	0.287s
+ok  	git.btq.ee/eephus/eephus-backend/internal/collegesavant	0.301s
+ok  	git.btq.ee/eephus/eephus-backend/internal/collegestats	0.702s
+ok  	git.btq.ee/eephus/eephus-backend/internal/consensus	0.531s
+ok  	git.btq.ee/eephus/eephus-backend/internal/debuts	0.323s
+ok  	git.btq.ee/eephus/eephus-backend/internal/dollardvm	0.232s
+ok  	git.btq.ee/eephus/eephus-backend/internal/draftboard	2.326s
+ok  	git.btq.ee/eephus/eephus-backend/internal/draftcsv	1.371s
+ok  	git.btq.ee/eephus/eephus-backend/internal/draftexport	1.578s
+ok  	git.btq.ee/eephus/eephus-backend/internal/draftpool	1.200s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvdata	1.954s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvexport	2.463s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvmodel	0.425s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvproxy	0.421s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvscore	2.894s
+ok  	git.btq.ee/eephus/eephus-backend/internal/efvungraded	1.619s
+ok  	git.btq.ee/eephus/eephus-backend/internal/eta	0.415s
+ok  	git.btq.ee/eephus/eephus-backend/internal/export	1.754s
+ok  	git.btq.ee/eephus/eephus-backend/internal/fangraphscsv	1.234s
+ok  	git.btq.ee/eephus/eephus-backend/internal/fantasy	1.570s
+ok  	git.btq.ee/eephus/eephus-backend/internal/faproj	0.350s
+ok  	git.btq.ee/eephus/eephus-backend/internal/farmdev	0.334s
+ok  	git.btq.ee/eephus/eephus-backend/internal/farmgrade	0.444s
+ok  	git.btq.ee/eephus/eephus-backend/internal/gamefeed	0.849s
+ok  	git.btq.ee/eephus/eephus-backend/internal/gamelogs	0.558s
+ok  	git.btq.ee/eephus/eephus-backend/internal/gradenorm	0.431s
+ok  	git.btq.ee/eephus/eephus-backend/internal/hsgeo	0.418s
+FAIL	git.btq.ee/eephus/eephus-backend/internal/httpserver [build failed]
+?   	git.btq.ee/eephus/eephus-backend/internal/httpx	[no test files]
+ok  	git.btq.ee/eephus/eephus-backend/internal/ifaexport	0.500s
+ok  	git.btq.ee/eephus/eephus-backend/internal/leaderboard	0.468s
+ok  	git.btq.ee/eephus/eephus-backend/internal/levelnorms	1.324s
+ok  	git.btq.ee/eephus/eephus-backend/internal/lgbm	0.375s
+?   	git.btq.ee/eephus/eephus-backend/internal/linalg	[no test files]
+ok  	git.btq.ee/eephus/eephus-backend/internal/manualrankings	2.421s
+ok  	git.btq.ee/eephus/eephus-backend/internal/milbhistory	2.001s
+ok  	git.btq.ee/eephus/eephus-backend/internal/milbrankings	2.383s
+ok  	git.btq.ee/eephus/eephus-backend/internal/mlbboards	0.993s
+ok  	git.btq.ee/eephus/eephus-backend/internal/mlborg	0.552s
+ok  	git.btq.ee/eephus/eephus-backend/internal/mlbstats	1.189s
+ok  	git.btq.ee/eephus/eephus-backend/internal/movement	0.492s
+FAIL	git.btq.ee/eephus/eephus-backend/internal/nightlyjobs [build failed]
+ok  	git.btq.ee/eephus/eephus-backend/internal/orgsummary	1.202s
+ok  	git.btq.ee/eephus/eephus-backend/internal/orgtendency	0.494s
+ok  	git.btq.ee/eephus/eephus-backend/internal/overseascsv	1.339s
+ok  	git.btq.ee/eephus/eephus-backend/internal/overseasexport	2.187s
+ok  	git.btq.ee/eephus/eephus-backend/internal/overseasstats	1.009s
+ok  	git.btq.ee/eephus/eephus-backend/internal/pal	1.052s
+?   	git.btq.ee/eephus/eephus-backend/internal/palfeeds	[no test files]
+ok  	git.btq.ee/eephus/eephus-backend/internal/photocache	2.297s
+--- FAIL: TestRunBuild_CurrentSymlinkRepoints (1.22s)
+--- FAIL: TestRunBuild_FirstBuild_Success (1.23s)
+--- FAIL: TestRunBuild_MaterializeRunsAfterSourcesAndIsFinalized (1.23s)
+--- FAIL: TestRunBuild_FirstBuild_Failure_DegradesToEmpty (1.23s)
+--- FAIL: TestRunBuild_MaterializeFailureStillFinalizesBuild (1.23s)
+--- FAIL: TestRunBuild_SecondBuild_FailureCarriesForward (1.23s)
+FAIL
+FAIL	git.btq.ee/eephus/eephus-backend/internal/pipeline	2.744s
+ok  	git.btq.ee/eephus/eephus-backend/internal/pitchmovement	0.788s
+ok  	git.btq.ee/eephus/eephus-backend/internal/playerimages	0.832s
+ok  	git.btq.ee/eephus/eephus-backend/internal/playerindex	1.318s
+ok  	git.btq.ee/eephus/eephus-backend/internal/playerkey	0.718s
+ok  	git.btq.ee/eephus/eephus-backend/internal/playerstats	1.361s
+ok  	git.btq.ee/eephus/eephus-backend/internal/plusindex	0.943s
+ok  	git.btq.ee/eephus/eephus-backend/internal/projexport	2.583s
+ok  	git.btq.ee/eephus/eephus-backend/internal/randomforest	0.762s
+ok  	git.btq.ee/eephus/eephus-backend/internal/savantarsenal	0.667s
+ok  	git.btq.ee/eephus/eephus-backend/internal/savantminors	2.019s
+ok  	git.btq.ee/eephus/eephus-backend/internal/scoutingtext	0.599s
+ok  	git.btq.ee/eephus/eephus-backend/internal/shadow	2.098s
+ok  	git.btq.ee/eephus/eephus-backend/internal/shipgate	0.719s
+ok  	git.btq.ee/eephus/eephus-backend/internal/site	1.863s
+ok  	git.btq.ee/eephus/eephus-backend/internal/spotlight	0.678s
+ok  	git.btq.ee/eephus/eephus-backend/internal/spotrac	1.178s
+ok  	git.btq.ee/eephus/eephus-backend/internal/statcast	1.135s
+ok  	git.btq.ee/eephus/eephus-backend/internal/statcastplus	1.128s
+ok  	git.btq.ee/eephus/eephus-backend/internal/store	3.941s
+ok  	git.btq.ee/eephus/eephus-backend/internal/swingplus	1.595s
+ok  	git.btq.ee/eephus/eephus-backend/internal/timemachine	0.450s
+ok  	git.btq.ee/eephus/eephus-backend/internal/tjstats	0.619s
+ok  	git.btq.ee/eephus/eephus-backend/internal/tjstuff	0.625s
+ok  	git.btq.ee/eephus/eephus-backend/internal/tradeaudit	0.546s
+ok  	git.btq.ee/eephus/eephus-backend/internal/trademachine	1.165s
+ok  	git.btq.ee/eephus/eephus-backend/internal/trades	0.939s
+ok  	git.btq.ee/eephus/eephus-backend/internal/transactions	0.621s
+ok  	git.btq.ee/eephus/eephus-backend/internal/translation	0.487s
+ok  	git.btq.ee/eephus/eephus-backend/internal/valueframework	2.687s
+ok  	git.btq.ee/eephus/eephus-backend/internal/xnum	0.426s
+ok  	git.btq.ee/eephus/eephus-backend/internal/zonemetrics	1.005s
+FAIL
+exit: 1

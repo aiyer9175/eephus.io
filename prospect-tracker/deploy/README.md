@@ -199,7 +199,17 @@ server {
 
 Reload with `sudo nginx -t && sudo systemctl reload nginx`.
 
-## MLB Scores: the /data/scores/ location (NOT INSTALLED YET)
+## MLB Scores: the /data/scores/ location (NOT INSTALLED YET, WITHDRAWN 2026-10-27)
+
+**Withdrawn under port Strategy D (owner PORT-Q-SCORES, 2026-10-27; task
+PORT_SCORES_PR11).** The box runs no Python (PORT-R1), so the job below never
+runs there. Instead the served bundle carries `data/scores/` as of its nightly
+build (tools/port_bundle.py, docs/port/PORT_BUNDLE.md section 11), the box
+publishes it through its `publish_paths.txt` like the other data
+subdirectories (port PR 11), and nginx serves it from the webroot: no alias, no
+second writer. The page tells its readers the scores came with the nightly
+build. The scores job keeps running on the PC and writing the local store. The
+section below is kept as the record of the pre-port design; do not install it.
 
 Add this only after the fWAR label epoch's step Z is recorded and after the
 SCORES_LIVE flip (SCORES_5a_LIVE_FLIP) has reached the box, in the order

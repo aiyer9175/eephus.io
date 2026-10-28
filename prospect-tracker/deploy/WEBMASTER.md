@@ -326,6 +326,13 @@ Data-sanity spot checks (confirms the site matches the intended local build):
 
 ## 10. MLB Scores job (install only after step Z and the SCORES_LIVE flip)
 
+**Withdrawn 2026-10-27 under port Strategy D (PORT_SCORES_PR11; deploy/README.md,
+the `/data/scores/` location).** The box runs no Python; the served bundle carries
+`data/scores/` as of its nightly build and port PR 11 publishes it from the bundle.
+Do not install the job, the directory or the location below; the owner's kill
+switch rows for embedded video still apply to the job on the PC, and the backfills
+run there. The section is kept as the record of the pre-port design.
+
 **When.** Do this only after the fWAR label epoch's step Z is recorded AND after
 the SCORES_LIVE flip (SCORES_5a_LIVE_FLIP) has reached this box through the owner's
 push, the beta sync and a nightly pull (SCORES_PLAN.md section 17). Before the
