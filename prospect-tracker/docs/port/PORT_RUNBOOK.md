@@ -448,11 +448,11 @@ after the regeneration of step L1. Three artifacts carry it:
 | Artifact | Value | How it was made |
 |---|---|---|
 | The final tree | commit `d6e12d09` (branch `wt-EVAL_FOLLOWUPS_REFREEZE`, lane 201, on the integration head `197d1803` of `efv-conviction-2026-08-08`): PORT_REFREEZE's snapshot `6af3861c`, then the STALE_EVALS_REMEASURE merge, then the owner's 2026-10-28 eval answers (proj_def_prior to provisional, the REM+ re-run, the freshness bar on live rows, the four WAR-rate glossary figures) with `gen_audit_docs.py`, `build_site.py` and the hand-page restamp committed as `1e4318fa`, and the slimming-list change committed as `d6e12d09`; its integration merge carries it to the main branch | section 2, step L1; the lane's integration notes |
-| `ref.json` (Gate C's REF) | sha256 `d75fe112e1c2460378328aebbcf83ba7c040fdbd2673d183d918cfadef614a90`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
-| The served bundle | id `20261028T125401Z-46579182aa19`, 19,480 files, 1,309,717,279 bytes, `MANIFEST.tsv` sha256 `7bbad95071cd73bf4ca7fdd6bd0ebe32d0a090ac6bd56c2cc2ca01b35bb77f3e`; `--verify-served` ok, 19,480 checked, 0 problems; live `data/scores` 80 files (PR 11), none vanished; `data/mlb_fielding_positions.json` now in the bundle (PORT_BUNDLE section 9, 2026-10-28) | `python tools/port_bundle.py --served-bundle <out> --keep 1` (slimmed, stripped), then `--verify-served` |
+| `ref.json` (Gate C's REF) | sha256 `9135bf127f35e2d9a389ecebd35fd00b505a48b3b072981ae7d3ddb7547adf5a`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
+| The served bundle | id `20261028T142646Z-6beb1283761b`, 19,480 files, 1,309,821,845 bytes, `MANIFEST.tsv` sha256 `d97d1dba75104416394937fdf81a281da6d2bc95de548759e523d5e4c237f5c6`; `--verify-served` ok, 19,480 checked, 0 problems; live `data/scores` 80 files (PR 11), none vanished; `data/mlb_fielding_positions.json` now in the bundle (PORT_BUNDLE section 9, 2026-10-28) | `python tools/port_bundle.py --served-bundle <out> --keep 1` (slimmed, stripped), then `--verify-served` |
 
 The copy of `ref.json` and the bundle's `MANIFEST.tsv`, `SHA256SUMS`, `BUNDLE.json` and
-`READY` sit in `port_out/bundles/20261028T125401Z-46579182aa19/` beside the repository
+`READY` sit in `port_out/bundles/20261028T142646Z-6beb1283761b/` beside the repository
 (measured in the lane worktree `C:/Users/noah/baseball-projects/wt/s201/port_out/` at
 commit `d6e12d09`, 2026-10-28, L4 and L5; the integrator moves them beside the main tree
 or re-runs L4 and L5 there after the merge). Against PORT_REFREEZE's REF of 2026-10-27
