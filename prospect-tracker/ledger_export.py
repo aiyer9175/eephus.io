@@ -2884,8 +2884,8 @@ def build_all() -> tuple:
         "payroll.s2027.split": "[active_usd, injured_usd, retained_usd, buried_usd]",
         "payroll.s2026.fetched": (
             "[tax page date, payroll page date]: the local date the Spotrac pages the block's row was read from "
-            "were captured (fa_team_payroll tax_page_captured / payroll_page_captured, else the row's fetched_at); "
-            "the same clock stamps the payroll history row for the season, and sections.payroll_history.census."
+            "were captured (fa_team_payroll tax_page_captured / payroll_page_captured, else the row's fetched_at). "
+            "The same clock stamps the payroll history row for the season. sections.payroll_history.census."
             "s2026_capture says whether the two read one capture (same_source_date) and how many clubs' tax "
             "payrolls agree (n_match of n_clubs); payroll.s2027.fetched is the same pair for the class year"),
         "arbitration.rows": "[name, mlbam, token_2027, proj_2027_usd, lo_usd, hi_usd, years_left, war_2027, class, flags]",
