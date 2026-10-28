@@ -46,3 +46,14 @@ def test_the_bare_timeseries_preload_stays_retired():
     head = re.sub(r"<!--.*?-->", "", head, flags=re.S)   # the note quotes the old tag
     tags = re.findall(r"<link\b[^>]*rel=\"preload\"[^>]*>", head)
     assert not any("timeseries.json" in t for t in tags), tags
+
+
+def test_every_ledger_expand_column_header_has_a_name():
+    """C3: the league board and four club tables end each header row with an
+    empty <th> over the 'Show detail' button column; a screen reader read it
+    as a blank column header. Every such cell now carries aria-label."""
+    js = (ROOT / "assets" / "ledger.js").read_text(encoding="utf-8")
+    cells = re.findall(r"<th[^>]*class=\"(?:lb|lc)-xp\"[^>]*>", js)
+    assert len(cells) >= 5, cells
+    for c in cells:
+        assert 'aria-label="Row detail"' in c, c
