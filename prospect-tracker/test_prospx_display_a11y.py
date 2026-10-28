@@ -89,7 +89,7 @@ def test_qpra05_tabs_state_and_section_menu_escape():
 
 def test_qpra06_main_landmark_heading_name_and_card_headings():
     assert '<main id="content">' in PAGE and "</main>" in PAGE
-    assert '<h1 aria-label="PROSPX beta">' in PAGE
+    assert '<h1 aria-label="PROSPX">' in PAGE
     # The vector badge, or the pixel mark PB-05 writes under PIXEL_BRAND: hidden
     # either way, the h1's aria-label names it.
     assert re.search(r'<svg class="h1-logo(?: wm-px px-mark)?" [^>]*\baria-hidden="true"', PAGE)

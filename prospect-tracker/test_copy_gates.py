@@ -170,7 +170,11 @@ def test_every_module_stage_chip_renders_through_one_helper():
         "a masthead builds its chip from MODULE_STAGE by hand; use _stage_chip(key)")
     for key in build_site.MODULE_STAGE:
         chip = build_site._stage_chip(key)
-        assert chip.startswith('<span class="eephus-beta" title="'), key
+        if build_site.MODULE_STAGE[key][0] in build_site.STAGE_CHIP_TEXT:
+            # FP1-4 at v2.0: a module in the beta stage renders no chip.
+            assert chip == "", key
+        else:
+            assert chip.startswith('<span class="eephus-beta" title="'), key
 
 
 # ---------------------------------------------------------------------------

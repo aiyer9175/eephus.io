@@ -244,10 +244,14 @@ def test_name_index_identical_to_fa_ident():
     assert _digest(old) == _digest(new)
     assert 545361 in new["mike_trout"]
     # the index rides the displayed series: eWAR v2 on the patched bWAR frame, or,
-    # since the eWAR v3 flip, FanGraphs' published 2023 total (no v3 departure in 2023)
+    # since the eWAR v3 flip, FanGraphs' published 2023 total plus the headline's
+    # own departure for the season (none at the flip; the xHEM+ half since the
+    # park-matched flip 8be6f71e, owner EW3-53, which the departures table carries)
     if war_source.DISPLAY_PROVIDER == "ewar_v3":
+        import ewar_v3
         import fwar_vintage
         want = fwar_vintage.season_totals()[(660271, 2023)]
+        want += sum((ewar_v3.departures(None, "headline").get((660271, 2023)) or {}).values())
         assert abs(new["shohei_ohtani"][660271]["war"][2023] - want) < 1e-6
     else:
         assert new["shohei_ohtani"][660271]["war"][2023] == 10.0

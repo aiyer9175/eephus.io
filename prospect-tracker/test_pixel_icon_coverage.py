@@ -279,9 +279,9 @@ def test_cs_bar_title_takes_the_12px_icon_under_the_flag(rel):
         assert 'class="cs-bar-title cs-bar-title--px"' not in page, "flag off: the bar is untouched"
     synced = B.pixel_brand_hand_cs_bar(page)
     assert B.pixel_brand_hand_cs_bar(synced) == synced, "idempotent"
-    bar = re.search(r'<span class="cs-bar-title cs-bar-title--px">(.*?)</span></span>', synced, re.S).group(1)
+    bar = re.search(r'<span class="cs-bar-title cs-bar-title--px">(.*?)</span>', synced, re.S).group(1)
     assert _icons(bar) == [(12, "collegesavant")] and 'viewBox="2 2 12 12"' in bar
-    assert re.sub(r"<svg\b.*?</svg>", "", bar).startswith("CollegeSavant <span class=\"eephus-beta\"")
+    assert re.sub(r"<svg\b.*?</svg>", "", bar) == "CollegeSavant "
     if B.PIXEL_BRAND:
         # PB-10 flipped the flag: restamp has already synced the committed page.
         assert synced == page, "flag on: the committed bar is the synced bar"

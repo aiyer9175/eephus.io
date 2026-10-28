@@ -116,3 +116,39 @@ test_ledger_export are green on the regenerated tree with no code change.
 - PRT-Q4: below 1024 px the /mlbstats/ xM$ column shows on the All view only. Options: hide
   it at 640 px and below only and let two 768 px views scroll; keep it on Standard and Value
   views only.
+
+## 6. The delta rerun before the snapshot (PORT_FINAL, 2026-10-27)
+
+The port spec (added 2026-10-27) asks for the test files of everything changed since this
+document's commit (02a4d3cf) to be rerun before the snapshot is frozen, never the full
+suite. `git diff --name-only 02a4d3cf HEAD` listed 204 paths (the xHEM+ park-matched flip
+and its lab, the eWAR band, the port tooling, the Stage 2 PR records, three module assets,
+the SITE_AUDIT_3A to 3C page fixes and the regenerated data of the integrations). The
+rerun took 57 test files: the 14 changed test files, the 24 files that import a changed
+module (ewar_v3, ewar_band, xhem_parkmatch, port_bundle, port_equivalence, port_ship,
+the eWAR glossary script), the renders of the three changed assets, the artifact gates
+(test_asset_versioning, test_copy_gates, test_model_report_cards, test_provisional_v2,
+test_fa_realized_ledger) and the v2.0 label pins. The regeneration of section 0 and the
+database and registry steps of section 4 ran first in the worktree (wt-PORT_FINAL, lane
+200: rebuild-only 2,133 s with its one expected franchise refusal, then the exporters,
+`fa_pipeline.rebuild_realized_ledger()` moving 1,576 rows to ewar_v3, and
+`tools/port_red_tests_glossary_registry.py` writing the provisional_v2 quote).
+
+Run: `EEPHUS_DEPLOY_RUN=1 python -m pytest -q -p no:cacheprovider -rfE --tb=line <57 files>`.
+
+| Run | State | Result |
+|---|---|---|
+| 1 | 4a3f70b9 (the v2.0 label) plus the regeneration | 17 failed, 1452 passed, 5 skipped in 307.02s (0:05:07) |
+| 2, the nine affected files | d165558c | 353 passed, 5 skipped in 87.64s (0:01:27) |
+
+The 17 of run 1, by cause:
+
+| Test id | Class | Resolution |
+|---|---|---|
+| test_pixel_icon_coverage::test_masthead_is_one_icon_one_grid_title_one_rule_under_the_flag (13 modules) | STALE PIN (v2.0) | d165558c: pixel_masthead keeps the gap after the title whether or not a chip follows, which the test pins as `' ' + _stage_chip(key)` |
+| test_pixel_icon_coverage::test_cs_bar_title_takes_the_12px_icon_under_the_flag (2) | STALE PIN (v2.0) | d165558c: the bar span closes alone once the chip span is gone; the regex reads to the first `</span>` |
+| test_war_source::test_name_index_identical_to_fa_ident | STALE PIN | d165558c: red since the park-matched xHEM+ flip 8be6f71e (flag-only, not rerun): Ohtani's displayed 2023 headline departs from FanGraphs' total by the xHEM+ half (8.871820 -> 8.586473, bat -0.285347); the pin adds the headline's own departure for the season |
+| test_model_report_cards::test_models_page_links_every_row_to_its_history | STALE ARTIFACT | the registry rows ewar_xhem_half and ewar_band (added after 02a4d3cf) had no Model Updates record; `model_updates.update()` appended 3 events (615 in all) and the page was rebuilt; the integrator appends the record on the main tree before `build_site.py` |
+
+Nothing else changed since 02a4d3cf fails: every eWAR v3, xHEM+, band, port-tool and
+site-audit test file is green on the regenerated tree.
