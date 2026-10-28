@@ -57,3 +57,14 @@ def test_every_ledger_expand_column_header_has_a_name():
     assert len(cells) >= 5, cells
     for c in cells:
         assert 'aria-label="Row detail"' in c, c
+
+
+def test_the_dugout_rate_tables_mark_their_row_labels_as_headers():
+    """C4: the betting dugout prints key/value tables (rates, shape, realized
+    mWPA families) whose label cells were plain <td>; a reader got the value
+    with no header. The label cells are <th scope="row"> and keep the body
+    face (the thead rule's small uppercase retro face is scoped off them)."""
+    js = (ROOT / "assets" / "betting.js").read_text(encoding="utf-8")
+    assert js.count('<th scope=\\"row\\" class=\\"bt-l\\">') == 3, js.count('<th scope=\\"row\\" class=\\"bt-l\\">')
+    assert '<tr><td class=\\"bt-l\\">' not in js
+    assert ".bt-dugout-t th[scope=row]{font:inherit;color:var(--text-primary);text-transform:none}" in js

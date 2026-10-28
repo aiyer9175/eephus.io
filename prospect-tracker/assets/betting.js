@@ -1604,12 +1604,12 @@
         '<span class="bt-dugout-zv">' + esc(signed(c.style[col.key], 1)) + "</span></span>";
     }).join("");
     var rates = (ctx.rate_columns || []).map(function (col) {
-      return "<tr><td class=\"bt-l\">" + esc(col.label) + "</td><td>" +
+      return "<tr><th scope=\"row\" class=\"bt-l\">" + esc(col.label) + "</th><td>" +
         esc(num((c.rates || {})[col.key], col.decimals)) + "</td></tr>";
     }).join("");
     var sh = c.shape || {};
-    var shape = "<tr><td class=\"bt-l\">Hook, median pitches (league " +
-      esc(num(sh.league_hook_median_pitches, 0)) + ")</td><td>" +
+    var shape = "<tr><th scope=\"row\" class=\"bt-l\">Hook, median pitches (league " +
+      esc(num(sh.league_hook_median_pitches, 0)) + ")</th><td>" +
       esc(num(sh.hook_median_pitches, 0)) + "</td></tr>" +
       "<tr><td class=\"bt-l\" colspan=\"2\"><span class=\"bt-dim\">" +
       esc(sh.li_at_entry_blocker || ctx.shape_dark_sentence || "") + "</span></td></tr>";
@@ -1619,7 +1619,7 @@
         ? '<span class="bt-dim">' + esc("- " + dugoutFill(ctx.below_floor_template,
                                                           {floor: f.floor, n: (n == null ? "-" : n)})) + "</span>"
         : esc(signed(v, 3));
-      return "<tr><td class=\"bt-l\">" + esc(f.label) + "</td><td>" +
+      return "<tr><th scope=\"row\" class=\"bt-l\">" + esc(f.label) + "</th><td>" +
         esc(n == null ? "-" : n) + "</td><td>" + cell + "</td></tr>";
     }).join("");
     return '<div class="bt-dugout-club">' + head +
@@ -4888,6 +4888,7 @@
     ".bt-dugout-t{width:100%;border-collapse:collapse;font-size:12px}",
     ".bt-dugout-t td,.bt-dugout-t th{padding:3px 6px;border-bottom:1px solid var(--border-light,#222);text-align:right;color:var(--text-primary)}",
     ".bt-dugout-t th{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase}",
+    ".bt-dugout-t th[scope=row]{font:inherit;color:var(--text-primary);text-transform:none}",
     ".bt-dugout-t td.bt-l,.bt-dugout-t th.bt-l{text-align:left}",
     ".bt-dugout-fine{font-size:11.5px;color:var(--text-tertiary);margin:6px 0 0}",
     ".bt-dugout-src{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
