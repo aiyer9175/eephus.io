@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-22T23:27:52Z",
+ "generated_at": "2026-10-28T02:12:55Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,7 +8,7 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "5e0a4cfddbcd05c3f0644be48fc259de3b300d483e79dfa6cbae22240ef65eeb"
+   "sha256": "c638198887bcaa45f254c4b162a0d4c8e91ef8d7c1c8fc761a332b16e332022e"
   },
   {
    "path": "data/efv_progress.json",
@@ -41,7 +41,7 @@
   },
   {
    "path": "data/eta_eval.json",
-   "sha256": "8460fcf6b33c6fdfe6d9de0b61e7d66a2b9a7206763abbb3213803a6328db796",
+   "sha256": "94ffdd662721e2a8c71a1b3954236c68f137de8a59653ade4bf4958ca01b7c85",
    "generated_at": "2026-10-02"
   },
   {
@@ -106,8 +106,8 @@
   },
   {
    "path": "data/team_outlook_eval.json",
-   "sha256": "af75a2e8a606edde975286590cf222929817d4991786cb8132e0c2c32d7df561",
-   "generated_at": "2026-10-22"
+   "sha256": "cced4fdabe3ddef261724dcef9ed8e0f792d5e146465bd97c30954a120190011",
+   "generated_at": "2026-10-26"
   }
  ],
  "families": [
@@ -1129,8 +1129,8 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 612,
-  "default_view": 130,
+  "events": 615,
+  "default_view": 131,
   "by_kind": {
    "artifact_change": 37,
    "backfill": 4,
@@ -1139,22 +1139,22 @@
    "frame_change": 1,
    "model_change": 14,
    "note": 25,
-   "registered": 407,
+   "registered": 409,
    "removed": 2,
    "rescored": 49,
    "scoring_correction": 2,
-   "verdict": 46
+   "verdict": 47
   },
   "by_layer": {
    "development": 9,
-   "headline": 111,
+   "headline": 112,
    "note": 25,
-   "registration": 446,
+   "registration": 448,
    "typed": 21
   },
-  "verdict_changes": 46,
-  "registry_models": 405,
-  "served_models": 287,
+  "verdict_changes": 47,
+  "registry_models": 407,
+  "served_models": 289,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
@@ -1165,13 +1165,13 @@
    "tie": 5,
    "trails": 1,
    "unresolved": 2,
-   "unwired": 271
+   "unwired": 273
   },
   "registry_verdicts": {
    "deprecated": 92,
-   "provisional": 207,
+   "provisional": 210,
    "unvalidated": 51,
-   "validated": 55
+   "validated": 54
   },
   "by_family": {
    "Alchemy Lab": 14,
@@ -1192,7 +1192,7 @@
    "Scores / Standings": 3,
    "Sources and Consensus": 13,
    "Trade Machine": 6,
-   "eWAR": 12
+   "eWAR": 14
   }
  },
  "models": [
@@ -1217,7 +1217,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1243,7 +1243,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1269,7 +1269,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 113,
+    "artifact_age_days": 118,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1295,7 +1295,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1321,7 +1321,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1437,7 +1437,7 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1463,7 +1463,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 79,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1489,7 +1489,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1515,7 +1515,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 79,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1567,7 +1567,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 88,
+    "artifact_age_days": 94,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1593,7 +1593,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1619,7 +1619,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1645,7 +1645,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1671,7 +1671,7 @@
    "last_update": "2026-10-22",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1697,7 +1697,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1723,7 +1723,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1810,7 +1810,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1836,7 +1836,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1862,7 +1862,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1888,7 +1888,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1914,7 +1914,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1966,7 +1966,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2044,7 +2044,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2096,7 +2096,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2122,7 +2122,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2148,7 +2148,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2203,7 +2203,7 @@
    "last_update": "2026-10-03",
    "events": 16,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2229,7 +2229,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2255,7 +2255,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2281,7 +2281,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2307,7 +2307,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2385,7 +2385,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2395,7 +2395,7 @@
    "label": "Draft Slot Curve",
    "family": "Draft",
    "served": true,
-   "verdict": "validated",
+   "verdict": "provisional",
    "provisional_kind": null,
    "benchmark": true,
    "benchmark_label": "picks 301-500",
@@ -2435,10 +2435,10 @@
     }
    ],
    "registered": "2026-06-10",
-   "last_update": "2026-10-03",
-   "events": 6,
+   "last_update": "2026-10-27",
+   "events": 7,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2594,7 +2594,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2620,7 +2620,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2646,7 +2646,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2672,7 +2672,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2698,7 +2698,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 90,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2724,7 +2724,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2750,7 +2750,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 112,
+    "artifact_age_days": 117,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2802,7 +2802,7 @@
      },
      "source": {
       "path": "data/eta_eval.json",
-      "sha256": "8460fcf6b33c6fdfe6d9de0b61e7d66a2b9a7206763abbb3213803a6328db796"
+      "sha256": "94ffdd662721e2a8c71a1b3954236c68f137de8a59653ade4bf4958ca01b7c85"
      }
     },
     {
@@ -2835,7 +2835,7 @@
      },
      "source": {
       "path": "data/eta_eval.json",
-      "sha256": "8460fcf6b33c6fdfe6d9de0b61e7d66a2b9a7206763abbb3213803a6328db796"
+      "sha256": "94ffdd662721e2a8c71a1b3954236c68f137de8a59653ade4bf4958ca01b7c85"
      }
     }
    ],
@@ -2843,7 +2843,7 @@
    "last_update": "2026-10-07",
    "events": 10,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2869,7 +2869,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 80,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2921,7 +2921,7 @@
      },
      "source": {
       "path": "data/eta_eval.json",
-      "sha256": "8460fcf6b33c6fdfe6d9de0b61e7d66a2b9a7206763abbb3213803a6328db796"
+      "sha256": "94ffdd662721e2a8c71a1b3954236c68f137de8a59653ade4bf4958ca01b7c85"
      }
     },
     {
@@ -2954,7 +2954,7 @@
      },
      "source": {
       "path": "data/eta_eval.json",
-      "sha256": "8460fcf6b33c6fdfe6d9de0b61e7d66a2b9a7206763abbb3213803a6328db796"
+      "sha256": "94ffdd662721e2a8c71a1b3954236c68f137de8a59653ade4bf4958ca01b7c85"
      }
     }
    ],
@@ -2962,7 +2962,7 @@
    "last_update": "2026-09-30",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2988,7 +2988,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3081,7 +3081,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 54,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3107,7 +3107,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3133,7 +3133,59 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_xhem_half",
+   "label": "eWAR xHEM Half",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "shipped_partial_measurement",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/swar_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-27",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 8,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "ewar_band",
+   "label": "eWAR Band",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/ewar_band.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-27",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3159,7 +3211,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3185,7 +3237,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3211,7 +3263,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3237,7 +3289,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3263,7 +3315,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3289,7 +3341,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3315,7 +3367,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3367,7 +3419,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3393,7 +3445,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3445,7 +3497,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3499,7 +3551,7 @@
    "last_update": "2026-10-08",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3525,7 +3577,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 98,
+    "artifact_age_days": 103,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3551,7 +3603,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3577,7 +3629,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 98,
+    "artifact_age_days": 103,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3603,7 +3655,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3657,7 +3709,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 34,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3683,7 +3735,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3709,7 +3761,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3735,7 +3787,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3761,7 +3813,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 79,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3787,7 +3839,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3813,7 +3865,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3865,7 +3917,7 @@
    "last_update": "2026-08-19",
    "events": 7,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3891,7 +3943,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3917,7 +3969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3943,7 +3995,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3969,7 +4021,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4047,7 +4099,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4108,7 +4160,7 @@
    "last_update": "2026-10-22",
    "events": 7,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4134,7 +4186,7 @@
    "last_update": "2026-07-01",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4160,7 +4212,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4295,7 +4347,7 @@
    "last_update": "2026-10-22",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4358,7 +4410,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4455,7 +4507,7 @@
    "last_update": "2026-09-11",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4481,7 +4533,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4507,7 +4559,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4559,7 +4611,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4585,7 +4637,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4637,7 +4689,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4715,7 +4767,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4741,7 +4793,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 112,
+    "artifact_age_days": 117,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4820,7 +4872,7 @@
    "last_update": "2026-08-19",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4846,7 +4898,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4872,7 +4924,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4898,7 +4950,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4924,7 +4976,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4950,7 +5002,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4976,7 +5028,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5002,7 +5054,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5028,7 +5080,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5080,7 +5132,7 @@
    "last_update": "2026-07-15",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5132,7 +5184,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5184,7 +5236,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5210,7 +5262,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5236,7 +5288,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5288,7 +5340,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5314,7 +5366,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 114,
+    "artifact_age_days": 120,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5340,7 +5392,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5392,7 +5444,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 114,
+    "artifact_age_days": 120,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5444,7 +5496,7 @@
    "last_update": "2026-07-31",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 88,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5470,7 +5522,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5496,7 +5548,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5548,7 +5600,7 @@
    "last_update": "2026-10-22",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5574,7 +5626,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5600,7 +5652,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5725,7 +5777,7 @@
    "last_update": "2026-07-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 114,
+    "artifact_age_days": 119,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5751,7 +5803,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5777,7 +5829,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5803,7 +5855,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5829,7 +5881,7 @@
    "last_update": "2026-09-18",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5907,7 +5959,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 88,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5933,7 +5985,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5959,7 +6011,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6058,7 +6110,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6084,7 +6136,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6110,7 +6162,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6136,7 +6188,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6219,7 +6271,7 @@
    "last_update": "2026-10-03",
    "events": 14,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6354,7 +6406,7 @@
    "last_update": "2026-10-02",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6380,7 +6432,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6406,7 +6458,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6432,7 +6484,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6484,7 +6536,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6536,7 +6588,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6588,7 +6640,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6717,7 +6769,7 @@
      },
      "source": {
       "path": "data/team_outlook_eval.json",
-      "sha256": "af75a2e8a606edde975286590cf222929817d4991786cb8132e0c2c32d7df561"
+      "sha256": "cced4fdabe3ddef261724dcef9ed8e0f792d5e146465bd97c30954a120190011"
      }
     }
    ],
@@ -6725,7 +6777,7 @@
    "last_update": "2026-10-09",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6751,7 +6803,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6777,7 +6829,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6803,7 +6855,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6829,7 +6881,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6855,7 +6907,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6881,7 +6933,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6907,7 +6959,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6933,7 +6985,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6959,7 +7011,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6985,7 +7037,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7011,7 +7063,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7063,7 +7115,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7089,7 +7141,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7141,7 +7193,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7193,7 +7245,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 110,
+    "artifact_age_days": 115,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7219,7 +7271,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7245,7 +7297,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7271,7 +7323,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 80,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7401,7 +7453,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7427,7 +7479,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 105,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7453,7 +7505,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 107,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7479,7 +7531,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7505,7 +7557,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7557,7 +7609,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7583,7 +7635,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7609,7 +7661,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7635,7 +7687,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7661,7 +7713,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 112,
+    "artifact_age_days": 117,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7687,7 +7739,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7713,7 +7765,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 109,
+    "artifact_age_days": 114,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7739,7 +7791,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7765,7 +7817,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7791,7 +7843,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7817,7 +7869,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7843,7 +7895,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7869,7 +7921,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7895,7 +7947,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7921,7 +7973,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7947,7 +7999,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 112,
+    "artifact_age_days": 117,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7973,7 +8025,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 112,
+    "artifact_age_days": 117,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7999,7 +8051,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8025,7 +8077,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8051,7 +8103,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8077,7 +8129,7 @@
    "last_update": "2026-09-25",
    "events": 21,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8103,7 +8155,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 96,
+    "artifact_age_days": 101,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8129,7 +8181,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8155,7 +8207,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 113,
+    "artifact_age_days": 118,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8181,7 +8233,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8207,7 +8259,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8233,7 +8285,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8259,7 +8311,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8285,7 +8337,7 @@
    "last_update": "2026-07-14",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 105,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8311,7 +8363,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 107,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8337,7 +8389,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8363,7 +8415,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8389,7 +8441,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 109,
+    "artifact_age_days": 114,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8415,7 +8467,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8441,7 +8493,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 80,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8467,7 +8519,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8493,7 +8545,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8519,7 +8571,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8545,7 +8597,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 82,
+    "artifact_age_days": 88,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8571,7 +8623,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 88,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8597,7 +8649,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8623,7 +8675,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8649,7 +8701,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8675,7 +8727,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8701,7 +8753,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8727,7 +8779,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 107,
+    "artifact_age_days": 112,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8753,7 +8805,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 80,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8779,7 +8831,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8805,7 +8857,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8831,7 +8883,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8857,7 +8909,7 @@
    "last_update": "2026-09-25",
    "events": 21,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8883,7 +8935,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8909,7 +8961,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8935,7 +8987,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8961,7 +9013,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8987,7 +9039,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9013,7 +9065,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9039,7 +9091,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9091,7 +9143,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9117,7 +9169,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9143,7 +9195,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9169,7 +9221,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 89,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9195,7 +9247,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9221,7 +9273,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9247,7 +9299,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9273,7 +9325,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9299,7 +9351,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9325,7 +9377,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9351,7 +9403,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9377,7 +9429,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9403,7 +9455,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 105,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9429,7 +9481,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9455,7 +9507,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9481,7 +9533,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9507,7 +9559,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 91,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9533,7 +9585,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9559,7 +9611,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9585,7 +9637,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9611,7 +9663,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9637,7 +9689,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 89,
+    "artifact_age_days": 94,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9715,7 +9767,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9741,7 +9793,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 80,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9767,7 +9819,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9793,7 +9845,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9819,7 +9871,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": false,
     "stale": false
    }
@@ -9845,7 +9897,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 90,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9871,7 +9923,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9932,7 +9984,7 @@
    "last_update": "2026-10-22",
    "events": 6,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10010,7 +10062,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 78,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10036,7 +10088,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10062,7 +10114,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10088,7 +10140,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10114,7 +10166,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10140,7 +10192,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10166,7 +10218,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10192,7 +10244,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10218,7 +10270,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 74,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10374,7 +10426,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 26,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10426,7 +10478,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10452,7 +10504,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10478,7 +10530,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10504,7 +10556,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10660,7 +10712,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10686,7 +10738,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10764,7 +10816,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10842,7 +10894,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10894,7 +10946,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10920,7 +10972,7 @@
    "last_update": "2026-10-03",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10946,7 +10998,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10972,7 +11024,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10998,7 +11050,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11024,7 +11076,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 47,
+    "artifact_age_days": 53,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11050,7 +11102,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11076,7 +11128,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11102,7 +11154,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11128,7 +11180,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11154,7 +11206,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11180,7 +11232,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11206,7 +11258,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 25,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11232,7 +11284,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11258,7 +11310,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11284,7 +11336,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11310,7 +11362,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 47,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11336,7 +11388,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11362,7 +11414,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11388,7 +11440,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11414,7 +11466,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 47,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11492,7 +11544,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11518,7 +11570,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11544,7 +11596,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11570,7 +11622,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11596,7 +11648,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11622,7 +11674,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11648,7 +11700,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11674,7 +11726,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11700,7 +11752,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11726,7 +11778,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11752,7 +11804,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11778,7 +11830,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11804,7 +11856,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11830,7 +11882,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 18,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11856,7 +11908,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 41,
+    "artifact_age_days": 46,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11908,7 +11960,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 46,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11934,7 +11986,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 45,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11960,7 +12012,7 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11986,7 +12038,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12012,7 +12064,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12038,7 +12090,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 20,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12168,7 +12220,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12393,7 +12445,7 @@
    "last_update": "2026-10-08",
    "events": 11,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12445,7 +12497,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 24,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12497,7 +12549,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12653,7 +12705,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12705,7 +12757,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12731,7 +12783,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12783,7 +12835,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12809,7 +12861,7 @@
    "last_update": "2026-10-22",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12887,7 +12939,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12913,7 +12965,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12939,7 +12991,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12965,7 +13017,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -12991,7 +13043,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -13017,7 +13069,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 8,
     "age_is_evidence": true,
     "stale": false
    }
@@ -13043,7 +13095,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 2,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -13069,7 +13121,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -13095,7 +13147,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -44949,6 +45001,122 @@
    "event_id": "2026-10-22|xm|registered|1a3fe882",
    "family": "Arbitration",
    "label": "Xm",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "benchmark": null,
+   "change": "verdict validated to provisional",
+   "content_hash": "68ccfada78e5c00501cf3f3981e272d6e625975e4970dd0257cc314e409dd888",
+   "date": "2026-10-27",
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "event_id": "2026-10-27|draft_slot_curve|verdict|68ccfada",
+   "kind": "verdict",
+   "layer": "headline",
+   "legs": [],
+   "model_id": "draft_slot_curve",
+   "sort_date": "2026-10-27",
+   "source": {
+    "commit": "4a3f70b9",
+    "path": "data/model_registry.json"
+   },
+   "state": {
+    "card": [
+     {
+      "benchmark": 0.29,
+      "benchmark_label": "picks 301-500",
+      "ci95": null,
+      "mde95": null,
+      "model": 29.98,
+      "n": 6596,
+      "stat": "mean career WAR",
+      "t": null
+     }
+    ],
+    "eval_artifact": "data/draft_slot_curve.json",
+    "removed": false,
+    "verdict": "provisional"
+   },
+   "statistic": null,
+   "verdict": {
+    "after": "provisional",
+    "before": "validated"
+   },
+   "family": "Draft",
+   "label": "Draft Slot Curve",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "benchmark": null,
+   "change": "registered as provisional",
+   "content_hash": "858f88cd2ce7ee3e27796a514047b8efd0589c1904416b5fdef26afc5dad91a1",
+   "date": "2026-10-27",
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "event_id": "2026-10-27|ewar_xhem_half|registered|858f88cd",
+   "kind": "registered",
+   "layer": "registration",
+   "legs": [],
+   "model_id": "ewar_xhem_half",
+   "sort_date": "2026-10-27",
+   "source": {
+    "commit": "4a3f70b9",
+    "path": "data/model_registry.json"
+   },
+   "state": {
+    "card": null,
+    "eval_artifact": "data/swar_eval.json",
+    "removed": false,
+    "verdict": "provisional"
+   },
+   "statistic": null,
+   "verdict": {
+    "after": "provisional",
+    "before": null
+   },
+   "family": "eWAR",
+   "label": "eWAR xHEM Half",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "benchmark": null,
+   "change": "registered as provisional",
+   "content_hash": "a85eec9e1355f689ffb6eeb191970317d7260b88732bde0ee7c33b5d39abb343",
+   "date": "2026-10-27",
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "event_id": "2026-10-27|ewar_band|registered|a85eec9e",
+   "kind": "registered",
+   "layer": "registration",
+   "legs": [],
+   "model_id": "ewar_band",
+   "sort_date": "2026-10-27",
+   "source": {
+    "commit": "4a3f70b9",
+    "path": "data/model_registry.json"
+   },
+   "state": {
+    "card": null,
+    "eval_artifact": "data/ewar_band.json",
+    "removed": false,
+    "verdict": "provisional"
+   },
+   "statistic": null,
+   "verdict": {
+    "after": "provisional",
+    "before": null
+   },
+   "family": "eWAR",
+   "label": "eWAR Band",
    "served": true,
    "default_view": false
   }

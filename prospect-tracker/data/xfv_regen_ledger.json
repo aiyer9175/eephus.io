@@ -12557,7 +12557,8 @@
     }
    },
    "alerts": [],
-   "n_alerts": 0
+   "n_alerts": 0,
+   "last_seen_at": "2026-10-27T03:10:25+00:00"
   }
  ],
  "thresholds": {
@@ -12574,6 +12575,6 @@
    "chosen": "geometric midpoint of the gap [0.112, 0.253] in 12 measured side-vintage label-set churn shares; flags the same 2 of 6 vintage pairs the weight tripwire does"
   }
  },
- "generated_at": "2026-10-26T21:50:27+00:00",
+ "generated_at": "2026-10-27T03:10:25+00:00",
  "latest_alerts": []
 }
