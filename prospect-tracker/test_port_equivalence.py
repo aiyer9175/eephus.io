@@ -242,3 +242,62 @@ def test_compare_http_cli_reads_an_explained_file(tmp_path):
     assert pe.read_explained(p) == [("forums/*", "the accounts layer")]
     assert plc.is_challenge(503, {}, b"<title>Just a moment...</title>")
     assert not plc.is_challenge(404, {}, b"not found")
+
+
+
+def _two_bundles(tmp_path, change_page=False, add=False):
+    root = tmp_path / "bmod"
+    full = _bundle(tmp_path)                      # builds tmp_path/bmod and a full bundle
+    out = tmp_path / "slim"
+    if change_page:
+        (root / "fa" / "index.html").write_bytes(b"<p>fa</p>\n<p>changed</p>\n")
+    if add:
+        (root / "data" / "e.json").write_text('{"v": 9}', encoding="utf-8")
+    slim = Path(pb.build_served(root, out, strip=False, slim=False, strips=lambda site: {},
+                                now=_dt.datetime(2026, 10, 23, tzinfo=_dt.timezone.utc))["path"])
+    return full, slim, root
+
+
+def _drop(bundle: Path, rel: str):
+    rows = (bundle / "MANIFEST.tsv").read_text(encoding="utf-8").splitlines()
+    (bundle / "MANIFEST.tsv").write_text(
+        "\n".join(r for r in rows if not r.startswith(rel + "\t")) + "\n", encoding="utf-8")
+    (bundle / "site" / rel).unlink()
+
+
+def test_compare_bundles_passes_a_slim_bundle_that_drops_only_unfetched_files(tmp_path):
+    full, slim, _ = _two_bundles(tmp_path)
+    _drop(slim, "data/d.json")
+    crawl = {"requests": {"/": [200, "x"], "/fa/": [200, "y"], "/data/a.json": [200, "z"],
+                          "/data/scores/latest.json": [404, None]}}
+    res = pe.compare_bundles(full, slim, (crawl,), crawl, crawl)
+    assert res["ok"], res
+    assert res["dropped"] == ["data/d.json"] and res["pages"]["differing"] == []
+    assert res["fetched"]["in_ref"] == 3 and res["fetched"]["dropped"] == []
+
+
+def test_compare_bundles_fails_a_dropped_fetched_file_a_page_change_or_an_addition(tmp_path):
+    full, slim, _ = _two_bundles(tmp_path)
+    _drop(slim, "data/a.json")
+    crawl = {"requests": {"/data/a.json": [200, "z"]}}
+    res = pe.compare_bundles(full, slim, (crawl,))
+    assert not res["ok"] and res["fetched"]["dropped"] == ["data/a.json"]
+    full2, slim2, _ = _two_bundles(tmp_path / "p", change_page=True)
+    res = pe.compare_bundles(full2, slim2)
+    assert not res["ok"] and res["pages"]["differing"] == ["fa/index.html"]
+    full3, slim3, _ = _two_bundles(tmp_path / "a", add=True)
+    res = pe.compare_bundles(full3, slim3)
+    assert not res["ok"] and res["added"] == ["data/e.json"]
+    a = {"requests": {"/x": [200, "1"]}}
+    b = {"requests": {"/x": [404, None]}}
+    full4, slim4, _ = _two_bundles(tmp_path / "c")
+    res = pe.compare_bundles(full4, slim4, (), a, b)
+    assert not res["ok"] and res["crawl_diff"] == ["/x: [200, '1'] -> [404, None]"]
+
+
+def test_compare_bundles_cli(tmp_path, capsys):
+    full, slim, _ = _two_bundles(tmp_path)
+    _drop(slim, "data/d.json")
+    assert pe.main(["compare-bundles", "--ref", str(full), "--new", str(slim)]) == 0
+    out = capsys.readouterr().out
+    assert "DROPPED data/d.json" in out and '"ok": true' in out
