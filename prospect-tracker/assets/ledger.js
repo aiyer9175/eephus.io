@@ -482,14 +482,33 @@
   function tile(title, big, sub, cls) {
     return '<div class="ledger-tile"><div class="ledger-tile-title">' + title + '</div><div class="ledger-tile-big ' + (cls || "") + '">' + big + '</div><div class="ledger-tile-sub">' + (sub || "") + "</div></div>";
   }
+  // The capture date pair a payroll row carries ([tax page date, payroll page
+  // date], payroll.sYYYY.fetched): one date when both pages were captured the
+  // same day, else each page named; empty when the row carries none.
+  function fetchedTxt(pair) {
+    if (!pair || !pair[0]) return "";
+    var lab = copy("payroll_fetched_label") || "fetched";
+    if (pair[1] && pair[1] !== pair[0]) return ", tax page " + lab + " " + esc(pair[0]) + ", payroll page " + lab + " " + esc(pair[1]);
+    return ", " + lab + " " + esc(pair[0]);
+  }
+  // The capture census for the current season (sections.payroll_history.census
+  // .s2026_capture): whether the Payroll now block and the history row read
+  // one Spotrac capture. Null when the history is dark.
+  function captureCensus() {
+    var H = (DATA.sections || {}).payroll_history || {};
+    return (H.census || {}).s2026_capture || null;
+  }
   function renderPayroll(d) {
     var P = d.payroll, y = state.season, ps = P["s" + y] || {}, p27 = P.s2027 || {};
     // the 2027 tile prints the club's 2027 basis (owner answer M13-1): Spotrac's
     // figure, or the guaranteed AAV where that is larger, named by taxFloorLine
     var b27 = P.cbt_basis_2027 || {};
     var bigTax = y === classYear() && isNum(b27.usd) ? b27.usd : ps.tax_payroll_usd;
+    // The tile names the date the Spotrac pages its row was read from were
+    // captured (payroll.sYYYY.fetched), the clock the history row below is
+    // stamped on, so two captures never print as one figure.
     var t1 = tile(gl("CBT payroll " + esc(y), "cbt_payroll"), money(bigTax),
-      gl("Total payroll allocations " + esc(y), "payroll_allocations") + ": " + esc(money(ps.total_payroll_usd)) + " (Spotrac)" +
+      gl("Total payroll allocations " + esc(y), "payroll_allocations") + ": " + esc(money(ps.total_payroll_usd)) + " (Spotrac" + fetchedTxt(ps.fetched) + ")" +
       (y === classYear() ? taxFloorLine(P.tax_floor_2027) : ""));
     // The 2027 tier names its basis (the Spotrac page, or derived) in both branches.
     var basis27 = y === classYear() ? " (" + esc(copy("payor_basis")[P.payor_2027.basis] || P.payor_2027.basis) + ")" : "";
@@ -497,7 +516,7 @@
     var surOnly = y === classYear() && (d.cbt[y] || {}).spotrac_est_is_surcharges_only;
     var t2 = ps.est_tax_bill_usd ? tile("Est. tax " + esc(y), money(ps.est_tax_bill_usd), "Spotrac estimate" + (surOnly ? ", surcharges only (no base rate)" : "") + "; " + payorTxt)
       : tile("Est. tax " + esc(y), "not a payor", payorTxt);
-    var t3 = tile(gl("Committed " + esc(classYear()), "payroll_allocations"), money(p27.total_payroll_usd), "Spotrac total payroll allocations");
+    var t3 = tile(gl("Committed " + esc(classYear()), "payroll_allocations"), money(p27.total_payroll_usd), "Spotrac total payroll allocations" + fetchedTxt(p27.fetched));
     var sp = P.space_2027;
     var t4 = tile("Space " + esc(classYear()), signedMoney(sp.spotrac_usd),
       esc(copy("space_2027_spotrac_label")) + "<br>" + esc(copy("space_2027_platform_label")) + ": " + signedMoney(sp.platform_usd) +
@@ -528,15 +547,23 @@
     var s = shardOf(d.club), rows = s && s.payroll ? s.payroll.history : null;
     var out = "<h3>" + gl(copy("payroll_history_title") || "Payroll history", "cbt_payroll") + "</h3>";
     if (!rows) return out + shardLine(d.club, copy("payroll_history_note"));
+    // The current season's row and the Payroll now tiles above are two reads
+    // of one Spotrac page. When the census says they are not one capture, the
+    // row carries its own page date beside the season, so the two figures
+    // never print as one undated number (SITE_AUDIT_3A A3).
+    var cap = captureCensus(), capNote = copy("payroll_capture_note");
+    var twoCaptures = !!(cap && cap.history && cap.history[0] && !cap.same_source_date);
     var body = rows.slice().reverse().map(function (r) {
-      var ov = cv(PH, r, "over_threshold_usd");
-      return "<tr><td>" + esc(cv(PH, r, "season")) + "</td><td>" + esc(money(cv(PH, r, "tax_payroll_usd"))) + "</td><td>" + esc(cv(PH, r, "payor_tier") || "") +
+      var ov = cv(PH, r, "over_threshold_usd"), season = cv(PH, r, "season");
+      var dated = twoCaptures && String(season) === seasonNow() ? " (" + esc(copy("payroll_fetched_label") || "fetched") + " " + esc(cap.history[0]) + ")" : "";
+      return "<tr><td>" + esc(season) + dated + "</td><td>" + esc(money(cv(PH, r, "tax_payroll_usd"))) + "</td><td>" + esc(cv(PH, r, "payor_tier") || "") +
         "</td><td>" + esc(money(cv(PH, r, "threshold_usd"))) + "</td><td>" + (isNum(ov) ? esc((Number(ov) < 0 ? "under by " : "over by ") + money(Math.abs(Number(ov)))) : "") +
         "</td><td>" + esc(money(cv(PH, r, "est_tax_bill_usd"))) + "</td><td>" + esc(money(cv(PH, r, "total_payroll_usd"))) + "</td></tr>";
     }).join("");
     return out + shardLine(d.club) + '<div class="ledger-scroll"><table class="ledger-table" aria-label="' + esc("Payroll history, " + d.club) + '"><thead><tr><th>Season</th><th>' + gl("CBT payroll", "cbt_payroll") + "</th><th>" + gl("Payor", "payor_tier") +
       "</th><th>Threshold</th><th>vs threshold</th><th>Est. tax</th><th>" + gl("Total allocations", "payroll_allocations") + "</th></tr></thead><tbody>" + body + "</tbody></table></div>" +
-      '<p class="ledger-count">' + esc(copy("payroll_history_note")) + "</p>";
+      '<p class="ledger-count">' + esc(copy("payroll_history_note")) + "</p>" +
+      (capNote ? '<p class="ledger-count ledger-capture">' + esc(capNote) + "</p>" : "");
   }
   function renderCbt(d) {
     var y = state.season, C = d.cbt[y] || {}, tiers = DATA.cba.surcharge_tiers_usd, T = C.threshold_usd;

@@ -157,3 +157,31 @@ def test_tax_table_parses_status_space_and_team(soup):
     assert rows[0]["team"] == "LAD" and rows[0]["status"] == "3+-Time"
     assert rows[0]["space"] == -177_772_931
     assert rows[1]["team"] == "CHW" and rows[1]["tax"] == 95_000_000
+
+
+def test_refresh_payroll_stamps_each_row_with_its_pages_capture_date(monkeypatch, tmp_path):
+    """fa_pipeline.refresh_payroll writes the cached page's local date on every
+    row (tax_page_captured, payroll_page_captured), the clock
+    read_cached_payroll_history stamps a history row on, so the Club Ledger can
+    tell one capture from two. A page with no cached copy leaves no stamp."""
+    import datetime as dt
+    import fa_pipeline
+    import scrapers
+    import storage
+    monkeypatch.setattr(scrapers, "CACHE_DIR", tmp_path)
+    (tmp_path / "spotrac_tax_2026.html").write_text("<html></html>", encoding="utf-8")
+    monkeypatch.setattr(fs, "scrape_spotrac_tax", lambda season, force=False: [
+        {"season": season, "team": "NYY", "tax_payroll_usd": 341875147, "space_usd": -97875147,
+         "est_tax_bill_usd": 83062662, "payor_status_raw": "3+-Time"}])
+    monkeypatch.setattr(fs, "scrape_spotrac_payroll", lambda season, force=False: [
+        {"season": season, "team": "NYY", "total_payroll_usd": 308336780},
+        {"season": season, "team": "AVERAGES", "total_payroll_usd": 127764025}])
+    written = {}
+    monkeypatch.setattr(storage, "upsert_fa_team_payroll", lambda season, rows: written.setdefault(season, rows) and len(rows))
+    assert fa_pipeline.refresh_payroll([2026]) == 2
+    today = dt.datetime.fromtimestamp((tmp_path / "spotrac_tax_2026.html").stat().st_mtime).date().isoformat()
+    rows = {r["team"]: r for r in written[2026]}
+    assert rows["NYY"]["tax_page_captured"] == today and rows["NYY"]["tax_payroll_usd"] == 341875147
+    assert "payroll_page_captured" not in rows["NYY"], "no cached payroll page, no stamp"
+    assert "tax_page_captured" not in rows["AVERAGES"], "a row the tax page does not carry takes no tax stamp"
+    assert fa_pipeline._page_captured("spotrac_payroll_2026") is None

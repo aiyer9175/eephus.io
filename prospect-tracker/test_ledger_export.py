@@ -2376,3 +2376,88 @@ def test_the_dvm_difficulty_copy_is_lint_clean_and_names_the_player_index():
     for text in [LE.DVM_DIFFICULTY_LEAF_BASIS, *LE.DVM_DIFFICULTY_COPY.values()]:
         assert chr(0x2014) not in text and chr(0x2013) not in text
         assert "clamped" not in text
+
+
+# --------------------------------------------------------------------------
+# The Payroll now block and the payroll history row for the current season are
+# two reads of one Spotrac page (fa_team_payroll and the cached tax page). They
+# agree when they are one capture; when they are two, each prints with its date
+# (SITE_AUDIT_3A A3, 2026-10-27).
+# --------------------------------------------------------------------------
+
+def test_the_payroll_now_block_and_the_current_season_history_row_read_one_capture_or_say_so(d, shards):
+    census = d["sections"]["payroll_history"].get("census") or {}
+    if not census.get("seasons"):
+        pytest.skip("payroll history dark")
+    y = d["season_now"]
+    cap = census["s2026_capture"]
+    hist_dates = census["fetched"][str(y)]
+    assert hist_dates and hist_dates[0], "the cached tax page carries no date"
+    n_match = 0
+    for c, club in d["clubs"].items():
+        blk = club["payroll"]["s2026"]
+        assert blk.get("fetched") and blk["fetched"][0], f"{c}: the block row carries no capture date"
+        row = next((r for r in shards[c]["payroll"]["history"] if r[0] == y), None)
+        assert row is not None, f"{c}: no {y} history row"
+        if blk["fetched"][0] == hist_dates[0]:
+            assert blk["tax_payroll_usd"] == row[1], (c, "one tax page capture, two tax payrolls")
+            assert (blk["est_tax_bill_usd"] or None) == (row[5] or None), (c, "one capture, two bills")
+        if blk["fetched"][1] == hist_dates[1]:
+            assert blk["total_payroll_usd"] == row[6], (c, "one payroll page capture, two allocations")
+        n_match += blk["tax_payroll_usd"] == row[1]
+    assert cap["n_match"] == n_match == census["s2026_matches_payroll_block"]
+    assert cap["n_clubs"] == len(d["clubs"]) and cap["figures_agree"] is (n_match == len(d["clubs"]))
+    assert set(cap["disagree"]) == {c for c, club in d["clubs"].items()
+                                    if club["payroll"]["s2026"]["tax_payroll_usd"]
+                                    != next(r[1] for r in shards[c]["payroll"]["history"] if r[0] == y)}
+    same = all(club["payroll"]["s2026"]["fetched"] == hist_dates for club in d["clubs"].values())
+    assert cap["same_source_date"] is same and cap["history"] == hist_dates
+    note = d["copy"]["payroll_capture_note"]
+    assert note == cap["note"] and note and chr(0x2014) not in note and chr(0x2013) not in note
+    assert hist_dates[0] in note
+    if same:
+        assert "same Spotrac capture" in note and cap["figures_agree"] and not cap["disagree"]
+    else:
+        assert "Two captures" in note or "more than one" in note
+        for pair in cap["block_dates_distinct"]:
+            assert pair[0] in note, "a mismatch names every capture date"
+    assert "payroll.s2026.fetched" in d["field_key"]
+    assert d["copy"]["payroll_fetched_label"] == "fetched"
+
+
+def test_payroll_capture_census_names_two_dates_when_the_captures_differ():
+    import ledger_export as LE
+    one = LE.payroll_capture_census({c: ["2026-10-27", "2026-10-27"] for c in "ABC"}, ["2026-10-27", "2026-10-27"], 3, 3, 2026)
+    assert one["same_source_date"] and one["figures_agree"] and one["block"] == ["2026-10-27", "2026-10-27"]
+    assert "same Spotrac capture (2026-10-27)" in one["note"] and "3 of 3" in one["note"]
+    two = LE.payroll_capture_census({c: ["2026-10-02", "2026-10-02"] for c in "ABC"}, ["2026-10-26", "2026-10-26"], 1, 3, 2026)
+    assert not two["same_source_date"] and not two["figures_agree"]
+    assert two["block"] == ["2026-10-02", "2026-10-02"] and two["history"] == ["2026-10-26", "2026-10-26"]
+    assert "fetched 2026-10-02" in two["note"] and "cached 2026-10-26" in two["note"] and "1 of 3" in two["note"]
+    assert "Two captures" in two["note"]
+    pages = LE.payroll_capture_census({"A": ["2026-10-02", "2026-10-03"]}, ["2026-10-26", "2026-10-27"], 0, 1, 2026)
+    for stamp in ("2026-10-02", "2026-10-03", "2026-10-26", "2026-10-27"):
+        assert stamp in pages["note"], stamp
+    mixed = LE.payroll_capture_census({"A": ["2026-10-02", "2026-10-02"], "B": ["2026-10-27", "2026-10-27"]},
+                                      ["2026-10-27", "2026-10-27"], 1, 2, 2026)
+    assert mixed["block"] is None and not mixed["same_source_date"]
+    assert "2026-10-02" in mixed["note"] and "2026-10-27" in mixed["note"] and "more than one" in mixed["note"]
+    undated = LE.payroll_capture_census({"A": None}, ["2026-10-27", "2026-10-27"], 1, 1, 2026)
+    assert not undated["same_source_date"] and "no capture date" in undated["note"] and "2026-10-27" in undated["note"]
+    # one capture date but a figure apart: never reported as agreement
+    apart = LE.payroll_capture_census({"A": ["2026-10-27", "2026-10-27"]}, ["2026-10-27", "2026-10-27"], 0, 1, 2026)
+    assert apart["same_source_date"] and not apart["figures_agree"] and "0 of 1" in apart["note"]
+    for doc in (one, two, pages, mixed, undated, apart):
+        assert chr(0x2014) not in doc["note"] and chr(0x2013) not in doc["note"]
+
+
+def test_fetch_stamp_dates_are_read_on_the_cache_files_clock():
+    """fa_team_payroll.fetched_at is SQLite's datetime('now'), UTC; a cached page's
+    date is its file's local modified date. The block's fallback stamp converts."""
+    import ledger_export as LE
+    from datetime import datetime, timezone
+    assert LE._fetch_stamp_date(None) is None and LE._fetch_stamp_date("") is None
+    at = "2026-10-28 02:41:40"
+    local = datetime.fromisoformat(at).replace(tzinfo=timezone.utc).astimezone().date().isoformat()
+    assert LE._fetch_stamp_date(at) == local
+    assert LE._fetch_stamp_date("2026-07-07") == "2026-07-07"

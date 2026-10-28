@@ -818,16 +818,41 @@ def quarantine_premature_winter_events(class_year: int | None = None,
             "status_restored": restored}
 
 
+def _page_captured(cache_key: str) -> str | None:
+    """The local calendar date the cached Spotrac page was written (its file's
+    modified time), the same stamp fa_sources.read_cached_payroll_history puts
+    on a history row; None when no cached copy exists."""
+    try:
+        from datetime import datetime
+        from scrapers import CACHE_DIR
+        p = CACHE_DIR / f"{cache_key}.html"
+        return datetime.fromtimestamp(p.stat().st_mtime).date().isoformat() if p.exists() else None
+    except OSError:
+        return None
+
+
 def refresh_payroll(seasons: list[int] | None = None, force: bool = False) -> int:
+    """Upsert the Spotrac tax and payroll ledgers for `seasons` into
+    fa_team_payroll. Each row carries the capture date of the page it was read
+    from (tax_page_captured, payroll_page_captured: the cache file's local
+    date), so the Club Ledger can say whether its Payroll now block and its
+    payroll history row for the season read the same capture."""
     seasons = seasons or [date.today().year, date.today().year + 1]
     n = 0
     for season in seasons:
         tax = {r["team"]: r for r in fa_sources.scrape_spotrac_tax(season, force=force)}
         pay = {r["team"]: r for r in fa_sources.scrape_spotrac_payroll(season, force=force)}
+        tax_at = _page_captured(f"spotrac_tax_{season}") if tax else None
+        pay_at = _page_captured(f"spotrac_payroll_{season}") if pay else None
         merged = []
         for team in sorted(set(tax) | set(pay)):
-            merged.append({"team": team, "season": season,
-                           **(pay.get(team) or {}), **(tax.get(team) or {})})
+            row = {"team": team, "season": season,
+                   **(pay.get(team) or {}), **(tax.get(team) or {})}
+            if team in tax and tax_at:
+                row["tax_page_captured"] = tax_at
+            if team in pay and pay_at:
+                row["payroll_page_captured"] = pay_at
+            merged.append(row)
         n += storage.upsert_fa_team_payroll(season, merged)
     return n
 
