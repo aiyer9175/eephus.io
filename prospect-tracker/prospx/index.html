@@ -10979,7 +10979,26 @@ async function loadData() {
       cache: "no-cache",
     });
     if (probeResp.ok || probeResp.status === 206) {
-      const head = await probeResp.text();
+      // Read the first chunk of the body only, then cancel the stream. A
+      // host that answers the Range request with 200 (python http.server;
+      // nginx when it gzips on the fly, which drops byte ranges) would
+      // otherwise stream the whole payload into probeResp.text() before
+      // the real fetch below starts: the full file twice per visit, as the
+      // retired bare-URL preload did (SITE_AUDIT_3C, 2026-10-27). A 206 of
+      // 2 KB reads the same way; it just ends sooner.
+      let head = "";
+      if (probeResp.body && typeof probeResp.body.getReader === "function") {
+        const reader = probeResp.body.getReader();
+        const dec = new TextDecoder();
+        while (head.length < 4096) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          head += dec.decode(value, { stream: true });
+        }
+        try { await reader.cancel(); } catch (e) { /* stream already closed */ }
+      } else {
+        head = await probeResp.text();
+      }
       const m = head.match(/"generated_at"\s*:\s*"([^"]+)"/);
       if (m) cacheVersion = m[1];
     }
