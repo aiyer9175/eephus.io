@@ -344,7 +344,7 @@ Outside the webroot, nothing visible changes yet:
 
 1. `git -C /opt/eephus/repo pull --ff-only` (a branch other than `main-deploy` for the rehearsal, or a second clone).
 2. `go build -o bin/ ./cmd/...` (eight binaries: server, nightly, buildsite, chadwick, fit, receive, shipgate, shadoweq).
-3. Create the `ship` user and `/opt/eephus/artifacts/{incoming,bundles}` as PR 4's README section says; install `/etc/eephus/ship_authorized_keys` (root-owned, the producer's address and key) and the sshd drop-in `sshd_eephus_ship.conf` (`sshd -t`, reload) from PR 7, in place of any rrsync line.
+3. Create the `ship` user and `/opt/eephus/artifacts/incoming` as PR 4's README section says (no `bundles/` directory: nothing in the box's code uses one); `deploy/port-setup.sh` (dry run by default, `--apply` to change) does steps 2 to 7 in one pass; install `/etc/eephus/ship_authorized_keys` (root-owned, the producer's address and key) and the sshd drop-in `sshd_eephus_ship.conf` (`sshd -t`, reload) from PR 7, in place of any rrsync line.
 4. `systemctl enable --now eephus-receive.path`; install and enable `eephus-ship-sweep.timer`.
 5. nginx: the two no-store locations for `/data/bundle_info.json` and `/data/bundle_receipt.json`; `nginx -t`, reload. Cloudflare: add the two paths to Rule 3.
 6. Send the owner the ship host, user name, port and host key (step L6).
