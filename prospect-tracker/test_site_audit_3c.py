@@ -1,0 +1,83 @@
+"""SITE_AUDIT_3C (2026-10-27): the pre-port audit's lens C fixes, pinned.
+
+Each test names the finding it guards. They read the served sources as text,
+so they run without a browser and without the data files.
+"""
+from pathlib import Path
+import re
+
+ROOT = Path(__file__).resolve().parent
+PROSPX = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+
+
+def _fn_body(src: str, head: str) -> str:
+    """The text of one top-level function, from its header to the next
+    column-zero closing brace."""
+    i = src.index(head)
+    j = src.index("\n}\n", i)
+    return src[i:j]
+
+
+def test_the_prospx_boot_probe_reads_one_chunk_and_cancels():
+    """C1: loadData() probes timeseries.json with a Range header for its
+    generated_at stamp and then fetches the ?v=-keyed payload. A host that
+    answers the Range request with 200 (python http.server; nginx gzipping on
+    the fly) streamed the whole 87 MB payload into probeResp.text() first, so
+    the file crossed the wire twice per visit. The probe now reads the first
+    chunk from the body stream and cancels the rest."""
+    body = _fn_body(PROSPX, "async function loadData() {")
+    probe = body.split("const probeResp = await fetch(DATA_URL", 1)[1]
+    probe = probe.split("const url = cacheVersion", 1)[0]
+    assert 'Range: "bytes=0-2048"' in probe
+    assert "probeResp.body.getReader()" in probe
+    assert "reader.cancel()" in probe
+    assert 'head.match(/"generated_at"' in probe
+    # the whole-body read survives only as the fallback for a body-less Response
+    code = "\n".join(l for l in probe.splitlines() if not l.strip().startswith("//"))
+    assert code.count("probeResp.text()") == 1
+    assert re.search(r"\} else \{\s*head = await probeResp\.text\(\);", code)
+
+
+def test_the_bare_timeseries_preload_stays_retired():
+    """The v35 note above the stylesheet links explains why no bare-URL
+    preload of the boot payload may come back: it is the same double
+    download the probe fix closes."""
+    head = PROSPX.split("</head>", 1)[0]
+    head = re.sub(r"<!--.*?-->", "", head, flags=re.S)   # the note quotes the old tag
+    tags = re.findall(r"<link\b[^>]*rel=\"preload\"[^>]*>", head)
+    assert not any("timeseries.json" in t for t in tags), tags
+
+
+def test_every_ledger_expand_column_header_has_a_name():
+    """C3: the league board and four club tables end each header row with an
+    empty <th> over the 'Show detail' button column; a screen reader read it
+    as a blank column header. Every such cell now carries aria-label."""
+    js = (ROOT / "assets" / "ledger.js").read_text(encoding="utf-8")
+    cells = re.findall(r"<th[^>]*class=\"(?:lb|lc)-xp\"[^>]*>", js)
+    assert len(cells) >= 5, cells
+    for c in cells:
+        assert 'aria-label="Row detail"' in c, c
+
+
+def test_the_dugout_rate_tables_mark_their_row_labels_as_headers():
+    """C4: the betting dugout prints key/value tables (rates, shape, realized
+    mWPA families) whose label cells were plain <td>; a reader got the value
+    with no header. The label cells are <th scope="row"> and keep the body
+    face (the thead rule's small uppercase retro face is scoped off them)."""
+    js = (ROOT / "assets" / "betting.js").read_text(encoding="utf-8")
+    assert js.count('<th scope=\\"row\\" class=\\"bt-l\\">') == 3, js.count('<th scope=\\"row\\" class=\\"bt-l\\">')
+    # the dugout card template, from its rate rows to its fine print; the
+    # board tables elsewhere in the file head their columns in a <thead>
+    dugout = js.split("var rates = (ctx.rate_columns", 1)[1].split("bt-dugout-fine", 1)[0]
+    assert '<tr><td class=\\"bt-l\\">' not in dugout
+    assert ".bt-dugout-t th[scope=row]{font:inherit;color:var(--text-primary);text-transform:none}" in js
+
+
+def test_the_prospx_contract_table_marks_the_season_as_the_row_header():
+    """C6: the player card's contract table (season | salary) had two <td>
+    per row and no header cell at all. The season cell is the row header,
+    left-aligned at the body weight so the card does not change."""
+    rows = re.findall(r"<th scope=\"row\" style=\"([^\"]*)\">\$\{yr\}\$\{tag\}</th>", PROSPX)
+    assert len(rows) == 1, rows
+    assert "text-align:left" in rows[0] and "font-weight:400" in rows[0]
+    assert "${yr}${tag}</td>" not in PROSPX

@@ -214,7 +214,7 @@ def test_the_block_carries_no_plus_suffix_no_ladder_and_no_sign_colour(teams, po
         assert not any(h.endswith("+") for h in heads)
         # realized rows: family, n, then a value signed to three places or the dim
         # below-floor sentence; rate and shape rows: label then a plain number
-        rows3 = re.findall(r'<tr><td class="bt-l">([^<]*)</td><td>([^<]*)</td><td>(.*?)</td></tr>', frag)
+        rows3 = re.findall(r'<tr><th scope="row" class="bt-l">([^<]*)</th><td>([^<]*)</td><td>(.*?)</td></tr>', frag)
         assert len(rows3) >= 6
         for _fam, n, cell in rows3:
             assert re.fullmatch(r"\d+|-", n), n
@@ -222,7 +222,7 @@ def test_the_block_carries_no_plus_suffix_no_ladder_and_no_sign_colour(teams, po
                 assert "below the floor of" in _visible_text(cell)
             else:
                 assert re.fullmatch(r"[+-]\d+\.\d{3}", cell), cell
-        rows2 = re.findall(r'<tr><td class="bt-l">([^<]*)</td><td>([^<]*)</td></tr>', frag)
+        rows2 = re.findall(r'<tr><th scope="row" class="bt-l">([^<]*)</th><td>([^<]*)</td></tr>', frag)
         assert len(rows2) >= 6
         for _lab, cell in rows2:
             assert re.fullmatch(r"\d+(\.\d+)?|-", cell), cell     # never signed, never coloured
@@ -230,7 +230,10 @@ def test_the_block_carries_no_plus_suffix_no_ladder_and_no_sign_colour(teams, po
         # the header cell is the glossary term alone; the board's units sentence is a
         # fine line under the table, never inside a <th> (review: a three-line header
         # cell at 390)
-        ths = [_visible_text(t).strip() for t in re.findall(r"<th[^>]*>(.*?)</th>", frag)]
+        # (the row labels are <th scope="row"> since SITE_AUDIT_3C; only the
+        # column headers inside <thead> are pinned here)
+        thead = "".join(re.findall(r"<thead>(.*?)</thead>", frag, re.S))
+        ths = [_visible_text(t).strip() for t in re.findall(r"<th[^>]*>(.*?)</th>", thead)]
         assert ths and set(ths) == {"Family", "n", "mWPA"}, ths
         fine = re.findall(r'<p class="bt-dugout-fine">(.*?)</p>', frag)
         assert any(_visible_text(f).startswith("mWPA: wins, realized value, not skill") for f in fine), fine

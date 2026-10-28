@@ -355,7 +355,7 @@
       var aria = state.sort.key === key ? (state.sort.asc ? "ascending" : "descending") : "none";
       return '<th class="' + cls + '" data-lsort="' + esc(key) + '" scope="col" tabindex="0" aria-sort="' + aria + '" title="' + esc(tip) + '">' +
         '<span class="lb-lab-long">' + lab + '</span><span class="lb-lab-short">' + labShort + "</span>" + arrow + "</th>";
-    }).join("") + '<th class="lb-xp"></th>';
+    }).join("") + '<th class="lb-xp" aria-label="Row detail"></th>';
     var body = sortedRows().map(function (r) {
       var tds = cols.map(function (c) {
         var cls = KEEP_NARROW[c[0]] ? "" : "lb-col-hide";
@@ -749,7 +749,7 @@
     rows.forEach(function (r) { (cv("arbitration.ladders", r, "ladder") || []).forEach(function (t) { if (years.indexOf(t[0]) < 0) years.push(t[0]); }); });
     years.sort();
     var head = "<tr><th>Player</th><th>Class</th>" + '<th class="lc-col-hide">' + gl("Service", "service_time") + '</th><th class="lc-col-hide">Yrs left</th>' +
-      years.map(function (y) { return '<th class="lc-col-hide">' + esc(y) + "</th>"; }).join("") + "<th>Remaining</th>" + '<th class="lc-col-hide">Flags</th><th class="lc-xp"></th></tr>';
+      years.map(function (y) { return '<th class="lc-col-hide">' + esc(y) + "</th>"; }).join("") + "<th>Remaining</th>" + '<th class="lc-col-hide">Flags</th><th class="lc-xp" aria-label="Row detail"></th></tr>';
     var body = rows.map(function (r) {
       var name = cv("arbitration.ladders", r, "name"), m = cv("arbitration.ladders", r, "mlbam"), cls = cv("arbitration.ladders", r, "class"), fl = cv("arbitration.ladders", r, "flags") || 0, sv = cv("arbitration.ladders", r, "sv"), svy = cv("arbitration.ladders", r, "svy"), yl = cv("arbitration.ladders", r, "years_left");
       var lad = cv("arbitration.ladders", r, "ladder") || [], war = cv("arbitration.ladders", r, "war") || [], tot = cv("arbitration.ladders", r, "tot_usd");
@@ -1259,7 +1259,7 @@
     var shown = rows.filter(function (r) { return f === "all" || cv("farm.prospects", r, "acq_method") === f; });
     var head = "<tr><th>Player</th><th>" + gl("Expected surplus", "tvi") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">' + gl("eFV", "xfv") + '</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
       '</th><th class="lc-col-hide">' + gl("Slot", "slot_value") + '</th><th class="lc-col-hide">' + gl("Net", "acquisition_cost_basis") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("ETA", "eta") +
-      ' / phase</th><th class="lc-col-hide">' + gl("Crunch", "roster_crunch") + '</th><th class="lc-col-hide">' + gl(copy("dvm_player_label") || "$DvM+", "fin_dollar_dvm") + '</th><th class="lc-xp"></th></tr>';
+      ' / phase</th><th class="lc-col-hide">' + gl("Crunch", "roster_crunch") + '</th><th class="lc-col-hide">' + gl(copy("dvm_player_label") || "$DvM+", "fin_dollar_dvm") + '</th><th class="lc-xp" aria-label="Row detail"></th></tr>';
     var sums = { s: 0, b: 0, n: 0 };
     var body = shown.map(function (r) {
       var key = cv("farm.prospects", r, "key"), s = cv("farm.prospects", r, "surplus_mm"), bonus = cv("farm.prospects", r, "bonus_usd"), slot = cv("farm.prospects", r, "slot_usd"), net = cv("farm.prospects", r, "net_mm"), method = cv("farm.prospects", r, "acq_method"), pick = cv("farm.prospects", r, "pick_overall"), dvm = cv("farm.prospects", r, "dollar_dvm_plus");
@@ -1307,7 +1307,7 @@
     if (!rows) return out + shardLine(d.club, copy("grad_preview_note"));
     out += shardLine(d.club, copy("grad_preview_note"));
     var head = "<tr><th>Player</th><th>" + gl("Debut", "mlb_debut") + "</th><th class=\"lc-col-hide\">" + gl("Share", "development_share") + '</th><th class="lc-col-hide">Now with</th><th>' + gl("Debuted value", "debuted_value") + '</th><th class="lc-col-hide">' + gl("Trade board", "trade_machine") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
-      '</th><th class="lc-col-hide">Realized<span class="ledger-th-tag">realized</span></th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-col-hide">Career WAR</th><th class="lc-col-hide">' + gl("WAG", "wag") + '</th><th class="lc-xp"></th></tr>';
+      '</th><th class="lc-col-hide">Realized<span class="ledger-th-tag">realized</span></th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-col-hide">Career WAR</th><th class="lc-col-hide">' + gl("WAG", "wag") + '</th><th class="lc-xp" aria-label="Row detail"></th></tr>';
     var body = rows.map(function (r) {
       var key = cv("farm.graduates", r, "key"), k = "G:" + key, open = !!state.open[k], inv = cv("farm.graduates", r, "in_vets");
       var href = inv ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
@@ -1340,7 +1340,7 @@
     var out = banner() + '<p class="ledger-note">' + esc(S.n_debuted_rows) + " debuted rows on the trade board; the active rows are the farm ledger's prospect rows and are not repeated. " + esc(copy("trade_currency_basis")) + "</p>";
     if (!rows) return out + shardLine(d.club, copy("trade_preview_note"));
     out += shardLine(d.club, copy("trade_preview_note"));
-    var head = "<tr><th>Player</th><th>" + gl("Trade value", "trade_machine") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">Tier</th><th class="lc-col-hide">Grade</th><th class="lc-col-hide">Source</th><th class="lc-col-hide">' + gl("Salary basis", "salary_path") + '</th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-xp"></th></tr>';
+    var head = "<tr><th>Player</th><th>" + gl("Trade value", "trade_machine") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">Tier</th><th class="lc-col-hide">Grade</th><th class="lc-col-hide">Source</th><th class="lc-col-hide">' + gl("Salary basis", "salary_path") + '</th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-xp" aria-label="Row detail"></th></tr>';
     var sum = 0;
     var body = rows.map(function (r) {
       var key = cv("surplus.rows_debuted", r, "key"), k = "T:" + key, open = !!state.open[k], v = cv("surplus.rows_debuted", r, "tv_mm"), src = cv("surplus.rows_debuted", r, "surplus_source");
