@@ -432,17 +432,16 @@ after the regeneration of step L1. Three artifacts carry it:
 
 | Artifact | Value | How it was made |
 |---|---|---|
-| The final tree | commit `d165558ca9250b232e654febc95389a010c31009` on branch `wt-PORT_FINAL` (lane 200, integration into `efv-conviction-2026-08-08` pending), with the regeneration of RED_TESTS_CLEARED sections 0 and 4 run on top (its data files are not committed by the lane; the integrator regenerates them on the main tree) | section 2, step L1 |
-| `ref.json` (Gate C's REF) | sha256 `6a4be091a41f90fee212ffa063731c5f27bd86e2706f90dd4e8dc4da128e7a4c`; 19,285 payloads and 214 pages, 9,215,701 bytes; the selftest on data/trade_values.json printed "ok": true | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
-| The served bundle | id `20261028T015745Z-0fd5e50fbffd`, 19,463 files, 1,307,440,059 bytes, `MANIFEST.tsv` sha256 `b5fe1987f8ee4fa7971d0c0e134f8db56709b8376ad80e91568eb920612072e5` | `python tools/port_bundle.py --served-bundle <out>` (slimmed, stripped), then `--verify-served` |
+| The final tree | commit `151b4f9e` on `efv-conviction-2026-08-08`: PORT_FINAL merged at `6b7a9cb5`, then the step L1 regeneration on the main tree committed as the port snapshot commit (FA realized ledger on ewar_v3, 1,576 rows; v2.0 label on every page) | section 2, step L1 |
+| `ref.json` (Gate C's REF) | sha256 `84d54f5030f4ff21c1e0d5e74c61f5979d623065a35b3671ecc3be9a8e6e14ff`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
+| The served bundle | id `20261028T022015Z-184c94ecf896`, 19,399 files, 1,307,036,866 bytes, `MANIFEST.tsv` sha256 `398267feeca49ac5bdf0fbe08504283cb8befa94eb67715ba34c7a58e8501ff1`; `--verify-served` ok, 0 problems | `python tools/port_bundle.py --served-bundle <out>` (slimmed, stripped), then `--verify-served` |
 
 The copy of `ref.json` and the bundle's `MANIFEST.tsv`, `SHA256SUMS`, `BUNDLE.json` and
-`READY` sit in the task's output directory
-(`scratchpad/wdq/PORT_FINAL/`); the bundle's `site/` tree is reproducible from the
-commit and the regeneration. **These values are the lane's measurement.** The integrator
-merges the lane, regenerates on the main tree, and re-runs L4 and L5 once; the shas that
-come out of that run are the ones the pin's `reference` takes (step C-1) and are written
-into this table in the same commit. A later rebuild re-freezes the same way.
+`READY` sit in `port_out/bundles/20261028T022015Z-184c94ecf896/` beside the repository.
+These values were measured on the main tree after the merge and regeneration (L4 and L5,
+2026-10-27); the lane's earlier measurement (ref sha `6a4be091...`, bundle
+`20261028T015745Z-0fd5e50fbffd`) is superseded. The pin's `reference` takes this bundle's
+MANIFEST sha (step C-1). A later rebuild re-freezes the same way.
 
 Every served number means: every leaf of every payload `port_equivalence.payload_files`
 names (the depth-one `data/*.json` minus `deploy/data_exclude.txt`, plus the nine shard
