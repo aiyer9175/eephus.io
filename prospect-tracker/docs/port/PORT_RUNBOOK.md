@@ -111,7 +111,7 @@ The 2026-10-22 answers supersede the first runbook's defaults where they differ.
 | P-2 | The `/partials/` layer | **Superseded by R2 "Pages + numbers":** static pages at cutover; the JSON sidecars serve the bundle's bytes (PR 5); a fragment route returns to htmx only when its rendered page and numbers equal the static page (Gate F). Named differences: the headshot proxy (not taken by default) and the forums and accounts layer (shipped inert). | Nothing is removed from his server; it is brought to equivalence route by route. |
 | P-3 | Python on the target | **Default stands, re-scoped to the producer:** Python 3.13.9 with `constraints-local.txt` on the PC. The box runs no Python. | `tools/freeze_constraints.py --check` is a producer check. |
 | P-4 | Cache carry | **Superseded by R1 "Your PC, ships nightly":** the 29.71 GB cache (363,455 files, `tools/port_bundle.py --plan`, 2026-10-22) and the 1.96 GB database stay on the PC with the producer. | Nothing large crosses to the box; its disk budget is two bundle generations (about 2.6 GB with hard links). The PC backup list in section 10 replaces the box backup. |
-| P-5 | Gitignored served artifacts | **Default stands as "the bundle is the served data":** every payload the nightly rsync ships goes in the bundle (`port_equivalence.payload_files`), minus the 37 payloads nothing fetches (`SLIM_EXCLUDE`, PORT_BUNDLE section 9). | The first publish equals the reference by construction. |
+| P-5 | Gitignored served artifacts | **Default stands as "the bundle is the served data":** every payload the nightly rsync ships goes in the bundle (`port_equivalence.payload_files`), minus the 36 payloads nothing fetches (`SLIM_EXCLUDE`, PORT_BUNDLE section 9; 37 until 2026-10-28). | The first publish equals the reference by construction. |
 | P-6 | Announcing the number change | **(a) a dated note the day of cutover.** `/news/` has no hand-written row type, so the note is a dated article (`docs/port/NEWS_NOTE_V2.md`), published in cutover day's first bundle (step C-6). It names every model that moved and links `/models/` and the registry; it includes the xHEM+ park-matched flip (EW3-53). | A reader who saw the old numbers is told why they moved. |
 | P-7 | The version label (FP1-4) | **(a) applied before the snapshot, 2026-10-27:** `EEPHUS_VERSION = "v2.0"`, the module beta chips dropped (`_stage_chip` renders nothing for a beta-stage row), the Diamond preview chips kept; PROSPX and the CollegeSavant bar edited by hand to match. | The reference and the published site carry the same label. |
 | P-8 | The red tests | **Cleared first** (`docs/port/RED_TESTS_CLEARED.md`, 2026-10-26, 17,686 passed in all; the delta rerun of 2026-10-27 in its section 6). | The PC's nightly gate (`deploy/port-nightly.ps1` step 5) means what it says: a red suite ships nothing. |
@@ -236,7 +236,7 @@ python tools/port_bundle.py --verify-served ../port_out/bundles/<bundle-id>
 ```
 
 What the bundle holds, how it verifies and how it ships is PORT_BUNDLE.md sections 1 to
-3. `--no-slim` keeps the 37 unfetched payloads; `--no-strip` ships the comment-carrying
+3. `--no-slim` keeps the 36 unfetched payloads (37 until 2026-10-28, PORT_BUNDLE section 9); `--no-strip` ships the comment-carrying
 sources. The cache, the database and the licensed imports never enter a bundle.
 
 **Check:** `--verify-served` exits 0; `READY` names the bundle id and the `MANIFEST.tsv`

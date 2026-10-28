@@ -394,7 +394,10 @@ SLIM_EXCLUDE: dict[str, str] = {
     "data/fa_overrides.json":                   _INPUT,
     "data/hof_public_benchmarks.json":          _INPUT,
     "data/intl_amateur_unmatched.json":         _LEDGER,
-    "data/mlb_fielding_positions.json":         _INPUT,
+    # data/mlb_fielding_positions.json left the list on 2026-10-28 (EVAL_FOLLOWUPS_REFREEZE):
+    # the re-measured data/prospect_def_value_eval.json names it as a frame input
+    # (STALE_EVALS_REMEASURE, 197d18030), so slim_violations refused the build; the
+    # 201,715-byte input ships with the bundle, as it does in the nightly rsync's set.
     "data/model_updates.json":                  _RENDERED,
     "data/pipeline_vintages.json":              _LEDGER,
     "data/position_overrides.json":             _INPUT,
