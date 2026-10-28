@@ -456,8 +456,10 @@ def _rederive_cards(reg: dict) -> None:
 # while its own stamp said 92. Order is preference: generated_at still wins
 # where a file carries both. test_the_stamp_keys_cover_every_artifact_date
 # fails when an artifact dates itself under a key this list does not read.
+# `evaluated_at` joined on 2026-10-28 (STALE_EVALS_REMEASURE): the re-measured
+# proj_def_feature_eval and prospect_def_value_eval stamp the measurement under it.
 _GENERATED_AT_KEYS = ("generated_at", "run_at", "fit_date", "as_of", "date",
-                      "generated")
+                      "generated", "evaluated_at")
 # Parsing guard: a handful of eval artifacts are multi-MB. Age is advisory, so
 # skip the parse rather than pay it, and fall back to mtime for those.
 _MAX_STAMP_PARSE_BYTES = 4_000_000

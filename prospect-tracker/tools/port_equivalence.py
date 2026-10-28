@@ -104,7 +104,7 @@ LIVE_DIRS: tuple[str, ...] = ("data/scores",)
 STAMP_KEYS: frozenset[str] = frozenset({
     "generated_at", "built_at", "checked_at", "written_at", "stamped_at",
     "updated_at", "last_updated", "run_at", "exported_at", "refreshed_at",
-    "built", "generated",
+    "built", "generated", "evaluated_at",
 })
 
 
