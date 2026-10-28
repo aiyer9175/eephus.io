@@ -41,7 +41,7 @@ THE SERVED BUNDLE (port Strategy D, docs/port/PORT_BUNDLE.md). The second job of
 this tool: freeze what the site serves, so the box only publishes it::
 
     python tools/port_bundle.py --plan-served                 # counts only
-    python tools/port_bundle.py --served-bundle OUT_ROOT [--no-strip] [--keep 2]
+    python tools/port_bundle.py --served-bundle OUT_ROOT [--no-strip] [--no-slim] [--keep 2]
     python tools/port_bundle.py --verify-served OUT_ROOT/<bundle-id>
 
 ``--served-bundle`` writes ``OUT_ROOT/<bundle-id>/``::
@@ -53,7 +53,9 @@ this tool: freeze what the site serves, so the box only publishes it::
                           per-player directories), the set computed by
                           port_equivalence.page_files and payload_files, with
                           the nightly's two publish-time comment strips applied
-                          (--no-strip ships the sources), plus
+                          (--no-strip ships the sources), minus the
+                          SLIM_EXCLUDE payloads nothing fetches (--no-slim
+                          keeps them), plus
                           site/data/bundle_info.json (bundle id, built_at)
     MANIFEST.tsv          relpath (under site/), bytes, sha256 for every file
     SHA256SUMS            the same sums in ``sha256sum -c`` form, so the box
@@ -348,19 +350,149 @@ def _withheld_names(root: Path) -> list[str]:
             if x.strip() and not x.strip().startswith("#")]
 
 
-def served_files(root: Path) -> list[str]:
-    """Webroot-relative paths the nightly rsync would publish from this tree.
+# --------------------------------------------------------------------------- #
+# Bundle slimming (port Stage 2 prep, 2026-10-27)
+# --------------------------------------------------------------------------- #
+# Served payloads that nothing on the site fetches: no page, asset or script in
+# the page set names the file, its stem as a quoted string or a numbered
+# prefix of it, no other served depth-one payload names it (a registry row a
+# page might render as a link), the Go server's sidecar table does not read
+# it, and a headless crawl of every page of the served worktree requested
+# none of them (docs/port/PORT_BUNDLE.md section 9). They stay in the local
+# tree and in the nightly rsync's set (port_equivalence.payload_files is
+# unchanged); only the served bundle leaves them out. build_served refuses to
+# build when something served has started to name one (slim_violations), so a
+# page that begins fetching one fails the build instead of a 404 on the box.
+_INPUT = "a hand-edited or fetched pipeline input; exporters fold it into served files"
+_LAB = "a lab, gate or evaluation record; no page reads it"
+_LEDGER = "a pipeline ledger; no page reads it"
+_RENDERED = "build_site.build_model_updates renders it into /models/updates/ at build time"
+_STRAY = "no code in this tree writes or reads it; no page reads it"
+SLIM_EXCLUDE: dict[str, str] = {
+    "data/_am_crossmodel_map.json":             _STRAY,
+    "data/_av_agelevel_verify.json":            _LAB,
+    "data/_c_agenorms.json":                    _LAB,
+    "data/arb_blast_bound.json":                _LAB,
+    "data/arb_mde_floor.json":                  _LAB,
+    "data/arb_source_urls.json":                _INPUT,
+    "data/college_source_probe.json":           _LAB,
+    "data/collegesavant_team_map.json":         _INPUT,
+    "data/contract_overrides.json":             _INPUT,
+    "data/debut_redates.json":                  _INPUT,
+    "data/draft_bonus_slot.json":               _INPUT,
+    "data/draft_bonus_slot_report.json":        _LAB,
+    "data/efv5_atlas_tools.json":               _LAB,
+    "data/efv5_tracking_head.json":             _LAB,
+    "data/efv_etools_reweight_weights.json":    _LAB,
+    "data/efv_label_horizon_2026.json":         _LAB,
+    "data/efv_surrogate_gate.json":             _LAB,
+    "data/fa_overrides.json":                   _INPUT,
+    "data/hof_public_benchmarks.json":          _INPUT,
+    "data/intl_amateur_unmatched.json":         _LEDGER,
+    "data/mlb_fielding_positions.json":         _INPUT,
+    "data/model_updates.json":                  _RENDERED,
+    "data/pipeline_vintages.json":              _LEDGER,
+    "data/position_overrides.json":             _INPUT,
+    "data/positional_shape_transfer_lab.json":  _LAB,
+    "data/proj_shape_blast.json":               _LAB,
+    "data/qo_history.json":                     _INPUT,
+    "data/role_full_season_baselines.json":     _INPUT,
+    "data/ros_talent_basis_probe.json":         _LAB,
+    "data/sdr_intake_manifest.json":            _LEDGER,
+    "data/tjstats_movers.json":                 _LEDGER,
+    "data/venue_meta.json":                     _INPUT,
+    "data/xfv_epoch2026_power_projection.json": _LAB,
+    "data/xfv_ewar_label_epoch_blast.json":     _LAB,
+    "data/xfv_grade_space_diag.json":           _LAB,
+    "data/xfv_regen_digest.json":               _LEDGER,
+    "data/xfv_regen_ledger.json":               _LEDGER,
+}
+# The files the webmaster's Go server reads from the bundle for its JSON
+# sidecar routes (port PR 5, internal/httpserver/sidecar.go): never slimmed.
+SIDECAR_FILES: frozenset[str] = frozenset({
+    "data/xfv.json", "data/xfv_history.json", "data/xfv_ungraded.json",
+    "data/xfv_proxy_eval.json", "data/player_links.json", "data/swing_plus.json",
+    "data/stuff_plus_aaa.json", "data/photo_ctx.json", "data/draft_timeseries.json",
+    "data/overseas_timeseries.json", "data/collegesavant_milb_equiv.json", "data/pal.json",
+    "data/pal_prospect_watch.json", "data/timeseries.json",
+    "data/hitter_leaderboards.json", "data/starter_leaderboards.json",
+    "data/bullpen_leaderboards.json", "data/leverage_leaderboards.json",
+    "data/hitter_history.json", "data/starter_history.json", "data/bullpen_history.json",
+    "data/leverage_history.json", "data/fantasy.json", "data/mlb_projections.json",
+    "data/mlb_player_detail.json", "data/trade_values.json",
+})
+SIDECAR_DIRS: tuple[str, ...] = ("data/pitch_plots/", "data/player_detail/")
+_TEXT = (".html", ".js", ".mjs", ".css", ".json", ".txt", ".xml", ".svg")
+
+
+class SlimError(RuntimeError):
+    pass
+
+
+def slim_violations(root: Path, exclude: dict[str, str] | None = None) -> dict[str, str]:
+    """Each excluded payload present in this tree that something served now
+    names, with what names it: a page-set file (its file name, its stem
+    quoted, or a numbered prefix of it), another served depth-one payload (its
+    file name), or the Go server's sidecar table. Empty is the precondition of
+    a slimmed build."""
+    import port_equivalence as pe
+    exclude = SLIM_EXCLUDE if exclude is None else exclude
+    live = {r for r in exclude if (root / r).is_file()}
+    if not live:
+        return {}
+    out: dict[str, str] = {}
+    for r in sorted(live):
+        if r in SIDECAR_FILES or r.startswith(SIDECAR_DIRS):
+            out[r] = "the Go server's sidecar table"
+    names = {r.split("/", 1)[1]: r for r in live}
+    stems = {n.rsplit(".", 1)[0]: r for n, r in names.items()}
+    prefixes = {}
+    for st, r in stems.items():
+        pre = re.sub(r"\d+$", "", st)
+        if pre != st and len(pre) >= 4:
+            prefixes[pre] = r
+    by_name = re.compile("|".join(re.escape(n) for n in sorted(names, key=len, reverse=True)))
+    by_stem = re.compile(r"""['"`](""" + "|".join(re.escape(x) for x in sorted(stems, key=len, reverse=True))
+                         + r""")['"`]""")
+    by_prefix = re.compile("|".join(re.escape(x) for x in sorted(prefixes, key=len, reverse=True))) \
+        if prefixes else None
+    for rel in pe.page_files(root):
+        p = root / rel
+        if p.suffix.lower() not in _TEXT:
+            continue
+        text = p.read_text(encoding="utf-8", errors="replace")
+        for m in set(by_name.findall(text)):
+            out.setdefault(names[m], rel)
+        for m in set(by_stem.findall(text)):
+            out.setdefault(stems[m], rel)
+        if by_prefix is not None:
+            for m in set(by_prefix.findall(text)):
+                out.setdefault(prefixes[m], rel + " (numbered prefix)")
+    for rel in pe.payload_files(root):
+        if rel.count("/") != 1 or rel in live:
+            continue
+        text = (root / rel).read_text(encoding="utf-8", errors="replace")
+        for m in set(by_name.findall(text)):
+            out.setdefault(names[m], rel)
+    return dict(sorted(out.items()))
+
+
+def served_files(root: Path, slim: bool = False) -> list[str]:
+    """Webroot-relative paths the nightly rsync would publish from this tree,
+    and with slim=True the served bundle's set: the same minus SLIM_EXCLUDE.
 
     The set is port_equivalence's (imported, never transcribed), so the bundle,
     the Gate C snapshot and deploy/nightly-build.sh's include lines agree."""
     import port_equivalence as pe
     rels = set(pe.page_files(root)) | set(pe.payload_files(root))
+    if slim:
+        rels -= set(SLIM_EXCLUDE)
     return sorted(r for r in rels
                   if r not in PUBLISHER_FILES and r not in (RECEIPT, BUNDLE_INFO))
 
 
-def plan_served(root: Path) -> dict:
-    rels = served_files(root)
+def plan_served(root: Path, slim: bool = True) -> dict:
+    rels = served_files(root, slim=slim)
     by_top: dict[str, list[int]] = {}
     for r in rels:
         parts = r.split("/")
@@ -369,7 +501,9 @@ def plan_served(root: Path) -> dict:
         n_b = by_top.setdefault(top, [0, 0])
         n_b[0] += 1
         n_b[1] += (root / r).stat().st_size
+    left = sorted(r for r in SLIM_EXCLUDE if (root / r).is_file()) if slim else []
     return {"files": len(rels), "bytes": sum(v[1] for v in by_top.values()),
+            "slimmed": {"files": len(left), "bytes": sum((root / r).stat().st_size for r in left)},
             "by_top": {k: {"files": v[0], "bytes": v[1]} for k, v in sorted(by_top.items())}}
 
 
@@ -400,15 +534,26 @@ def _git(root: Path, *args: str) -> str:
 
 
 def build_served(root: Path, out_root: Path, strip: bool = True,
-                 now: _dt.datetime | None = None, strips=apply_strips) -> dict:
-    """Freeze the served set into OUT_ROOT/<bundle-id>/ and return BUNDLE.json."""
+                 now: _dt.datetime | None = None, strips=apply_strips,
+                 slim: bool = True) -> dict:
+    """Freeze the served set into OUT_ROOT/<bundle-id>/ and return BUNDLE.json.
+
+    slim=True (the default) leaves SLIM_EXCLUDE out, after slim_violations
+    shows nothing served names any of it; a violation raises SlimError and
+    writes nothing."""
+    if slim:
+        bad = slim_violations(root)
+        if bad:
+            raise SlimError("the slimming list names files something served now reads: "
+                            + json.dumps(bad) + "; drop them from SLIM_EXCLUDE")
     now = (now or _dt.datetime.now(_dt.timezone.utc)).astimezone(_dt.timezone.utc)
     out_root.mkdir(parents=True, exist_ok=True)
     stage = out_root / f".building-{os.getpid()}"
     if stage.exists():
         shutil.rmtree(stage)
     site = stage / "site"
-    rels = served_files(root)
+    rels = served_files(root, slim=slim)
+    slimmed = sorted(r for r in SLIM_EXCLUDE if (root / r).is_file()) if slim else []
     for rel in rels:
         dst = site / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -448,6 +593,7 @@ def build_served(root: Path, out_root: Path, strip: bool = True,
         "strip": strip, "strips": strip_rows,
         "withheld": _withheld_names(root),
         "left_out": sorted(PUBLISHER_FILES), "receipt": RECEIPT,
+        "slim": slim, "slimmed": slimmed,
     }
     (stage / "BUNDLE.json").write_text(json.dumps(info, indent=1) + "\n",
                                        encoding="utf-8", newline="\n")
@@ -552,6 +698,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="verify a served bundle against its own manifest")
     ap.add_argument("--no-strip", action="store_true",
                     help="served bundle: ship the sources, skip the comment strips")
+    ap.add_argument("--no-slim", action="store_true",
+                    help="served bundle: keep the payloads SLIM_EXCLUDE leaves out")
     ap.add_argument("--keep", type=int, default=2,
                     help="served bundle: bundles to keep under OUT_ROOT (0 keeps all)")
     ap.add_argument("--served-data", action="store_true",
@@ -562,11 +710,15 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     root = a.root.resolve()
     if a.plan_served:
-        print(json.dumps(plan_served(root), indent=1))
+        print(json.dumps(plan_served(root, slim=not a.no_slim), indent=1))
         return 0
     if a.served_bundle:
         out_root = a.served_bundle.resolve()
-        info = build_served(root, out_root, strip=not a.no_strip)
+        try:
+            info = build_served(root, out_root, strip=not a.no_strip, slim=not a.no_slim)
+        except SlimError as exc:
+            print(f"!!! port bundle: {exc}", file=sys.stderr)
+            return 1
         res = verify_served(Path(info["path"]))
         info["verify"] = {k: res[k] for k in ("checked", "ok", "problems")}
         info["pruned"] = prune_served(out_root, a.keep, protect=info["bundle_id"]) \

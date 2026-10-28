@@ -10,7 +10,8 @@ the key, batch mode and strict host checking; READY alone and last; a
 --link-dest to the last shipped bundle), that an unverified bundle never
 leaves, that nothing is recorded unless both calls succeed, that the config is
 refused inside a git work tree, and the shape of the Task Scheduler XML and the
-nightly script it runs (not installed)."""
+nightly script it runs (not installed). The remote commands a ship makes rsync
+send are pinned to the box's bin/shipgate fixture byte for byte."""
 
 import datetime as _dt
 import json
@@ -93,11 +94,44 @@ def test_commands_ship_ready_last_over_a_strict_ssh(tmp_path):
                  "IdentitiesOnly=yes", "StrictHostKeyChecking=yes"):
         assert part in e
     assert "--exclude=/READY" in first
+    assert "--chmod=D775,F664" in first and "--chmod=D775,F664" in second, \
+        "group-writable, so the box's receive step (group eephus) can mark, swap and prune"
     assert "--link-dest=../20261021T070000Z-aaaaaaaaaaaa" in first
     assert first[-1] == f"eephus-artifacts@203.0.113.7:/opt/eephus/artifacts/incoming/{bundle.name}/"
     assert first[-2].endswith(f"/{bundle.name}/") and first[-2].startswith("/")
     assert second[-2].endswith("/READY") and second[-1].endswith(f"/{bundle.name}/READY")
     assert "--delete" not in " ".join(first + second), "a ship never deletes on the box"
+
+
+FIXTURE = ROOT / "test_fixtures" / "port_ship" / "remote_commands.txt"
+# The bytes committed as internal/shipgate/testdata/port_ship_remote_commands.txt
+# in the webmaster's repository (port PR 7); bin/shipgate's tests accept them verbatim.
+FIXTURE_SHA256 = "137e017b071cf51fa92390cfc726414e4120aad984061b4b39fc24ec97ca23d8"
+
+
+def test_remote_commands_are_the_gates_fixture(capsys):
+    import hashlib
+    raw = FIXTURE.read_bytes().replace(b"\r\n", b"\n")
+    assert hashlib.sha256(raw).hexdigest() == FIXTURE_SHA256, \
+        "the fixture changed: copy it to the gate's testdata in the same PR set"
+    want = [x for x in raw.decode("ascii").splitlines() if x and not x.startswith("#")]
+    got: list[str] = []
+    for argv in (["--print-remote", "20261023T001053Z-6f82911d5778"],
+                 ["--print-remote", "20261024T031000Z-0123456789ab",
+                  "--link-from", "20261023T001053Z-6f82911d5778"],
+                 ["--print-remote", "20261025T031000Z-abcdef012345",
+                  "--link-from", "20261024T031000Z-0123456789ab", "--bwlimit", "20000"]):
+        assert ps.main(argv) == 0
+        got += capsys.readouterr().out.splitlines()
+    assert got == want
+
+
+def test_remote_dir_must_be_the_inbox_spelled_as_the_pin_spells_it(tmp_path):
+    for bad in (".", "incoming", "/opt/eephus/artifacts/incoming/", "/opt/eephus/../x",
+                "/opt/eephus artifacts"):
+        with pytest.raises(ps.ShipError, match="EEPHUS_SHIP_REMOTE_DIR"):
+            _conf(tmp_path, EEPHUS_SHIP_REMOTE_DIR=bad)
+    assert ps.main(["--print-remote", "not-an-id"]) == 1
 
 
 def test_dry_run_runs_and_writes_nothing(tmp_path):
@@ -109,6 +143,9 @@ def test_dry_run_runs_and_writes_nothing(tmp_path):
 
     res = ps.ship(bundle, conf, dry_run=True, runner=runner)
     assert res["ok"] and res["dry_run"] and len(res["commands"]) == 2
+    assert res["remote"] == [
+        f"rsync --server -rte.iLsfxCIvu --partial . /opt/eephus/artifacts/incoming/{bundle.name}/",
+        f"rsync --server -rte.iLsfxCIvu --partial . /opt/eephus/artifacts/incoming/{bundle.name}/READY"]
     assert not (tmp_path / "state").exists()
 
 

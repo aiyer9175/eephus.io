@@ -278,3 +278,92 @@ def test_served_bundle_cli_builds_verifies_and_prunes(tmp_path, capsys):
     out = json.loads(capsys.readouterr().out)
     assert rc == 0 and out["verify"]["ok"] and out["pruned"] == []
     assert pb.main(["--verify-served", out["path"]]) == 0
+
+
+# --------------------------------------------------------------------------- #
+# Bundle slimming (docs/port/PORT_BUNDLE.md section 9)
+# --------------------------------------------------------------------------- #
+import pytest  # noqa: E402
+
+
+def test_slim_list_never_names_a_sidecar_file_and_only_depth_one_payloads():
+    assert not set(pb.SLIM_EXCLUDE) & pb.SIDECAR_FILES
+    for rel, why in pb.SLIM_EXCLUDE.items():
+        assert rel.startswith("data/") and rel.count("/") == 1 and rel.endswith(".json"), rel
+        assert why and why in (pb._INPUT, pb._LAB, pb._LEDGER, pb._RENDERED, pb._STRAY)
+        assert not rel.startswith(pb.SIDECAR_DIRS)
+        assert rel not in (pb.BUNDLE_INFO, pb.RECEIPT) and rel not in pb.PUBLISHER_FILES
+
+
+def _slim_tree(tmp_path, monkeypatch):
+    root = _site_tree(tmp_path)
+    (root / "data" / "old_lab.json").write_text('{"lab": 1}', encoding="utf-8")
+    (root / "data" / "awards_2021.json").write_text('{"y": 2021}', encoding="utf-8")
+    monkeypatch.setattr(pb, "SLIM_EXCLUDE", {"data/old_lab.json": pb._LAB,
+                                             "data/awards_2021.json": pb._LAB,
+                                             "data/not_in_this_tree.json": pb._LAB})
+    return root
+
+
+def test_slimmed_set_is_the_rsync_set_minus_the_list(tmp_path, monkeypatch):
+    root = _slim_tree(tmp_path, monkeypatch)
+    full = pb.served_files(root)
+    assert "data/old_lab.json" in full and "data/awards_2021.json" in full
+    assert pb.served_files(root, slim=True) == sorted(
+        set(full) - {"data/old_lab.json", "data/awards_2021.json"})
+    plan = pb.plan_served(root)
+    assert plan["slimmed"]["files"] == 2 and plan["files"] == len(full) - 2
+    assert pb.plan_served(root, slim=False)["files"] == len(full)
+
+
+def test_a_slimmed_build_leaves_the_list_out_and_still_verifies(tmp_path, monkeypatch):
+    root = _slim_tree(tmp_path, monkeypatch)
+    info = pb.build_served(root, tmp_path / "out", strip=False, now=_T0, strips=_no_strip)
+    bundle = Path(info["path"])
+    assert info["slim"] and info["slimmed"] == ["data/awards_2021.json", "data/old_lab.json"]
+    assert not (bundle / "site" / "data" / "old_lab.json").exists()
+    assert pb.verify_served(bundle)["ok"]
+    full = pb.build_served(root, tmp_path / "full", strip=False, now=_T0, strips=_no_strip,
+                           slim=False)
+    assert full["slimmed"] == [] and full["files"] == info["files"] + 2
+
+
+def test_the_guard_refuses_a_build_once_something_served_names_an_excluded_file(
+        tmp_path, monkeypatch):
+    root = _slim_tree(tmp_path, monkeypatch)
+    assert pb.slim_violations(root) == {}
+    plants = {
+        "file name": ("fa/index.html", '<script>fetch("/data/old_lab.json")</script>'),
+        "quoted stem": ("assets/site.css", "/* 'old_lab' */"),
+        "numbered prefix": ("prospx/index.html", "<script>fetch(`/data/awards_${y}.json`)</script>"),
+        "another payload": ("data/a.json", '{"src": "data/old_lab.json"}'),
+    }
+    for how, (rel, text) in plants.items():
+        before = (root / rel).read_text(encoding="utf-8")
+        (root / rel).write_text(before + text, encoding="utf-8")
+        bad = pb.slim_violations(root)
+        assert bad, how
+        assert set(bad.values()) <= {rel, rel + " (numbered prefix)"}, (how, bad)
+        with pytest.raises(pb.SlimError):
+            pb.build_served(root, tmp_path / f"out-{len(how)}", strip=False, now=_T0,
+                            strips=_no_strip)
+        assert not (tmp_path / f"out-{len(how)}").exists() or not any(
+            (tmp_path / f"out-{len(how)}").iterdir()), "a refused build wrote a bundle"
+        (root / rel).write_text(before, encoding="utf-8")
+    # A file's own name inside itself is not a reference.
+    (root / "data" / "old_lab.json").write_text('{"self": "data/old_lab.json"}', encoding="utf-8")
+    assert pb.slim_violations(root) == {}
+    # The CLI reports the refusal and exits 1; --no-slim still builds.
+    (root / "fa" / "index.html").write_text('<a href="/data/old_lab.json">x</a>', encoding="utf-8")
+    assert pb.main(["--root", str(root), "--served-bundle", str(tmp_path / "cli"),
+                    "--no-strip"]) == 1
+    assert pb.main(["--root", str(root), "--served-bundle", str(tmp_path / "cli"),
+                    "--no-strip", "--no-slim"]) == 0
+
+
+def test_the_real_tree_names_no_excluded_file():
+    """The committed list against the real page set and payloads: the guard a
+    nightly build runs. Skips on a checkout without the gitignored payloads."""
+    if not any((ROOT / r).is_file() for r in pb.SLIM_EXCLUDE):
+        pytest.skip("no served payloads in this checkout")
+    assert pb.slim_violations(ROOT) == {}

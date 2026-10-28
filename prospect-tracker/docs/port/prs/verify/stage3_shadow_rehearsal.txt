@@ -1,0 +1,131 @@
+== champion against itself (the identity check)
+shadow equivalence, 2026-10-27T23:36:27Z
+  table deploy\shadow_gates.tsv (sha256 832ba23e4274)
+  bundle dir C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/bundle_out/20261023T001053Z-6f82911d5778/site 20261023T001053Z-6f82911d5778
+  challenger dir C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/bundle_out/20261023T001053Z-6f82911d5778/site
+  10 PASS, 0 FAIL, 0 NOT RUN
+astuff_plus    PASS
+    rows data/stuff_plus_aaa.json /players: bundle 1379, challenger 1379, matched 1379, missing 0, extra 0
+    stuff_plus               round:0    1379/1379   1.0000 (floor 1.00)
+consensus      PASS
+    rows data/xfv.json /by_player: bundle 9515, challenger 9515, matched 9515, missing 0, extra 0
+    consensus_fv             ceil:0     9515/9515   1.0000 (floor 1.00)
+fantasy        PASS
+    rows data/fantasy.json /players: bundle 1498, challenger 1498, matched 1498, missing 0, extra 0
+    fpts_fgp                 exact      1498/1498   1.0000 (floor 1.00)
+mlb_boards     PASS
+    rows data/hitter_leaderboards.json /hitters: bundle 661, challenger 661, matched 661, missing 0, extra 0
+    rows data/starter_leaderboards.json /starters: bundle 237, challenger 237, matched 237, missing 0, extra 0
+    rows data/bullpen_leaderboards.json /relievers: bundle 514, challenger 514, matched 514, missing 0, extra 0
+    hem_plus                 round:0     661/661    1.0000 (floor 1.00)
+    war                      round:1     661/661    1.0000 (floor 1.00)
+    sem_plus                 round:0     237/237    1.0000 (floor 1.00)
+    war                      round:1     237/237    1.0000 (floor 1.00)
+    rem_plus                 round:0     514/514    1.0000 (floor 1.00)
+    war                      round:1     514/514    1.0000 (floor 1.00)
+pal            PASS
+    rows data/pal.json /rp2sp: bundle 285, challenger 285, matched 285, missing 0, extra 0
+    rows data/pal.json /sp2rp: bundle 196, challenger 196, matched 196, missing 0, extra 0
+    fit                      exact       285/285    1.0000 (floor 1.00)
+    fit                      exact       196/196    1.0000 (floor 1.00)
+projections    PASS
+    rows data/mlb_projections.json /vets: bundle 1336, challenger 1336, matched 1336, missing 0, extra 0
+    rows data/mlb_projections.json /prospects: bundle 178, challenger 178, matched 178, missing 0, extra 0
+    warTotal                 round:1    1336/1336   1.0000 (floor 1.00)
+    surNpv                   round:1    1336/1336   1.0000 (floor 1.00)
+    warTotal                 round:1     178/178    1.0000 (floor 1.00)
+surplus        PASS
+    rows data/xfv.json /by_player: bundle 9515, challenger 9515, matched 9515, missing 0, extra 0
+    surplus_mm               round:1    9515/9515   1.0000 (floor 1.00)
+swing_plus     PASS
+    rows data/swing_plus.json /players: bundle 297, challenger 297, matched 297, missing 0, extra 0
+    swing_plus               round:0     297/297    1.0000 (floor 1.00)
+trade_machine  PASS
+    rows data/trade_values.json /players: bundle 6316, challenger 6316, matched 6316, missing 0, extra 0
+    trade_value_mm           round:1    6316/6316   1.0000 (floor 1.00)
+    posterior_surplus_mm     round:1    6316/6316   1.0000 (floor 1.00)
+xfv            PASS
+    rows data/xfv.json /by_player: bundle 9515, challenger 9515, matched 9515, missing 0, extra 0
+    xfv_grade                round:0    9515/9515   1.0000 (floor 1.00)
+    xfv_war_6yr              round:1    9515/9515   1.0000 (floor 1.00)
+exit 0
+
+== his committed frontend/data as a stand-in challenger
+shadow equivalence, 2026-10-27T23:36:27Z
+  table deploy\shadow_gates.tsv (sha256 832ba23e4274)
+  bundle dir C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/eephusgit/prs/bundle_out/20261023T001053Z-6f82911d5778/site 20261023T001053Z-6f82911d5778
+  challenger dir ../frontend/data/..
+  0 PASS, 8 FAIL, 2 NOT RUN
+astuff_plus    FAIL
+    rows data/stuff_plus_aaa.json /players: bundle 1379, challenger 196, matched 84, missing 1295, extra 112
+    stuff_plus               round:0      11/84     0.1310 (floor 1.00)
+    why: data/stuff_plus_aaa.json /players: 1295 rows missing in the challenger, 112 extra
+    why: data/stuff_plus_aaa.json stuff_plus: 11 of 84 agree under round:0 (0.1310, floor 1.0000)
+consensus      FAIL
+    rows data/xfv.json /by_player: bundle 9515, challenger 9040, matched 8999, missing 516, extra 41
+    consensus_fv             ceil:0     4247/8999   0.4719 (floor 1.00)
+    why: data/xfv.json /by_player: 516 rows missing in the challenger, 41 extra
+    why: data/xfv.json consensus_fv: 4247 of 8999 agree under ceil:0 (0.4719, floor 1.0000)
+fantasy        FAIL
+    rows data/fantasy.json /players: bundle 1498, challenger 1276, matched 1276, missing 222, extra 0
+    fpts_fgp                 exact         0/1276   0.0000 (floor 1.00)
+    why: data/fantasy.json /players: 222 rows missing in the challenger, 0 extra
+    why: data/fantasy.json fpts_fgp: 0 of 1276 agree under exact (0.0000, floor 1.0000)
+mlb_boards     FAIL
+    rows data/hitter_leaderboards.json /hitters: bundle 661, challenger 597, matched 597, missing 64, extra 0
+    rows data/starter_leaderboards.json /starters: bundle 237, challenger 213, matched 203, missing 34, extra 10
+    rows data/bullpen_leaderboards.json /relievers: bundle 514, challenger 442, matched 422, missing 92, extra 20
+    hem_plus                 round:0      98/597    0.1642 (floor 1.00)
+    war                      round:1       0/597    0.0000 (floor 1.00)
+    sem_plus                 round:0      31/203    0.1527 (floor 1.00)
+    war                      round:1       0/203    0.0000 (floor 1.00)
+    rem_plus                 round:0      89/422    0.2109 (floor 1.00)
+    war                      round:1       0/422    0.0000 (floor 1.00)
+    why: data/hitter_leaderboards.json /hitters: 64 rows missing in the challenger, 0 extra
+    why: data/starter_leaderboards.json /starters: 34 rows missing in the challenger, 10 extra
+    why: data/bullpen_leaderboards.json /relievers: 92 rows missing in the challenger, 20 extra
+    why: data/hitter_leaderboards.json hem_plus: 98 of 597 agree under round:0 (0.1642, floor 1.0000)
+    why: data/hitter_leaderboards.json war: 0 of 597 agree under round:1 (0.0000, floor 1.0000)
+    why: data/starter_leaderboards.json sem_plus: 31 of 203 agree under round:0 (0.1527, floor 1.0000)
+    why: data/starter_leaderboards.json war: 0 of 203 agree under round:1 (0.0000, floor 1.0000)
+    why: data/bullpen_leaderboards.json rem_plus: 89 of 422 agree under round:0 (0.2109, floor 1.0000)
+    why: data/bullpen_leaderboards.json war: 0 of 422 agree under round:1 (0.0000, floor 1.0000)
+pal            FAIL
+    rows data/pal.json /rp2sp: bundle 285, challenger 208, matched 203, missing 82, extra 5
+    rows data/pal.json /sp2rp: bundle 196, challenger 172, matched 162, missing 34, extra 10
+    fit                      exact        16/203    0.0788 (floor 1.00)
+    fit                      exact        13/162    0.0802 (floor 1.00)
+    why: data/pal.json /rp2sp: 82 rows missing in the challenger, 5 extra
+    why: data/pal.json /sp2rp: 34 rows missing in the challenger, 10 extra
+    why: data/pal.json fit: 16 of 203 agree under exact (0.0788, floor 1.0000)
+    why: data/pal.json fit: 13 of 162 agree under exact (0.0802, floor 1.0000)
+projections    NOT RUN
+    warTotal                 not measured: a side has no document
+    surNpv                   not measured: a side has no document
+    warTotal                 not measured: a side has no document
+    why: challenger: data/mlb_projections.json: unavailable
+surplus        FAIL
+    rows data/xfv.json /by_player: bundle 9515, challenger 9040, matched 8999, missing 516, extra 41
+    surplus_mm               round:1     142/8999   0.0158 (floor 1.00)
+    why: data/xfv.json /by_player: 516 rows missing in the challenger, 41 extra
+    why: data/xfv.json surplus_mm: 142 of 8999 agree under round:1 (0.0158, floor 1.0000)
+swing_plus     FAIL
+    rows data/swing_plus.json /players: bundle 297, challenger 164, matched 164, missing 133, extra 0
+    swing_plus               round:0     125/164    0.7622 (floor 1.00)
+    why: data/swing_plus.json /players: 133 rows missing in the challenger, 0 extra
+    why: data/swing_plus.json swing_plus: 125 of 164 agree under round:0 (0.7622, floor 1.0000)
+trade_machine  NOT RUN
+    trade_value_mm           not measured: a side has no document
+    posterior_surplus_mm     not measured: a side has no document
+    why: challenger: data/trade_values.json: unavailable
+xfv            FAIL
+    rows data/xfv.json /by_player: bundle 9515, challenger 9040, matched 8999, missing 516, extra 41
+    xfv_grade                round:0    1632/8999   0.1814 (floor 1.00)
+    xfv_war_6yr              round:1     706/8999   0.0785 (floor 1.00)
+    why: data/xfv.json /by_player: 516 rows missing in the challenger, 41 extra
+    why: data/xfv.json xfv_grade: 1632 of 8999 agree under round:0 (0.1814, floor 1.0000)
+    why: data/xfv.json xfv_war_6yr: 706 of 8999 agree under round:1 (0.0785, floor 1.0000)
+exit 1
+== -out inside the bundle is refused
+shadoweq: the report may not be written inside the bundle: it would become an unlisted file the next verify rejects
+exit 2

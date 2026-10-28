@@ -67,11 +67,11 @@ On the box the same check needs no Python: `cd <bundle-id> && sha256sum -c --qui
 
 **A ship, in order:**
 1. Verify the bundle (section 2). A bundle that fails is never sent.
-2. `rsync -rt --partial` over `ssh -i <key> -p <port> -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes`. It sends everything but `READY` into `<remote dir>/<bundle-id>/` (default `/opt/eephus/artifacts/incoming`), with `--link-dest=../<last shipped id>`, so unchanged files become hard links on the box and only changed bytes cross the wire.
+2. `rsync -rt --partial --chmod=D775,F664` over `ssh -i <key> -p <port> -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes`. It sends everything but `READY` into `<remote dir>/<bundle-id>/` (default `/opt/eephus/artifacts/incoming`), with `--link-dest=../<last shipped id>`, so unchanged files become hard links on the box and only changed bytes cross the wire. The modes are group-writable so the box's receive step, running as `eephus` in the inbox's group, can write the receipt, rename `READY` and prune (with `D755,F644`, the first version, it could do none of the three).
 3. Send `READY` alone, last.
 4. Record the ship in `.cache/port_ship/last_ship.json` and `ship_log.tsv`. Nothing is recorded unless both rsync calls succeed.
 
-The ship never deletes anything on the box. `--dry-run` prints both commands and runs nothing.
+The ship never deletes anything on the box. `--dry-run` prints both commands, and the two remote commands they make rsync send, and runs nothing.
 
 **rsync on the PC.** The PC has no rsync today. Install cwRsync, MSYS2 (`pacman -S rsync`) or use WSL, then set `EEPHUS_SHIP_RSYNC` and `EEPHUS_SHIP_PATH_STYLE` (`cygdrive`, `msys` or `wsl`) to match.
 
@@ -85,7 +85,7 @@ The box acts only on a directory under `incoming/` that holds `READY`. Its steps
 
 **Rollback** repoints `current` to the previous bundle.
 
-**Restricted user.** It needs write access to `incoming/` only: `rrsync` or a forced command. With `rrsync` rooted at `incoming/`, set `EEPHUS_SHIP_REMOTE_DIR=.`. `--link-dest` then stays inside the restricted directory.
+**Restricted user.** Its key forces the webmaster's `bin/shipgate` (port PR 7, `internal/shipgate`), which reads the remote command from `SSH_ORIGINAL_COMMAND` and accepts exactly the two calls above: `rsync --server <cluster> --partial [--bwlimit=N] [--link-dest=../<id>] . <inbox>/<bundle-id>/`, then the same into `<inbox>/<bundle-id>/READY`. `<inbox>` is the pin's `paths.incoming` spelled exactly, so `EEPHUS_SHIP_REMOTE_DIR` must be that absolute path (the tool refuses `.` or a trailing slash). Before rsync runs, the gate refuses `READY` until the body's `MANIFEST.tsv`, `SHA256SUMS`, `BUNDLE.json` and `site/` have arrived, refuses either call into a bundle that already has `READY`, `RECEIVED` or `REJECTED` (so a bundle id is shipped once), and refuses the body when the box's free space under the inbox is below its floor (8 GB by default), with a message that lands in the PC's ship log. `python tools/port_ship.py --print-remote <bundle-id> [--link-from <id>]` prints the remote commands; `test_fixtures/port_ship/remote_commands.txt` is that output and the gate's test fixture, byte for byte (`test_port_ship.py` pins its sha256). A daily sweep on the box removes an abandoned upload (no marker, its id more than 48 hours old).
 
 **Disk.** Budget about 2.6 GB for two generations, less with the hard links.
 
@@ -160,3 +160,29 @@ powershell -ExecutionPolicy Bypass -File deploy\port-nightly.ps1 -SkipPipeline -
 ## 8. The box half, prepared as PRs (2026-10-22, task PORT_PR_PREP)
 
 The webmaster's side of Strategy D is prepared as six stacked feature branches of `eephus/eephus`, built and tested locally from the read-only copy of his `main` (9e1423cc) and never pushed: `port-stage0-withheld-data` (the six withheld files untracked, the 44-name exclude union), `port-stage1-publish-contract` (the pin `frontend/deploy/artifact_manifest.json`, `publish.sh` publishing `current/site` with the nine `data/<subdir>` shards, `publish_paths.txt` with our 33 page directories and no `teams/`), `port-stage1-buildsite-ownership` (his generator and site tests skip the pages the pin says the bundle owns), `port-stage1-receive` (`cmd/receive` in Go: verify against MANIFEST.tsv and the pin, write the receipt, rename READY to RECEIVED or REJECTED, swap `current` atomically, prune; `eephus-receive.path` and `.service`; nginx and Cloudflare no-store for the two bundle heartbeats), `port-stage1-sidecars` (the twenty JSON `/partials/` routes serve the bundle's file verbatim under `-bundle-dir`) and `port-stage1-pages` (our 214 pages and assets in his `frontend/`, LF, with his deep-link fix carried in). The plan with merge order, test lines and the owner defaults is `docs/port/prs/PR_PLAN.md`; the six PR descriptions and the per-branch build and test records sit beside it. The receive contract of section 4 is what `cmd/receive` implements, measured against the rehearsal bundle `20261023T001053Z-6f82911d5778` (17,837 files, 1,304,296,283 bytes): verified in 1m29s cold and 1.9s warm, a planted unlisted file rejected.
+
+## 9. Bundle slimming (2026-10-27, task PORT_STAGE2_PREP)
+
+**Question.** Which of the bundle's files does no page or script ever fetch, so the bundle can leave them out without changing a served page?
+
+**Method.** Two independent reads of the served set, intersected:
+- A static scan of every page-set file (the 214 pages, assets, prospx, the CollegeSavant modules and vendor; 82 MB of text). A payload counts as named when its file name appears, its stem appears as a quoted string, or a numbered prefix of it appears (`awards_${year}.json`). A shard directory counts as named when `<dir>/` appears. A payload that no page names is then looked up in every other served depth-one payload (a registry row a page may render as a link) and in the Go server's sidecar table (port PR 5). On top of that, every shard file's key was looked up among every string, key and integer of the served payloads and every token of the page set.
+- A headless Chromium crawl of all 37 pages plus six deep links on the served worktree, logging every request the server answered (210 requests, 76 under `data/`).
+
+**Result.** The bundle is close to minimal. Every shard directory is named, and every shard key is reachable but one (`mlb_player_detail/will_smith__519293.json`, 4,555 bytes, kept, because a disambiguated key can be built at run time). At depth one, 536 of 573 payloads are named; 37 (5,865,389 bytes, 0.45% of the bundle) are named by nothing: pipeline inputs (overrides, maps, benchmarks), lab, gate and evaluation records, pipeline ledgers, and `model_updates.json`, which `build_site.build_model_updates` renders into `/models/updates/` at build time. None of them was requested by the crawl.
+
+**The list.** `SLIM_EXCLUDE` in `tools/port_bundle.py`, each with its reason. `--served-bundle` leaves them out by default and `--no-slim` keeps them. They stay in the local tree and in `port_equivalence.payload_files` (the nightly rsync's set), so the local site and its snapshot are unchanged. Before a slimmed build, `slim_violations` re-runs the name scan for the listed files (about 10 seconds on the full tree); if any page, asset or other payload has started to name one, the build refuses (`SlimError`, exit 1) and writes nothing, so a page that begins fetching a listed file fails the build instead of answering 404 on the box.
+
+**The proof** (`python tools/port_equivalence.py compare-bundles`). Two bundles from the same worktree, minutes apart: full `20261027T235310Z-0507c0fe732a` (19,500 files, 1,313,198,226 bytes) and slim `20261027T235541Z-e54140664b09` (19,463 files, 1,307,332,837 bytes). All 214 page and asset rows identical; no row changed or added; 37 dropped, exactly the list; every file fetched by the worktree crawl and by crawls of both bundles' sites present in the slim bundle with the same bytes; and the two bundle crawls answered every one of 206 requests with the same status and bytes. The webmaster's `bin/receive -verify-only` accepts the slim bundle (`ok: 20261027T235541Z-e54140664b09, 19463 files, 1307332837 bytes verified in 2.039s`).
+
+**Not slimmed, and why.** The shard directories are the bulk (pitch plots 439 MB, player detail 262 MB, graduates 80 MB, management decisions 42 MB) and every file in them is reachable from a key a page holds. Trimming them is a producer question (fewer pitch plot points, or shards only for players on a board), not a packaging one.
+
+**Found on the way.** `data/scores/` is in neither the nightly rsync's set nor the bundle: the scores job (`tools/scores_job.py`) was designed to write it on the box behind its own nginx alias (`deploy/README.md`, the `/data/scores/` location). Under PORT-R1 the box runs no Python, so on the box `/scores/` loads its page and 404s `/data/scores/latest.json` (both bundle crawls show it). This is an owner question (the PORT_STAGE2_PREP report), not a slimming change.
+
+## 10. The ship gate and Stage 3 (2026-10-27, task PORT_STAGE2_PREP)
+
+Four more stacked branches of `eephus/eephus` sit on `port-stage1-pages` (docs/port/prs/PR_PLAN.md has the merge order and the test lines):
+- `port-stage2-transport`: `bin/shipgate`, the forced command on the ship user's key, accepting exactly the two calls in section 3, with the disk floor, READY last, never into a marked bundle, and a daily sweep of abandoned uploads; the producer side moved to `--chmod=D775,F664` so the box's receive step can mark, swap and prune what arrives.
+- `port-stage3-shadow-gates`: `bin/shadoweq` and `deploy/shadow_gates.tsv`, the registered per-field equivalence table the Go models are measured against; it serves nothing.
+- `port-stage3-asof-accessor`: `internal/asof` and `docs/AS_OF_ACCESSOR.md`, the schema-level as-of accessor and its classification of all 57 store tables.
+- `port-cutover-checklist`: `docs/port-cutover.md`, main-deploy day and its rollback.

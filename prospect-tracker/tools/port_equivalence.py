@@ -53,6 +53,18 @@ Three commands:
           MISSING     any status but 200 (the status is recorded)
         Exit 1 on any DIFFERENT, MISSING or BLOCKED file.
 
+    python tools/port_equivalence.py compare-bundles --ref FULL_BUNDLE
+            --new SLIM_BUNDLE [--fetched crawl.json ...]
+            [--crawl-ref crawl_full.json --crawl-new crawl_slim.json] [--out report.json]
+        Two served bundles from the same tree (port_bundle.py --served-bundle
+        with and without --no-slim): every page and asset row identical, no
+        row changed or added, and every file a crawl fetched (a crawl JSON of
+        {path: [status, sha256]}) present in the new bundle with the same
+        bytes; with --crawl-ref/--crawl-new, the two crawls of the two
+        bundles' sites answered every request with the same status and bytes.
+        Lists what the new bundle dropped. Exit 1 on any page difference,
+        change, addition, dropped fetched file or crawl difference.
+
 The published set is computed the way deploy/nightly-build.sh's rsync computes
 it: data/*.json and data/*.js at depth one minus deploy/data_exclude.txt, plus
 the per-player directories in PER_PLAYER_DIRS (pinned to the script's include
@@ -306,6 +318,66 @@ def read_bundle_manifest(bundle: Path) -> list[str]:
         return [line.split("\t", 1)[0] for line in f if line.strip()]
 
 
+def _manifest_rows(bundle: Path) -> dict[str, tuple[int, str]]:
+    rows: dict[str, tuple[int, str]] = {}
+    with open(bundle / "MANIFEST.tsv", encoding="utf-8") as f:
+        next(f)
+        for line in f:
+            if line.strip():
+                rel, size, digest = line.rstrip("\n").split("\t")
+                rows[rel] = (int(size), digest)
+    return rows
+
+
+def _crawl_rel(path: str) -> str:
+    rel = path.lstrip("/")
+    return rel + "index.html" if rel == "" or rel.endswith("/") else rel
+
+
+def compare_bundles(ref: Path, new: Path, fetched: tuple[dict, ...] = (),
+                    crawl_ref: dict | None = None, crawl_new: dict | None = None) -> dict:
+    """A slimmed bundle against the full one built from the same tree."""
+    a, b = _manifest_rows(ref), _manifest_rows(new)
+    skip = {"data/bundle_info.json"}         # names its own bundle id: differs by design
+    both = (a.keys() & b.keys()) - skip
+    changed = sorted(r for r in both if a[r] != b[r])
+    dropped = sorted(a.keys() - b.keys() - skip)
+    added = sorted(b.keys() - a.keys() - skip)
+    pages_ref = sorted(r for r in a if not r.startswith("data/"))
+    pages_new = sorted(r for r in b if not r.startswith("data/"))
+    page_diff = sorted(set(pages_ref) ^ set(pages_new)) + [
+        r for r in pages_ref if r in b and a[r] != b[r]]
+    fetched_paths: set[str] = set()
+    for crawl in fetched:
+        for path, (status, _sha) in crawl.get("requests", {}).items():
+            if status == 200:
+                fetched_paths.add(_crawl_rel(path))
+    fetched_in_ref = sorted(r for r in fetched_paths if r in a and r not in skip)
+    fetched_dropped = sorted(r for r in fetched_in_ref if r not in b)
+    fetched_changed = sorted(r for r in fetched_in_ref if r in b and a[r] != b[r])
+    crawl_diff: list[str] = []
+    if crawl_ref is not None and crawl_new is not None:
+        ra, rb = crawl_ref.get("requests", {}), crawl_new.get("requests", {})
+        for path in sorted(set(ra) | set(rb)):
+            if path == "/data/bundle_info.json":
+                continue
+            if ra.get(path) != rb.get(path):
+                crawl_diff.append(f"{path}: {ra.get(path)} -> {rb.get(path)}")
+    res = {
+        "ref": str(ref), "new": str(new),
+        "rows": {"ref": len(a), "new": len(b)},
+        "pages": {"ref": len(pages_ref), "new": len(pages_new), "differing": page_diff},
+        "changed": changed, "added": added,
+        "dropped": dropped, "dropped_bytes": sum(a[r][0] for r in dropped),
+        "fetched": {"files": len(fetched_paths), "in_ref": len(fetched_in_ref),
+                    "dropped": fetched_dropped, "changed": fetched_changed},
+        "crawl_diff": crawl_diff,
+    }
+    res["ok"] = not (page_diff or changed or added or fetched_dropped or fetched_changed
+                     or crawl_diff)
+    return res
+
+
 def read_explained(path: Path | None) -> list[tuple[str, str]]:
     if path is None:
         return []
@@ -426,7 +498,35 @@ def main(argv: list[str] | None = None) -> int:
                    help="every Nth path of the sorted list (a fixed sample)")
     h.add_argument("--explained", type=Path, help="TSV of glob<TAB>reason lines")
     h.add_argument("--out", type=Path, help="write the full report here")
+    cb = sub.add_parser("compare-bundles")
+    cb.add_argument("--ref", type=Path, required=True, help="the full served bundle")
+    cb.add_argument("--new", type=Path, required=True, help="the slimmed served bundle")
+    cb.add_argument("--fetched", type=Path, action="append", default=[],
+                    help="a crawl JSON whose fetched files must survive (repeatable)")
+    cb.add_argument("--crawl-ref", type=Path, help="a crawl of the full bundle's site/")
+    cb.add_argument("--crawl-new", type=Path, help="a crawl of the slimmed bundle's site/")
+    cb.add_argument("--out", type=Path, help="write the full report here")
     a = ap.parse_args(argv)
+    if a.cmd == "compare-bundles":
+        def _j(path):
+            return json.loads(path.read_text(encoding="utf-8")) if path else None
+        res = compare_bundles(a.ref.resolve(), a.new.resolve(),
+                              tuple(_j(x) for x in a.fetched),
+                              _j(a.crawl_ref), _j(a.crawl_new))
+        if a.out:
+            a.out.write_text(json.dumps(res, indent=1), encoding="utf-8")
+        print(json.dumps({"rows": res["rows"], "pages": {k: (len(v) if isinstance(v, list) else v)
+                                                         for k, v in res["pages"].items()},
+                          "changed": len(res["changed"]), "added": len(res["added"]),
+                          "dropped": len(res["dropped"]), "dropped_bytes": res["dropped_bytes"],
+                          "fetched": {k: (len(v) if isinstance(v, list) else v)
+                                      for k, v in res["fetched"].items()},
+                          "crawl_diff": len(res["crawl_diff"]), "ok": res["ok"]}, indent=1))
+        for rel in res["dropped"]:
+            print("DROPPED", rel)
+        for line in res["crawl_diff"][:50]:
+            print("CRAWL", line)
+        return 0 if res["ok"] else 1
     if a.cmd == "compare-http":
         res = compare_http(
             a.origin, bundle=a.bundle.resolve() if a.bundle else None,
