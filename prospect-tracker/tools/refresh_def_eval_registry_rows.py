@@ -11,7 +11,11 @@ re-measure the served claim must be read off the artifact, never typed, so this 
     regressing the dev bases or the star slice; prospect_def_value: |Spearman| beats the
     FG grade and MAE_z is no worse). When a rule does NOT hold the summary and verdict
     are left exactly as registered and the paragraph says so: a verdict is changed by
-    the owner, not by a refresh.
+    the owner, not by a refresh. EXCEPTION, answered: for proj_def_prior the owner
+    ruled on 2026-10-28 (EVAL-Q, DECISIONS_FOR_OWNER.md, 'Downgrade to provisional')
+    that a failed re-measure sets the verdict to provisional with provisional_kind
+    shipped_partial_measurement, the feature staying in the model and nothing
+    retrained; this script applies that answer (task EVAL_FOLLOWUPS_REFREEZE).
   * replaces the row's RE-MEASURED paragraph in notes (one per row, derived).
   * restamps last_checked / stale / artifact_age_days from model_registry.freshness().
 
@@ -50,17 +54,26 @@ def _proj_def_prior(row: dict, art: dict) -> bool:
         f"pooled {hp:+.4f} / star {hs:+.4f} against a baseline of {base['pooled_mae']:.4f} / "
         f"{base['pooled_star_mae']:.4f} (n {base['pooled_n']:,} / {base['pooled_star_n']:,}); dev "
         f"{dp:+.4f} / star {ds:+.4f}. Gate rule (reduce holdout pooled MAE without regressing the dev "
-        f"bases or the star slice): {'HOLDS' if rule else 'DOES NOT HOLD; the verdict is left as registered and an owner question is open'}."
+        f"bases or the star slice): {'HOLDS' if rule else 'DOES NOT HOLD. OWNER ANSWER 2026-10-28 (EVAL-Q, DECISIONS_FOR_OWNER.md): verdict provisional, provisional_kind shipped_partial_measurement; the 2026-06-29 ship on bWAR stands as the record of its day, the feature stays in the model and nothing is retrained'}."
     )
     if rule:
         row["summary"] = (f"Validated: the defensive prior cuts holdout hitter MAE {hp:.4f} and the "
                           f"star slice {hs:.4f}; a feature of the WAR-path model, not a separate model.")
     else:
-        # The served claim may not say "cuts" when the artifact no longer shows it; the
-        # verdict field itself is the owner's to change.
-        row["summary"] = (f"Shipped 2026-06-29 on its gate; re-measured {stamp}: holdout hitter MAE "
-                          f"{hp:+.4f}, star slice {hs:+.4f}, dev {dp:+.4f} (gate rule not met; "
-                          f"verdict under owner review). A WAR-path model feature.")
+        # The served claim may not say "cuts" when the artifact no longer shows it. The
+        # verdict moves by the owner's 2026-10-28 answer (docstring): provisional, the
+        # feature kept. provisional_kind sits beside verdict so the row reads in order.
+        row["summary"] = (f"Provisional: shipped 2026-06-29 on its bWAR gate; re-measured {stamp} "
+                          f"on fWAR: holdout hitter MAE {hp:+.4f}, star slice {hs:+.4f}, dev {dp:+.4f} "
+                          f"(gate rule not met). Feature kept, nothing retrained.")
+        row["verdict"] = "provisional"
+        if row.get("provisional_kind") != "shipped_partial_measurement":
+            items = [(k, v) for k, v in row.items() if k != "provisional_kind"]
+            row.clear()
+            for k, v in items:
+                row[k] = v
+                if k == "verdict":
+                    row["provisional_kind"] = "shipped_partial_measurement"
     row["notes"] = _PARA_RE.sub("", row["notes"]) + para
     return rule
 

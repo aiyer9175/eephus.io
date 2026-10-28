@@ -98,6 +98,12 @@ The full inventory is PORT_RECON sections 1 to 3.
   `gen_audit_docs.py` rerun and committed (no served number moved: stamps, shard hashes
   and two corrected asset stamps), then L4 and L5 rerun; the bundle now carries the
   80-file scores store.
+- **2026-10-28, the re-freeze (EVAL_FOLLOWUPS_REFREEZE, section 6):** after the
+  STALE_EVALS_REMEASURE merge and the owner's 2026-10-28 eval answers (proj_def_prior
+  provisional, REM+ re-run and validated to the digit, the freshness bar on live rows, four
+  WAR-rate glossary figures), `gen_audit_docs.py`, `build_site.py` and the restamp rerun and
+  committed, then L4 and L5 rerun; `data/mlb_fielding_positions.json` left the slimming list
+  (the re-measured eval names it) and the bundle gains that one file.
 
 ---
 
@@ -111,7 +117,7 @@ The 2026-10-22 answers supersede the first runbook's defaults where they differ.
 | P-2 | The `/partials/` layer | **Superseded by R2 "Pages + numbers":** static pages at cutover; the JSON sidecars serve the bundle's bytes (PR 5); a fragment route returns to htmx only when its rendered page and numbers equal the static page (Gate F). Named differences: the headshot proxy (not taken by default) and the forums and accounts layer (shipped inert). | Nothing is removed from his server; it is brought to equivalence route by route. |
 | P-3 | Python on the target | **Default stands, re-scoped to the producer:** Python 3.13.9 with `constraints-local.txt` on the PC. The box runs no Python. | `tools/freeze_constraints.py --check` is a producer check. |
 | P-4 | Cache carry | **Superseded by R1 "Your PC, ships nightly":** the 29.71 GB cache (363,455 files, `tools/port_bundle.py --plan`, 2026-10-22) and the 1.96 GB database stay on the PC with the producer. | Nothing large crosses to the box; its disk budget is two bundle generations (about 2.6 GB with hard links). The PC backup list in section 10 replaces the box backup. |
-| P-5 | Gitignored served artifacts | **Default stands as "the bundle is the served data":** every payload the nightly rsync ships goes in the bundle (`port_equivalence.payload_files`), minus the 37 payloads nothing fetches (`SLIM_EXCLUDE`, PORT_BUNDLE section 9). | The first publish equals the reference by construction. |
+| P-5 | Gitignored served artifacts | **Default stands as "the bundle is the served data":** every payload the nightly rsync ships goes in the bundle (`port_equivalence.payload_files`), minus the 36 payloads nothing fetches (`SLIM_EXCLUDE`, PORT_BUNDLE section 9; 37 until 2026-10-28). | The first publish equals the reference by construction. |
 | P-6 | Announcing the number change | **(a) a dated note the day of cutover.** `/news/` has no hand-written row type, so the note is a dated article (`docs/port/NEWS_NOTE_V2.md`), published in cutover day's first bundle (step C-6). It names every model that moved and links `/models/` and the registry; it includes the xHEM+ park-matched flip (EW3-53). | A reader who saw the old numbers is told why they moved. |
 | P-7 | The version label (FP1-4) | **(a) applied before the snapshot, 2026-10-27:** `EEPHUS_VERSION = "v2.0"`, the module beta chips dropped (`_stage_chip` renders nothing for a beta-stage row), the Diamond preview chips kept; PROSPX and the CollegeSavant bar edited by hand to match. | The reference and the published site carry the same label. |
 | P-8 | The red tests | **Cleared first** (`docs/port/RED_TESTS_CLEARED.md`, 2026-10-26, 17,686 passed in all; the delta rerun of 2026-10-27 in its section 6). | The PC's nightly gate (`deploy/port-nightly.ps1` step 5) means what it says: a red suite ships nothing. |
@@ -218,7 +224,7 @@ sha256sum ../port_out/ref.json
 
 The snapshot records every served payload's leaves and every page's hash; the selftest is
 the positive control and must print `"ok": true` with one leaf reported. The frozen
-values of 2026-10-27 are in section 6; re-freeze after any rebuild, because the REF must
+values of 2026-10-28 are in section 6; re-freeze after any rebuild, because the REF must
 be the output of the commit being ported. The REF that the box pins is the shipped
 bundle's `MANIFEST.tsv` sha256 (step C-1), and `ref.json` is what `compare-http --ref`
 reads when a bundle directory is not at hand.
@@ -236,7 +242,7 @@ python tools/port_bundle.py --verify-served ../port_out/bundles/<bundle-id>
 ```
 
 What the bundle holds, how it verifies and how it ships is PORT_BUNDLE.md sections 1 to
-3. `--no-slim` keeps the 37 unfetched payloads; `--no-strip` ships the comment-carrying
+3. `--no-slim` keeps the 36 unfetched payloads (37 until 2026-10-28, PORT_BUNDLE section 9); `--no-strip` ships the comment-carrying
 sources. The cache, the database and the licensed imports never enter a bundle.
 
 **Check:** `--verify-served` exits 0; `READY` names the bundle id and the `MANIFEST.tsv`
@@ -434,31 +440,32 @@ date when it is done.
 
 ---
 
-## 6. The equivalence snapshot (re-frozen 2026-10-27, task PORT_REFREEZE)
+## 6. The equivalence snapshot (re-frozen 2026-10-28, task EVAL_FOLLOWUPS_REFREEZE)
 
 The snapshot is the local build with every served number in it, taken from the final tree
 after the regeneration of step L1. Three artifacts carry it:
 
 | Artifact | Value | How it was made |
 |---|---|---|
-| The final tree | commit `6af3861c` (branch `wt-PORT_REFREEZE`, lane 201, on the integration head `bbfa0104` of `efv-conviction-2026-08-08`): PORT_FINAL's snapshot `151b4f9e`, then the PORT_SCORES_PR11 and LEDGER_PAYROLL_REFRESH merges, then their main-tree steps (the payroll row replay, the FA, ledger, F-SCORE and franchise exporters, `build_site.py`, the hand-page restamp, `gen_audit_docs.py`) committed as the regeneration commit; its integration merge carries it to the main branch | section 2, step L1; the two lanes' integration notes |
-| `ref.json` (Gate C's REF) | sha256 `7f83c24b2f65636a5701b44bbcb2f2d21e106cdaa9317ef48c17e501ba68667a`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
-| The served bundle | id `20261028T034022Z-a488e90dd97a`, 19,479 files, 1,309,489,428 bytes, `MANIFEST.tsv` sha256 `964ae99d6c1385fecb36f6ced4fc9856cdd4c10e6e291d4e2c7a24659835a6cf`; `--verify-served` ok, 19,479 checked, 0 problems; live `data/scores` 80 files (PR 11), none vanished | `python tools/port_bundle.py --served-bundle <out> --keep 1` (slimmed, stripped), then `--verify-served` |
+| The final tree | commit `d6e12d09` (branch `wt-EVAL_FOLLOWUPS_REFREEZE`, lane 201, on the integration head `197d1803` of `efv-conviction-2026-08-08`): PORT_REFREEZE's snapshot `6af3861c`, then the STALE_EVALS_REMEASURE merge, then the owner's 2026-10-28 eval answers (proj_def_prior to provisional, the REM+ re-run, the freshness bar on live rows, the four WAR-rate glossary figures) with `gen_audit_docs.py`, `build_site.py` and the hand-page restamp committed as `1e4318fa`, and the slimming-list change committed as `d6e12d09`; its integration merge carries it to the main branch | section 2, step L1; the lane's integration notes |
+| `ref.json` (Gate C's REF) | sha256 `d75fe112e1c2460378328aebbcf83ba7c040fdbd2673d183d918cfadef614a90`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
+| The served bundle | id `20261028T125401Z-46579182aa19`, 19,480 files, 1,309,717,279 bytes, `MANIFEST.tsv` sha256 `7bbad95071cd73bf4ca7fdd6bd0ebe32d0a090ac6bd56c2cc2ca01b35bb77f3e`; `--verify-served` ok, 19,480 checked, 0 problems; live `data/scores` 80 files (PR 11), none vanished; `data/mlb_fielding_positions.json` now in the bundle (PORT_BUNDLE section 9, 2026-10-28) | `python tools/port_bundle.py --served-bundle <out> --keep 1` (slimmed, stripped), then `--verify-served` |
 
 The copy of `ref.json` and the bundle's `MANIFEST.tsv`, `SHA256SUMS`, `BUNDLE.json` and
-`READY` sit in `port_out/bundles/20261028T034022Z-a488e90dd97a/` beside the repository
+`READY` sit in `port_out/bundles/20261028T125401Z-46579182aa19/` beside the repository
 (measured in the lane worktree `C:/Users/noah/baseball-projects/wt/s201/port_out/` at
-commit `6af3861c`, 2026-10-27, L4 and L5; the integrator moves them beside the main tree
-or re-runs L4 and L5 there after the merge). Against PORT_FINAL's REF of the same day
-(ref sha `84d54f50...`, bundle `20261028T022015Z-184c94ecf896`, 19,399 files; superseded,
-as is the lane's earlier `6a4be091...` / `20261028T015745Z-0fd5e50fbffd`): 65 payloads
-differ, all from the payroll refetch (`fa_class`, `fa_meta`, `trade_cbt`, `ledger_board`,
-`franchise_board` and their 60 club shards), 2 differ by timestamp only, 19 by line
-endings only, none missing; 9 pages or assets differ (`assets/ledger.js`, `assets/scores.js`,
-`ledger/index.html`, `scores/index.html`, and the rebuilt `arbitration`, `models`, `sources`,
-`standings` and `team` pages); the bundle gains the 80-file scores store. The pin's
-`reference` takes this bundle's MANIFEST sha (step C-1). A later rebuild re-freezes the
-same way.
+commit `d6e12d09`, 2026-10-28, L4 and L5; the integrator moves them beside the main tree
+or re-runs L4 and L5 there after the merge). Against PORT_REFREEZE's REF of 2026-10-27
+(ref sha `7f83c24b...`, bundle `20261028T034022Z-a488e90dd97a`, 19,479 files; superseded): 5
+payloads differ (`glossary`, `model_registry`, `proj_def_feature_eval`,
+`prospect_def_value_eval`, `rem_plus_eval`: the two re-measured evals, the REM+ re-run, the
+two registry rows and the four WAR-rate glossary figures), 2 differ by timestamp only
+(`efv_alerts`, `mlb_current_lines`), none by line endings, none missing; 34 pages differ:
+every generated page by the glossary payload's content stamp (`EEPHUS_GL_DATA_VER`
+f324bc5c to e0c93f7e), six of them (`models`, `models/updates`, `diamond`, `index.html`,
+`history`, `team`) also by rebuilt content, and `sitemap.xml` by lastmod; the bundle gains
+`data/mlb_fielding_positions.json`. The pin's `reference` takes this bundle's MANIFEST sha
+(step C-1). A later rebuild re-freezes the same way.
 
 Every served number means: every leaf of every payload `port_equivalence.payload_files`
 names (the depth-one `data/*.json` minus `deploy/data_exclude.txt`, plus the nine shard
