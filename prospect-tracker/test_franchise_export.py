@@ -1365,7 +1365,8 @@ def test_the_shell_copy_switches_with_the_flag(monkeypatch):
     import gen_audit_docs as G
     monkeypatch.setattr(fscore_export, "FSCORE_LIVE", False)
     off = B.build_franchise()
-    assert 'data-gl="franchise_index"' in off and "Franchise Index is a descriptive rank" in off
+    # FP1-4 at v2.0: the stage chip (and its hover line) is gone from the shell.
+    assert 'data-gl="franchise_index"' in off and "Franchise Index is a descriptive rank" not in off
     row_off = next(r for r in data_catalog.catalog_rows() if r["file"] == "franchise_board.json")
     assert "Franchise Index" in row_off["what"]
     assert "Franchise Index" in G._route_note("franchise/index.html")
@@ -1374,7 +1375,7 @@ def test_the_shell_copy_switches_with_the_flag(monkeypatch):
     monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
     on = B.build_franchise()
     assert "Franchise Index" not in on and 'data-gl="franchise_score"' in on
-    assert B.FRANCHISE_STAGE_FSCORE in on and B.FRANCHISE_DESC_FSCORE in on
+    assert B.FRANCHISE_STAGE_FSCORE not in on and B.FRANCHISE_DESC_FSCORE in on
     row_on = next(r for r in data_catalog.catalog_rows() if r["file"] == "franchise_board.json")
     assert row_on["what"] == data_catalog.FRANCHISE_BOARD_FSCORE["what"]
     assert "retired by owner answer FS-Q4" in row_on["note"]

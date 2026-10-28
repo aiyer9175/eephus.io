@@ -146,7 +146,7 @@ def test_sync_swaps_the_mark_and_keeps_the_handler(synced):
                  'title="Back to MiLB Prospects"', 'aria-hidden="true"', 'width="44" height="44"'):
         assert attr in marks[0], attr
     assert B.pixel_prospx_mark(44, cls="h1-logo").split(">", 1)[1] in synced
-    assert '<h1 aria-label="PROSPX beta">' in synced
+    assert '<h1 aria-label="PROSPX">' in synced
     assert "ball-seam-gradient" not in synced and "mono-letter" not in synced
 
 
