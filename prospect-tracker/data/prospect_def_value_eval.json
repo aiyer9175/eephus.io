@@ -1,13 +1,16 @@
 {
+ "evaluated_at": "2026-10-28T01:49:09",
  "model": "prospect_def_value (Will Cahoon, local reconstruction)",
  "validation_vs_fg": {
-  "n_graduated": 263,
-  "def_value_spearman": 0.6787,
-  "fg_tool_field_spearman": 0.2831,
-  "def_value_mae_z": 0.6151,
-  "fg_tool_field_mae_z": 0.9621,
+  "n_graduated": 322,
+  "def_value_spearman": 0.6811,
+  "fg_tool_field_spearman": 0.2852,
+  "def_value_mae_z": 0.6559,
+  "fg_tool_field_mae_z": 0.9748,
   "verdict": "def_value BEATS FG fFld",
-  "leakage_check": "def_value uses as-of-prospect listed position + frame (BMI) + age only; realized MLB position is never an input"
+  "verdict_rule": "|Spearman(def_value)| > |Spearman(tool_field)| and MAE_z(def_value) <= MAE_z(tool_field)",
+  "leakage_check": "def_value uses as-of-prospect listed position + frame (BMI) + age only; realized MLB position is never an input",
+  "frame": "graduated prospects: mlbam present in data/prospect_def_value.json, data/xfv_hitter_matrix.json (tool_field) and data/mlb_fielding_positions.json"
  },
  "xfv_swap_gate": {
   "protocol": "forward-chained OOS (tools/xfv_ml_lab.py), hit side; lean = shipped xFV set",
@@ -33,7 +36,6 @@
   },
   "verdict": "REJECTED (loss, not shipped): def_value REGRESSES the shipped lean xFV model on every gate (pooled rho -0.0040, within-tier -0.0208, fringe -0.0201). Even a far better defensive predictor (0.68 vs FG 0.28) is flat-to-negative on xFV's offense-dominated first-6yr-WAR target -- the binding constraint is the TARGET, not measurement quality (re-confirms wills-models-for-xfv-audit + the 2026-06-29 def-feature-class re-test)."
  },
- "alternative_use": "def_value validates as a better-than-FG prospect-defense predictor; its lane is the surfaces where defense IS a measured WAR component (MLB Projections / farm / display), NOT the offense-dominated xFV ranker. See def-prior-mlb-projections.",
  "proj_lgbm_swap_gate": {
   "protocol": "forward-chained OOS (tools/def_feature_backtest.py), joined by mlbam as a pre-MLB prior on top of the shipped pos_adj_prior; coverage 14.7% of corpus hitters",
   "baseline_pos_adj": {
@@ -56,5 +58,15 @@
    "holdout_star": 0.0247
   },
   "verdict": "REJECTED (loss, not shipped): every variant REGRESSES the holdout (pooled +0.0009..+0.0028, star +0.025..+0.035) with dev ~flat -- inconsistent sign = noise. For MLB players the REALIZED positional value (shipped pos_adj_prior, bWAR runs_position) already captures def_value; the prospect-era prediction is redundant + low-coverage (14.7%), and the entropy signal does not help. def_value's positional-value core is thus ALREADY in the projection model via pos_adj_prior."
+ },
+ "alternative_use": "def_value validates as a better-than-FG prospect-defense predictor; its lane is the surfaces where defense IS a measured WAR component (MLB Projections / farm / display), NOT the offense-dominated xFV ranker. See def-prior-mlb-projections.",
+ "carried_forward": {
+  "blocks": [
+   "xfv_swap_gate",
+   "proj_lgbm_swap_gate",
+   "alternative_use"
+  ],
+  "measured_at": "2026-06-29",
+  "reason": "rejection ledgers of other models (xFV, proj_lgbm) with def_value as a candidate feature; not re-run: the xFV arm would score the reserved eFV frames and the proj_lgbm join variant is not a variant of tools/def_feature_backtest.py at HEAD"
  }
 }

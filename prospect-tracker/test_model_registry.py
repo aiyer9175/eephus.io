@@ -291,8 +291,8 @@ UNDATED_EVAL_ARTIFACTS = frozenset({
     "data/fa_gate1_eval.json",
     # fa_gate2_eval, proj_horizon_eval, total_band_eval, trade_machine_eval:
     # removed 2026-08-19, all four now self-date via their writers.
-    "data/proj_def_feature_eval.json",
-    "data/prospect_def_value_eval.json",
+    # proj_def_feature_eval, prospect_def_value_eval: removed 2026-10-28, both
+    # re-measured and stamped evaluated_at (STALE_EVALS_REMEASURE).
     "data/value_framework_fitted.json",
     "data/xfv_cap_sweep_eval.json",
     "data/xfv_generality_eval.json",
@@ -349,7 +349,8 @@ def test_no_new_undated_eval_artifact():
 # what the run read, not the run.
 _STAMP_KEY_RE = re.compile(
     r"^(generated(_at|_utc|_on)?|as_of(_date)?|fit_date|run_date|date|"
-    r"(run|built|written|produced|created|updated|stamped|started|finished|completed)_at)$")
+    r"(run|built|written|produced|created|updated|stamped|started|finished|completed|"
+    r"evaluated)_at)$")
 
 
 def _eval_artifact_paths() -> set:

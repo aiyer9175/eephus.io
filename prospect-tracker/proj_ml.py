@@ -87,6 +87,8 @@ QUANTILES = (0.10, 0.25, 0.50, 0.75, 0.90)
 # def_war_prior gains similarly (collinear -- DON'T stack, "+both" is worse);
 # the def_missing flag is INERT (0.0000, redundant with the war_l*_missing
 # flags) and is dropped. () = dormant. Candidate set: DEF_FEATURE_CANDIDATES.
+# RE-MEASURED 2026-10-28 (STALE_EVALS_REMEASURE): the live gate numbers are the
+# evaluated_at run in the artifact; the figures above are the 2026-06-29 record.
 #
 # NOT A POSITIONAL-ADJUSTMENT TABLE. pos_adj_prior is bWAR's OBSERVED runs_position
 # for this player, read off data/mlb_def_history.json -- it is the realized quantity a

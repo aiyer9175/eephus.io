@@ -35,6 +35,12 @@ concentrates in established regulars (the star slice) -- the mechanism the hypot
 predicted: a stable, position-anchored defensive read the noisy single-season WAR lags
 don't isolate.
 
+RE-MEASURED 2026-10-28 (task STALE_EVALS_REMEASURE): the same bases, variants and
+gate rule re-run on the current corpus; per the protocol a horizon target is scored
+once its season is complete, so the 2024 base now scores further out than it could
+on 2026-06-29. The live numbers are in the artifact (evaluated_at, scored_through);
+the figures above are the 2026-06-29 ship record and are not restated here.
+
 Run: python tools/def_feature_backtest.py
 """
 from __future__ import annotations
@@ -42,6 +48,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -202,7 +209,9 @@ def run():
         print(f"  {v:>9}: dev {d['dev_pooled']:+.4f} (star {d['dev_star']:+.4f}) | "
               f"HOLDOUT {d['holdout_pooled']:+.4f} (star {d['holdout_star']:+.4f})")
 
-    out = {"side": SIDE, "dev_bases": DEV_BASES, "holdout_bases": HOLDOUT_BASES,
+    out = {"evaluated_at": datetime.now().isoformat(timespec="seconds"),
+           "scored_through": last_complete,
+           "side": SIDE, "dev_bases": DEV_BASES, "holdout_bases": HOLDOUT_BASES,
            "variants": results, "deltas_vs_baseline": deltas,
            "shrink_pa": PM._DEF_SHRINK_PA}
     (ROOT / "data" / "proj_def_feature_eval.json").write_text(

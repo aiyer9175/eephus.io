@@ -40,6 +40,9 @@ VERDICT 2026-06-29 (data/prospect_def_value_eval.json):
     first-6yr-WAR target: the binding constraint is the TARGET, not measurement quality.
   * The real lane for this signal is the defense-IS-WAR surfaces (MLB Projections / farm
     / display), NOT the eFV ranker.
+  RE-MEASURED 2026-10-28 (task STALE_EVALS_REMEASURE): `--write-eval` re-runs validate()
+    on the current frame and rewrites the artifact with an evaluated_at stamp; the live
+    numbers are in the artifact, the figures above are the 2026-06-29 record.
 
 LADDER ADOPTION 2026-07-25 (data/positional_ladder_eval.json). POS_ADJ below is now the
 EMPIRICALLY RECOVERED Baseball-Reference ladder, not the folklore round numbers. The
@@ -520,9 +523,74 @@ def validate() -> dict:
     return out
 
 
+EVAL_PATH = DATA / "prospect_def_value_eval.json"
+
+# Blocks of the eval artifact that validate() does not produce. They are the 2026-06-29
+# rejection ledgers of OTHER models with def_value as a candidate feature, and neither can
+# be re-run as written: the xFV arm (xfv_ml_lab extra_join=defense) predates the reserved
+# eFV frames R-LV and R-VM, which may not be scored, and the proj_lgbm join variant was
+# never a variant of tools/def_feature_backtest.py at HEAD. They are carried forward
+# under their own date, never restated as current.
+_CARRIED_BLOCKS = ("xfv_swap_gate", "proj_lgbm_swap_gate", "alternative_use")
+_CARRIED_MEASURED_AT = "2026-06-29"
+
+
+def write_eval(out_path: Path | None = None) -> dict:
+    """Re-run validate() and rewrite data/prospect_def_value_eval.json with an explicit
+    evaluated_at stamp, so model_registry.freshness() ages the row by the measurement and
+    not by the file mtime. The validation block keeps the registered key names
+    (team_facts reads validation_vs_fg.*); the carried blocks are copied from the existing
+    artifact unchanged and dated under carried_forward."""
+    from datetime import datetime
+    path = out_path or EVAL_PATH
+    prev = {}
+    try:
+        prev = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    v = validate()
+    if "error" in v:
+        raise RuntimeError(f"validate() did not score: {v}")
+    out = {
+        "evaluated_at": datetime.now().isoformat(timespec="seconds"),
+        "model": prev.get("model") or "prospect_def_value (Will Cahoon, local reconstruction)",
+        "validation_vs_fg": {
+            "n_graduated": v["n_graduated"],
+            "def_value_spearman": v["def_value"]["spearman"],
+            "fg_tool_field_spearman": v["fg_tool_field"]["spearman"],
+            "def_value_mae_z": v["def_value"]["mae_z"],
+            "fg_tool_field_mae_z": v["fg_tool_field"]["mae_z"],
+            "verdict": v["verdict"],
+            "verdict_rule": "|Spearman(def_value)| > |Spearman(tool_field)| and "
+                            "MAE_z(def_value) <= MAE_z(tool_field)",
+            "leakage_check": v["leakage_check"],
+            "frame": "graduated prospects: mlbam present in data/prospect_def_value.json, "
+                     "data/xfv_hitter_matrix.json (tool_field) and data/mlb_fielding_positions.json",
+        },
+    }
+    carried = [k for k in _CARRIED_BLOCKS if k in prev]
+    for k in carried:
+        out[k] = prev[k]
+    if carried:
+        out["carried_forward"] = {
+            "blocks": carried,
+            "measured_at": prev.get("carried_forward", {}).get("measured_at", _CARRIED_MEASURED_AT),
+            "reason": "rejection ledgers of other models (xFV, proj_lgbm) with def_value as a "
+                      "candidate feature; not re-run: the xFV arm would score the reserved eFV "
+                      "frames and the proj_lgbm join variant is not a variant of "
+                      "tools/def_feature_backtest.py at HEAD",
+        }
+    path.write_text(json.dumps(out, indent=1), encoding="utf-8")
+    print(f"wrote {path}: n {v['n_graduated']}, def_value rho {v['def_value']['spearman']} "
+          f"vs tool_field {v['fg_tool_field']['spearman']}; {v['verdict']}")
+    return out
+
+
 if __name__ == "__main__":
     import sys
-    if "--validate" in sys.argv:
+    if "--write-eval" in sys.argv:
+        write_eval()
+    elif "--validate" in sys.argv:
         print(json.dumps(validate(), indent=1))
     else:
         build()
