@@ -242,7 +242,7 @@ def test_the_served_pages_carry_the_rename():
         leaves = _LEAF.findall(page)
         assert leaves == [("/awards/", ' class="is-active"', "Awards / HoF")], (key, leaves)
         assert re.search(r'<h1(?: class="mh-px")?><svg class="ico" width="32"[^>]*>.*?</svg>'
-                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)?</h1>',
+                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)? </h1>',
                          page), key
         nav = re.search(r'<nav class="mlbstats-sectionnav hof-modstrip" aria-label="Awards / HoF">(.*?)</nav>',
                         page, re.S)
@@ -272,7 +272,7 @@ def test_with_the_flag_true_the_strip_marks_the_current_page(monkeypatch, tmp_pa
         assert len(on) == 1 and f'href="{cur}"' in on[0] and "active" in on[0]
         assert any(f'href="{other}"' in a and "aria-current" not in a for a in links)
         assert re.search(r'<h1(?: class="mh-px")?><svg class="ico" width="32"[^>]*>.*?</svg>'
-                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)?</h1>', page)
+                         r'(?:<span class="mh-title">)?Awards / HoF(?:</span>)? </h1>', page)
     assert "#i-aw-podium" in aw and "#i-hof" in aw
     row = re.search(r'<div class="mlbstats-tabs" role="tablist" aria-label="Hall of Fame sections">(.*?)</div>', hof)
     assert row, "the /hof/ section row moves to the underline tab row"

@@ -704,7 +704,7 @@ def pixel_masthead(body: str) -> str:
         words = m.group(2).rstrip()
         gap = m.group(2)[len(words):]
         return (f'<h1 class="mh-px">{m.group(1)}<span class="mh-title">{words}</span>'
-                f'{gap if m.group(3) else ""}{m.group(3) or ""}</h1>')
+                f'{gap}{m.group(3) or ""}</h1>')
     return _MASTHEAD_H1_RE.sub(_sub, body, count=1)
 
 
