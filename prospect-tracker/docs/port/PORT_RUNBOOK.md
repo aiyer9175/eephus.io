@@ -93,6 +93,11 @@ The full inventory is PORT_RECON sections 1 to 3.
   regeneration of RED_TESTS_CLEARED section 0 rerun, the test files of everything changed
   since that document rerun in deploy mode (RED_TESTS_CLEARED section 6), the REF
   snapshot and a slimmed bundle frozen from the result.
+- **2026-10-27, the re-freeze (PORT_REFREEZE, section 6):** after the PORT_SCORES_PR11 and
+  LEDGER_PAYROLL_REFRESH merges, their main-tree steps, `build_site.py`, the restamp and
+  `gen_audit_docs.py` rerun and committed (no served number moved: stamps, shard hashes
+  and two corrected asset stamps), then L4 and L5 rerun; the bundle now carries the
+  80-file scores store.
 
 ---
 
@@ -256,9 +261,9 @@ python tools/port_ship.py --latest ../port_out/bundles --dry-run      # prints b
 
 ## 3. Stage 0 and Stage 1: the PR set, numbered (OWNER and WEBMASTER)
 
-The ten branches are prepared, tested and never pushed (PR_PLAN.md). They are stacked:
-each is one commit on the previous, so merging in order is ten fast-forwards and the
-webmaster reviews each diff alone.
+The eleven branches are prepared, tested and never pushed (PR_PLAN.md; PR 11 was added on
+2026-10-27 for the scores store). They are stacked: each is one commit on the previous, so
+merging in order is eleven fast-forwards and the webmaster reviews each diff alone.
 
 | # | Branch | Commit | What it does | Stage |
 |---|---|---|---|---|
@@ -272,8 +277,9 @@ webmaster reviews each diff alone.
 | 8 | `port-stage3-shadow-gates` | e14d10d | `deploy/shadow_gates.tsv` (20 registered per-field gates over 10 modules) and `cmd/shadoweq`: his models measured against the bundle, a report, nothing served | 3 |
 | 9 | `port-stage3-asof-accessor` | 64b78aa | `internal/asof`: an as-of connection through temp views, all 57 store tables classified, the schema test; `docs/AS_OF_ACCESSOR.md` | 3 |
 | 10 | `port-cutover-checklist` | 1c3b963 | `docs/port-cutover.md`: main-deploy day and its rollback, layer by layer | cutover |
+| 11 | `port-stage2-scores-in-bundle` | 48c2084 | `publish_paths.txt` gains `data/scores` (the store as of the nightly build, PORT-Q-SCORES); the nginx comment on `/data/`; `TestTheScoresStoreShipsFromTheBundle`; the old `/opt/eephus/scores` alias withdrawn; the cutover checkbox | 2 |
 
-### S-1. OWNER: push the ten branches
+### S-1. OWNER: push the eleven branches
 
 The repository is private and behind Cloudflare; git over HTTPS needs the WAF skip rule
 of ask 1 (section 4) and a Forgejo personal access token (PAT, scope `write:repository`)
@@ -285,24 +291,25 @@ git remote add eephus https://git.eephus.io/eephus/eephus.git
 git -c http.sslBackend=schannel fetch eephus main                       # confirm his main is still 9e1423cc (the branches require it)
 for b in port-stage0-withheld-data port-stage1-publish-contract port-stage1-buildsite-ownership \
          port-stage1-receive port-stage1-sidecars port-stage1-pages port-stage2-transport \
-         port-stage3-shadow-gates port-stage3-asof-accessor port-cutover-checklist; do
+         port-stage3-shadow-gates port-stage3-asof-accessor port-cutover-checklist \
+         port-stage2-scores-in-bundle; do
   git -c http.sslBackend=schannel push eephus "$b:refs/heads/$b" || break
 done
 ```
 
 If his `main` has moved past 9e1423cc, rebase the stack onto it first
-(`git rebase --onto eephus/main 9e1423cc port-cutover-checklist` carries all ten, then
-re-run the Go gates of PR_PLAN.md on the result). If a push is refused at 100 MB, push
+(`git rebase --onto eephus/main 9e1423cc port-stage2-scores-in-bundle` carries all eleven,
+then re-run the Go gates of PR_PLAN.md on the result). If a push is refused at 100 MB, push
 PRs 1 to 5 first and PR 6 alone (its chain compresses to under the cap; the git bundle
 `eephus-port-prs.bundle`, 3.7 MB, is the measure). If git over HTTPS is blocked, send him
 the git bundle instead: `git fetch <bundle> 'refs/heads/*:refs/heads/*'` in his clone
-restores all ten.
+restores all eleven.
 
 Never push to `main` or `main-deploy`; never self-merge.
 
-**Check:** `git -c http.sslBackend=schannel ls-remote eephus 'refs/heads/port-*'` lists ten branches at the shas above.
+**Check:** `git -c http.sslBackend=schannel ls-remote eephus 'refs/heads/port-*'` lists eleven branches at the shas above.
 
-### S-2. OWNER: open ten PRs in order
+### S-2. OWNER: open eleven PRs in order
 
 One PR per branch, in the table's order, each targeting `main`, each with the body from
 `docs/port/prs/PR_<n>_<branch>.md` (what, why, how verified, asks). Open PR 2 only after
@@ -427,23 +434,31 @@ date when it is done.
 
 ---
 
-## 6. The equivalence snapshot (frozen 2026-10-27, task PORT_FINAL)
+## 6. The equivalence snapshot (re-frozen 2026-10-27, task PORT_REFREEZE)
 
 The snapshot is the local build with every served number in it, taken from the final tree
 after the regeneration of step L1. Three artifacts carry it:
 
 | Artifact | Value | How it was made |
 |---|---|---|
-| The final tree | commit `151b4f9e` on `efv-conviction-2026-08-08`: PORT_FINAL merged at `6b7a9cb5`, then the step L1 regeneration on the main tree committed as the port snapshot commit (FA realized ledger on ewar_v3, 1,576 rows; v2.0 label on every page) | section 2, step L1 |
-| `ref.json` (Gate C's REF) | sha256 `84d54f5030f4ff21c1e0d5e74c61f5979d623065a35b3671ecc3be9a8e6e14ff`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
-| The served bundle | id `20261028T022015Z-184c94ecf896`, 19,399 files, 1,307,036,866 bytes, `MANIFEST.tsv` sha256 `398267feeca49ac5bdf0fbe08504283cb8befa94eb67715ba34c7a58e8501ff1`; `--verify-served` ok, 0 problems | `python tools/port_bundle.py --served-bundle <out>` (slimmed, stripped), then `--verify-served` |
+| The final tree | commit `6af3861c` (branch `wt-PORT_REFREEZE`, lane 201, on the integration head `bbfa0104` of `efv-conviction-2026-08-08`): PORT_FINAL's snapshot `151b4f9e`, then the PORT_SCORES_PR11 and LEDGER_PAYROLL_REFRESH merges, then their main-tree steps (the payroll row replay, the FA, ledger, F-SCORE and franchise exporters, `build_site.py`, the hand-page restamp, `gen_audit_docs.py`) committed as the regeneration commit; its integration merge carries it to the main branch | section 2, step L1; the two lanes' integration notes |
+| `ref.json` (Gate C's REF) | sha256 `7f83c24b2f65636a5701b44bbcb2f2d21e106cdaa9317ef48c17e501ba68667a`; 19,221 payloads and 214 pages; kept at `port_out/ref.json` beside the repository | `python tools/port_equivalence.py snapshot --root . --out ref.json` |
+| The served bundle | id `20261028T034022Z-a488e90dd97a`, 19,479 files, 1,309,489,428 bytes, `MANIFEST.tsv` sha256 `964ae99d6c1385fecb36f6ced4fc9856cdd4c10e6e291d4e2c7a24659835a6cf`; `--verify-served` ok, 19,479 checked, 0 problems; live `data/scores` 80 files (PR 11), none vanished | `python tools/port_bundle.py --served-bundle <out> --keep 1` (slimmed, stripped), then `--verify-served` |
 
 The copy of `ref.json` and the bundle's `MANIFEST.tsv`, `SHA256SUMS`, `BUNDLE.json` and
-`READY` sit in `port_out/bundles/20261028T022015Z-184c94ecf896/` beside the repository.
-These values were measured on the main tree after the merge and regeneration (L4 and L5,
-2026-10-27); the lane's earlier measurement (ref sha `6a4be091...`, bundle
-`20261028T015745Z-0fd5e50fbffd`) is superseded. The pin's `reference` takes this bundle's
-MANIFEST sha (step C-1). A later rebuild re-freezes the same way.
+`READY` sit in `port_out/bundles/20261028T034022Z-a488e90dd97a/` beside the repository
+(measured in the lane worktree `C:/Users/noah/baseball-projects/wt/s201/port_out/` at
+commit `6af3861c`, 2026-10-27, L4 and L5; the integrator moves them beside the main tree
+or re-runs L4 and L5 there after the merge). Against PORT_FINAL's REF of the same day
+(ref sha `84d54f50...`, bundle `20261028T022015Z-184c94ecf896`, 19,399 files; superseded,
+as is the lane's earlier `6a4be091...` / `20261028T015745Z-0fd5e50fbffd`): 65 payloads
+differ, all from the payroll refetch (`fa_class`, `fa_meta`, `trade_cbt`, `ledger_board`,
+`franchise_board` and their 60 club shards), 2 differ by timestamp only, 19 by line
+endings only, none missing; 9 pages or assets differ (`assets/ledger.js`, `assets/scores.js`,
+`ledger/index.html`, `scores/index.html`, and the rebuilt `arbitration`, `models`, `sources`,
+`standings` and `team` pages); the bundle gains the 80-file scores store. The pin's
+`reference` takes this bundle's MANIFEST sha (step C-1). A later rebuild re-freezes the
+same way.
 
 Every served number means: every leaf of every payload `port_equivalence.payload_files`
 names (the depth-one `data/*.json` minus `deploy/data_exclude.txt`, plus the nine shard
