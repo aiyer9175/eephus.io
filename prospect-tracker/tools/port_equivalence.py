@@ -68,7 +68,9 @@ Three commands:
 The published set is computed the way deploy/nightly-build.sh's rsync computes
 it: data/*.json and data/*.js at depth one minus deploy/data_exclude.txt, plus
 the per-player directories in PER_PLAYER_DIRS (pinned to the script's include
-lines by test_port_equivalence.py).
+lines by test_port_equivalence.py). The served bundle adds the live store in
+LIVE_DIRS (data/scores/, as of the build); compare-bundles reports its rows
+apart, because the scores job rewrites them between two builds.
 """
 
 from __future__ import annotations
@@ -90,6 +92,14 @@ PER_PLAYER_DIRS: tuple[str, ...] = (
     "ledger_clubs", "franchise_clubs", "mlb_events", "mlbstats_player",
     "mlb_player_detail",
 )
+# The live store the served bundle carries as of its build and the nightly
+# rsync never ships (port task PORT_SCORES_PR11, 2026-10-27): data/scores/,
+# written by tools/scores_job.py between builds for /scores/ and /standings/.
+# On the box it is published from the bundle like every other payload, so
+# the site's copy is the store as of the build; two bundles from the same
+# tree minutes apart may differ here, and compare_bundles reports those rows
+# apart. Never a nightly rsync include (test_scores_fence, test_publish_manifest).
+LIVE_DIRS: tuple[str, ...] = ("data/scores",)
 # Leaf keys that carry a write time, not a value (the TIMESTAMP category).
 STAMP_KEYS: frozenset[str] = frozenset({
     "generated_at", "built_at", "checked_at", "written_at", "stamped_at",
@@ -115,6 +125,23 @@ def payload_files(root: Path) -> list[str]:
             out += sorted(p.relative_to(root).as_posix()
                           for p in base.rglob("*") if p.is_file())
     return out
+
+
+def live_files(root: Path) -> list[str]:
+    """Module-relative posix paths of every file of the live stores in
+    LIVE_DIRS: the served bundle's extra set, never the nightly rsync's."""
+    out: list[str] = []
+    for d in LIVE_DIRS:
+        base = root / d
+        if base.is_dir():
+            out += sorted(p.relative_to(root).as_posix()
+                          for p in base.rglob("*") if p.is_file())
+    return out
+
+
+def is_live(rel: str) -> bool:
+    """True for a file inside one of LIVE_DIRS."""
+    return rel.startswith(tuple(d + "/" for d in LIVE_DIRS))
 
 
 def page_files(root: Path) -> list[str]:
@@ -336,13 +363,26 @@ def _crawl_rel(path: str) -> str:
 
 def compare_bundles(ref: Path, new: Path, fetched: tuple[dict, ...] = (),
                     crawl_ref: dict | None = None, crawl_new: dict | None = None) -> dict:
-    """A slimmed bundle against the full one built from the same tree."""
+    """A slimmed bundle against the full one built from the same tree.
+
+    Rows inside LIVE_DIRS (the scores store) are reported under "live" and
+    never fail the comparison on their bytes: the scores job rewrites them
+    between the two builds. A live file a crawl fetched must still be
+    present in the new bundle, and a crawl of each bundle's site must have
+    answered it with the same status."""
     a, b = _manifest_rows(ref), _manifest_rows(new)
     skip = {"data/bundle_info.json"}         # names its own bundle id: differs by design
     both = (a.keys() & b.keys()) - skip
-    changed = sorted(r for r in both if a[r] != b[r])
-    dropped = sorted(a.keys() - b.keys() - skip)
-    added = sorted(b.keys() - a.keys() - skip)
+    changed = sorted(r for r in both if a[r] != b[r] and not is_live(r))
+    dropped = sorted(r for r in a.keys() - b.keys() - skip if not is_live(r))
+    added = sorted(r for r in b.keys() - a.keys() - skip if not is_live(r))
+    live = {
+        "dirs": list(LIVE_DIRS),
+        "ref": sum(1 for r in a if is_live(r)), "new": sum(1 for r in b if is_live(r)),
+        "changed": sorted(r for r in both if is_live(r) and a[r] != b[r]),
+        "added": sorted(r for r in b.keys() - a.keys() if is_live(r)),
+        "dropped": sorted(r for r in a.keys() - b.keys() if is_live(r)),
+    }
     pages_ref = sorted(r for r in a if not r.startswith("data/"))
     pages_new = sorted(r for r in b if not r.startswith("data/"))
     page_diff = sorted(set(pages_ref) ^ set(pages_new)) + [
@@ -354,12 +394,17 @@ def compare_bundles(ref: Path, new: Path, fetched: tuple[dict, ...] = (),
                 fetched_paths.add(_crawl_rel(path))
     fetched_in_ref = sorted(r for r in fetched_paths if r in a and r not in skip)
     fetched_dropped = sorted(r for r in fetched_in_ref if r not in b)
-    fetched_changed = sorted(r for r in fetched_in_ref if r in b and a[r] != b[r])
+    fetched_changed = sorted(r for r in fetched_in_ref
+                             if r in b and a[r] != b[r] and not is_live(r))
     crawl_diff: list[str] = []
     if crawl_ref is not None and crawl_new is not None:
         ra, rb = crawl_ref.get("requests", {}), crawl_new.get("requests", {})
         for path in sorted(set(ra) | set(rb)):
             if path == "/data/bundle_info.json":
+                continue
+            if is_live(_crawl_rel(path)):          # the status, not the bytes
+                if (ra.get(path) or [None])[0] != (rb.get(path) or [None])[0]:
+                    crawl_diff.append(f"{path}: {ra.get(path)} -> {rb.get(path)}")
                 continue
             if ra.get(path) != rb.get(path):
                 crawl_diff.append(f"{path}: {ra.get(path)} -> {rb.get(path)}")
@@ -369,6 +414,7 @@ def compare_bundles(ref: Path, new: Path, fetched: tuple[dict, ...] = (),
         "pages": {"ref": len(pages_ref), "new": len(pages_new), "differing": page_diff},
         "changed": changed, "added": added,
         "dropped": dropped, "dropped_bytes": sum(a[r][0] for r in dropped),
+        "live": live,
         "fetched": {"files": len(fetched_paths), "in_ref": len(fetched_in_ref),
                     "dropped": fetched_dropped, "changed": fetched_changed},
         "crawl_diff": crawl_diff,
@@ -519,11 +565,16 @@ def main(argv: list[str] | None = None) -> int:
                                                          for k, v in res["pages"].items()},
                           "changed": len(res["changed"]), "added": len(res["added"]),
                           "dropped": len(res["dropped"]), "dropped_bytes": res["dropped_bytes"],
+                          "live": {k: (len(v) if isinstance(v, list) else v)
+                                   for k, v in res["live"].items() if k != "dirs"},
                           "fetched": {k: (len(v) if isinstance(v, list) else v)
                                       for k, v in res["fetched"].items()},
                           "crawl_diff": len(res["crawl_diff"]), "ok": res["ok"]}, indent=1))
         for rel in res["dropped"]:
             print("DROPPED", rel)
+        for key in ("changed", "added", "dropped"):
+            for rel in res["live"][key][:20]:
+                print("LIVE", key.upper(), rel)
         for line in res["crawl_diff"][:50]:
             print("CRAWL", line)
         return 0 if res["ok"] else 1
