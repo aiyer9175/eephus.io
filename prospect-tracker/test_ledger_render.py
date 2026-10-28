@@ -1511,3 +1511,57 @@ def test_the_farm_surfaces_relabel_when_the_arm_copy_is_served():
     farm, prospects = _block(html, "farm"), _block(html, "prospects")
     assert "Org DvM+ (player)" in farm and ">DvM+ (player)<" in prospects
     assert "$DvM+" not in farm and "$DvM+" not in prospects
+
+
+# --------------------------------------------------------------------------
+# Payroll now and the current season's history row: one capture prints one
+# dated figure; two captures print two dated figures (SITE_AUDIT_3A A3).
+# --------------------------------------------------------------------------
+
+HIST_2025 = [2025, 319522564, "3+-Time", 241000000, 78522564, 61774820, 299091683]
+HIST_2026 = [2026, 433057244, "3+-Time", 244000000, 189057244, 183362968, 339319244]
+
+
+def _sample_with_history(block_pair, hist_pair, n_match):
+    s = _sample2()
+    s["columns"]["payroll.history"] = list(_LE.FA_PROFILE_COLUMNS["payroll.history"])
+    p = s["clubs"]["LAD"]["payroll"]
+    p["s2026"]["fetched"] = block_pair
+    p["history"] = {"status": "shard", "n": 2, "first": 2025, "last": 2026}
+    cap = _LE.payroll_capture_census({"LAD": block_pair}, hist_pair, n_match, 1, 2026)
+    s["sections"]["payroll_history"] = {"live": True, "note": "per-club rows",
+                                        "census": {"seasons": [2025, 2026], "fetched": {"2025": ["2026-10-09", "2026-10-09"], "2026": hist_pair},
+                                                   "s2026_matches_payroll_block": n_match, "s2026_capture": cap}}
+    s["copy"].update({"payroll_history_title": "Payroll history", "payroll_history_note": "Spotrac's tax page for each season as cached.",
+                      "payroll_capture_note": cap["note"], "payroll_fetched_label": "fetched"})
+    shard = _copy.deepcopy(SHARD_LAD)
+    shard["payroll"] = {"history": [HIST_2025, HIST_2026]}
+    return s, shard
+
+
+def test_two_payroll_captures_print_two_dated_figures_and_one_capture_prints_one():
+    s, shard = _sample_with_history(["2026-10-02", "2026-10-02"], ["2026-10-26", "2026-10-26"], 0)
+    pay = _block(_render2(payload=s, shards={SHARD_URL_LAD: shard}), "payroll")
+    assert "(Spotrac, fetched 2026-10-02)" in pay, "the block tile names its capture date"
+    assert "<td>2026 (fetched 2026-10-26)</td>" in pay, "the history row names its own page date"
+    assert "<td>2025</td>" in pay, "only the current season's row is dated"
+    assert s["copy"]["payroll_capture_note"] in pay and "Two captures" in pay
+    assert "$430.3M" in pay and "$433.1M" in pay, "both figures stay on the page, each with its date"
+    s1, shard1 = _sample_with_history(["2026-10-26", "2026-10-26"], ["2026-10-26", "2026-10-26"], 1)
+    pay1 = _block(_render2(payload=s1, shards={SHARD_URL_LAD: shard1}), "payroll")
+    assert "(Spotrac, fetched 2026-10-26)" in pay1 and "<td>2026</td>" in pay1
+    assert "(fetched 2026-10-26)</td>" not in pay1, "one capture is not dated twice"
+    assert "same Spotrac capture (2026-10-26)" in pay1
+    s2, shard2 = _sample_with_history(None, ["2026-10-26", "2026-10-26"], 0)
+    pay2 = _block(_render2(payload=s2, shards={SHARD_URL_LAD: shard2}), "payroll")
+    assert "(Spotrac)" in pay2 and "fetched" not in pay2.split("Payroll history")[0], "an undated row prints no date"
+    assert "no capture date" in pay2
+    s3, shard3 = _sample_with_history(["2026-10-02", "2026-10-03"], ["2026-10-26", "2026-10-26"], 0)
+    pay3 = _block(_render2(payload=s3, shards={SHARD_URL_LAD: shard3}), "payroll")
+    assert "tax page fetched 2026-10-02, payroll page fetched 2026-10-03" in pay3
+
+
+def test_the_payroll_tiles_read_the_capture_date_from_the_payload_not_the_js():
+    assert "payroll_capture_note" in JS and "payroll_fetched_label" in JS and "s2026_capture" in JS
+    for stamp in ("2026-10-02", "2026-10-26", "2026-10-27"):
+        assert stamp not in JS, "no capture date is typed into the JS"

@@ -830,18 +830,48 @@ def _payroll_rows() -> tuple[dict, dict, dict]:
         if key in clubs and team != c:
             continue      # an alias row never overwrites the canonical one
         clubs[key] = row
+    # Each row's source date, keyed like the rows: the date the Spotrac page
+    # was captured (tax_page_captured / payroll_page_captured, the cache file's
+    # local date, stamped by fa_pipeline.refresh_payroll), else the local date
+    # of the row's fetched_at. That is the clock read_cached_payroll_history
+    # stamps a history row with, so the two can be compared date to date.
     stamps: dict = {}
+    captured: dict = {}
     try:
         with storage.connect() as con:
-            for team, season, at in con.execute(
-                    "SELECT team, season, fetched_at FROM fa_team_payroll").fetchall():
+            for team, season, at, payload in con.execute(
+                    "SELECT team, season, fetched_at, payload_json FROM fa_team_payroll").fetchall():
                 key = ("AVERAGES" if team == "AVERAGES" else _canon(team), int(season))
-                if key[0] and at and (key not in stamps or str(at)[:10] > stamps[key]):
-                    stamps[key] = str(at)[:10]
+                if not key[0]:
+                    continue
+                try:
+                    pj = json.loads(payload or "{}") or {}
+                except ValueError:
+                    pj = {}
+                fetched_day = _fetch_stamp_date(at)
+                tax_day = pj.get("tax_page_captured") or fetched_day
+                pay_day = pj.get("payroll_page_captured") or fetched_day
+                if tax_day and (key not in stamps or tax_day > stamps[key]):
+                    stamps[key] = tax_day
+                    captured[key] = [tax_day, pay_day]
     except Exception as exc:                      # noqa: BLE001
         log.warning("ledger_export: fa_team_payroll stamps unavailable: %s", exc)
     return clubs, averages, {"rows_in": len(raw), "club_rows": len(clubs),
-                             "averages_rows": len(averages), "fetched_at": stamps}
+                             "averages_rows": len(averages), "fetched_at": stamps,
+                             "captured": captured}
+
+
+def _fetch_stamp_date(at) -> str | None:
+    """The local calendar date of a fa_team_payroll fetched_at stamp (SQLite's
+    datetime('now'), UTC), the clock a cached page's modified date is read on."""
+    if not at:
+        return None
+    if len(str(at)) <= 10:
+        return str(at)                  # a bare date carries no clock to convert
+    try:
+        return datetime.fromisoformat(str(at)).replace(tzinfo=timezone.utc).astimezone().date().isoformat()
+    except ValueError:
+        return str(at)[:10]
 
 
 def footer_means_note(av_fetched, clubs_fetched, gap_usd, class_year) -> str:
@@ -1124,6 +1154,50 @@ def club_fa_spend_profile(winters: list, clubs, recent: int = FA_PROFILE_RECENT_
         out_clubs[c] = rec
     windows = {wk: [min(ys), max(ys), len(ys)] for wk, ys in win_years.items()}
     return {"windows": windows, "league_usd": league, "clubs": out_clubs}
+
+
+def payroll_capture_census(block_dates: dict, hist_dates, n_match: int, n_clubs: int,
+                           season: int = SEASON_NOW) -> dict:
+    """Whether the Payroll now block and the payroll history row for `season`
+    read the same Spotrac capture, and the sentence the page prints about it.
+
+    block_dates maps club -> [tax page date, payroll page date] the block's row
+    carries (fa_team_payroll); hist_dates is the cached page pair the history
+    row reads ([tax_fetched, payroll_fetched]). The block is one capture when
+    all thirty rows carry one date pair; a club whose row carries another date
+    is listed. n_match is the count of clubs whose block tax payroll equals the
+    history row's. When the dates agree the figures have to agree too, and a
+    disagreement is a defect the census records rather than hides; when the
+    dates differ the page prints each figure with its date and says so."""
+    pairs = sorted({tuple(v or [None, None]) for v in block_dates.values()}, key=str)
+    block = list(pairs[0]) if len(pairs) == 1 else None
+    hist = list(hist_dates or [None, None])
+    same = bool(block and block[0] and block[0] == hist[0] and block[1] == hist[1])
+    out = {"season": season, "block": block, "block_dates_distinct": [list(p) for p in pairs],
+           "history": hist, "same_source_date": same, "n_match": n_match, "n_clubs": n_clubs,
+           "figures_agree": n_match == n_clubs}
+    if same:
+        out["note"] = (f"Payroll now and the {season} history row read the same Spotrac capture "
+                       f"({block[0]}); the figures agree for {n_match} of {n_clubs} clubs.")
+    elif block and not block[0]:
+        out["note"] = (f"Payroll now carries no capture date for {season}; the {season} history row "
+                       f"reads the pages as cached {hist[0]}. The tax payroll agrees for {n_match} of "
+                       f"{n_clubs} clubs.")
+    elif block:
+        t_b, p_b = block
+        t_h, p_h = hist
+        out["note"] = (f"Payroll now reads Spotrac's {season} tax page as fetched {t_b}"
+                       + (f" and its payroll page as fetched {p_b}" if p_b != t_b else "")
+                       + f"; the {season} history row reads the pages as cached {t_h}"
+                       + (f" and {p_h}" if p_h != t_h else "")
+                       + f". Two captures, each figure printed with its date; the tax payroll agrees for "
+                         f"{n_match} of {n_clubs} clubs.")
+    else:
+        out["note"] = (f"Payroll now carries more than one {season} capture date across the clubs "
+                       f"({', '.join(str(p[0]) for p in pairs)}); the {season} history row reads the "
+                       f"pages as cached {hist[0]}. Each figure prints with its date; the tax payroll "
+                       f"agrees for {n_match} of {n_clubs} clubs.")
+    return out
 
 
 def club_payroll_history(hist: dict, clubs, cba_threshold=None) -> tuple:
@@ -1510,14 +1584,19 @@ def build_all() -> tuple:
             payor27 = {"value": PAYOR_NEXT.get(t26, "1st-Time") if over26 else "Non-Tax",
                        "basis": PAYOR_BASIS_DERIVED}
         split27 = [r27.get(k) for k in ("active_usd", "injured_usd", "retained_usd", "buried_usd")]
+        # fetched: [tax page date, payroll page date] the row was captured on,
+        # the clock the payroll history row for the same season is stamped on
+        captured = payroll_join.get("captured") or {}
         payroll_block = {
             "s2026": {"total_payroll_usd": r26.get("total_payroll_usd"), "tax_payroll_usd": tax26,
                       "space_usd": r26.get("space_usd"), "payor_status_raw": r26.get("payor_status_raw"),
                       "est_tax_bill_usd": r26.get("est_tax_bill_usd") or None,
-                      "split": None, "split_available": False},
+                      "split": None, "split_available": False,
+                      "fetched": captured.get((c, SEASON_NOW))},
             "s2027": {"total_payroll_usd": r27.get("total_payroll_usd"), "tax_payroll_usd": tax27,
                       "space_usd": r27.get("space_usd"), "payor_status_raw": r27.get("payor_status_raw"),
                       "est_tax_bill_usd": r27.get("est_tax_bill_usd") or None,
+                      "fetched": captured.get((c, CLASS_YEAR)),
                       "split": split27 if any(v is not None for v in split27) else None,
                       "split_available": any(v is not None for v in split27),
                       "avg_age": r27.get("avg_age")},
@@ -2233,6 +2312,22 @@ def build_all() -> tuple:
         hist_census["s2026_matches_payroll_block"] = sum(
             1 for c in clubs for r in hist_rows[c]
             if r[0] == SEASON_NOW and r[1] == club_docs[c]["payroll"]["s2026"]["tax_payroll_usd"])
+        # The Payroll now block (fa_team_payroll) and the history row for the
+        # current season (the cached pages) are two reads of one Spotrac page:
+        # the census says whether they are one capture, and the page prints
+        # each figure with its date when they are not (SITE_AUDIT_3A A3).
+        hist_census["s2026_capture"] = payroll_capture_census(
+            {c: club_docs[c]["payroll"]["s2026"].get("fetched") for c in clubs},
+            (hist_census.get("fetched") or {}).get(str(SEASON_NOW)),
+            hist_census["s2026_matches_payroll_block"], len(clubs))
+        hist_census["s2026_capture"]["disagree"] = {
+            c: [club_docs[c]["payroll"]["s2026"]["tax_payroll_usd"],
+                next((r[1] for r in hist_rows[c] if r[0] == SEASON_NOW), None)]
+            for c in clubs if club_docs[c]["payroll"]["s2026"]["tax_payroll_usd"]
+            != next((r[1] for r in hist_rows[c] if r[0] == SEASON_NOW), None)}
+        if hist_census["s2026_capture"]["same_source_date"] and not hist_census["s2026_capture"]["figures_agree"]:
+            log.warning("ledger_export: one Spotrac capture date, two %d tax payrolls for %s",
+                        SEASON_NOW, sorted(hist_census["s2026_capture"]["disagree"]))
         for c in clubs:
             rows_h = hist_rows[c]
             shard_docs[c]["payroll"] = {"history": rows_h}
@@ -2787,6 +2882,12 @@ def build_all() -> tuple:
         "contracts.unpriced": "[key, name, pos, salSrc]",
         "contracts.deferrals.players": "[name, sticker_usd, npv_usd, class_year, verify_status]",
         "payroll.s2027.split": "[active_usd, injured_usd, retained_usd, buried_usd]",
+        "payroll.s2026.fetched": (
+            "[tax page date, payroll page date]: the local date the Spotrac pages the block's row was read from "
+            "were captured (fa_team_payroll tax_page_captured / payroll_page_captured, else the row's fetched_at); "
+            "the same clock stamps the payroll history row for the season, and sections.payroll_history.census."
+            "s2026_capture says whether the two read one capture (same_source_date) and how many clubs' tax "
+            "payrolls agree (n_match of n_clubs); payroll.s2027.fetched is the same pair for the class year"),
         "arbitration.rows": "[name, mlbam, token_2027, proj_2027_usd, lo_usd, hi_usd, years_left, war_2027, class, flags]",
         "arbitration.realized.seasons": "[season, n, actual_usd, ours_usd, ou_mkt_usd, ou_war_usd, war]; ou_mkt and ou_war are never combined",
         "farm.pools": "year -> [pool_usd, status, picks [[pick_overall, slot_usd]]]",
@@ -2973,6 +3074,9 @@ def build_all() -> tuple:
                                      "it, the shortened season's prorated cash). Realized figures, not a "
                                      "forecast; no line is drawn past the last season.")
             if hist_census and hist_census["seasons"] else copy["history_blocked_on"],
+            "payroll_capture_note": (hist_census.get("s2026_capture") or {}).get("note", "")
+            if hist_census else "",
+            "payroll_fetched_label": "fetched",
         })
     field_key.update(shard_field_key)
     field_key.update(board_field_key)
